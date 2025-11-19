@@ -39,7 +39,7 @@ INSERT INTO Address (userID, country, city, street, apartment) VALUES
 -- ======================================================
 -- POPULATE SERVICES
 -- ======================================================
-INSERT INTO Service (name, description, imagedata, imageName, imageType) VALUES
+INSERT INTO Service (name, description, imageData, imageName, imageType) VALUES
 ('House Cleaning', 'Professional cleaning services for your home including dusting, vacuuming, and sanitizing.', NULL, 'cleaning.jpg', 'image/jpeg'),
 ('Plumbing', 'Expert plumbing services for repairs, installations, and maintenance.', NULL, 'plumbing.jpg', 'image/jpeg'),
 ('Electrical Work', 'Licensed electricians for all your electrical needs and repairs.', NULL, 'electrical.jpg', 'image/jpeg'),
@@ -54,7 +54,7 @@ INSERT INTO Service (name, description, imagedata, imageName, imageType) VALUES
 -- ======================================================
 -- POPULATE TASKERS
 -- ======================================================
-INSERT INTO Tasker (firstName, lastName, username, password, email, birthDate, phone, gender, image, availability, rating, hourrate, bio, serviceID, totalEarning, WorkedHours, addressCity) VALUES
+INSERT INTO Tasker (firstName, lastName, username, password, email, birthDate, phone, gender, image, availability, rating, hourRate, bio, serviceID, totalEarning, WorkedHours, addressCity) VALUES
 ('Tom', 'Anderson', 'tanderson', '$2a$10$tasker123456789abcdefghij', 'tom.a@tasker.com', '1985-03-20', '+1-555-1001', 'M', NULL, 'available', 4.8, 35.00, 'Experienced cleaner with 10 years in the business.', 1, 15400.00, 440.00, 'New York'),
 ('Lisa', 'Thompson', 'lthompson', '$2a$10$tasker223456789abcdefghij', 'lisa.t@tasker.com', '1982-07-14', '+1-555-1002', 'F', NULL, 'available', 4.9, 55.00, 'Licensed plumber with expertise in residential repairs.', 2, 28600.00, 520.00, 'Los Angeles'),
 ('Mark', 'White', 'mwhite', '$2a$10$tasker323456789abcdefghij', 'mark.w@tasker.com', '1988-11-02', '+1-555-1003', 'M', NULL, 'available', 4.7, 60.00, 'Certified electrician, safety is my priority.', 3, 19800.00, 330.00, 'Chicago'),
@@ -69,7 +69,7 @@ INSERT INTO Tasker (firstName, lastName, username, password, email, birthDate, p
 -- ======================================================
 -- POPULATE CHATS
 -- ======================================================
-INSERT INTO Chat (user_id, tasker_id, useris_active, taskeris_active) VALUES
+INSERT INTO Chat (userID, taskerID, userIsActive, taskerIsActive) VALUES
 (1, 1, TRUE, TRUE),
 (2, 2, TRUE, TRUE),
 (3, 3, TRUE, TRUE),
@@ -84,17 +84,17 @@ INSERT INTO Chat (user_id, tasker_id, useris_active, taskeris_active) VALUES
 -- ======================================================
 -- POPULATE TASKS
 -- ======================================================
-INSERT INTO Task (startDate, workedHours, userID, taskerID, serviceID, finishDate, chatID, bill, status, startInprogress, addressID, descriptionNotes) VALUES
-('2024-11-01 09:00:00', 4, 1, 1, 1, '2024-11-01 13:00:00', 1, 140.00, 'done', '2024-11-01 09:00:00', 1, 'Deep cleaning of entire apartment'),
-('2024-11-03 10:00:00', 3, 2, 2, 2, '2024-11-03 13:00:00', 2, 165.00, 'done', '2024-11-03 10:00:00', 3, 'Fix leaking kitchen faucet'),
-('2024-11-05 14:00:00', 5, 3, 3, 3, '2024-11-05 19:00:00', 3, 300.00, 'done', '2024-11-05 14:00:00', 4, 'Install new light fixtures in living room'),
-('2024-11-07 08:00:00', 6, 4, 4, 4, '2024-11-07 14:00:00', 4, 180.00, 'done', '2024-11-07 08:00:00', 5, 'Lawn mowing and hedge trimming'),
-('2024-11-10 09:00:00', 8, 5, 5, 5, '2024-11-10 17:00:00', 5, 360.00, 'done', '2024-11-10 09:00:00', 6, 'Paint bedroom walls'),
+INSERT INTO Task (startDate, workedHours, userID, taskerID, serviceID, endDate, chatID, bill, status, startInProgress, addressID, description) VALUES
+('2024-11-01 09:00:00', 4, 1, 1, 1, '2024-11-01 13:00:00', 1, 140.00, 'Done', '2024-11-01 09:00:00', 1, 'Deep cleaning of entire apartment'),
+('2024-11-03 10:00:00', 3, 2, 2, 2, '2024-11-03 13:00:00', 2, 165.00, 'Done', '2024-11-03 10:00:00', 3, 'Fix leaking kitchen faucet'),
+('2024-11-05 14:00:00', 5, 3, 3, 3, '2024-11-05 19:00:00', 3, 300.00, 'Done', '2024-11-05 14:00:00', 4, 'Install new light fixtures in living room'),
+('2024-11-07 08:00:00', 6, 4, 4, 4, '2024-11-07 14:00:00', 4, 180.00, 'Done', '2024-11-07 08:00:00', 5, 'Lawn mowing and hedge trimming'),
+('2024-11-10 09:00:00', 8, 5, 5, 5, '2024-11-10 17:00:00', 5, 360.00, 'Done', '2024-11-10 09:00:00', 6, 'Paint bedroom walls'),
 ('2024-11-12 10:00:00', 0, 1, 2, 2, NULL, 6, 0, 'Accepted', NULL, 2, 'Bathroom sink repair'),
-('2024-11-14 11:00:00', 2, 2, 3, 3, NULL, 7, 120.00, 'Inprogress', '2024-11-14 11:00:00', 3, 'Replace electrical outlet'),
-('2024-11-15 09:00:00', 0, 6, 6, 6, NULL, 8, 0, 'inReview', NULL, 7, 'Build custom bookshelf'),
-('2024-11-16 13:00:00', 0, 7, 7, 7, NULL, 9, 0, 'inReview', NULL, 8, 'Move furniture to new apartment'),
-('2024-11-08 15:00:00', 4, 8, 8, 8, '2024-11-08 19:00:00', 10, 260.00, 'done', '2024-11-08 15:00:00', 9, 'AC maintenance and filter replacement');
+('2024-11-14 11:00:00', 2, 2, 3, 3, NULL, 7, 120.00, 'InProgress', '2024-11-14 11:00:00', 3, 'Replace electrical outlet'),
+('2024-11-15 09:00:00', 0, 6, 6, 6, NULL, 8, 0, 'InReview', NULL, 7, 'Build custom bookshelf'),
+('2024-11-16 13:00:00', 0, 7, 7, 7, NULL, 9, 0, 'InReview', NULL, 8, 'Move furniture to new apartment'),
+('2024-11-08 15:00:00', 4, 8, 8, 8, '2024-11-08 19:00:00', 10, 260.00, 'Done', '2024-11-08 15:00:00', 9, 'AC maintenance and filter replacement');
 
 -- ======================================================
 -- POPULATE REVIEWS
@@ -110,7 +110,7 @@ INSERT INTO Reviews (text, rate, time, taskID) VALUES
 -- ======================================================
 -- POPULATE REVIEW IMAGES
 -- ======================================================
-INSERT INTO Review_Image (format, ImgFile, ImgName, review_id) VALUES
+INSERT INTO ReviewImage (format, ImageFile, ImageName, reviewID) VALUES
 ('jpg', 0x89504E470D0A1A0A, 'before_after_cleaning.jpg', 1),
 ('jpg', 0x89504E470D0A1A0A, 'fixed_faucet.jpg', 2),
 ('jpg', 0x89504E470D0A1A0A, 'new_lights.jpg', 3),
@@ -119,7 +119,7 @@ INSERT INTO Review_Image (format, ImgFile, ImgName, review_id) VALUES
 -- ======================================================
 -- POPULATE MESSAGES
 -- ======================================================
-INSERT INTO Message (chat_id, content, timestamp, senderid, receiverid, isusersender, status) VALUES
+INSERT INTO Message (chatID, content, timestamp, senderID, receiverID, isUserSender, status) VALUES
 (1, 'Hi, I need my apartment cleaned this week', '2024-10-31 08:00:00', 1, 1, TRUE, 'seen'),
 (1, 'Hello! I can help with that. When works for you?', '2024-10-31 08:15:00', 1, 1, FALSE, 'seen'),
 (1, 'How about Friday at 9 AM?', '2024-10-31 08:20:00', 1, 1, TRUE, 'seen'),
@@ -136,7 +136,7 @@ INSERT INTO Message (chat_id, content, timestamp, senderid, receiverid, isuserse
 -- ======================================================
 -- POPULATE MESSAGE IMAGES
 -- ======================================================
-INSERT INTO message_img (messageID, format, ImgFile, ImgName) VALUES
+INSERT INTO MessageImage (messageID, format, ImageFile, ImageName) VALUES
 (1, 'jpg', 0x89504E470D0A1A0A, 'apartment_photo.jpg'),
 (5, 'jpg', 0x89504E470D0A1A0A, 'leaking_faucet.jpg'),
 (8, 'jpg', 0x89504E470D0A1A0A, 'electrical_outlet.jpg');
