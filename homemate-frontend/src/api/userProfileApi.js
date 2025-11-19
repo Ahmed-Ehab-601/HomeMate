@@ -1,0 +1,77 @@
+const DEFAULT_API_BASE_URL = "http://localhost:8080";
+const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
+const USERS_ENDPOINT = `${baseUrl}/api/users`;
+
+const buildError = (status, body) => {
+  const error = new Error(body?.message ?? "HomeMate profile service request failed.");
+  error.status = status;
+  error.body = body;
+  return error;
+};
+
+const safeJson = async (response) => {
+  const text = await response.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("[userProfileApi] Failed to parse JSON", error);
+    return null;
+  }
+};
+
+async function request(url, options) {
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch (error) {
+    throw new Error(
+      error?.message ?? "Unable to reach the HomeMate API. Please ensure the backend is running.",
+    );
+  }
+
+  const data = await safeJson(response);
+
+  if (!response.ok) {
+    throw buildError(response.status, data);
+  }
+
+  return data;
+}
+
+export function getUserProfile(userId) {
+  return request(`${USERS_ENDPOINT}/${userId}/profile`);
+}
+
+export function getUserAddresses(userId) {
+  return request(`${USERS_ENDPOINT}/${userId}/addresses`);
+}
+
+export function addUserAddress(userId, payload) {
+  return request(`${USERS_ENDPOINT}/${userId}/addresses`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateUserAddress(userId, addressId, payload) {
+  return request(`${USERS_ENDPOINT}/${userId}/addresses/${addressId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteUserAddress(userId, addressId) {
+  return request(`${USERS_ENDPOINT}/${userId}/addresses/${addressId}`, {
+    method: "DELETE",
+  });
+}
+
+export function deleteUserAccount(userId) {
+  return request(`${USERS_ENDPOINT}/${userId}/account`, {
+    method: "DELETE",
+  });
+}
+

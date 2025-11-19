@@ -1,4 +1,6 @@
 import taskers from "../data/taskers";
+import services from "../data/services";
+import { normalizeService } from "../utils/services";
 
 const PAGE_SIZE = 20;
 
@@ -8,6 +10,9 @@ const rateBuckets = {
   medium: (value) => value >= 35 && value <= 55,
   premium: (value) => value > 55,
 };
+
+const servicesIndex = services.map(normalizeService);
+const serviceBySlug = new Map(servicesIndex.map((service) => [service.slug, service]));
 
 export async function fetchTaskers({
   serviceSlug,
@@ -35,7 +40,8 @@ export async function fetchTaskers({
 
   return new Promise((resolve) => {
     setTimeout(() => {
-      let pool = taskers.filter((t) => t.serviceSlug === serviceSlug);
+      const serviceId = serviceSlug ? serviceBySlug.get(serviceSlug)?.serviceId ?? null : null;
+      let pool = serviceId ? taskers.filter((t) => t.serviceId === serviceId) : [...taskers];
 
       if (searchTerm) {
         const query = searchTerm.toLowerCase();
@@ -47,7 +53,7 @@ export async function fetchTaskers({
       }
 
       if (filters.availability && filters.availability !== "any") {
-        pool = pool.filter((t) => t.availabilityTag === filters.availability);
+        pool = pool.filter((t) => t.availability === filters.availability);
       }
 
       if (filters.rating && filters.rating !== "any") {
@@ -95,7 +101,7 @@ export async function fetchTaskerById(taskerId) {
 
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      const tasker = taskers.find((t) => t.id === taskerId);
+      const tasker = taskers.find((t) => String(t.id) === String(taskerId));
       if (!tasker) {
         reject(new Error("Tasker not found"));
         return;

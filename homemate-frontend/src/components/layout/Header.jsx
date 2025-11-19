@@ -1,7 +1,9 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 
 function Header() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   return (
     <header className="sticky-header">
@@ -26,6 +28,14 @@ function Header() {
           >
             Explore Services
           </NavLink>
+          {isAuthenticated && (
+            <NavLink
+              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+              to="/profile"
+            >
+              Profile
+            </NavLink>
+          )}
           <a className="nav-link" href="#how-it-works">
             How It Works
           </a>
