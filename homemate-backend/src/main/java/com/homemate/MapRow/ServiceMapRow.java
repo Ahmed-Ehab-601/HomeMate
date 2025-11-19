@@ -4,9 +4,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.homemate.Model.ServiceEntity;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
-public class ServiceMapRow<S> {
-  public ServiceEntity map(ResultSet rs) throws SQLException {
+ @Component
+
+ public class ServiceMapRow implements RowMapper<ServiceEntity> {
+  @Override
+  public ServiceEntity mapRow(ResultSet rs,int rowNum) throws SQLException {
     ServiceEntity service = new ServiceEntity();
 
     service.setId(rs.getLong("serviceID"));
@@ -18,5 +23,5 @@ public class ServiceMapRow<S> {
 
     return service;
   }
-    
-}
+
+ }

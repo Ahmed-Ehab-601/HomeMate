@@ -1,6 +1,7 @@
 package com.homemate.Interface;
 
 import java.sql.SQLException;
+import java.util.List;
 
 public interface IServiceDao<S> {
 
@@ -12,6 +13,6 @@ public interface IServiceDao<S> {
 
     public S get(S service) throws SQLException;
 
-    public Iterable<S> getAll() throws SQLException;
+    public List<S> getAll() throws SQLException;
 
 }

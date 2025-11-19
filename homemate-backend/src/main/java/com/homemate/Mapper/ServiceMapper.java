@@ -2,11 +2,13 @@ package com.homemate.Mapper;
 
 import com.homemate.Dto.ServiceDto;
 import com.homemate.Model.ServiceEntity;
+import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+@Component
 
 public class ServiceMapper {
-    public static ServiceEntity mapFromDto(ServiceDto serviceDto) {
+    public  ServiceEntity mapFromDto(ServiceDto serviceDto) {
         return ServiceEntity.builder()
         .id(serviceDto.getId())
         .name(serviceDto.getName())
@@ -16,7 +18,7 @@ public class ServiceMapper {
         .imageType(serviceDto.getImageType())
         .build();
     }
-    public static ServiceDto mapToDto(ServiceEntity service) {
+    public  ServiceDto mapToDto(ServiceEntity service) {
         return ServiceDto.builder()
         .id(service.getId())
         .name(service.getName())

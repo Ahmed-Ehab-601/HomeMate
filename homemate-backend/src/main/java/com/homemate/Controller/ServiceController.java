@@ -1,6 +1,7 @@
 package com.homemate.Controller;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -30,6 +31,10 @@ public class ServiceController {
         public String editService(@PathVariable long id) throws SQLException {
             serviceManagService.deleteService(id);
             return "Service deleted successfully!";
+        }
+        @GetMapping("/getallservices")
+        public List<ServiceDto> editService() throws SQLException {
+            return serviceManagService.getAllService();
         }
 
 }
