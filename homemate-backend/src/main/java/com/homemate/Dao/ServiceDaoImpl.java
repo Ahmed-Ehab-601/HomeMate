@@ -1,5 +1,7 @@
 package com.homemate.Dao;
 import java.sql.SQLException;
+
+import org.springframework.data.annotation.Id;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -35,11 +37,17 @@ import com.homemate.Model.ServiceEntity;
 
 
     @Override
-    public void delete(Object service) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'delete'");
+    public void delete(long id) throws SQLException {
+        try {
+            String sql = "DELETE FROM service WHERE serviceID = ?";
+            jdbcTemplate.update(
+                    sql,
+                    id
+            );
+        } catch (Exception e) {
+            throw new UnsupportedOperationException("Unimplemented method 'delete'");
+        }
     }
-
     @Override
     public void update(long id ,Object service) throws SQLException {
         try {
