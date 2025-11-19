@@ -39,7 +39,7 @@ INSERT INTO Address (userID, country, city, street, apartment) VALUES
 -- ======================================================
 -- POPULATE SERVICES
 -- ======================================================
-INSERT INTO Service (name, description, imagedata, imageName, imageType) VALUES
+INSERT INTO Service (name, description, imageData, imageName, imageType) VALUES
 ('House Cleaning', 'Professional cleaning services for your home including dusting, vacuuming, and sanitizing.', NULL, 'cleaning.jpg', 'image/jpeg'),
 ('Plumbing', 'Expert plumbing services for repairs, installations, and maintenance.', NULL, 'plumbing.jpg', 'image/jpeg'),
 ('Electrical Work', 'Licensed electricians for all your electrical needs and repairs.', NULL, 'electrical.jpg', 'image/jpeg'),
