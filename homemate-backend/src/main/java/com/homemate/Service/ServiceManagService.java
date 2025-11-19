@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.homemate.Dto.ServiceDetailsDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -46,5 +47,13 @@ public class ServiceManagService {
         }
 
         return listOfDtos;
+    }
+
+    public ServiceDetailsDto getdetails(long serviceID) throws SQLException{
+         ServiceEntity service= serviceDAO.get(serviceID);
+         int count = serviceDAO.countCompletedTasksByServiceId(serviceID);
+         int taskers=serviceDAO.countTasker(serviceID);
+        return ServiceDetailsDto.builder().service(service).taskers(taskers).completedTasks(count)
+                .build();
     }
 }

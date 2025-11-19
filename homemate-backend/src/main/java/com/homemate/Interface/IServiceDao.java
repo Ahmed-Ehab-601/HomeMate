@@ -1,5 +1,7 @@
 package com.homemate.Interface;
 
+import com.homemate.Model.ServiceEntity;
+
 import java.sql.SQLException;
 import java.util.List;
 
@@ -11,8 +13,12 @@ public interface IServiceDao<S> {
 
     public void update(long id ,S service) throws SQLException;
 
-    public S get(S service) throws SQLException;
+
+    public ServiceEntity get(long serviceID) throws SQLException;
 
     public List<S> getAll() throws SQLException;
 
+    int countCompletedTasksByServiceId(Long serviceID);
+
+    int countTasker(long serviceID);
 }

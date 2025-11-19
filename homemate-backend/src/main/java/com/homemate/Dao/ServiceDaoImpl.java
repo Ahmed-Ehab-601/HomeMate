@@ -69,11 +69,11 @@ import com.homemate.Model.ServiceEntity;
         } catch (Exception e) {
             throw new UnsupportedOperationException("Unimplemented method 'save'");}
     }
-
-    @Override
-    public ServiceEntity get(ServiceEntity service) throws SQLException {
+ @Override
+ public ServiceEntity get(long serviceID) throws SQLException {
     try {
-        return null;
+        String sql= "SELECT serviceID, name, description, imageData, imageName, imageType FROM service WHERE serviceID = ?";
+        return jdbcTemplate.queryForObject(sql, new ServiceMapRow(),serviceID);
     } catch (Exception e) {
         throw new UnsupportedOperationException("Unimplemented method 'get'");
     }
@@ -88,8 +88,16 @@ import com.homemate.Model.ServiceEntity;
             throw new SQLException("Failed to fetch services", e);
         }
     }
-
+@Override
+public int countCompletedTasksByServiceId(Long serviceID) {
+    String sql = "SELECT COUNT(*) FROM Task WHERE serviceID = ? AND status = 'done'";
+    return jdbcTemplate.queryForObject(sql, Integer.class, serviceID);
+    }
+@Override
+public int countTasker(long serviceID){
+    String sql = "SELECT COUNT(*) FROM Tasker WHERE serviceID = ?";
+        return jdbcTemplate.queryForObject(sql, Integer.class, serviceID);
+            }
 }
-
     
 
