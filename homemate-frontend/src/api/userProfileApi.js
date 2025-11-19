@@ -20,10 +20,33 @@ const safeJson = async (response) => {
   }
 };
 
-async function request(url, options) {
+function getAuthHeaders() {
+  const token = localStorage.getItem("homemate_token");
+  const headers = {};
+  
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  return headers;
+}
+
+async function request(url, options = {}) {
+  // Get auth token and add to headers
+  const authHeaders = getAuthHeaders();
+  const headers = {
+    ...authHeaders,
+    ...(options.headers || {}),
+  };
+
+  const requestOptions = {
+    ...options,
+    headers,
+  };
+
   let response;
   try {
-    response = await fetch(url, options);
+    response = await fetch(url, requestOptions);
   } catch (error) {
     throw new Error(
       error?.message ?? "Unable to reach the HomeMate API. Please ensure the backend is running.",

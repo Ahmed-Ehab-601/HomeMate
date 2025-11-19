@@ -9,6 +9,7 @@ import TaskerDiscoveryPage from "./pages/TaskerDiscoveryPage";
 import TaskerProfilePage from "./pages/TaskerProfilePage";
 import RequestTaskPage from "./pages/RequestTaskPage";
 import UserProfilePage from "./pages/UserProfilePage";
+import SignInPage from "./pages/SignInPage";
 
 // Protected route component
 function ProtectedRoute({ children }) {
@@ -33,6 +34,7 @@ function AppRoutes() {
       <Route path="/services/:slug/taskers" element={<TaskerDiscoveryPage />} />
       <Route path="/taskers/:taskerId" element={<TaskerProfilePage />} />
       <Route path="/taskers/:taskerId/request" element={<RequestTaskPage />} />
+      <Route path="/signin" element={<SignInPage />} />
       <Route
         path="/profile"
         element={

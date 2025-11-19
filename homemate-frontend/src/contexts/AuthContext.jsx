@@ -4,38 +4,59 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for stored user on mount (for when sign up is implemented)
+  // Check for stored user and token on mount
   useEffect(() => {
     const storedUser = localStorage.getItem("homemate_user");
-    if (storedUser) {
+    const storedToken = localStorage.getItem("homemate_token");
+    if (storedUser && storedToken) {
       try {
         setUser(JSON.parse(storedUser));
+        setToken(storedToken);
       } catch (error) {
         console.error("Failed to parse stored user", error);
         localStorage.removeItem("homemate_user");
+        localStorage.removeItem("homemate_token");
       }
     }
     setIsLoading(false);
   }, []);
 
-  const login = (userData) => {
+  const login = (loginResponse) => {
+    // loginResponse contains: role, username, firstname, lastname, token
+    const userData = {
+      role: loginResponse.role,
+      username: loginResponse.username,
+      firstname: loginResponse.firstname,
+      lastname: loginResponse.lastname,
+    };
     setUser(userData);
+    setToken(loginResponse.token);
     localStorage.setItem("homemate_user", JSON.stringify(userData));
+    localStorage.setItem("homemate_token", loginResponse.token);
   };
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem("homemate_user");
+    localStorage.removeItem("homemate_token");
+  };
+
+  const getToken = () => {
+    return token || localStorage.getItem("homemate_token");
   };
 
   const value = {
     user,
-    isAuthenticated: !!user,
+    token,
+    isAuthenticated: !!user && !!token,
     isLoading,
     login,
     logout,
+    getToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
