@@ -41,9 +41,24 @@ import com.homemate.Model.ServiceEntity;
     }
 
     @Override
-    public Object update(Object service) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'update'");
+    public void update(long id ,Object service) throws SQLException {
+        try {
+            ServiceEntity s = (ServiceEntity) service;
+
+            String sql = "UPDATE service SET name = ? ,description = ?, imageData = ?, imageName = ?, imageType = ? WHERE serviceID = ?" ;
+
+            jdbcTemplate.update(
+                    sql,
+                    s.getName(),
+                    s.getDescription(),
+                    s.getImageData(),
+                    s.getImageName(),
+                    s.getImageType(),
+                    id
+            );
+
+        } catch (Exception e) {
+            throw new UnsupportedOperationException("Unimplemented method 'save'");}
     }
 
     @Override

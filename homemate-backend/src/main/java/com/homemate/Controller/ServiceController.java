@@ -21,5 +21,10 @@ public class ServiceController {
             serviceManagService.createService(serviceDto);
             return "Service created successfully!";
         }
+        @PostMapping("/edit/{id}")
+        public String editService(@PathVariable long id,@RequestBody ServiceDto serviceDto) throws SQLException {
+            serviceManagService.editService(id,serviceDto);
+            return "Service edited successfully!";
+        }
 
 }
