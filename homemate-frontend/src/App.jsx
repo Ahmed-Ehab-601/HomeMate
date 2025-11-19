@@ -7,6 +7,7 @@ import ServicesCatalog from "./pages/ServicesCatalog";
 import TaskerDiscoveryPage from "./pages/TaskerDiscoveryPage";
 import TaskerProfilePage from "./pages/TaskerProfilePage";
 import RequestTaskPage from "./pages/RequestTaskPage";
+import SignInPage from "./pages/SignInPage";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/services/:slug/taskers" element={<TaskerDiscoveryPage />} />
           <Route path="/taskers/:taskerId" element={<TaskerProfilePage />} />
           <Route path="/taskers/:taskerId/request" element={<RequestTaskPage />} />
+          <Route path="/signin" element={<SignInPage />} />
         </Routes>
         <Footer />
       </div>

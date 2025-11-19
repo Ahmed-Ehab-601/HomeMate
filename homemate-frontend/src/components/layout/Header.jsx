@@ -35,7 +35,7 @@ function Header() {
         </nav>
 
         <div className="header-cta">
-          <button type="button" className="btn btn-ghost">
+          <button type="button" className="btn btn-ghost" onClick={() => navigate("/signin")}>
             Sign in
           </button>
           <button type="button" className="btn btn-primary" onClick={() => navigate("/services")}>
