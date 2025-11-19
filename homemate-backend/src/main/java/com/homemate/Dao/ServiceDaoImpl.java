@@ -1,21 +1,22 @@
 package com.homemate.Dao;
 import java.sql.SQLException;
+import java.util.List;
 
-import org.springframework.data.annotation.Id;
+import com.homemate.MapRow.ServiceMapRow;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import com.homemate.Interface.IServiceDao;
 import com.homemate.Model.ServiceEntity;
 @Component
- public class ServiceDaoImpl implements IServiceDao<Object> {
+ public class ServiceDaoImpl implements IServiceDao<ServiceEntity> {
 
     private final JdbcTemplate jdbcTemplate;
     public ServiceDaoImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
     @Override
-    public void save(Object service) throws SQLException {
+    public void save(ServiceEntity service) throws SQLException {
         try {
             ServiceEntity s = (ServiceEntity) service;
 
@@ -49,7 +50,7 @@ import com.homemate.Model.ServiceEntity;
         }
     }
     @Override
-    public void update(long id ,Object service) throws SQLException {
+    public void update(long id , ServiceEntity service) throws SQLException {
         try {
             ServiceEntity s = (ServiceEntity) service;
 
@@ -70,7 +71,7 @@ import com.homemate.Model.ServiceEntity;
     }
 
     @Override
-    public Object get(Object service) throws SQLException {
+    public ServiceEntity get(ServiceEntity service) throws SQLException {
     try {
         return null;
     } catch (Exception e) {
@@ -78,14 +79,17 @@ import com.homemate.Model.ServiceEntity;
     }
 }
 
-    @Override
-    public Iterable<Object> getAll() throws SQLException {
+@Override
+   public List<ServiceEntity> getAll() throws SQLException {
+        String sql = "SELECT serviceID, name, description, imageData, imageName, imageType FROM service";
         try {
-            return null;
+            return jdbcTemplate.query(sql, new ServiceMapRow());
         } catch (Exception e) {
-        throw new UnsupportedOperationException("Unimplemented method 'getAll'");
+            throw new SQLException("Failed to fetch services", e);
+        }
     }
+
 }
 
     
-}
+
