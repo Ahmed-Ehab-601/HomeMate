@@ -20,6 +20,11 @@ public class ServiceManagService {
         ServiceEntity service=ServiceMapper.mapFromDto(serviceDto); 
         serviceDAO.save(service);
         }
-      
-    
+
+
+    public void editService(long id ,ServiceDto serviceDto) throws SQLException {
+        ServiceEntity service=ServiceMapper.mapFromDto(serviceDto);
+        serviceDAO.update(id,service);
+
+    }
 }
