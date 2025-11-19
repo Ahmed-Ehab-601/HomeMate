@@ -127,7 +127,7 @@ function TaskerDiscoveryPage() {
         <div>
           <p className="section-kicker">Tasker discovery</p>
           <h1 className="section-heading">
-            {service ? `${service.name} taskers` : "Find taskers"} ({taskers.length})
+            {service ? `${service.serviceName} taskers` : "Find taskers"} ({taskers.length})
           </h1>
           {service && <p className="tasker-card__meta">{service.description}</p>}
         </div>
@@ -154,9 +154,8 @@ function TaskerDiscoveryPage() {
           onChange={(event) => updateFilters({ availability: event.target.value })}
         >
           <option value="any">Availability • Any</option>
-          <option value="weekday">Weekdays</option>
-          <option value="evening">Evenings</option>
-          <option value="weekend">Weekends</option>
+          <option value="available">Available</option>
+          <option value="unavailable">Unavailable</option>
         </select>
 
         <select

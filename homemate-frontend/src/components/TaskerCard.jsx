@@ -7,7 +7,7 @@ function TaskerCard({ tasker }) {
   const navigate = useNavigate();
   const location = useLocation();
   const services = useMemo(() => servicesData.map(normalizeService), []);
-  const service = services.find((svc) => svc.slug === tasker.serviceSlug) ?? null;
+  const service = services.find((svc) => svc.serviceId === tasker.serviceId) ?? null;
   const hasPhoto = Boolean(tasker.photo);
   const initials = tasker.name
     .split(" ")
@@ -25,12 +25,11 @@ function TaskerCard({ tasker }) {
         <div>
           <h3 className="tasker-card__name">{tasker.name}</h3>
           <p className="tasker-card__meta">
-            {tasker.location} • Rating {tasker.rating.toFixed(1)} ★
+            {service?.serviceName ?? "Home service"} • {tasker.location}
           </p>
-          <p className="tasker-card__meta">Availability: {tasker.availability}</p>
+          <p className="tasker-card__meta">Rating {tasker.rating.toFixed(1)} ★ • Status {tasker.availability}</p>
         </div>
       </div>
-      <p className="tasker-card__meta">{tasker.bio}</p>
       <div className="tasker-card__stats">
         <span>${tasker.hourRate}/hr starting</span>
       </div>

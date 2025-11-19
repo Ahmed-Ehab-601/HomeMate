@@ -391,6 +391,9 @@
   gap: 12px;
   font-weight: 700;
   color: var(--text-primary);
+  border: none;
+  background: none;
+  padding: 0;
 }
 
 .brand__mark {
@@ -402,6 +405,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
+  border: none;
 }
 
 .nav-links {
@@ -415,6 +419,7 @@
   color: var(--text-secondary);
   padding: 8px 14px;
   border-radius: 999px;
+  text-decoration: none;
 }
 
 .nav-link.active,
