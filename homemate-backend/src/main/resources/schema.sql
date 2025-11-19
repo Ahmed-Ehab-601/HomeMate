@@ -64,7 +64,7 @@ CREATE TABLE Service (
     serviceID INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     description VARCHAR(500),
-    imagedata LONGBLOB,
+    imageData LONGBLOB,
     imageName VARCHAR(200),
     imageType VARCHAR(200),
     INDEX idx_service_name (name)
