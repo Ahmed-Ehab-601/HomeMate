@@ -13,7 +13,7 @@ function TaskerProfilePage() {
   const [status, setStatus] = useState(tasker ? "success" : "loading");
   const service =
     location.state?.service ??
-    (tasker ? services.find((svc) => svc.slug === tasker.serviceSlug) : null);
+    (tasker ? services.find((svc) => svc.serviceId === tasker.serviceId) : null);
 
   useEffect(() => {
     if (tasker) return;

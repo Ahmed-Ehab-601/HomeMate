@@ -4,7 +4,7 @@ import servicesData from "../data/services";
 import taskersData from "../data/taskers";
 import { normalizeService } from "../utils/services";
 import { fetchUserAddresses } from "../api/addressesApi";
-import { getPendingRequestsCount, hasPendingRequest, requestTask } from "../api/tasksApi";
+import { requestTask } from "../api/tasksApi";
 import Modal from "../components/Modal";
 
 const MOCK_USER_ID = 1;
@@ -47,10 +47,14 @@ function RequestTaskPage() {
   const stateService = location.state?.service;
   const fromPath = location.state?.from;
 
-  const fallbackTasker = taskersData.find((t) => t.id === taskerId);
+  const fallbackTasker = taskersData.find(
+    (t) => String(t.id) === String(taskerId)
+  );
   const tasker = stateTasker ?? fallbackTasker;
   const service =
-    stateService ?? services.find((svc) => svc.slug === tasker?.serviceSlug) ?? services[0];
+    stateService ??
+    services.find((svc) => svc.serviceId === tasker?.serviceId) ??
+    services[0];
 
   const [addresses, setAddresses] = useState([]);
   const [addressStatus, setAddressStatus] = useState("loading");
@@ -68,6 +72,7 @@ function RequestTaskPage() {
   const [errorBanner, setErrorBanner] = useState(null);
   const [progressMessage, setProgressMessage] = useState("");
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [duplicateMessage, setDuplicateMessage] = useState("");
   const [limitError, setLimitError] = useState("");
 
   const hasUnsavedChanges =
@@ -82,16 +87,6 @@ function RequestTaskPage() {
     limit.setMonth(limit.getMonth() + 3);
     return limit;
   }, [today]);
-
-  useEffect(() => {
-    if (!tasker) return;
-    if (hasPendingRequest(MOCK_USER_ID, tasker.id)) {
-      setDuplicateModalOpen(true);
-    }
-    if (getPendingRequestsCount(MOCK_USER_ID) >= 10) {
-      setLimitError("Maximum pending requests limit (10) reached");
-    }
-  }, [tasker]);
 
   useEffect(() => {
     let cancelled = false;
@@ -128,7 +123,7 @@ function RequestTaskPage() {
   }
 
   const selectedAddress = addresses.find(
-    (address) => String(address.id) === String(selectedAddressId),
+    (address) => String(address.id) === String(selectedAddressId)
   );
 
   const isAddressMissing = !selectedAddressId;
@@ -144,7 +139,28 @@ function RequestTaskPage() {
     })();
 
   const canSubmit =
-    !isAddressMissing && !isScheduleMissing && isDateWithinBounds && !limitError && !isSubmitting;
+    !isAddressMissing &&
+    !isScheduleMissing &&
+    isDateWithinBounds &&
+    !isSubmitting;
+
+  const describeMissingFields = () => {
+    const missing = [];
+    if (isAddressMissing) missing.push("service address");
+    if (!dateValue) missing.push("preferred date");
+    if (!isDateWithinBounds && dateValue) missing.push("valid date");
+    if (!timeValue) missing.push("preferred time");
+    if (!tasker) missing.push("tasker");
+    if (!service) missing.push("service");
+    if (!missing.length) return "";
+    if (missing.length === 1) {
+      return `Please provide the ${missing[0]} before submitting.`;
+    }
+    const last = missing.pop();
+    return `Please provide the ${missing.join(
+      ", "
+    )} and ${last} before submitting.`;
+  };
 
   const handleBack = () => {
     if (hasUnsavedChanges) {
@@ -166,8 +182,11 @@ function RequestTaskPage() {
   const openConfirmation = () => {
     setShowErrors(true);
     if (!canSubmit) {
+      const message =
+        describeMissingFields() ||
+        "Please resolve the highlighted fields before submitting.";
       setErrorBanner({
-        message: "Please resolve the highlighted fields before submitting.",
+        message,
       });
       return;
     }
@@ -179,24 +198,22 @@ function RequestTaskPage() {
     if (!canSubmit) return;
     setIsSubmitting(true);
     setProgressMessage("Submitting request...");
-    const payload = {
+    const requestDto = {
       userId: MOCK_USER_ID,
       taskerId: tasker.id,
-      taskerName: tasker.name,
-      hourRate: tasker.hourRate,
       serviceId: service.serviceId,
-      serviceName: service.serviceName,
-      addressId: selectedAddress?.id,
-      addressDetails: formatAddress(selectedAddress),
-      startDate: new Date(`${dateValue}T${timeValue}:00`).toISOString(),
+      addressId: Number(selectedAddressId),
+      startDate: `${dateValue}T${timeValue}:00`,
       description: description.trim(),
-      username: MOCK_USER_NAME,
     };
 
-    requestTask(payload)
+    console.info("[RequestTaskPage] Sending task request", requestDto);
+    requestTask(requestDto)
       .then((response) => {
+        console.info("[RequestTaskPage] Task request response", response);
         setSuccessBanner({
-          message: "✓ Task request sent successfully! The Tasker will review your request shortly.",
+          message:
+            "✓ Task request sent successfully! The Tasker will review your request shortly.",
           details: response,
         });
         setConfirmModalOpen(false);
@@ -205,18 +222,43 @@ function RequestTaskPage() {
         setTimeValue("");
         defaultAddressRef.current = selectedAddressId;
         setShowErrors(false);
+        setSubmissionError(null);
+        setErrorBanner(null);
+        setLimitError("");
+        setDuplicateModalOpen(false);
+        setDuplicateMessage("");
         // TODO: Navigate to task details once page is available.
       })
       .catch((error) => {
-        const message =
-          error?.message ??
-          (error?.error === "DUPLICATE_REQUEST"
-            ? "You already have a pending request with this Tasker. Please wait for their response."
-            : "Failed to submit task request. Please try again.");
-        setSubmissionError(message);
-        setErrorBanner({
-          message: `✗ Failed to submit task request. ${message}`,
-        });
+        // Close confirm modal to show error messages
+        setConfirmModalOpen(false);
+
+        if (error?.error === "DUPLICATE_REQUEST") {
+          const message =
+            error.message ??
+            "You already have a pending request with this Tasker. Please wait for their response.";
+          setDuplicateMessage(message);
+          setDuplicateModalOpen(true);
+          // Clear other error states
+          setErrorBanner(null);
+          setSubmissionError(null);
+        } else if (error?.error === "REQUEST_LIMIT_EXCEEDED") {
+          const message =
+            error.message ?? "Maximum pending requests limit (10) reached";
+          setLimitError(message);
+          // Clear other error states
+          setErrorBanner(null);
+          setSubmissionError(null);
+        } else {
+          // Generic error - show only error banner
+          const message =
+            error?.message ??
+            "Failed to submit task request. Please try again.";
+          setErrorBanner({
+            message: `✗ Failed to submit task request. ${message}`,
+          });
+          setSubmissionError(null);
+        }
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -225,7 +267,9 @@ function RequestTaskPage() {
   };
 
   const descriptionCounterClass =
-    description.length >= descriptionWarningThreshold ? "char-counter warn" : "char-counter";
+    description.length >= descriptionWarningThreshold
+      ? "char-counter warn"
+      : "char-counter";
 
   return (
     <main className="page">
@@ -254,7 +298,10 @@ function RequestTaskPage() {
               type="button"
               className="alert-link"
               onClick={() =>
-                console.info("Navigate to task details once implemented", successBanner.details)
+                console.info(
+                  "Navigate to task details once implemented",
+                  successBanner.details
+                )
               }
             >
               Go to Task
@@ -265,7 +312,11 @@ function RequestTaskPage() {
         {errorBanner && (
           <div className="alert-banner error">
             <div>{errorBanner.message}</div>
-            <button type="button" className="alert-dismiss" onClick={() => setErrorBanner(null)}>
+            <button
+              type="button"
+              className="alert-dismiss"
+              onClick={() => setErrorBanner(null)}
+            >
               ×
             </button>
           </div>
@@ -274,9 +325,13 @@ function RequestTaskPage() {
         <section className="request-form card">
           <div className="form-field">
             <label htmlFor="address-select">Service address*</label>
-            {addressStatus === "loading" && <p className="tasker-card__meta">Loading addresses…</p>}
+            {addressStatus === "loading" && (
+              <p className="tasker-card__meta">Loading addresses…</p>
+            )}
             {addressStatus === "error" && (
-              <p className="error-text">We couldn’t load your addresses. Please retry.</p>
+              <p className="error-text">
+                We couldn’t load your addresses. Please retry.
+              </p>
             )}
             {addressStatus === "success" && addresses.length === 0 && (
               <div className="empty-state">
@@ -288,7 +343,9 @@ function RequestTaskPage() {
               <>
                 <select
                   id="address-select"
-                  className={`address-select${showErrors && isAddressMissing ? " error" : ""}`}
+                  className={`address-select${
+                    showErrors && isAddressMissing ? " error" : ""
+                  }`}
                   style={{ width: "400px" }}
                   value={selectedAddressId}
                   onChange={(event) => setSelectedAddressId(event.target.value)}
@@ -313,7 +370,9 @@ function RequestTaskPage() {
               <input
                 id="date-input"
                 type="date"
-                className={`input ${showErrors && !isDateWithinBounds ? "error" : ""}`}
+                className={`input ${
+                  showErrors && !isDateWithinBounds ? "error" : ""
+                }`}
                 min={formatDateForInput(today)}
                 max={formatDateForInput(maxDate)}
                 value={dateValue}
@@ -353,7 +412,9 @@ function RequestTaskPage() {
               value={description}
               onChange={handleDescriptionChange}
             />
-            <div className={descriptionCounterClass}>{description.length}/500 characters</div>
+            <div className={descriptionCounterClass}>
+              {description.length}/500 characters
+            </div>
           </div>
 
           <div className="summary-box">
@@ -372,13 +433,16 @@ function RequestTaskPage() {
                 <dd>
                   ${tasker.hourRate}/hr{" "}
                   <span className="tasker-card__meta">
-                    (Final cost calculated after task completion based on worked hours)
+                    (Final cost calculated after task completion based on worked
+                    hours)
                   </span>
                 </dd>
               </div>
               <div>
                 <dt>Address</dt>
-                <dd>{selectedAddress ? formatAddress(selectedAddress) : "--"}</dd>
+                <dd>
+                  {selectedAddress ? formatAddress(selectedAddress) : "--"}
+                </dd>
               </div>
               <div>
                 <dt>Date & time</dt>
@@ -388,7 +452,11 @@ function RequestTaskPage() {
           </div>
 
           <div className="form-actions">
-            <button type="button" className="btn btn-ghost" onClick={handleBack}>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={handleBack}
+            >
               Cancel
             </button>
             <button
@@ -409,7 +477,11 @@ function RequestTaskPage() {
           onClose={() => setBackModalOpen(false)}
           actions={
             <>
-            <button type="button" className="btn btn-secondary" onClick={() => setBackModalOpen(false)}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setBackModalOpen(false)}
+              >
                 Stay
               </button>
               <button
@@ -429,7 +501,10 @@ function RequestTaskPage() {
             </>
           }
         >
-          <p>You have unsaved changes. Are you sure you want to leave? All entered information will be lost.</p>
+          <p>
+            You have unsaved changes. Are you sure you want to leave? All
+            entered information will be lost.
+          </p>
         </Modal>
       )}
 
@@ -443,7 +518,9 @@ function RequestTaskPage() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => {
-                  console.info("Navigate to existing request details once implemented");
+                  console.info(
+                    "Navigate to existing request details once implemented"
+                  );
                   setDuplicateModalOpen(false);
                 }}
               >
@@ -460,8 +537,8 @@ function RequestTaskPage() {
           }
         >
           <p>
-            You already have a pending task request with {tasker.name}. Please wait for their response or
-            cancel your previous request before creating a new one.
+            {duplicateMessage ||
+              `You already have a pending task request with ${tasker.name}. Please wait for their response or cancel your previous request before creating a new one.`}
           </p>
         </Modal>
       )}
@@ -501,9 +578,13 @@ function RequestTaskPage() {
           <p>You are requesting a task from {tasker.name}</p>
           <ul className="confirm-list">
             <li>Service: {service.serviceName}</li>
-            <li>Address: {selectedAddress ? formatAddress(selectedAddress) : "--"}</li>
+            <li>
+              Address: {selectedAddress ? formatAddress(selectedAddress) : "--"}
+            </li>
             <li>Date & Time: {formatDisplayDateTime(dateValue, timeValue)}</li>
-            <li>Description: {description ? `${description.slice(0, 100)}…` : "—"}</li>
+            <li>
+              Description: {description ? `${description.slice(0, 100)}…` : "—"}
+            </li>
           </ul>
           {progressMessage && <p>{progressMessage}</p>}
         </Modal>
@@ -513,4 +594,3 @@ function RequestTaskPage() {
 }
 
 export default RequestTaskPage;
-
