@@ -6,7 +6,7 @@ public interface IServiceDao<S> {
 
     public void save(S service) throws SQLException;
 
-    public void delete(S service) throws SQLException;
+    public void delete(long id) throws SQLException;
 
     public void update(long id ,S service) throws SQLException;
 

@@ -27,4 +27,8 @@ public class ServiceManagService {
         serviceDAO.update(id,service);
 
     }
+
+    public void deleteService(long id) throws SQLException {
+        serviceDAO.delete(id);
+    }
 }

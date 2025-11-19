@@ -26,5 +26,10 @@ public class ServiceController {
             serviceManagService.editService(id,serviceDto);
             return "Service edited successfully!";
         }
+        @DeleteMapping("/delete/{id}")
+        public String editService(@PathVariable long id) throws SQLException {
+            serviceManagService.deleteService(id);
+            return "Service deleted successfully!";
+        }
 
 }
