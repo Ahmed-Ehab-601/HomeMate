@@ -9,7 +9,7 @@ USE HomeMate;
 -- ======================================================
 -- POPULATE USERS
 -- ======================================================
-INSERT INTO User (firstName, lastName, username, password, email, birthDate, gender, phone, admin, suspended) VALUES
+INSERT INTO Users (firstName, lastName, username, password, email, birthDate, gender, phone, admin, suspended) VALUES
 ('John', 'Smith', 'jsmith', '$2a$10$abcdefghijklmnopqrstuvwxyz123456', 'john.smith@email.com', '1990-05-15', 'M', '+1-555-0101', FALSE, FALSE),
 ('Sarah', 'Johnson', 'sjohnson', '$2a$10$abcdefghijklmnopqrstuvwxyz123457', 'sarah.j@email.com', '1988-08-22', 'F', '+1-555-0102', FALSE, FALSE),
 ('Michael', 'Brown', 'mbrown', '$2a$10$abcdefghijklmnopqrstuvwxyz123458', 'michael.b@email.com', '1992-03-10', 'M', '+1-555-0103', FALSE, FALSE),
