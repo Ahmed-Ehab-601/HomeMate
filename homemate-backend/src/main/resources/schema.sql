@@ -25,7 +25,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- ======================================================
 -- USER
 -- ======================================================
-CREATE TABLE User (
+CREATE TABLE Users (
     userID INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(50) NOT NULL,
     lastName VARCHAR(50) NOT NULL,
