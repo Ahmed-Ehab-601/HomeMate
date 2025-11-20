@@ -10,6 +10,6 @@ public interface TaskDao {
     Optional<Long> getChat (Long userID,Long TaskerId);
     Optional<Long> insertChat(Long userID,Long TaskerId);
     Optional<TaskDto> getTaskDetails (Long taskID);
-    boolean checkIfTaskExist(Long userID,Long TaskerID);
-    boolean checkIfTaskLimit(Long userID);
+    boolean checkIfTaskExist(Long userID,Long TaskerID,Long addressID);
+    boolean checkIfTaskLimit(Long userID,Integer limit);
 }

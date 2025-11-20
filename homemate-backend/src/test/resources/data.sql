@@ -1,10 +1,7 @@
 -- ======================================================
 -- HOMEMATE DATABASE POPULATION SCRIPT
+-- Updated: table renamed to Users
 -- ======================================================
--- This script populates the HomeMate database with sample data
--- Run this after creating the database schema
-
-USE HomeMate;
 
 -- ======================================================
 -- POPULATE USERS
@@ -96,72 +93,15 @@ INSERT INTO Task (startDate, workedHours, userID, taskerID, serviceID, endDate, 
 ('2024-11-16 13:00:00', 0, 7, 7, 7, NULL, 9, 0, 'InReview', NULL, 8, 'Move furniture to new apartment'),
 ('2024-11-08 15:00:00', 4, 8, 8, 8, '2024-11-08 19:00:00', 10, 260.00, 'Done', '2024-11-08 15:00:00', 9, 'AC maintenance and filter replacement');
 
--- ======================================================
--- POPULATE REVIEWS
--- ======================================================
-INSERT INTO Reviews (text, rate, time, taskID) VALUES
-('Excellent service, very thorough!', 5.0, '2024-11-01 14:00:00', 1),
-('Quick and professional work', 4.5, '2024-11-03 14:00:00', 2),
-('Great job, very knowledgeable', 4.8, '2024-11-05 20:00:00', 3),
-('Good work, on time', 4.3, '2024-11-07 15:00:00', 4),
-('Amazing painting skills!', 5.0, '2024-11-10 18:00:00', 5),
-('Very professional and efficient', 4.9, '2024-11-08 20:00:00', 10);
-
--- ======================================================
--- POPULATE REVIEW IMAGES
--- ======================================================
-INSERT INTO ReviewImage (format, ImageFile, ImageName, reviewID) VALUES
-('jpg', 0x89504E470D0A1A0A, 'before_after_cleaning.jpg', 1),
-('jpg', 0x89504E470D0A1A0A, 'fixed_faucet.jpg', 2),
-('jpg', 0x89504E470D0A1A0A, 'new_lights.jpg', 3),
-('jpg', 0x89504E470D0A1A0A, 'lawn_result.jpg', 4);
-
--- ======================================================
--- POPULATE MESSAGES
--- ======================================================
-INSERT INTO Message (chatID, content, timestamp, senderID, receiverID, isUserSender, status) VALUES
-(1, 'Hi, I need my apartment cleaned this week', '2024-10-31 08:00:00', 1, 1, TRUE, 'seen'),
-(1, 'Hello! I can help with that. When works for you?', '2024-10-31 08:15:00', 1, 1, FALSE, 'seen'),
-(1, 'How about Friday at 9 AM?', '2024-10-31 08:20:00', 1, 1, TRUE, 'seen'),
-(1, 'Perfect, I will be there!', '2024-10-31 08:25:00', 1, 1, FALSE, 'seen'),
-(2, 'I have a leaking faucet in my kitchen', '2024-11-02 09:00:00', 2, 2, TRUE, 'seen'),
-(2, 'I can fix that. Is Saturday morning good?', '2024-11-02 09:30:00', 2, 2, FALSE, 'seen'),
-(2, 'Yes, that works great!', '2024-11-02 10:00:00', 2, 2, TRUE, 'seen'),
-(3, 'Need help with electrical work', '2024-11-04 10:00:00', 3, 3, TRUE, 'seen'),
-(3, 'What kind of work do you need done?', '2024-11-04 10:15:00', 3, 3, FALSE, 'seen'),
-(3, 'Installing new light fixtures', '2024-11-04 10:20:00', 3, 3, TRUE, 'seen'),
-(6, 'Can you help with my bathroom sink?', '2024-11-11 14:00:00', 1, 2, TRUE, 'received'),
-(6, 'Yes, I can come tomorrow', '2024-11-11 14:30:00', 1, 2, FALSE, 'seen');
-
--- ======================================================
--- POPULATE MESSAGE IMAGES
--- ======================================================
-INSERT INTO MessageImage (messageID, format, ImageFile, ImageName) VALUES
-(1, 'jpg', 0x89504E470D0A1A0A, 'apartment_photo.jpg'),
-(5, 'jpg', 0x89504E470D0A1A0A, 'leaking_faucet.jpg'),
-(8, 'jpg', 0x89504E470D0A1A0A, 'electrical_outlet.jpg');
-
--- ======================================================
--- POPULATE REPORTS
--- ======================================================
-INSERT INTO Report (header, body, taskID, reporter, adminStatus) VALUES
-('Late arrival', 'Tasker arrived 30 minutes late without prior notice', 4, TRUE, 'pending'),
-('Payment issue', 'User has not paid the full amount agreed upon', 7, FALSE, 'pending'),
-('Incomplete work', 'The cleaning was not thorough, several areas were missed', 1, TRUE, 'done');
 
 -- ======================================================
 -- SUMMARY
 -- ======================================================
 -- Data inserted:
--- - 10 Users (including 1 admin)
+-- - 10 Users
 -- - 10 Addresses
 -- - 10 Services
 -- - 10 Taskers
 -- - 10 Chats
--- - 10 Tasks (6 completed, 2 in progress/accepted, 2 in review)
--- - 6 Reviews (for completed tasks)
--- - 4 Review Images
--- - 12 Messages
--- - 3 Message Images
--- - 3 Reports (2 pending, 1 resolved)
+-- - 10 Tasks
 -- ======================================================

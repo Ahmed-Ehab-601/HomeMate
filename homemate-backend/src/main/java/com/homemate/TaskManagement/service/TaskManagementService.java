@@ -47,9 +47,9 @@ public class TaskManagementService {
 
     }
     public void checkRequest(TaskRequestDto requestDto){
-        if(taskDao.checkIfTaskExist(requestDto.getUserID(),requestDto.getTaskerID())){
+        if(taskDao.checkIfTaskExist(requestDto.getUserID(),requestDto.getTaskerID(),requestDto.getAddressID())){
             throw new DuplicateRequestException();
-        } else if (taskDao.checkIfTaskLimit(requestDto.getUserID())) {
+        } else if (taskDao.checkIfTaskLimit(requestDto.getUserID(),10)) {
             throw new RequestLimitExceededException();
         }
     }

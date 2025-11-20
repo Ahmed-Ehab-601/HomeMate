@@ -4,6 +4,7 @@ import com.homemate.TaskManagement.Dao.TaskDao;
 import com.homemate.TaskManagement.Dao.TaskRowMapper;
 import com.homemate.TaskManagement.Dto.TaskDto;
 import com.homemate.TaskManagement.exceptions.BadTaskRequestException;
+import com.homemate.TaskManagement.exceptions.DuplicateChatException;
 import com.homemate.TaskManagement.model.TaskEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -92,7 +93,7 @@ public class TaskDaoImpl implements TaskDao {
             }
             return Optional.of(key.longValue());
         } catch (DataAccessException e) {
-            throw new BadTaskRequestException();
+            throw new DuplicateChatException();
         }
 
     }
@@ -120,7 +121,7 @@ public class TaskDaoImpl implements TaskDao {
                 u.email AS userMail,
                 tas.email AS taskerMail
             FROM Task t
-                INNER JOIN User u ON t.userID = u.userID
+                INNER JOIN Users u ON t.userID = u.userID
                 INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
                 INNER JOIN Service s ON t.serviceID = s.serviceID
                 INNER JOIN Address a ON t.addressID = a.addressID
@@ -132,17 +133,17 @@ public class TaskDaoImpl implements TaskDao {
     }
 
     @Override
-    public boolean checkIfTaskExist(Long userID, Long taskerID) {
-        String sql = "SELECT COUNT(*) FROM Task WHERE userID = ? and TaskerID = ? and status = 'InReview' ";
-        Integer count = jdbcTemplate.queryForObject(sql,Integer.class,userID,taskerID);
+    public boolean checkIfTaskExist(Long userID, Long taskerID,Long addressID) {
+        String sql = "SELECT COUNT(*) FROM Task WHERE userID = ? and taskerID = ? and addressID = ? and status = 'InReview' ";
+        Integer count = jdbcTemplate.queryForObject(sql,Integer.class,userID,taskerID,addressID);
         return count !=null && count == 1;
     }
 
     @Override
-    public boolean checkIfTaskLimit(Long userID) {
+    public boolean checkIfTaskLimit(Long userID,Integer limit) {
         String sql = "SELECT COUNT(*) FROM Task WHERE userID = ? and status = 'InReview' ";
         Integer count = jdbcTemplate.queryForObject(sql,Integer.class,userID);
-        return count !=null && count >= 9;
+        return count !=null && count >= limit;
     }
 
 }
