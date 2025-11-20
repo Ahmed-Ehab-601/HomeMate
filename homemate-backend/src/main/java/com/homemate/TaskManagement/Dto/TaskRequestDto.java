@@ -2,11 +2,18 @@ package com.homemate.TaskManagement.Dto;
 
 
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.context.annotation.Bean;
 
 import java.time.LocalDateTime;
 
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class TaskRequestDto {
     @NotNull(message = "Start date is required")
     private LocalDateTime startDate;

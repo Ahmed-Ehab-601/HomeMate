@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDateTime;
@@ -19,12 +20,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-public class TaskDaoTest {
+@ActiveProfiles("task")
+public class TaskDaoImpIntegrationTest {
 
     private final TaskDaoImpl underTest;
 
     @Autowired
-    public TaskDaoTest(TaskDaoImpl underTest) {
+    public TaskDaoImpIntegrationTest(TaskDaoImpl underTest) {
         this.underTest = underTest;
     }
 
