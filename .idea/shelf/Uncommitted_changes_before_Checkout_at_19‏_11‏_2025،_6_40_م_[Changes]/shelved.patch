@@ -1,0 +1,18 @@
+Index: .idea/modules.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"ProjectModuleManager\">\n    <modules>\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/backend.iml\" filepath=\"$PROJECT_DIR$/.idea/backend.iml\" />\n    </modules>\n  </component>\n</project>
+===================================================================
+diff --git a/.idea/modules.xml b/.idea/modules.xml
+--- a/.idea/modules.xml	(revision 61bb27eef2007d68ca1b9b5f2e58692cceefdf2d)
++++ b/.idea/modules.xml	(date 1763504672905)
+@@ -2,7 +2,7 @@
+ <project version="4">
+   <component name="ProjectModuleManager">
+     <modules>
+-      <module fileurl="file://$PROJECT_DIR$/.idea/backend.iml" filepath="$PROJECT_DIR$/.idea/backend.iml" />
++      <module fileurl="file://$PROJECT_DIR$/.idea/HomeMate2.iml" filepath="$PROJECT_DIR$/.idea/HomeMate2.iml" />
+     </modules>
+   </component>
+ </project>
+\ No newline at end of file
