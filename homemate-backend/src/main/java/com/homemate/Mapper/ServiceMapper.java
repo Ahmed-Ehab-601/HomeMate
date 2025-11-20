@@ -5,6 +5,8 @@ import com.homemate.Model.ServiceEntity;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 @Component
 
 public class ServiceMapper {
@@ -13,7 +15,8 @@ public class ServiceMapper {
         .id(serviceDto.getId())
         .name(serviceDto.getName())
         .description(serviceDto.getDescription())
-        .imageData(serviceDto.getImageData()!=null?serviceDto.getImageData().getBytes(StandardCharsets.UTF_8): null)
+        .imageData(serviceDto.getImageData() != null ?
+                        Base64.getDecoder().decode(serviceDto.getImageData()) : null)
         .imageName(serviceDto.getImageName())
         .imageType(serviceDto.getImageType())
         .build();
@@ -23,7 +26,8 @@ public class ServiceMapper {
         .id(service.getId())
         .name(service.getName())
         .description(service.getDescription())
-        .imageData(service.getImageData()!=null?new String(service.getImageData(), StandardCharsets.UTF_8) : null)
+        .imageData(service.getImageData() != null ?
+                Base64.getEncoder().encodeToString(service.getImageData()) : null)
         .imageName(service.getImageName())
         .imageType(service.getImageType())
         .build();

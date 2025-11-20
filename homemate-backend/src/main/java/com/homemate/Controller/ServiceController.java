@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.homemate.Dto.ServiceDetailsDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +14,7 @@ import com.homemate.Dto.ServiceDto;
 import com.homemate.Service.ServiceManagService;
 @RestController
 @RequestMapping("/service")
+@CrossOrigin(origins = "http://localhost:5174")
 public class ServiceController {
 
         private final ServiceManagService serviceManagService;
@@ -38,7 +41,16 @@ public class ServiceController {
             return serviceManagService.getAllService();
         }
        @GetMapping("/getservicedetails/{serviceID}")
-       public ServiceDetailsDto getdetails(@PathVariable long serviceID) throws SQLException {
-           return serviceManagService.getdetails(serviceID);
+       public ResponseEntity<ServiceDetailsDto> getDetails(@PathVariable long serviceID) {
+           try {
+               ServiceDetailsDto details = serviceManagService.getdetails(serviceID);
+               if (details != null) {
+                   return ResponseEntity.ok(details);
+               } else {
+                   return ResponseEntity.notFound().build();
+               }
+           } catch (Exception e) {
+               return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+           }
        }
 }
