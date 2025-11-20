@@ -1,7 +1,10 @@
-package com.homemate.Authentication;
+package com.homemate.security.filter;
 
 // Change import from io.jsonwebtoken.io.IOException to java.io.IOException
 import java.io.IOException;
+
+import com.homemate.security.service.AppUserDetailsService;
+import com.homemate.security.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,11 +24,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/login", "/api/signup"
     );
 
-    private final JwtUtil jwtUtil;
+    private final JwtService jwtService;
     private final AppUserDetailsService userDetailsService;
 
-    JwtAuthFilter(JwtUtil jwtUtil, AppUserDetailsService userDetailsService) {
-        this.jwtUtil = jwtUtil;
+    JwtAuthFilter(JwtService jwtService, AppUserDetailsService userDetailsService) {
+        this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
     }
 
@@ -64,7 +67,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String jwt = authHeader.substring(7);
 
-        if (!jwtUtil.isTokenValid(jwt)) {
+        if (!jwtService.isTokenValid(jwt)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             try {
                 response.getWriter().write("Invalid or expired token");
@@ -74,7 +77,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        Long userId = jwtUtil.extractUserId(jwt);
+        Long userId = jwtService.extractUserId(jwt);
 
         // Fetch user details
         UserDetails userDetails;

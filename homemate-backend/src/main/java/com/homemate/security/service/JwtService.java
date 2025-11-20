@@ -1,4 +1,4 @@
-package com.homemate.Authentication;
+package com.homemate.security.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -11,9 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class JwtUtil {
+public class JwtService {
 
-    private static final String SECRET = "NOT_SECRET_KEY_1234567890";
+    private static final String SECRET = "NOT_SECRET_KEY_123456789012345678";
     private static final long EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
     // Create JWT with only the userId inside
@@ -23,7 +23,7 @@ public class JwtUtil {
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userId.toString())   // optional but good
+                .setSubject(userId.toString())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_MS))
                 .signWith(SignatureAlgorithm.HS256, SECRET.getBytes())

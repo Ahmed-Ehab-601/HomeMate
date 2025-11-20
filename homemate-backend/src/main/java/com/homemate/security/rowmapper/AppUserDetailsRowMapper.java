@@ -1,5 +1,6 @@
-package com.homemate.Authentication;
+package com.homemate.security.rowmapper;
 
+import com.homemate.security.model.AppUserDetails;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
@@ -9,7 +10,7 @@ public class AppUserDetailsRowMapper implements RowMapper<AppUserDetails> {
 
     String role;
 
-    AppUserDetailsRowMapper(String role) {
+    public AppUserDetailsRowMapper(String role) {
         this.role = role;
     }
 
