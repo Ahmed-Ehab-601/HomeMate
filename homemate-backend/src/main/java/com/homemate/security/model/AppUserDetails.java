@@ -1,4 +1,4 @@
-package com.homemate.Authentication;
+package com.homemate.security.model;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

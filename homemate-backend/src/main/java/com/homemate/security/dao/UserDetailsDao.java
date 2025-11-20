@@ -1,5 +1,7 @@
-package com.homemate.Authentication;
+package com.homemate.security.dao;
 
+import com.homemate.security.model.AppUserDetails;
+import com.homemate.security.rowmapper.AppUserDetailsRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 

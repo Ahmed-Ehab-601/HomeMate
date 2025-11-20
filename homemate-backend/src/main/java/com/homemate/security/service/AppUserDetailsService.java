@@ -1,18 +1,18 @@
-package com.homemate.Authentication;
+package com.homemate.security.service;
 
+import com.homemate.security.dao.UserDetailsDao;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class AppUserDetailsService implements UserDetailsService {
 
     UserDetailsDao userDetailsDao;
 
-    AppUserDetailsService(UserDetailsDao userDetailsDao) {
+    public AppUserDetailsService(UserDetailsDao userDetailsDao) {
         this.userDetailsDao = userDetailsDao;
     }
 
