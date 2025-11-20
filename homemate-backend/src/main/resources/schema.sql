@@ -18,7 +18,7 @@ DROP TABLE IF EXISTS Task;
 DROP TABLE IF EXISTS Address;
 DROP TABLE IF EXISTS Tasker;
 DROP TABLE IF EXISTS Service;
-DROP TABLE IF EXISTS User;
+DROP TABLE IF EXISTS Users;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -52,7 +52,7 @@ CREATE TABLE Address (
     city VARCHAR(50) NOT NULL,
     street VARCHAR(50) NOT NULL,
     apartment VARCHAR(50),
-    FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE CASCADE ON UPDATE CASCADE,
     INDEX idx_user_address (userID),
     INDEX idx_city (city)
 );
@@ -111,7 +111,7 @@ CREATE TABLE Chat (
     useris_active BOOLEAN DEFAULT TRUE NOT NULL,
     taskeris_active BOOLEAN DEFAULT TRUE NOT NULL,
     UNIQUE KEY unique_chat (user_id, tasker_id),
-    FOREIGN KEY (user_id) REFERENCES User(userID) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES Users(userID) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (tasker_id) REFERENCES Tasker(taskerID) ON DELETE CASCADE ON UPDATE CASCADE,
     INDEX idx_chat_user (user_id),
     INDEX idx_chat_tasker (tasker_id)
@@ -134,7 +134,7 @@ CREATE TABLE Task (
     startInprogress TIMESTAMP NULL,
     addressID INT NOT NULL,
     descriptionNotes VARCHAR(500),
-    FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (taskerID) REFERENCES Tasker(taskerID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (chatID) REFERENCES Chat(chat_id) ON DELETE SET NULL ON UPDATE CASCADE,
@@ -156,7 +156,7 @@ CREATE TABLE Report (
     header VARCHAR(100) NOT NULL,
     body VARCHAR(500) NOT NULL,
     taskID INT NOT NULL,
-    reporter BOOLEAN NOT NULL, -- true = user, false = tasker
+    reporter BOOLEAN NOT NULL, -- true = users, false = tasker
     adminStatus ENUM('pending','done') DEFAULT 'pending' NOT NULL,
     FOREIGN KEY (taskID) REFERENCES Task(taskID) ON DELETE CASCADE ON UPDATE CASCADE,
     INDEX idx_report_task (taskID),
@@ -201,7 +201,7 @@ CREATE TABLE Message (
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     senderid INT NOT NULL,
     receiverid INT NOT NULL,
-    isusersender BOOLEAN NOT NULL, -- true=user, false=tasker
+    isusersender BOOLEAN NOT NULL, -- true=users, false=tasker
     status ENUM('sent','received','seen') DEFAULT 'sent' NOT NULL,
     FOREIGN KEY (chat_id) REFERENCES Chat(chat_id) ON DELETE CASCADE ON UPDATE CASCADE,
     INDEX idx_message_chat (chat_id),
@@ -233,7 +233,7 @@ CREATE TABLE message_img (
 --   - Status fields with defaults marked as NOT NULL
 --
 -- UNIQUE Constraints:
---   - User: username, email
+--   - Users: username, email
 --   - Tasker: username, email
 --   - Service: name
 --   - Chat: unique_chat (user_id, tasker_id) - prevents duplicate chats
