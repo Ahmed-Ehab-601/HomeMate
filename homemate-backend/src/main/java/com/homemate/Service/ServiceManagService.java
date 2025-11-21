@@ -49,7 +49,7 @@ public class ServiceManagService {
         return listOfDtos;
     }
 
-    public ServiceDetailsDto getdetails(long serviceID) throws SQLException{
+    public ServiceDetailsDto getdetails(long serviceID) throws Exception {
          ServiceEntity service= serviceDAO.get(serviceID);
          int count = serviceDAO.countCompletedTasksByServiceId(serviceID);
          int taskers=serviceDAO.countTasker(serviceID);

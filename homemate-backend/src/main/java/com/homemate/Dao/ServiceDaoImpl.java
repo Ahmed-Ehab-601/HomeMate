@@ -89,18 +89,19 @@ import com.homemate.Model.ServiceEntity;
         }
     }
 @Override
-public int countCompletedTasksByServiceId(Long serviceID) {
+public int countCompletedTasksByServiceId(Long serviceID) throws Exception{
     String sql = "SELECT COUNT(*) FROM Task WHERE serviceID = ? AND status = 'done'";
     return jdbcTemplate.queryForObject(sql, Integer.class, serviceID);
     }
 @Override
-public int countTasker(long serviceID){
+public int countTasker(long serviceID) throws Exception{
     String sql = "SELECT COUNT(*) FROM Tasker WHERE serviceID = ?";
         return jdbcTemplate.queryForObject(sql, Integer.class, serviceID);
             }
 
-public long findIdByName(String name){
-    String sql="SELECT serviceID FROM service WHERE name = ?";
-    return jdbcTemplate.update(sql,name);
-}
+    public Long findIdByName(String name) throws Exception {
+        String sql = "SELECT serviceID FROM service WHERE name = ?";
+        return jdbcTemplate.queryForObject(sql, Long.class, name);
+    }
+
 }

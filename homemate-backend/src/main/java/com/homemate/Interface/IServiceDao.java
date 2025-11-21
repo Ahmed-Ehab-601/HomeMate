@@ -18,7 +18,7 @@ public interface IServiceDao<S> {
 
     public List<S> getAll() throws SQLException;
 
-    int countCompletedTasksByServiceId(Long serviceID);
+    int countCompletedTasksByServiceId(Long serviceID) throws Exception;
 
-    int countTasker(long serviceID);
+    int countTasker(long serviceID) throws Exception;
 }

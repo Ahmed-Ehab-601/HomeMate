@@ -10,7 +10,7 @@ import java.util.Base64;
 @Component
 
 public class ServiceMapper {
-    public  ServiceEntity mapFromDto(ServiceDto serviceDto) {
+    public static ServiceEntity mapFromDto(ServiceDto serviceDto) {
         return ServiceEntity.builder()
         .id(serviceDto.getId())
         .name(serviceDto.getName())
@@ -21,7 +21,7 @@ public class ServiceMapper {
         .imageType(serviceDto.getImageType())
         .build();
     }
-    public  ServiceDto mapToDto(ServiceEntity service) {
+    public static ServiceDto mapToDto(ServiceEntity service) {
         return ServiceDto.builder()
         .id(service.getId())
         .name(service.getName())
