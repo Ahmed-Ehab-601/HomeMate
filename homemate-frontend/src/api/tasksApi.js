@@ -1,6 +1,6 @@
 const DEFAULT_API_BASE_URL = "http://localhost:8080";
 const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
-const TASK_REQUEST_ENDPOINT = `${baseUrl}/task/request`;
+const TASK_REQUEST_ENDPOINT = `${baseUrl}/api/user/task/request`;
 
 const parseJson = async (response) => {
   const text = await response.text();
