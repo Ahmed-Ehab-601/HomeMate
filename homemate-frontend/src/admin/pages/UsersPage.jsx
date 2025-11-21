@@ -14,7 +14,7 @@ const booleanOrUndefined = (value) => {
 
 const UsersPage = () => {
   const [users, setUsers] = useState([]);
-  const [filters, setFilters] = useState({ admin: '', suspended: '' });
+  const [filters, setFilters] = useState({ admin: '', suspended: '', username: '' });
   const [pagination, setPagination] = useState({ page: 0, size: 10, totalItems: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,6 +23,7 @@ const UsersPage = () => {
     () => ({
       admin: booleanOrUndefined(filters.admin),
       suspended: booleanOrUndefined(filters.suspended),
+      username: filters.username || undefined,
     }),
     [filters],
   );
@@ -59,7 +60,7 @@ const UsersPage = () => {
   };
 
   const handleClearFilters = () => {
-    setFilters({ admin: '', suspended: '' });
+    setFilters({ admin: '', suspended: '', username: '' });
     setPagination((prev) => ({ ...prev, page: 0 }));
   };
 
@@ -90,7 +91,7 @@ const UsersPage = () => {
         title="Users"
         subtitle="Monitor platform users"
       />
-      <UserFilters values={filters} onChange={handleFilterChange} onClear={handleClearFilters} />
+      <UserFilters values={filters} onChange={handleFilterChange} onClear={handleClearFilters} onSearch={fetchUsers} />
       <UserTable
         rows={users}
         loading={loading}

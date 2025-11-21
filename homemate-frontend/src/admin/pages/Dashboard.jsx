@@ -112,7 +112,7 @@ const Dashboard = () => {
           <Card
             elevation={0}
             sx={{
-              background: 'linear-gradient(135deg, #6750A4, #00BFA6)',
+              background: 'linear-gradient(135deg, #9fbf3a, #d7f04a)',
               color: '#fff',
             }}
           >

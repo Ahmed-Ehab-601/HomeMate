@@ -15,11 +15,12 @@ const normalizeFilters = (filters) => ({
           ? false
           : filters.suspended,
   minRate: filters.minRate || undefined,
+  username: filters.username || undefined,
 });
 
 const TaskersPage = () => {
   const [taskers, setTaskers] = useState([]);
-  const [filters, setFilters] = useState({ suspended: '', minRate: '' });
+  const [filters, setFilters] = useState({ suspended: '', minRate: '', username: '' });
   const [pagination, setPagination] = useState({ page: 0, size: 10, totalItems: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -58,7 +59,7 @@ const TaskersPage = () => {
   };
 
   const handleClearFilters = () => {
-    setFilters({ suspended: '', minRate: '' });
+    setFilters({ suspended: '', minRate: '', username: '' });
     setPagination((prev) => ({ ...prev, page: 0 }));
   };
 
@@ -85,7 +86,7 @@ const TaskersPage = () => {
         title="Taskers"
         subtitle="Manage service providers"
       />
-      <TaskerFilters values={filters} onChange={handleFilterChange} onClear={handleClearFilters} />
+      <TaskerFilters values={filters} onChange={handleFilterChange} onClear={handleClearFilters} onSearch={fetchTaskers} />
       <TaskerTable
         rows={taskers}
         loading={loading}

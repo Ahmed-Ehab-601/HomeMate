@@ -23,7 +23,7 @@ const baseOptions = {
       styleOverrides: {
         root: {
           borderRadius: 16,
-          border: '1px solid rgba(103, 80, 164, 0.08)',
+          border: '1px solid rgba(215,240,74,0.08)',
           boxShadow: '0 10px 30px rgba(15, 15, 15, 0.04)',
         },
       },
@@ -62,14 +62,14 @@ export const lightTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#6750A4',
-      light: '#8f7dd0',
-      dark: '#402c73',
+      main: '#d7f04a',
+      light: '#eaf78a',
+      dark: '#9fbf3a',
     },
     secondary: {
-      main: '#00BFA6',
-      light: '#5ef0d0',
-      dark: '#008b78',
+      main: '#98c86a',
+      light: '#bfe867',
+      dark: '#6f973d',
     },
     background: {
       default: '#f5f7fb',
@@ -83,7 +83,7 @@ export const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#b0a8ff',
+      main: '#5ef0d0',
     },
     secondary: {
       main: '#5ef0d0',

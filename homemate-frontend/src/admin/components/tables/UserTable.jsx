@@ -33,18 +33,19 @@ const UserTable = ({
       border: (theme) =>
         theme.palette.mode === 'dark'
           ? '1px solid rgba(255,255,255,0.08)'
-          : '1px solid rgba(103,80,164,0.1)',
+          : '1px solid rgba(215,240,74,0.1)',
       boxShadow: (theme) =>
         theme.palette.mode === 'dark'
           ? '0 20px 35px rgba(0,0,0,0.6)'
           : '0 20px 35px rgba(15,15,15,0.05)',
-      width: '100vw',
-      maxWidth: '100vw',
+      width: '100%',
+      maxWidth: '100%',
       margin: 0,
       boxSizing: 'border-box',
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
+      px: 0,
     }}
   >
     {loading && <LinearProgress />}
@@ -61,7 +62,7 @@ const UserTable = ({
               backgroundColor: 'rgba(0,0,0,0.05)',
             },
             '&::-webkit-scrollbar-thumb': {
-              backgroundColor: 'rgba(103,80,164,0.3)',
+              backgroundColor: 'rgba(215,240,74,0.3)',
               borderRadius: '4px',
             },
           }}
@@ -70,8 +71,7 @@ const UserTable = ({
             size="small"
             sx={{
               width: '100%',
-              tableLayout: 'auto',
-              minWidth: '600px', // Minimum width to ensure readability on mobile
+              tableLayout: 'fixed',
               '& .MuiTableCell-root': {
                 color: (theme) =>
                   theme.palette.mode === 'dark'
@@ -80,23 +80,30 @@ const UserTable = ({
                 fontWeight: (theme) => (theme.palette.mode === 'dark' ? 500 : 'inherit'),
                 WebkitFontSmoothing: 'antialiased',
                 MozOsxFontSmoothing: 'grayscale',
+                px: { xs: 1, sm: 2 },
+                py: { xs: 0.6, sm: 1 },
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               },
               '& .MuiTableHead-root .MuiTableCell-root': {
                 color: (theme) =>
                   theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
                 fontWeight: 600,
+                fontSize: { xs: '0.75rem', sm: '0.9rem' },
               },
             }}
           >
             <TableHead>
               <TableRow>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Name</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Email</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Username</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Phone</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Admin</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
-                <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
+                <TableCell sx={{ width: '18%' }}>Name</TableCell>
+                <TableCell sx={{ width: '30%' }}>Email</TableCell>
+                <TableCell sx={{ width: '14%' }}>Username</TableCell>
+                <TableCell sx={{ width: '12%' }}>Phone</TableCell>
+                <TableCell sx={{ width: '10%' }}>Admin</TableCell>
+                <TableCell sx={{ width: '10%' }}>Status</TableCell>
+                <TableCell align="right" sx={{ width: '6%' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -106,14 +113,14 @@ const UserTable = ({
                   hover
                   sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  <TableCell>
                     {row.fName} {row.lName}
                   </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap', maxWidth: { xs: '150px', sm: 'none' }, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <TableCell sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {row.email}
                   </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{row.username}</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{row.phone || '-'}</TableCell>
+                  <TableCell>{row.username}</TableCell>
+                  <TableCell>{row.phone || '-'}</TableCell>
                   <TableCell>
                     <Chip size="small" color={row.admin ? 'primary' : 'default'} label={row.admin ? 'Admin' : 'User'} />
                   </TableCell>

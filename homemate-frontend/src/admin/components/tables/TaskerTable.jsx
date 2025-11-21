@@ -32,17 +32,18 @@ const TaskerTable = ({
       border: (theme) =>
         theme.palette.mode === 'dark'
           ? '1px solid rgba(255,255,255,0.08)'
-          : '1px solid rgba(103,80,164,0.1)',
+          : '1px solid rgba(215,240,74,0.1)',
       boxShadow: (theme) =>
         theme.palette.mode === 'dark'
           ? '0 20px 35px rgba(0,0,0,0.6)'
           : '0 20px 35px rgba(15,15,15,0.05)',
-      width: '100vw',
-      maxWidth: '100vw',
+      width: '100%',
+      maxWidth: '100%',
       margin: 0,
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
+      px: 0,
     }}
   >
     {loading && <LinearProgress />}
@@ -59,7 +60,7 @@ const TaskerTable = ({
               backgroundColor: 'rgba(0,0,0,0.05)',
             },
             '&::-webkit-scrollbar-thumb': {
-              backgroundColor: 'rgba(103,80,164,0.3)',
+              backgroundColor: 'rgba(215,240,74,0.3)',
               borderRadius: '4px',
             },
           }}
@@ -68,8 +69,7 @@ const TaskerTable = ({
             size="small"
             sx={{
               width: '100%',
-              tableLayout: 'auto',
-              minWidth: '700px', // Minimum width to ensure readability on mobile
+              tableLayout: 'fixed',
               '& .MuiTableCell-root': {
                 color: (theme) =>
                   theme.palette.mode === 'dark'
@@ -78,24 +78,31 @@ const TaskerTable = ({
                 fontWeight: (theme) => (theme.palette.mode === 'dark' ? 500 : 'inherit'),
                 WebkitFontSmoothing: 'antialiased',
                 MozOsxFontSmoothing: 'grayscale',
+                px: { xs: 1, sm: 2 },
+                py: { xs: 0.6, sm: 1 },
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               },
               '& .MuiTableHead-root .MuiTableCell-root': {
                 color: (theme) =>
                   theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
                 fontWeight: 600,
+                fontSize: { xs: '0.75rem', sm: '0.9rem' },
               },
             }}
           >
             <TableHead>
               <TableRow>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Name</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Email</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Username</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Phone</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Avg Rating</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Hour Rate</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
-                <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
+                <TableCell sx={{ width: '18%' }}>Name</TableCell>
+                <TableCell sx={{ width: '30%' }}>Email</TableCell>
+                <TableCell sx={{ width: '12%' }}>Username</TableCell>
+                <TableCell sx={{ width: '12%' }}>Phone</TableCell>
+                <TableCell sx={{ width: '10%' }}>Avg Rating</TableCell>
+                <TableCell sx={{ width: '10%' }}>Hour Rate</TableCell>
+                <TableCell sx={{ width: '8%' }}>Status</TableCell>
+                <TableCell align="right" sx={{ width: '6%' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -105,16 +112,16 @@ const TaskerTable = ({
                   hover
                   sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  <TableCell>
                     {row.fname} {row.lname}
                   </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap', maxWidth: { xs: '150px', sm: 'none' }, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <TableCell sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {row.email}
                   </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{row.username}</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{row.phone || '-'}</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{row.avgRating ?? row.AvgRating ?? '-'}</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  <TableCell>{row.username}</TableCell>
+                  <TableCell>{row.phone || '-'}</TableCell>
+                  <TableCell>{row.avgRating ?? row.AvgRating ?? '-'}</TableCell>
+                  <TableCell>
                     {row.hourRate != null ? `$${Number(row.hourRate).toFixed(2)}` : '-'}
                   </TableCell>
                   <TableCell>
