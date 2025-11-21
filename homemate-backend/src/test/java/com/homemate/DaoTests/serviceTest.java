@@ -43,4 +43,27 @@ public class serviceTest {
         );
 
     }
+    @Test
+    public void testCreationWithImageData() throws Exception {
+        byte[] imageData = new byte[]{1, 2, 3, 4, 5};
+
+        ServiceEntity serviceEntity = ServiceEntity.builder()
+                .name("plumbing")
+                .description("professional plumbing")
+                .imageData(imageData)
+                .imageType("png")
+                .imageName("plumbing-icon")
+                .build();
+
+        undertest.save(serviceEntity);
+
+        verify(jdbcTemplate).update(
+                "INSERT INTO service(name, description, imageData, imageName, imageType) VALUES (?, ?, ?, ?, ?)",
+                "plumbing",
+                "professional plumbing",
+                imageData,
+                "plumbing-icon",
+                "png"
+        );
+    }
 }
