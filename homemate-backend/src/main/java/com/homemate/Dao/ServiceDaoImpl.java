@@ -98,6 +98,9 @@ public int countTasker(long serviceID){
     String sql = "SELECT COUNT(*) FROM Tasker WHERE serviceID = ?";
         return jdbcTemplate.queryForObject(sql, Integer.class, serviceID);
             }
-}
-    
 
+public long findIdByName(String name){
+    String sql="SELECT serviceID FROM service WHERE name = ?";
+    return jdbcTemplate.update(sql,name);
+}
+}
