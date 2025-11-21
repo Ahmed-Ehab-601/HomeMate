@@ -14,16 +14,21 @@ public class ServiceDaoImp implements ServiceDao {
     private final ServiceRowMapper serviceRowMapper;
 
     @Autowired
-    public ServiceDaoImp(JdbcTemplate jdbcTemplate) {
+    public ServiceDaoImp(JdbcTemplate jdbcTemplate, ServiceRowMapper serviceRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
-        this.serviceRowMapper=new ServiceRowMapper();
+        this.serviceRowMapper = serviceRowMapper;
     }
 
     @Override
     public List<Service> getAllServices() {
-        String sql = "SELECT serviceID, name, description, imagedata, imageName, imageType " +
-                "FROM Service " ;
-        return jdbcTemplate.query(sql,serviceRowMapper);
+        String sql = "SELECT serviceID, name, description, imagedata, imageName, imageType FROM Service";
+        return jdbcTemplate.query(sql, serviceRowMapper);
+    }
 
+    @Override
+    public int getTotalTasksForService(int serviceId) {
+        String sql = "SELECT COUNT(*) FROM Task WHERE serviceID = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, serviceId);
+        return count;
     }
 }

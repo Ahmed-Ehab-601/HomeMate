@@ -8,7 +8,7 @@ import java.util.Base64;
 @Component
 public class ObjectMapper {
 
-    public ServiceDto mapToServiceDto(Service service) {
+    public ServiceDto mapToServiceDto(Service service, int totalTasks) {
 
         ServiceDto dto = new ServiceDto();
         dto.setServiceid(service.getServiceid());
@@ -24,6 +24,7 @@ public class ObjectMapper {
             dto.setImageData(null);
         }
 
+        dto.setTotalTasks(totalTasks);
 
         return dto;
     }

@@ -152,7 +152,7 @@ function TaskerDiscoveryPage() {
         <div>
           <p className="section-kicker">Tasker discovery</p>
           <h1 className="section-heading">
-            {service ? `${service.serviceName} taskers` : "Find taskers"} ({taskers.length})
+            {service ? `${service.serviceName} taskers` : "Find taskers"} 
           </h1>
           {service && <p className="tasker-card__meta">{service.description}</p>}
         </div>

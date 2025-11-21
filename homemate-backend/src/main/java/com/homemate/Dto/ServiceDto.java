@@ -8,6 +8,9 @@ public class ServiceDto {
     private String imageName;
     private String imageType;
 
+
+    private int totalTasks;
+
     public ServiceDto() {
     }
 
@@ -18,6 +21,7 @@ public class ServiceDto {
     public void setServiceid(int serviceid) {
 
         this.serviceid = serviceid;
+        this.totalTasks=0;
     }
 
     public String getServicename() {
@@ -61,4 +65,13 @@ public class ServiceDto {
     public void setImageType(String imageType) {
         this.imageType = imageType;
     }
+
+    public int getTotalTasks() {
+        return totalTasks;
+    }
+
+    public void setTotalTasks(int totalTasks) {
+        this.totalTasks = totalTasks;
+    }
+
 }
