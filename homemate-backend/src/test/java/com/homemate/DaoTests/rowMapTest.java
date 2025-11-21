@@ -1,4 +1,4 @@
-
+package com.homemate.DaoTests;
 
 import com.homemate.MapRow.ServiceMapRow;
 import com.homemate.Model.ServiceEntity;
