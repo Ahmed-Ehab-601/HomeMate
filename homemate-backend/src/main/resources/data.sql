@@ -9,7 +9,7 @@ USE HomeMate;
 -- ======================================================
 -- POPULATE USERS
 -- ======================================================
-INSERT INTO User (firstName, lastName, username, password, email, birthDate, gender, phone, admin, suspended) VALUES
+INSERT INTO Users (firstName, lastName, username, password, email, birthDate, gender, phone, admin, suspended) VALUES
 ('John', 'Smith', 'jsmith', '$2a$10$abcdefghijklmnopqrstuvwxyz123456', 'john.smith@email.com', '1990-05-15', 'M', '+1-555-0101', FALSE, FALSE),
 ('Sarah', 'Johnson', 'sjohnson', '$2a$10$abcdefghijklmnopqrstuvwxyz123457', 'sarah.j@email.com', '1988-08-22', 'F', '+1-555-0102', FALSE, FALSE),
 ('Michael', 'Brown', 'mbrown', '$2a$10$abcdefghijklmnopqrstuvwxyz123458', 'michael.b@email.com', '1992-03-10', 'M', '+1-555-0103', FALSE, FALSE),
@@ -18,7 +18,7 @@ INSERT INTO User (firstName, lastName, username, password, email, birthDate, gen
 ('Jessica', 'Martinez', 'jmartinez', '$2a$10$abcdefghijklmnopqrstuvwxyz123461', 'jessica.m@email.com', '1993-01-25', 'F', '+1-555-0106', FALSE, FALSE),
 ('Robert', 'Garcia', 'rgarcia', '$2a$10$abcdefghijklmnopqrstuvwxyz123462', 'robert.g@email.com', '1991-09-05', 'M', '+1-555-0107', FALSE, FALSE),
 ('Amanda', 'Rodriguez', 'arodriguez', '$2a$10$abcdefghijklmnopqrstuvwxyz123463', 'amanda.r@email.com', '1989-12-12', 'F', '+1-555-0108', FALSE, FALSE),
-('Admin', 'User', 'admin', '$2a$10$abcdefghijklmnopqrstuvwxyz123464', 'admin@homemate.com', '1985-06-20', 'M', '+1-555-0001', TRUE, FALSE),
+('Admin', 'User', 'admin',  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'admin@homemate.com', '1985-06-20', 'M', '+1-555-0001', TRUE, FALSE),
 ('Chris', 'Taylor', 'ctaylor', '$2a$10$abcdefghijklmnopqrstuvwxyz123465', 'chris.t@email.com', '1994-04-08', 'M', '+1-555-0109', FALSE, FALSE);
 
 -- ======================================================
@@ -54,7 +54,7 @@ INSERT INTO Service (name, description, imagedata, imageName, imageType) VALUES
 -- ======================================================
 -- POPULATE TASKERS
 -- ======================================================
-INSERT INTO Tasker (firstName, lastName, username, password, email, birthDate, phone, gender, image, availability, rating, hourrate, bio, serviceID, totalEarning, WorkedHours, addressCity) VALUES
+INSERT INTO Taskers (firstName, lastName, username, password, email, birthDate, phone, gender, image, availability, rating, hourrate, bio, serviceID, totalEarning, WorkedHours, addressCity) VALUES
 ('Tom', 'Anderson', 'tanderson', '$2a$10$tasker123456789abcdefghij', 'tom.a@tasker.com', '1985-03-20', '+1-555-1001', 'M', NULL, 'available', 4.8, 35.00, 'Experienced cleaner with 10 years in the business.', 1, 15400.00, 440.00, 'New York'),
 ('Lisa', 'Thompson', 'lthompson', '$2a$10$tasker223456789abcdefghij', 'lisa.t@tasker.com', '1982-07-14', '+1-555-1002', 'F', NULL, 'available', 4.9, 55.00, 'Licensed plumber with expertise in residential repairs.', 2, 28600.00, 520.00, 'Los Angeles'),
 ('Mark', 'White', 'mwhite', '$2a$10$tasker323456789abcdefghij', 'mark.w@tasker.com', '1988-11-02', '+1-555-1003', 'M', NULL, 'available', 4.7, 60.00, 'Certified electrician, safety is my priority.', 3, 19800.00, 330.00, 'Chicago'),

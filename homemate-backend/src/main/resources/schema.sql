@@ -16,16 +16,16 @@ DROP TABLE IF EXISTS Reviews;
 DROP TABLE IF EXISTS Report;
 DROP TABLE IF EXISTS Task;
 DROP TABLE IF EXISTS Address;
-DROP TABLE IF EXISTS Tasker;
+DROP TABLE IF EXISTS Taskers;
 DROP TABLE IF EXISTS Service;
-DROP TABLE IF EXISTS User;
+DROP TABLE IF EXISTS Users;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ======================================================
 -- USER
 -- ======================================================
-CREATE TABLE User (
+CREATE TABLE Users (
     userID INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(50) NOT NULL,
     lastName VARCHAR(50) NOT NULL,
@@ -52,7 +52,7 @@ CREATE TABLE Address (
     city VARCHAR(50) NOT NULL,
     street VARCHAR(50) NOT NULL,
     apartment VARCHAR(50),
-    FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE CASCADE ON UPDATE CASCADE,
     INDEX idx_user_address (userID),
     INDEX idx_city (city)
 );
@@ -73,7 +73,7 @@ CREATE TABLE Service (
 -- ======================================================
 -- TASKER
 -- ======================================================
-CREATE TABLE Tasker (
+CREATE TABLE Taskers (
     taskerID INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(50) NOT NULL,
     lastName VARCHAR(50) NOT NULL,
@@ -92,6 +92,7 @@ CREATE TABLE Tasker (
     totalEarning DOUBLE DEFAULT 0.00 NOT NULL,
     WorkedHours DOUBLE DEFAULT 0.00 NOT NULL,
     addressCity VARCHAR(200),
+    suspended BOOLEAN DEFAULT FALSE NOT NULL,
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE,
     INDEX idx_tasker_username (username),
     INDEX idx_tasker_email (email),
@@ -111,8 +112,8 @@ CREATE TABLE Chat (
     useris_active BOOLEAN DEFAULT TRUE NOT NULL,
     taskeris_active BOOLEAN DEFAULT TRUE NOT NULL,
     UNIQUE KEY unique_chat (user_id, tasker_id),
-    FOREIGN KEY (user_id) REFERENCES User(userID) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (tasker_id) REFERENCES Tasker(taskerID) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES Users(userID) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (tasker_id) REFERENCES Taskers(taskerID) ON DELETE CASCADE ON UPDATE CASCADE,
     INDEX idx_chat_user (user_id),
     INDEX idx_chat_tasker (tasker_id)
 );
@@ -134,8 +135,8 @@ CREATE TABLE Task (
     startInprogress TIMESTAMP NULL,
     addressID INT NOT NULL,
     descriptionNotes VARCHAR(500),
-    FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (taskerID) REFERENCES Tasker(taskerID) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (taskerID) REFERENCES Taskers(taskerID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (chatID) REFERENCES Chat(chat_id) ON DELETE SET NULL ON UPDATE CASCADE,
     FOREIGN KEY (addressID) REFERENCES Address(addressID) ON DELETE RESTRICT ON UPDATE CASCADE,
