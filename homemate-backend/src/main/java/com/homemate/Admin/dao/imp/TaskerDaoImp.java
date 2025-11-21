@@ -29,11 +29,10 @@ public class TaskerDaoImp implements TaskerDao {
         String whereConditions=buildWhere(filters);
         sql.append(whereConditions);
         sql.append(" ORDER BY taskerID ASC");
-        sql.append(" LIMIT ? OFFSET ?");
-
+        sql.append(" LIMIT ?, ?");
         List<Object> params = Helper.buildParams(filters);
-        params.add(limit);
         params.add(offest);
+        params.add(limit);
         return jdbcTemplate.query(sql.toString(), TASKER_ROW_MAPPER,params.toArray());
     }
 

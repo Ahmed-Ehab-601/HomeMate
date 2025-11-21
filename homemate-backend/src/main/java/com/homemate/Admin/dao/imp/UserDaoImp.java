@@ -32,11 +32,12 @@ public class UserDaoImp implements UserDao {
         String whereConditions=buildWhere(filters);
         sql.append(whereConditions);
         sql.append(" ORDER BY userID ASC");
-        sql.append(" LIMIT ? OFFSET ?");
+        sql.append(" LIMIT ?, ?");
 
         List<Object> params = Helper.buildParams(filters);
-        params.add(limit);
+        // pass offset then limit for MySQL LIMIT offset,count
         params.add(offest);
+        params.add(limit);
         return jdbcTemplate.query(sql.toString(), USER_ROW_MAPPER,params.toArray());
     }
 

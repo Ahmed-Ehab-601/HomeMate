@@ -6,6 +6,10 @@ import com.homemate.Admin.domain.dto.*;
 import com.homemate.Admin.domain.entities.Tasker;
 import com.homemate.Admin.domain.entities.User;
 import com.homemate.Admin.domain.filters.Filter;
+import com.homemate.Admin.domain.filters.imp.MinRateFilter;
+import com.homemate.Admin.domain.filters.imp.RoleUserFilter;
+import com.homemate.Admin.domain.filters.imp.StatusFilter;
+import com.homemate.Admin.domain.filters.imp.UsernameFilter;
 import com.homemate.Admin.mappers.imp.TaskerMapper;
 import com.homemate.Admin.mappers.imp.UserMapper;
 import com.homemate.Admin.services.IAdminService;
@@ -78,11 +82,32 @@ public class AdminServiceImp implements IAdminService {
     private List<Filter> buildTaskerFilters(TaskerFilterDto taskerFilterDto) {
         List<Filter> filters = new ArrayList<>();
 
+        if (taskerFilterDto.getSuspended() != null) {
+            filters.add(new StatusFilter(taskerFilterDto.getSuspended()));
+        }
+
+        if (taskerFilterDto.getMinRate() != null) {
+            filters.add(new MinRateFilter(taskerFilterDto.getMinRate()));
+        }
+        if (taskerFilterDto.getUsername() != null) {
+            filters.add(new UsernameFilter(taskerFilterDto.getUsername()));
+        }
 
         return filters;
     }
     private List<Filter> buildUserFilters(UserFilterDto userFilterDto) {
         List<Filter> filters = new ArrayList<>();
+
+        if (userFilterDto.getAdmin() != null) {
+            filters.add(new RoleUserFilter(userFilterDto.getAdmin()));
+        }
+
+        if (userFilterDto.getSuspended() != null) {
+            filters.add(new StatusFilter(userFilterDto.getSuspended()));
+        }
+        if (userFilterDto.getUsername() != null) {
+            filters.add(new UsernameFilter(userFilterDto.getUsername()));
+        }
 
         return filters;
     }

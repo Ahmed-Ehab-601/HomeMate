@@ -4,6 +4,9 @@ import com.homemate.Admin.dao.UserDao;
 import com.homemate.Admin.domain.entities.Tasker;
 import com.homemate.Admin.domain.entities.User;
 import com.homemate.Admin.domain.filters.Filter;
+import com.homemate.Admin.domain.filters.imp.RoleUserFilter;
+import com.homemate.Admin.domain.filters.imp.StatusFilter;
+import com.homemate.Admin.domain.filters.imp.UsernameFilter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +39,39 @@ class UserDaoImpIntegrationTest {
         assertThat(users.size()).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("FindUsers - Should filter by admin status")
+    void testFindUsers_WithAdminFilter_ReturnsOnlyAdmins() {
+
+        List<Filter> filters = new ArrayList<>();
+        filters.add(new RoleUserFilter(true));
+        Long limit = 10L;
+        Long offset = 0L;
+
+        List<User> users = userDao.findUsers(filters, limit, offset);
+
+        assertThat(users).isNotNull();
+        assertThat(users).isNotEmpty();
+        users.forEach(user -> assertThat(user.isAdmin()).isTrue());
+    }
+
+    @Test
+    @DisplayName("FindUsers - Should filter by suspended status")
+    void testFindUsers_WithSuspendedFilter_ReturnsOnlySuspendedUsers() {
+
+        List<Filter> filters = new ArrayList<>();
+        filters.add(new StatusFilter(true));
+        Long limit = 10L;
+        Long offset = 0L;
+
+
+        List<User> users = userDao.findUsers(filters, limit, offset);
+
+
+        assertThat(users).isNotNull();
+        assertThat(users).isNotEmpty();
+        users.forEach(user -> assertThat(user.isSuspended()).isTrue());
+    }
 
     @Test
     @DisplayName("FindUsers - Should respect pagination limit")
@@ -74,7 +110,98 @@ class UserDaoImpIntegrationTest {
         assertThat(count).isNotNull();
         assertThat(count).isEqualTo(3L);
     }
+    @Test
+    @DisplayName("CountUsers - Should ignore null role filter ")
+    public void testCountUsers_WithNullRoleFilter_ReturnsAllUsers() {
+        List<Filter> filters = new ArrayList<>();
+        filters.add(new RoleUserFilter(null));
+        Long count = userDao.countUsers(filters);
+        assertThat(count).isNotNull();
+        assertThat(count).isEqualTo(3L);
+    }
+    @Test
+    @DisplayName("FindUsers - Should filter by username ")
+    public void testFindUsers_WithUsernameFilter_ReturnsOnlyUsersPartialMatchingUsername() {
 
+        List<Filter> filters = new ArrayList<>();
+        filters.add(new UsernameFilter("user"));
+        Long limit = 10L;
+        Long offset = 0L;
+        List<User> users = userDao.findUsers(filters, limit, offset);
+        assertThat(users).isNotNull();
+        assertThat(users).isNotEmpty();
+        assertThat(users.size()).isEqualTo(3);
+    }
+   @Test
+    @DisplayName("FindUsers - Should filter by null username ")
+    public void testFindUsers_WithNullUsernameFilter_ReturnsOnlyUsersPartialMatchingUsername() {
+
+        List<Filter> filters = new ArrayList<>();
+        filters.add(new UsernameFilter(null));
+        Long limit = 10L;
+        Long offset = 0L;
+        List<User> users = userDao.findUsers(filters, limit, offset);
+        assertThat(users).isNotNull();
+        assertThat(users).isNotEmpty();
+        assertThat(users.size()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("CountUsers - Should ignore null status filter ")
+    public void testCountUsers_WithNullStatusFilter_ReturnsAllUsers() {
+        List<Filter> filters = new ArrayList<>();
+        filters.add(new StatusFilter(null));
+        Long count = userDao.countUsers(filters);
+        assertThat(count).isNotNull();
+        assertThat(count).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("CountUsers - Should return filtered count")
+    void testCountUsers_WithAdminFilter_ReturnsAdminCount() {
+
+        List<Filter> filters = new ArrayList<>();
+        filters.add(new RoleUserFilter(true));
+        Long adminCount = userDao.countUsers(filters);
+        Long totalCount = userDao.countUsers(new ArrayList<>());
+        assertThat(adminCount).isNotNull();
+        assertThat(adminCount).isLessThanOrEqualTo(totalCount);
+        assertThat(adminCount).isGreaterThan(0L);
+    }
+
+    @Test
+    @DisplayName("CountUsers - Should return zero when no matches")
+    void testCountUsers_WithNonMatchingFilter_ReturnsZero() {
+
+        List<Filter> filters = new ArrayList<>();
+
+        filters.add(new StatusFilter(true));
+        filters.add(new RoleUserFilter(true));
+
+        Long count = userDao.countUsers(filters);
+
+        assertThat(count).isNotNull();
+        assertThat(count).isGreaterThanOrEqualTo(0L);
+    }
+
+    @Test
+    @DisplayName("FindUsers - Should combine multiple filters correctly")
+    void testFindUsers_WithMultipleFilters_AppliesAllFilters() {
+
+        List<Filter> filters = new ArrayList<>();
+        filters.add(new RoleUserFilter(false));
+        filters.add(new StatusFilter(false));
+        Long limit = 10L;
+        Long offset = 0L;
+        List<User> users = userDao.findUsers(filters, limit, offset);
+
+        assertThat(users).isNotNull();
+
+        users.forEach(user -> {
+            assertThat(user.isAdmin()).isFalse();
+            assertThat(user.isSuspended()).isFalse();
+        });
+    }
 }
 
 
