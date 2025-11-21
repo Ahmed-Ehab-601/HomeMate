@@ -49,23 +49,62 @@ INSERT INTO Service (name, description, imagedata, imageName, imageType) VALUES
 ('Moving & Delivery', 'Reliable moving and delivery services for your belongings.', NULL, 'moving.jpg', 'image/jpeg'),
 ('HVAC Services', 'Heating, ventilation, and air conditioning installation and repair.', NULL, 'hvac.jpg', 'image/jpeg'),
 ('Pet Care', 'Pet sitting, dog walking, and pet care services.', NULL, 'petcare.jpg', 'image/jpeg'),
-('Tutoring', 'Educational tutoring services for various subjects and levels.', NULL, 'tutoring.jpg', 'image/jpeg');
-
+('Tutoring', 'Educational tutoring services for various subjects and levels.', NULL, 'tutoring.jpg', 'image/jpeg'),
+('Cooking Services', 'Home-cooked meals, meal prep, and private chef services.', NULL, 'cooking.jpg', 'image/jpeg'),
+('IT Support', 'Troubleshooting computers, networks, and software.', NULL, 'it_support.jpg', 'image/jpeg'),
+('Car Washing', 'Mobile car washing and detailing at your location.', NULL, 'carwash.jpg', 'image/jpeg'),
+('Home Repair', 'Handyman services for home fixes and repairs.', NULL, 'homerepair.jpg', 'image/jpeg'),
+('Fitness Training', 'Personal trainers for workouts, weight loss, and strength building.', NULL, 'fitness.jpg', 'image/jpeg'),
+('Baby Sitting', 'Responsible childcare and babysitting services.', NULL, 'babysitting.jpg', 'image/jpeg'),
+('Elder Care', 'Caregivers providing support for elderly people.', NULL, 'eldercare.jpg', 'image/jpeg'),
+('Interior Design', 'Home interior decoration and design services.', NULL, 'interiordesign.jpg', 'image/jpeg'),
+('Photography', 'Professional photography for events and personal shoots.', NULL, 'photography.jpg', 'image/jpeg'),
+('Home Security Installation', 'Installation of cameras, alarms, and security systems.', NULL, 'security.jpg', 'image/jpeg');
 -- ======================================================
 -- POPULATE TASKERS
 -- ======================================================
 INSERT INTO Tasker (firstName, lastName, username, password, email, birthDate, phone, gender, image, availability, rating, hourrate, bio, serviceID, totalEarning, WorkedHours, addressCity) VALUES
 ('Tom', 'Anderson', 'tanderson', '$2a$10$tasker123456789abcdefghij', 'tom.a@tasker.com', '1985-03-20', '+1-555-1001', 'M', NULL, 'available', 4.8, 35.00, 'Experienced cleaner with 10 years in the business.', 1, 15400.00, 440.00, 'New York'),
-('Lisa', 'Thompson', 'lthompson', '$2a$10$tasker223456789abcdefghij', 'lisa.t@tasker.com', '1982-07-14', '+1-555-1002', 'F', NULL, 'available', 4.9, 55.00, 'Licensed plumber with expertise in residential repairs.', 2, 28600.00, 520.00, 'Los Angeles'),
-('Mark', 'White', 'mwhite', '$2a$10$tasker323456789abcdefghij', 'mark.w@tasker.com', '1988-11-02', '+1-555-1003', 'M', NULL, 'available', 4.7, 60.00, 'Certified electrician, safety is my priority.', 3, 19800.00, 330.00, 'Chicago'),
-('Karen', 'Harris', 'kharris', '$2a$10$tasker423456789abcdefghij', 'karen.h@tasker.com', '1990-05-28', '+1-555-1004', 'F', NULL, 'available', 4.6, 30.00, 'Passionate gardener with a green thumb.', 4, 9600.00, 320.00, 'Houston'),
-('James', 'Clark', 'jclark', '$2a$10$tasker523456789abcdefghij', 'james.c@tasker.com', '1986-09-17', '+1-555-1005', 'M', NULL, 'available', 4.9, 45.00, 'Professional painter with attention to detail.', 5, 22500.00, 500.00, 'Phoenix'),
-('Nancy', 'Lewis', 'nlewis', '$2a$10$tasker623456789abcdefghij', 'nancy.l@tasker.com', '1984-12-08', '+1-555-1006', 'F', NULL, 'unavailable', 4.5, 50.00, 'Skilled carpenter, custom work specialist.', 6, 17000.00, 340.00, 'Philadelphia'),
-('Steve', 'Walker', 'swalker', '$2a$10$tasker723456789abcdefghij', 'steve.w@tasker.com', '1992-02-22', '+1-555-1007', 'M', NULL, 'available', 4.4, 40.00, 'Reliable moving services, careful with your items.', 7, 12800.00, 320.00, 'San Antonio'),
-('Patricia', 'Hall', 'phall', '$2a$10$tasker823456789abcdefghij', 'patricia.h@tasker.com', '1987-06-30', '+1-555-1008', 'F', NULL, 'available', 4.8, 65.00, 'HVAC expert with 15 years experience.', 8, 26000.00, 400.00, 'San Diego'),
-('Daniel', 'Allen', 'dallen', '$2a$10$tasker923456789abcdefghij', 'daniel.a@tasker.com', '1995-08-11', '+1-555-1009', 'M', NULL, 'available', 4.7, 25.00, 'Animal lover providing quality pet care.', 9, 7500.00, 300.00, 'Dallas'),
-('Maria', 'Young', 'myoung', '$2a$10$tasker1023456789abcdefghi', 'maria.y@tasker.com', '1989-10-19', '+1-555-1010', 'F', NULL, 'available', 4.9, 40.00, 'Experienced tutor in math and science.', 10, 16000.00, 400.00, 'New York');
+('Lisa', 'Thompson', 'lthompson', '$2a$10$tasker223456789abcdefghij', 'lisa.t@tasker.com', '1982-07-14', '+1-555-1002', 'F', NULL, 'available', 4.9, 55.00, 'Licensed plumber with expertise in residential repairs.', 1, 28600.00, 520.00, 'Los Angeles'),
+('Mark', 'White', 'mwhite', '$2a$10$tasker323456789abcdefghij', 'mark.w@tasker.com', '1988-11-02', '+1-555-1003', 'M', NULL, 'available', 4.7, 60.00, 'Certified electrician, safety is my priority.', 1, 19800.00, 330.00, 'Chicago'),
+('Karen', 'Harris', 'kharris', '$2a$10$tasker423456789abcdefghij', 'karen.h@tasker.com', '1990-05-28', '+1-555-1004', 'F', NULL, 'available', 4.6, 30.00, 'Passionate gardener with a green thumb.', 1, 9600.00, 320.00, 'Houston'),
+('James', 'Clark', 'jclark', '$2a$10$tasker523456789abcdefghij', 'james.c@tasker.com', '1986-09-17', '+1-555-1005', 'M', NULL, 'available', 4.9, 45.00, 'Professional painter with attention to detail.', 1, 22500.00, 500.00, 'Phoenix'),
+('Nancy', 'Lewis', 'nlewis', '$2a$10$tasker623456789abcdefghij', 'nancy.l@tasker.com', '1984-12-08', '+1-555-1006', 'F', NULL, 'unavailable', 4.5, 50.00, 'Skilled carpenter, custom work specialist.', 1, 17000.00, 340.00, 'Philadelphia'),
+('Steve', 'Walker', 'swalker', '$2a$10$tasker723456789abcdefghij', 'steve.w@tasker.com', '1992-02-22', '+1-555-1007', 'M', NULL, 'available', 4.4, 40.00, 'Reliable moving services, careful with your items.', 1, 12800.00, 320.00, 'San Antonio'),
+('Patricia', 'Hall', 'phall', '$2a$10$tasker823456789abcdefghij', 'patricia.h@tasker.com', '1987-06-30', '+1-555-1008', 'F', NULL, 'available', 4.8, 65.00, 'HVAC expert with 15 years experience.', 1, 26000.00, 400.00, 'San Diego'),
+('Daniel', 'Allen', 'dallen', '$2a$10$tasker923456789abcdefghij', 'daniel.a@tasker.com', '1995-08-11', '+1-555-1009', 'M', NULL, 'available', 4.7, 25.00, 'Animal lover providing quality pet care.', 1, 7500.00, 300.00, 'Dallas'),
+('Maria', 'Young', 'myoung', '$2a$10$tasker1023456789abcdefghi', 'maria.y@tasker.com', '1989-10-19', '+1-555-1010', 'F', NULL, 'available', 4.9, 40.00, 'Experienced tutor in math and science.', 1, 16000.00, 400.00, 'New York'),
+('Oliver', 'King', 'oking', '$2a$10$tasker113456789abcdefghij', 'oliver.k@tasker.com', '1991-04-12', '+1-555-1011', 'M', NULL, 'available', 4.6, 45.00, 'Home cleaning expert.', 1, 14500.00, 380.00, 'New York'),
+('Emily', 'Green', 'egreen', '$2a$10$tasker123456789abcdefghij', 'emily.g@tasker.com', '1993-06-22', '+1-555-1012', 'F', NULL, 'available', 4.8, 60.00, 'Licensed plumber with 6 years of experience.', 1, 18200.00, 410.00, 'Los Angeles'),
+('Henry', 'Moore', 'hmoore', '$2a$10$tasker133456789abcdefghij', 'henry.m@tasker.com', '1987-02-10', '+1-555-1013', 'M', NULL, 'available', 4.5, 58.00, 'Electrical expert.', 1, 20000.00, 440.00, 'Chicago'),
+('Sophia', 'Baker', 'sbaker', '$2a$10$tasker143456789abcdefghij', 'sophia.b@tasker.com', '1994-03-18', '+1-555-1014', 'F', NULL, 'unavailable', 4.7, 32.00, 'Gardening and lawn care specialist.', 1, 10800.00, 300.00, 'Houston'),
+('Ethan', 'Reed', 'ereed', '$2a$10$tasker153456789abcdefghij', 'ethan.r@tasker.com', '1990-07-09', '+1-555-1015', 'M', NULL, 'available', 4.9, 48.00, 'Professional painter.', 1, 24000.00, 500.00, 'Phoenix'),
+('Grace', 'Price', 'gprice', '$2a$10$tasker163456789abcdefghij', 'grace.p@tasker.com', '1985-01-27', '+1-555-1016', 'F', NULL, 'available', 4.6, 52.00, 'Experienced carpenter.', 1, 19400.00, 460.00, 'Philadelphia'),
+('Logan', 'Wright', 'lwright', '$2a$10$tasker173456789abcdefghij', 'logan.w@tasker.com', '1991-10-13', '+1-555-1017', 'M', NULL, 'unavailable', 4.4, 42.00, 'Moving & delivery specialist.', 1, 11000.00, 270.00, 'San Antonio'),
+('Victoria', 'Brooks', 'vbrooks', '$2a$10$tasker183456789abcdefghij', 'victoria.b@tasker.com', '1989-11-07', '+1-555-1018', 'F', NULL, 'available', 4.8, 70.00, 'HVAC engineer.', 8, 28000.00, 420.00, 'San Diego'),
+('Matthew', 'Evans', 'mevans', '$2a$10$tasker193456789abcdefghij', 'matt.e@tasker.com', '1994-05-16', '+1-555-1019', 'M', NULL, 'available', 4.9, 30.00, 'Pet care expert.', 9, 13500.00, 380.00, 'Dallas'),
+('Hannah', 'Rivera', 'hrivera', '$2a$10$tasker203456789abcdefghij', 'hannah.r@tasker.com', '1992-08-23', '+1-555-1020', 'F', NULL, 'available', 4.7, 45.00, 'Academic tutor.', 10, 17500.00, 390.00, 'New York'),
 
+('Noah', 'Scott', 'nscott', '$2a$10$tasker213456789abcdefghij', 'noah.s@tasker.com', '1990-01-11', '+1-555-1021', 'M', NULL, 'available', 4.6, 35.00, 'Chef and meal prep expert.', 11, 12000.00, 330.00, 'Los Angeles'),
+('Ava', 'Cooper', 'acooper', '$2a$10$tasker223456789abcdefghij', 'ava.c@tasker.com', '1995-09-30', '+1-555-1022', 'F', NULL, 'available', 4.8, 55.00, 'IT support specialist.', 12, 21000.00, 450.00, 'Chicago'),
+('Liam', 'Ward', 'lward', '$2a$10$tasker233456789abcdefghij', 'liam.w@tasker.com', '1988-12-03', '+1-555-1023', 'M', NULL, 'available', 4.5, 25.00, 'Car washing and detailing.', 13, 8000.00, 260.00, 'Houston'),
+('Chloe', 'Cruz', 'ccruz', '$2a$10$tasker243456789abcdefghij', 'chloe.c@tasker.com', '1991-06-08', '+1-555-1024', 'F', NULL, 'available', 4.9, 40.00, 'Home repair handyman.', 14, 16000.00, 340.00, 'Phoenix'),
+('Daniel', 'Bell', 'dbell', '$2a$10$tasker253456789abcdefghij', 'daniel.b@tasker.com', '1986-02-19', '+1-555-1025', 'M', NULL, 'available', 4.7, 65.00, 'Fitness trainer.', 15, 30000.00, 470.00, 'Philadelphia'),
+('Ella', 'Murphy', 'emurphy', '$2a$10$tasker263456789abcdefghij', 'ella.m@tasker.com', '1994-07-14', '+1-555-1026', 'F', NULL, 'available', 4.6, 30.00, 'Babysitter with 5 years experience.', 16, 9000.00, 250.00, 'San Antonio'),
+('Mason', 'Cook', 'mcook', '$2a$10$tasker273456789abcdefghij', 'mason.c@tasker.com', '1993-09-25', '+1-555-1027', 'M', NULL, 'unavailable', 4.8, 55.00, 'Elder care specialist.', 17, 22000.00, 390.00, 'San Diego'),
+('Zoe', 'Morgan', 'zmorgan', '$2a$10$tasker283456789abcdefghij', 'zoe.m@tasker.com', '1992-04-04', '+1-555-1028', 'F', NULL, 'available', 4.9, 75.00, 'Interior designer.', 18, 31000.00, 410.00, 'Dallas'),
+('Jack', 'Lee', 'jlee', '$2a$10$tasker293456789abcdefghij', 'jack.l@tasker.com', '1991-03-12', '+1-555-1029', 'M', NULL, 'available', 4.6, 80.00, 'Event photographer.', 19, 26000.00, 390.00, 'New York'),
+('Layla', 'Turner', 'lturner', '$2a$10$tasker303456789abcdefghij', 'layla.t@tasker.com', '1990-11-29', '+1-555-1030', 'F', NULL, 'available', 4.7, 55.00, 'Home security installer.', 20, 17800.00, 350.00, 'Los Angeles'),
+('Aaron', 'Mitchell', 'amitchell', '$2a$10$tasker313456789abcdefghij', 'aaron.m@tasker.com', '1987-05-12', '+1-555-1031', 'M', NULL, 'available', 4.5, 33.00, 'Cleaner.', 1, 11200.00, 300.00, 'Houston'),
+('Natalie', 'Ross', 'nross', '$2a$10$tasker323456789abcdefghij', 'natalie.r@tasker.com', '1993-10-01', '+1-555-1032', 'F', NULL, 'available', 4.9, 58.00, 'Plumber.', 2, 21000.00, 430.00, 'Chicago'),
+('Wyatt', 'Perry', 'wperry', '$2a$10$tasker333456789abcdefghij', 'wyatt.p@tasker.com', '1990-06-22', '+1-555-1033', 'M', NULL, 'available', 4.7, 65.00, 'Electrician.', 3, 24000.00, 450.00, 'Los Angeles'),
+('Bella', 'Foster', 'bfoster', '$2a$10$tasker343456789abcdefghij', 'bella.f@tasker.com', '1991-01-18', '+1-555-1034', 'F', NULL, 'available', 4.8, 35.00, 'Gardener.', 4, 13200.00, 280.00, 'Phoenix'),
+('Owen', 'Howard', 'ohoward', '$2a$10$tasker353456789abcdefghij', 'owen.h@tasker.com', '1989-03-03', '+1-555-1035', 'M', NULL, 'available', 4.9, 48.00, 'Painter.', 5, 20000.00, 420.00, 'New York'),
+('Aria', 'Ward', 'award', '$2a$10$tasker363456789abcdefghij', 'aria.w@tasker.com', '1992-02-11', '+1-555-1036', 'F', NULL, 'available', 4.8, 52.00, 'Carpenter.', 6, 18500.00, 380.00, 'Philadelphia'),
+('Carter', 'Fleming', 'cfleming', '$2a$10$tasker373456789abcdefghij', 'carter.f@tasker.com', '1994-09-27', '+1-555-1037', 'M', NULL, 'available', 4.6, 44.00, 'Mover.', 7, 12500.00, 310.00, 'Houston'),
+('Hailey', 'Summers', 'hsummers', '$2a$10$tasker383456789abcdefghij', 'hailey.s@tasker.com', '1993-07-05', '+1-555-1038', 'F', NULL, 'available', 4.9, 72.00, 'HVAC technician.', 8, 28000.00, 430.00, 'Chicago'),
+('Gabriel', 'Bryant', 'gbryant', '$2a$10$tasker393456789abcdefghij', 'gabriel.b@tasker.com', '1991-12-14', '+1-555-1039', 'M', NULL, 'available', 4.7, 26.00, 'Pet care expert.', 9, 9800.00, 300.00, 'Dallas'),
+('Stella', 'Cole', 'scole', '$2a$10$tasker403456789abcdefghij', 'stella.c@tasker.com', '1990-04-21', '+1-555-1040', 'F', NULL, 'available', 4.8, 48.00, 'Tutor.', 10, 15000.00, 350.00, 'New York');
 -- ======================================================
 -- POPULATE CHATS
 -- ======================================================

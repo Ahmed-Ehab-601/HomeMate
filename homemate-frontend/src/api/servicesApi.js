@@ -1,16 +1,14 @@
-import services from "../data/services";
+// api/servicesApi.js
 import { normalizeService } from "../utils/services";
 
-const normalizedServices = services.map(normalizeService);
+const DEFAULT_API_BASE_URL = "http://localhost:8080";
+const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
 
 export async function fetchServices() {
-  // Uncomment once backend is ready:
-  // const response = await fetch(`${import.meta.env.VITE_API_URL}/services`);
-  // if (!response.ok) throw new Error("Failed to load services");
-  // return response.json();
-
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(normalizedServices), 300);
-  });
+  const response = await fetch(`${DEFAULT_API_BASE_URL}/api/services`);
+  if (!response.ok) {
+    throw new Error("Failed to load services");
+  }
+  const services = await response.json();
+  return Array.isArray(services) ? services.map(normalizeService) : [];
 }
-

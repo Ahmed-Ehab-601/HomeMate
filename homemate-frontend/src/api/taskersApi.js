@@ -1,104 +1,89 @@
 import taskers from "../data/taskers";
-import services from "../data/services";
-import { normalizeService } from "../utils/services";
+import { normalizeTasker } from "../utils/taskers";
 
-const PAGE_SIZE = 20;
+const DEFAULT_API_BASE_URL = "http://localhost:8080";
+const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
 
-const rateBuckets = {
-  any: () => true,
-  low: (value) => value < 35,
-  medium: (value) => value >= 35 && value <= 55,
-  premium: (value) => value > 55,
+const RATE_BUCKETS = {
+  low: { minHourRate: 0, maxHourRate: 35 },
+  medium: { minHourRate: 35, maxHourRate: 55 },
+  premium: { minHourRate: 55, maxHourRate: null },
 };
 
-const servicesIndex = services.map(normalizeService);
-const serviceBySlug = new Map(servicesIndex.map((service) => [service.slug, service]));
+const SORT_MAP = {
+  "price-asc": { sortBy: "hourRate", sortOrder: "ASC" },
+  "price-desc": { sortBy: "hourRate", sortOrder: "DESC" },
+  "rating-asc": { sortBy: "rating", sortOrder: "ASC" },
+  "rating-desc": { sortBy: "rating", sortOrder: "DESC" },
+};
+
+const cleanPayload = (payload) =>
+  Object.fromEntries(
+    Object.entries(payload).filter(
+      ([, value]) =>
+        value !== undefined &&
+        value !== null &&
+        value !== "" &&
+        !(typeof value === "number" && Number.isNaN(value)),
+    ),
+  );
 
 export async function fetchTaskers({
-  serviceSlug,
-  page = 1,
+  serviceId,
+  page = 0,
+  size = 12,
   searchTerm = "",
   filters = {},
   sortOption = "rating-desc",
 }) {
-  // Uncomment when backend endpoint is available.
-  // const searchParams = new URLSearchParams({
-  //   page: String(page),
-  //   pageSize: String(PAGE_SIZE),
-  //   search: searchTerm,
-  //   rate: filters.rate ?? "",
-  //   availability: filters.availability ?? "",
-  //   rating: filters.rating ?? "",
-  //   location: filters.location ?? "",
-  //   sort: sortOption,
-  // });
-  // const response = await fetch(
-  //   `${import.meta.env.VITE_API_URL}/services/${serviceSlug}/taskers?${searchParams}`,
-  // );
-  // if (!response.ok) throw new Error("Failed to load taskers");
-  // return response.json();
+  if (!serviceId) {
+    throw new Error("serviceId is required to fetch taskers.");
+  }
 
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const serviceId = serviceSlug ? serviceBySlug.get(serviceSlug)?.serviceId ?? null : null;
-      let pool = serviceId ? taskers.filter((t) => t.serviceId === serviceId) : [...taskers];
+  const rateRange = filters.rate && RATE_BUCKETS[filters.rate] ? RATE_BUCKETS[filters.rate] : {};
+  const sort = SORT_MAP[sortOption] ?? SORT_MAP["rating-desc"];
 
-      if (searchTerm) {
-        const query = searchTerm.toLowerCase();
-        pool = pool.filter((t) => t.name.toLowerCase().includes(query));
-      }
-
-      if (filters.rate && rateBuckets[filters.rate]) {
-        pool = pool.filter((t) => rateBuckets[filters.rate](t.hourRate));
-      }
-
-      if (filters.availability && filters.availability !== "any") {
-        pool = pool.filter((t) => t.availability === filters.availability);
-      }
-
-      if (filters.rating && filters.rating !== "any") {
-        pool = pool.filter((t) => t.rating >= Number(filters.rating));
-      }
-
-      if (filters.location) {
-        const locationQuery = filters.location.toLowerCase();
-        pool = pool.filter((t) => t.location.toLowerCase().includes(locationQuery));
-      }
-
-      switch (sortOption) {
-        case "price-asc":
-          pool = [...pool].sort((a, b) => a.hourRate - b.hourRate);
-          break;
-        case "price-desc":
-          pool = [...pool].sort((a, b) => b.hourRate - a.hourRate);
-          break;
-        case "rating-asc":
-          pool = [...pool].sort((a, b) => a.rating - b.rating);
-          break;
-        default:
-          pool = [...pool].sort((a, b) => b.rating - a.rating);
-      }
-
-      const start = (page - 1) * PAGE_SIZE;
-      const end = start + PAGE_SIZE;
-      const data = pool.slice(start, end);
-      const hasMore = end < pool.length;
-
-      resolve({
-        data,
-        page,
-        hasMore,
-        total: pool.length,
-      });
-    }, 400);
+  const criteria = cleanPayload({
+    serviceID: Number(serviceId),
+    availability: filters.availability !== "any" ? filters.availability : null,
+    search: searchTerm || null,
+    minRating: filters.rating && filters.rating !== "any" ? Number(filters.rating) : null,
+    minHourRate: rateRange.minHourRate ?? null,
+    maxHourRate: rateRange.maxHourRate ?? null,
+    city: filters.location || null,
+    sortBy: sort.sortBy,
+    sortOrder: sort.sortOrder,
   });
+
+  const backendPage = Math.max(1, page + 1);
+  const params = new URLSearchParams({
+    page: String(backendPage),
+    size: String(size),
+  });
+
+  const response = await fetch(`${baseUrl}/api/taskers/search?${params.toString()}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(criteria),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw error ?? new Error("Failed to load taskers.");
+  }
+
+  const body = await response.json();
+  const list = Array.isArray(body) ? body : [];
+  return {
+    data: list.map(normalizeTasker),
+    page,
+    hasMore: list.length === size,
+  };
 }
 
 export async function fetchTaskerById(taskerId) {
-  // const response = await fetch(`${import.meta.env.VITE_API_URL}/taskers/${taskerId}`);
-  // if (!response.ok) throw new Error("Failed to load tasker profile");
-  // return response.json();
-
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       const tasker = taskers.find((t) => String(t.id) === String(taskerId));

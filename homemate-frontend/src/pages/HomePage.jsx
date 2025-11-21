@@ -1,3 +1,4 @@
+// pages/HomePage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchServices } from "../api/servicesApi";
@@ -24,9 +25,9 @@ function HomePage() {
           setStatus("success");
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
-          setError("We could not load services. Please try again.");
+          setError(err.message || "We could not load services. Please try again.");
           setStatus("error");
         }
       });
@@ -46,6 +47,8 @@ function HomePage() {
 
   const suggestions = searchText ? matchingServices.slice(0, 4) : [];
   const hasNoMatches = Boolean(searchText) && suggestions.length === 0;
+  
+  // Note: totalTasks defaults to 0 from backend, so this won't sort meaningfully yet
   const popularServices = useMemo(
     () => [...services].sort((a, b) => b.totalTasks - a.totalTasks).slice(0, 6),
     [services],
@@ -113,7 +116,8 @@ function HomePage() {
         </div>
       </section>
 
-      <section>
+      {/* Uncomment when backend provides totalTasks data */}
+      {/* <section>
         <div className="section-title">
           <div>
             <p className="section-kicker">Highly Requested</p>
@@ -137,32 +141,38 @@ function HomePage() {
             ))}
           </div>
         )}
-      </section>
+      </section> */}
 
       <section id="how-it-works">
         <div className="section-title">
           <div>
             <p className="section-kicker">Service discovery</p>
             <h2 className="section-heading">
-              {searchText ? `Results for “${searchText}”` : "Explore every HomeMate service"}
+              {searchText ? `Results for "${searchText}"` : "Explore every HomeMate service"}
             </h2>
           </div>
         </div>
-        {hasNoMatches ? (
-          <div className="empty-state">
-            We couldn’t find a service named “{searchText}”. Try another search or browse all taskers
-            below.
-          </div>
-        ) : (
-          <div className="grid grid--services">
-            {matchingServices.map((service) => (
-              <ServiceCard
-                key={service.serviceId}
-                service={service}
-                onSelect={handleSelectService}
-              />
-            ))}
-          </div>
+        {status === "loading" && <div className="load-indicator">Loading services…</div>}
+        {status === "error" && <div className="no-results">{error}</div>}
+        {status === "success" && (
+          <>
+            {hasNoMatches ? (
+              <div className="empty-state">
+                We couldn't find a service named "{searchText}". Try another search or browse all
+                taskers below.
+              </div>
+            ) : (
+              <div className="grid grid--services">
+                {matchingServices.map((service) => (
+                  <ServiceCard
+                    key={service.serviceId}
+                    service={service}
+                    onSelect={handleSelectService}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </section>
     </main>
@@ -170,4 +180,3 @@ function HomePage() {
 }
 
 export default HomePage;
-

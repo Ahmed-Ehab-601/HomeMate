@@ -1,19 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { fetchTaskerById } from "../api/taskersApi";
-import servicesData from "../data/services";
-import { normalizeService } from "../utils/services";
+import { fetchServices } from "../api/servicesApi";
 
 function TaskerProfilePage() {
   const { taskerId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const services = useMemo(() => servicesData.map(normalizeService), []);
   const [tasker, setTasker] = useState(location.state?.tasker ?? null);
   const [status, setStatus] = useState(tasker ? "success" : "loading");
-  const service =
-    location.state?.service ??
-    (tasker ? services.find((svc) => svc.serviceId === tasker.serviceId) : null);
+  const [service, setService] = useState(location.state?.service ?? null);
 
   useEffect(() => {
     if (tasker) return;
@@ -36,6 +32,26 @@ function TaskerProfilePage() {
       cancelled = true;
     };
   }, [tasker, taskerId]);
+
+  useEffect(() => {
+    if (service || !tasker) return undefined;
+    let cancelled = false;
+    fetchServices()
+      .then((data) => {
+        if (!cancelled) {
+          const match = data.find((svc) => svc.serviceId === tasker.serviceId);
+          setService(match ?? null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setService(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [service, tasker]);
 
   if (status === "loading") {
     return <div className="page">Loading profile…</div>;

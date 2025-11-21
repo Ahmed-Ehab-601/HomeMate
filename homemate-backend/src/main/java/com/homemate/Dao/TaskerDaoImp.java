@@ -83,10 +83,21 @@ public class TaskerDaoImp implements TaskerDao {
         }
 
         int offset = (page - 1) * pageSize;
+
+        if (offset < 0) {
+            System.out.println("errrroooo +" + offset);
+        }
+
         sql.append(" LIMIT ? OFFSET ?");
         params.add(pageSize);
         params.add(offset);
 
+
+        System.out.println("page = " + page);
+        System.out.println("pagesize = " + pageSize);
+        System.out.println("offset = " + offset);
+
         return jdbcTemplate.query(sql.toString(), params.toArray(), rowMapper);
+
     }
 }
