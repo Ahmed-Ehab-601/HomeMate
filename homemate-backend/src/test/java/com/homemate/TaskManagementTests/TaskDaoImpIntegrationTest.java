@@ -107,7 +107,7 @@ public class TaskDaoImpIntegrationTest {
 
     @Test
     void testThatExistingChatIsReturned() {
-        // Given - User 1 and Tasker 1 who already have a chat (from data.sql)
+        // Given - User 1 and Tasker 1 who already have a chat (from taskData.sql)
         Long userId = 1L;
         Long taskerId = 1L;
 

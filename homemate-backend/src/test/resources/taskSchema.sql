@@ -164,3 +164,4 @@ CREATE TABLE Report (
 
 CREATE INDEX idx_report_task ON Report(taskID);
 CREATE INDEX idx_report_admin_status ON Report(adminStatus);
+

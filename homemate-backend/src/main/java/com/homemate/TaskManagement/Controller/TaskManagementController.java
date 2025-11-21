@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/task")
+@RequestMapping("/api")
 @CrossOrigin("*")
 public class TaskManagementController {
     private final TaskManagementService taskManagementService;
@@ -21,7 +21,7 @@ public class TaskManagementController {
         this.taskManagementService = taskManagementService;
     }
 
-    @PostMapping("/request")
+    @PostMapping("/user/task/request")
     public ResponseEntity<?> requestTask(@Valid @RequestBody TaskRequestDto requestDto) {
         Optional<TaskDto> taskDto = taskManagementService.requestTask(requestDto);
         if(taskDto.isPresent()) return new ResponseEntity<>(taskDto.get(),HttpStatus.CREATED);

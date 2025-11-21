@@ -95,7 +95,7 @@ class TaskManagementControllerTest {
                 .thenReturn(Optional.of(taskDto));
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isCreated())
@@ -116,7 +116,7 @@ class TaskManagementControllerTest {
                 .thenReturn(Optional.empty());
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isBadRequest());
@@ -128,7 +128,7 @@ class TaskManagementControllerTest {
         validTaskRequest.setUserID(null);
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isBadRequest())
@@ -142,7 +142,7 @@ class TaskManagementControllerTest {
         validTaskRequest.setTaskerID(null);
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isBadRequest())
@@ -156,7 +156,7 @@ class TaskManagementControllerTest {
         validTaskRequest.setServiceID(null);
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isBadRequest())
@@ -170,7 +170,7 @@ class TaskManagementControllerTest {
         validTaskRequest.setAddressID(null);
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isBadRequest())
@@ -184,7 +184,7 @@ class TaskManagementControllerTest {
         validTaskRequest.setStartDate(null);
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isBadRequest())
@@ -199,7 +199,7 @@ class TaskManagementControllerTest {
                 .thenThrow(new DuplicateRequestException());
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isBadRequest())
@@ -214,7 +214,7 @@ class TaskManagementControllerTest {
                 .thenThrow(new RequestLimitExceededException());
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isTooManyRequests())
@@ -229,7 +229,7 @@ class TaskManagementControllerTest {
                 .thenThrow(new BadTaskRequestException());
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isBadRequest())
@@ -245,7 +245,7 @@ class TaskManagementControllerTest {
                 .thenReturn(Optional.of(taskDto));
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isCreated())
@@ -258,7 +258,7 @@ class TaskManagementControllerTest {
         String invalidJson = "{\"userID\": \"not a number\"}";
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
                 .andExpect(status().isBadRequest());
@@ -267,7 +267,7 @@ class TaskManagementControllerTest {
     @Test
     void testThatRequestTaskReturnsBadRequestWithEmptyBody() throws Exception {
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())
@@ -282,7 +282,7 @@ class TaskManagementControllerTest {
                 .thenReturn(Optional.of(taskDto));
 
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isCreated());
@@ -297,7 +297,7 @@ class TaskManagementControllerTest {
     @Test
     void testThatRequestTaskVerifiesContentTypeIsRequired() throws Exception {
         // Act & Assert
-        mockMvc.perform(post("/task/request")
+        mockMvc.perform(post("/api/user/task/request")
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isUnsupportedMediaType());
     }
