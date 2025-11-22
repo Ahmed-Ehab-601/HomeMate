@@ -7,15 +7,17 @@ import java.util.List;
 
 public interface IAdminService {
 
-    // User Management
+
     PageResponse<UserDto> getUsers(UserFilterDto filterDTO, PageRequest pageRequest);
 
-//    Boolean suspendUser(SuspendDto suspendDto);
+    UserDto suspendUser(SuspendDto suspendDto);
+    TaskerDto suspendTasker(SuspendDto suspendDto);
 
-    Boolean reactiveUser(Long userId, String userType);
+    UserDto reactiveUser(Long userID);
+    TaskerDto reactiveTasker(Long userID);
 
-    Boolean promoteUser(Long userId);
-    public Boolean demoteUser(Long userId);
+    UserDto promoteUser(Long userId);
+    UserDto demoteUser(Long userId);
 
 
     PageResponse<TaskerDto> getTaskers(TaskerFilterDto filterDTO, PageRequest pageRequest);

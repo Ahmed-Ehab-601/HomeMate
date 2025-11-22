@@ -57,23 +57,72 @@ public class AdminServiceImp implements IAdminService {
         return res;
     }
 
-//    @Override
-//    public Boolean suspendUser(SuspendDto suspendDto) {
-//        return null;
-//    }
-
     @Override
-    public Boolean reactiveUser(Long userId, String userType) {
-        return null;
+    public UserDto suspendUser(SuspendDto suspendDto) {
+        if (suspendDto == null || suspendDto.getUserId() == null) return null;
+        Long id = suspendDto.getUserId();
+        User user = userDao.findById(id);
+        if (user == null) return null;
+        boolean updated = userDao.updateUserSuspended(id, true);
+        if (!updated) return null;
+        User refreshed = userDao.findById(id);
+        return refreshed != null ? userMapper.mapTO(refreshed) : null;
     }
 
     @Override
-    public Boolean promoteUser(Long userId) {
-        return null;
+    public TaskerDto suspendTasker(SuspendDto suspendDto) {
+        if (suspendDto == null || suspendDto.getUserId() == null) return null;
+        Long id = suspendDto.getUserId();
+        Tasker tasker = taskerDao.findById(id);
+        if (tasker == null) return null;
+        boolean updated = taskerDao.updateTaskerSuspended(id, true);
+        if (!updated) return null;
+        Tasker refreshed = taskerDao.findById(id);
+        return refreshed != null ? taskerMapper.mapTO(refreshed) : null;
     }
+
     @Override
-    public Boolean demoteUser(Long userId) {
-        return null;
+    public UserDto reactiveUser(Long userID) {
+        if (userID == null) return null;
+        User user = userDao.findById(userID);
+        if (user == null) return null;
+        boolean updated = userDao.updateUserSuspended(userID, false);
+        if (!updated) return null;
+        User refreshed = userDao.findById(userID);
+        return refreshed != null ? userMapper.mapTO(refreshed) : null;
+    }
+
+    @Override
+    public TaskerDto reactiveTasker(Long userID) {
+        if (userID == null) return null;
+        Tasker tasker = taskerDao.findById(userID);
+        if (tasker == null) return null;
+        boolean updated = taskerDao.updateTaskerSuspended(userID, false);
+        if (!updated) return null;
+        Tasker refreshed = taskerDao.findById(userID);
+        return refreshed != null ? taskerMapper.mapTO(refreshed) : null;
+    }
+
+    @Override
+    public UserDto promoteUser(Long userId) {
+        if (userId == null) return null;
+        User user = userDao.findById(userId);
+        if (user == null) return null;
+        boolean updated = userDao.updateUserAdmin(userId, true);
+        if (!updated) return null;
+        User refreshed = userDao.findById(userId);
+        return refreshed != null ? userMapper.mapTO(refreshed) : null;
+    }
+
+    @Override
+    public UserDto demoteUser(Long userId) {
+        if (userId == null) return null;
+        User user = userDao.findById(userId);
+        if (user == null) return null;
+        boolean updated = userDao.updateUserAdmin(userId, false);
+        if (!updated) return null;
+        User refreshed = userDao.findById(userId);
+        return refreshed != null ? userMapper.mapTO(refreshed) : null;
     }
 
 

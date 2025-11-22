@@ -8,4 +8,7 @@ import java.util.List;
 public interface UserDao {
     List<User> findUsers(List<Filter> filters, Long limit , Long offest);
     Long countUsers(List<Filter> filters);
+    User findById(Long userId);
+    boolean updateUserSuspended(Long userId, boolean suspended);
+    boolean updateUserAdmin(Long userId, boolean isAdmin);
 }

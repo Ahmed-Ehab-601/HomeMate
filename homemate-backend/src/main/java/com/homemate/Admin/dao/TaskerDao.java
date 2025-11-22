@@ -9,6 +9,8 @@ import java.util.List;
 public interface TaskerDao {
     List<Tasker> findTaskers(List<Filter> filters,Long limit , Long offest);
     Long countTaskers(List<Filter> filters);
+    Tasker findById(Long taskerId);
+    boolean updateTaskerSuspended(Long taskerId, boolean suspended);
 
 
 }

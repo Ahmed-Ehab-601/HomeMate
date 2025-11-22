@@ -53,6 +53,30 @@ public class UserDaoImp implements UserDao {
         return count != null ? count : 0L;
     }
 
+    @Override
+    public User findById(Long userId) {
+        try {
+            String sql = "SELECT * FROM Users WHERE userID = ?";
+            return jdbcTemplate.queryForObject(sql, USER_ROW_MAPPER, userId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @Override
+    public boolean updateUserSuspended(Long userId, boolean suspended) {
+        String sql = "UPDATE Users SET suspended = ? WHERE userID = ?";
+        int updated = jdbcTemplate.update(sql, suspended, userId);
+        return updated > 0;
+    }
+
+    @Override
+    public boolean updateUserAdmin(Long userId, boolean isAdmin) {
+        String sql = "UPDATE Users SET admin = ? WHERE userID = ?";
+        int updated = jdbcTemplate.update(sql, isAdmin, userId);
+        return updated > 0;
+    }
+
 
 
     private static class RowMapperUser implements RowMapper<User> {

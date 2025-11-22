@@ -50,6 +50,23 @@ public class TaskerDaoImp implements TaskerDao {
         return count != null ? count : 0L;
     }
 
+    @Override
+    public Tasker findById(Long taskerId) {
+        try {
+            String sql = "SELECT * FROM Taskers WHERE taskerID = ?";
+            return jdbcTemplate.queryForObject(sql, TASKER_ROW_MAPPER, taskerId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @Override
+    public boolean updateTaskerSuspended(Long taskerId, boolean suspended) {
+        String sql = "UPDATE Taskers SET suspended = ? WHERE taskerID = ?";
+        int updated = jdbcTemplate.update(sql, suspended, taskerId);
+        return updated == 1;
+    }
+
 
 
 
