@@ -15,8 +15,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
-import static com.homemate.Admin.TestDataUtil.createMockTaskerPageResponse;
-import static com.homemate.Admin.TestDataUtil.createMockUserPageResponse;
+
+import static com.homemate.Admin.TestDataUtil.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -46,7 +46,7 @@ class AdminControllerTest {
                 .thenReturn(mockResponse);
 
 
-        mockMvc.perform(get("/admin/users")
+        mockMvc.perform(get("/api/admin/users")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -63,7 +63,7 @@ class AdminControllerTest {
         when(adminService.getUsers(any(UserFilterDto.class), any(PageRequest.class)))
                 .thenReturn(mockResponse);
 
-        mockMvc.perform(get("/admin/users")
+        mockMvc.perform(get("/api/admin/users")
                         .param("admin", "true")
                         .param("suspended", "false")
                         .param("username","adm")
@@ -75,29 +75,128 @@ class AdminControllerTest {
     @Test
     @DisplayName("GET /admin/users - Should handle pagination parameters")
     void testGetUsers_WithPagination_AppliesPagination() throws Exception {
-        // Given
+
         PageResponse<UserDto> mockResponse = createMockUserPageResponse();
         when(adminService.getUsers(any(UserFilterDto.class), any(PageRequest.class)))
                 .thenReturn(mockResponse);
 
-        // When & Then
-        mockMvc.perform(get("/admin/users")
+
+        mockMvc.perform(get("/api/admin/users")
                         .param("page", "1")
                         .param("size", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").exists());
     }
+    @Test
+    @DisplayName("GET api/admin/user")
+    void testSuspendUser() throws Exception {
+
+        UserDto userDto=UserDto.builder()
+                .suspended(true)
+                .build();
+        SuspendDto suspendDto=SuspendDto.builder()
+                .userId(1L)
+                .reason("I do not like his personality")
+                .build();
+
+        when(adminService.suspendUser(any(SuspendDto.class)))
+                .thenReturn(userDto);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/admin/user/suspend")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(suspendDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suspended").value(true));
+    }
+    @Test
+    @DisplayName("Patch api/admin/tasker")
+    void testSuspendTasker() throws Exception {
+        TaskerDto taskerDto=TaskerDto.builder()
+                .suspended(true)
+                .build();
+        SuspendDto suspendDto=SuspendDto.builder()
+                .userId(1L)
+                .reason("I do not like his personality")
+                .build();
+
+        when(adminService.suspendTasker(any(SuspendDto.class)))
+                .thenReturn(taskerDto);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/admin/tasker/suspend")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(suspendDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suspended").value(true));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/admin/user/promote - promote user to admin")
+    void testPromoteUser() throws Exception {
+        UserDto promoted = UserDto.builder()
+                .userId(1L)
+                .admin(true)
+                .build();
+
+        when(adminService.promoteUser(1L)).thenReturn(promoted);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/admin/user/promote/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.admin").value(true));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/admin/user/demote - demote user from admin")
+    void testDemoteUser() throws Exception {
+        UserDto demoted = UserDto.builder()
+                .userId(2L)
+                .admin(false)
+                .build();
+
+        when(adminService.demoteUser(2L)).thenReturn(demoted);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/admin/user/demote/2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.admin").value(false));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/admin/user/reactive/{id} - reactivate user")
+    void testReactiveUser() throws Exception {
+        UserDto active = UserDto.builder()
+                .userId(3L)
+                .suspended(false)
+                .build();
+
+        when(adminService.reactiveUser(3L)).thenReturn(active);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/admin/user/reactive/3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suspended").value(false));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/admin/tasker/reactive/{id} - reactivate tasker")
+    void testReactiveTasker() throws Exception {
+        TaskerDto active = TaskerDto.builder()
+                .taskerID(4L)
+                .suspended(false)
+                .build();
+
+        when(adminService.reactiveTasker(4L)).thenReturn(active);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/admin/tasker/reactive/4"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suspended").value(false));
+    }
 
     @Test
     @DisplayName("GET /admin/taskers - Should return 200 with tasker list")
     void testGetTaskers_Returns200WithTaskerList() throws Exception {
-        // Given
         PageResponse<TaskerDto> mockResponse = createMockTaskerPageResponse();
         when(adminService.getTaskers(any(TaskerFilterDto.class), any(PageRequest.class)))
                 .thenReturn(mockResponse);
 
-        // When & Then
-        mockMvc.perform(get("/admin/taskers")
+        mockMvc.perform(get("/api/admin/taskers")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -114,7 +213,7 @@ class AdminControllerTest {
         when(adminService.getTaskers(any(TaskerFilterDto.class), any(PageRequest.class)))
                 .thenReturn(mockResponse);
 
-        mockMvc.perform(get("/admin/taskers")
+        mockMvc.perform(get("/api/admin/taskers")
                         .param("suspended", "false")
                         .param("minRate", "4.6")
                         .param("username","tasker")
@@ -131,7 +230,7 @@ class AdminControllerTest {
         when(adminService.getTaskers(any(TaskerFilterDto.class), any(PageRequest.class)))
                 .thenReturn(mockResponse);
 
-        mockMvc.perform(get("/admin/taskers")
+        mockMvc.perform(get("/api/admin/taskers")
                         .param("page", "1")
                         .param("size", "5"))
                 .andExpect(status().isOk())
@@ -149,7 +248,7 @@ class AdminControllerTest {
         when(adminService.getUsers(any(UserFilterDto.class), any(PageRequest.class)))
                 .thenReturn(emptyResponse);
 
-        mockMvc.perform(get("/admin/users")
+        mockMvc.perform(get("/api/admin/users")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -158,7 +257,7 @@ class AdminControllerTest {
                 .andExpect(jsonPath("$.totalItems").value(0L));
     }
 
-@Test
+    @Test
     @DisplayName("GET /admin/taskers - Should return empty list when no users")
     void testGetTaskers_WhenNoUsers_ReturnsEmptyList() throws Exception {
 
@@ -170,7 +269,7 @@ class AdminControllerTest {
         when(adminService.getTaskers(any(TaskerFilterDto.class), any(PageRequest.class)))
                 .thenReturn(emptyResponse);
 
-        mockMvc.perform(get("/admin/taskers")
+        mockMvc.perform(get("/api/admin/taskers")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())

@@ -202,6 +202,43 @@ class UserDaoImpIntegrationTest {
             assertThat(user.isSuspended()).isFalse();
         });
     }
+    @Test
+    @DisplayName("FindUserById")
+    public void testFindUserById() {
+
+        User user= userDao.findById(1L);
+        assertThat(user).isNotNull();
+        assertThat(user.getUsername()).isEqualTo("admin_user");
+    }
+
+    @Test
+    @DisplayName("UpdateUserSuspended")
+    public void testUpdateUserSuspended() {
+
+        boolean updated= userDao.updateUserSuspended(1L,true);
+        assertThat(updated).isTrue();
+    }
+    @Test
+    @DisplayName("UpdateUserAdmin ")
+    public void testUpdateUserAdmin() {
+
+        boolean updated= userDao.updateUserAdmin(2L,true);
+        assertThat(updated).isTrue();
+    }
+    @Test
+    @DisplayName("UpdateUserAdmin - when not found ")
+    public void testUpdateUserAdminWithNoUser() {
+
+        boolean updated= userDao.updateUserAdmin(7L,true);
+        assertThat(updated).isFalse();
+    }
+    @Test
+    @DisplayName("UpdateUserSuspended - when not found ")
+    public void testUpdateUserSuspendedWithNoUser() {
+
+        boolean updated= userDao.updateUserSuspended(7L,true);
+        assertThat(updated).isFalse();
+    }
 }
 
 

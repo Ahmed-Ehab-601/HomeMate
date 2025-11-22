@@ -148,12 +148,32 @@ public class TaskerDaoImpIntegrationTest {
         List<Filter> filters = new ArrayList<>();
         Long limit = 2L;
         Long offset = 0L;
-
-
         List<Tasker> taskers = taskerDao.findTaskers(filters, limit, offset);
-
         assertThat(taskers).isNotNull();
         assertThat(taskers.size()).isLessThanOrEqualTo(2);
+    }
+    @Test
+    @DisplayName("FindTaskerById")
+    public void testFindTaskerById() {
+
+        Tasker tasker= taskerDao.findById(1L);
+        assertThat(tasker).isNotNull();
+        assertThat(tasker.getUsername()).isEqualTo("samaa");
+    }
+
+    @Test
+    @DisplayName("UpdateTaskerSuspended")
+    public void testUpdateTaskerSuspended() {
+
+        boolean updated= taskerDao.updateTaskerSuspended(1L,true);
+        assertThat(updated).isTrue();
+    }
+    @Test
+    @DisplayName("UpdateTaskerSuspended - with user not find")
+    public void testUpdateTaskerSuspendedWithNoUser() {
+
+        boolean updated= taskerDao.updateTaskerSuspended(7L,true);
+        assertThat(updated).isFalse();
     }
     @Test
     @DisplayName("FindTaskers - Should combine multiple filters correctly")
@@ -174,4 +194,5 @@ public class TaskerDaoImpIntegrationTest {
 
 
     }
+
 }
