@@ -11,18 +11,25 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthenticationService {
+public class LoginService {
     TaskerDao taskerDao;
     UserDao userDao;
     JwtService jwtService;
 
-    public AuthenticationService(TaskerDao taskerDao, UserDao userDao, JwtService jwtService) {
+    public LoginService(TaskerDao taskerDao, UserDao userDao, JwtService jwtService) {
         this.taskerDao = taskerDao;
         this.userDao = userDao;
         this.jwtService = jwtService;
     }
 
     public LoginResponseDto login(LoginRequestDto loginRequestDto) {
+
+        if (
+                loginRequestDto.getPassword() == null ||
+                loginRequestDto.getPassword().isEmpty() ||
+                loginRequestDto.getEmail() == null ||
+                loginRequestDto.getEmail().isEmpty()
+        ) return null;
 
         try {
 
