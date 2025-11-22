@@ -9,13 +9,17 @@ import {
   TableRow,
   TablePagination,
   IconButton,
+  Checkbox,
   Chip,
   Tooltip,
   LinearProgress,
   Stack,
 } from '@mui/material';
+import React from 'react';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { Menu, MenuItem } from '@mui/material';
 
 const TaskerTable = ({
   rows = [],
@@ -24,6 +28,9 @@ const TaskerTable = ({
   onPageChange,
   onRowsPerPageChange,
   onSuspend,
+  selectedIds,
+  onToggleSelect,
+  onSelectAll,
 }) => (
   <Card
     elevation={0}
@@ -95,6 +102,24 @@ const TaskerTable = ({
           >
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    indeterminate={Boolean(selectedIds && selectedIds.length && selectedIds.length < rows.length)}
+                    checked={Boolean(rows.length && selectedIds && selectedIds.length === rows.length)}
+                    onChange={(e) => {
+                      if (onSelectAll) onSelectAll(e.target.checked);
+                    }}
+                    inputProps={{ 'aria-label': 'select all taskers' }}
+                    sx={(theme) => ({
+                      ml: 0.5,
+                      '& .MuiSvgIcon-root': { fontSize: '1.15rem' },
+                      color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.65)',
+                      '&.Mui-checked': { color: theme.palette.primary.main },
+                      '&:hover': { backgroundColor: 'transparent' },
+                    })}
+                  />
+                </TableCell>
                 <TableCell sx={{ width: '18%' }}>Name</TableCell>
                 <TableCell sx={{ width: '30%' }}>Email</TableCell>
                 <TableCell sx={{ width: '12%' }}>Username</TableCell>
@@ -112,6 +137,20 @@ const TaskerTable = ({
                   hover
                   sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      size="small"
+                      checked={Boolean(selectedIds && selectedIds.includes(row.taskerID))}
+                      onChange={() => onToggleSelect && onToggleSelect(row.taskerID)}
+                      inputProps={{ 'aria-label': `select tasker ${row.taskerID}` }}
+                      sx={(theme) => ({
+                        ml: 0.5,
+                        '& .MuiSvgIcon-root': { fontSize: '1.15rem' },
+                        color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.65)',
+                        '&.Mui-checked': { color: theme.palette.primary.main },
+                      })}
+                    />
+                  </TableCell>
                   <TableCell>
                     {row.fname} {row.lname}
                   </TableCell>
@@ -134,7 +173,15 @@ const TaskerTable = ({
                   <TableCell align="right">
                     <Stack direction="row" spacing={1} justifyContent="flex-end">
                       <Tooltip title={row.suspended ? 'Unsuspend' : 'Suspend'}>
-                        <IconButton onClick={() => onSuspend(row)} size="small">
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSuspend(row);
+                          }}
+                          size="small"
+                          type="button"
+                          aria-label={row.suspended ? 'Unsuspend tasker' : 'Suspend tasker'}
+                        >
                           {row.suspended ? (
                             <CheckCircleIcon fontSize="small" color="success" />
                           ) : (

@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Card,
   CardContent,
@@ -9,6 +10,7 @@ import {
   TableRow,
   TablePagination,
   IconButton,
+  Checkbox,
   Chip,
   Tooltip,
   LinearProgress,
@@ -16,6 +18,8 @@ import {
 } from '@mui/material';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 const UserTable = ({
   rows = [],
@@ -24,7 +28,12 @@ const UserTable = ({
   onPageChange,
   onRowsPerPageChange,
   onSuspend,
+  onPromote,
+  onDemote,
   onStatusFilter,
+  selectedIds,
+  onToggleSelect,
+  onSelectAll,
 }) => (
   <Card
     elevation={0}
@@ -97,6 +106,24 @@ const UserTable = ({
           >
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    indeterminate={Boolean(selectedIds && selectedIds.length && selectedIds.length < rows.length)}
+                    checked={Boolean(rows.length && selectedIds && selectedIds.length === rows.length)}
+                    onChange={(e) => {
+                      if (onSelectAll) onSelectAll(e.target.checked);
+                    }}
+                    inputProps={{ 'aria-label': 'select all users' }}
+                    sx={(theme) => ({
+                      ml: 0.5,
+                      '& .MuiSvgIcon-root': { fontSize: '1.15rem' },
+                      color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.65)',
+                      '&.Mui-checked': { color: theme.palette.primary.main },
+                      '&:hover': { backgroundColor: 'transparent' },
+                    })}
+                  />
+                </TableCell>
                 <TableCell sx={{ width: '18%' }}>Name</TableCell>
                 <TableCell sx={{ width: '30%' }}>Email</TableCell>
                 <TableCell sx={{ width: '14%' }}>Username</TableCell>
@@ -113,6 +140,19 @@ const UserTable = ({
                   hover
                   sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      size="small"
+                      checked={Boolean(selectedIds && selectedIds.includes(row.userId))}
+                      onChange={() => onToggleSelect && onToggleSelect(row.userId)}
+                      inputProps={{ 'aria-label': `select user ${row.userId}` }}
+                      sx={(theme) => ({
+                        '& .MuiSvgIcon-root': { fontSize: '1.15rem' },
+                        color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.65)',
+                        '&.Mui-checked': { color: theme.palette.primary.main },
+                      })}
+                    />
+                  </TableCell>
                   <TableCell>
                     {row.fName} {row.lName}
                   </TableCell>
@@ -162,6 +202,26 @@ const UserTable = ({
                   </TableCell>
                   <TableCell align="right">
                     <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      {onPromote && onDemote && (
+                        <Tooltip title={row.admin ? 'Demote from admin' : 'Promote to admin'}>
+                          <IconButton
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (row.admin) onDemote(row);
+                              else onPromote(row);
+                            }}
+                            size="small"
+                            type="button"
+                            aria-label={row.admin ? 'Demote user' : 'Promote user'}
+                          >
+                            {row.admin ? (
+                              <ArrowDownwardIcon fontSize="small" />
+                            ) : (
+                              <ArrowUpwardIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+                      )}
                       <Tooltip title={row.suspended ? 'Unsuspend' : 'Suspend'}>
                         <IconButton
                           onClick={(e) => {
@@ -185,7 +245,7 @@ const UserTable = ({
               ))}
               {!rows.length && !loading && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     No users found.
                   </TableCell>
                 </TableRow>

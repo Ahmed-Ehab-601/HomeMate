@@ -24,7 +24,6 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import { useAdminThemeMode } from '../../theme/ThemeProviderSwitcher';
 
 const navItems = [
-  { label: 'Overview', path: '/admin', icon: <DashboardIcon fontSize="small" /> },
   { label: 'Users', path: '/admin/users', icon: <PeopleIcon fontSize="small" /> },
   { label: 'Taskers', path: '/admin/taskers', icon: <HandymanIcon fontSize="small" /> },
 ];
@@ -37,7 +36,7 @@ const AdminLayout = () => {
   const activePath = useMemo(() => {
     if (location.pathname.startsWith('/admin/taskers')) return '/admin/taskers';
     if (location.pathname.startsWith('/admin/users')) return '/admin/users';
-    return '/admin';
+    return '/admin/users';
   }, [location.pathname]);
 
   return (
@@ -90,7 +89,11 @@ const AdminLayout = () => {
           </Stack>
           <Stack direction="row" alignItems="center" spacing={2}>
             <Chip
-              label={location.pathname.replace('/admin', '') || 'Dashboard'}
+              label={(() => {
+                const p = location.pathname.replace('/admin', '') || '/users';
+                const name = p.replace('/', '') || 'users';
+                return name.charAt(0).toUpperCase() + name.slice(1);
+              })()}
               color="primary"
               variant="soft"
               sx={{ fontWeight: 600, display: { xs: 'none', md: 'inline-flex' } }}
