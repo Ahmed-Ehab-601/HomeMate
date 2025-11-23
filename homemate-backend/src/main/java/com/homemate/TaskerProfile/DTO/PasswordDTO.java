@@ -1,0 +1,23 @@
+package com.homemate.TaskerProfile.DTO;
+
+public class PasswordDTO {
+    private Long taskerID;
+    private String newPassword;
+
+    public Long getTaskerID() {
+        return taskerID;
+    }
+
+    public void setTaskerID(Long taskerID) {
+        this.taskerID = taskerID;
+    }
+
+    public String getNewPassword() {
+        return newPassword;
+    }
+
+    public void setNewPassword(String newPassword) {
+        this.newPassword = newPassword;
+    }
+}
+
