@@ -1,7 +1,10 @@
 package com.homemate.taskmanagement.dao.impl;
 
+import com.homemate.taskmanagement.dao.TaskCardRowMapper;
 import com.homemate.taskmanagement.dao.TaskDao;
 import com.homemate.taskmanagement.dao.TaskRowMapper;
+import com.homemate.taskmanagement.dto.StatusDto;
+import com.homemate.taskmanagement.dto.TaskCardDto;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
 import com.homemate.taskmanagement.exceptions.DuplicateChatException;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -100,7 +104,7 @@ public class TaskDaoImpl implements TaskDao {
     @Override
     public Optional<TaskDto> getTaskDetails(Long taskID) {
         String sql = """
-            SELECT 
+            SELECT
                 t.taskID,
                 t.startDate,
                 t.endDate,
@@ -134,15 +138,79 @@ public class TaskDaoImpl implements TaskDao {
     @Override
     public boolean checkIfTaskExist(Long userID, Long taskerID,Long addressID) {
         String sql = "SELECT COUNT(*) FROM Task WHERE userID = ? and taskerID = ? and addressID = ? and status = 'InReview' ";
-        Integer count = jdbcTemplate.queryForObject(sql,Integer.class,userID,taskerID,addressID);
+        Long count = jdbcTemplate.queryForObject(sql,Long.class,userID,taskerID,addressID);
         return count !=null && count == 1;
     }
 
     @Override
     public boolean checkIfTaskLimit(Long userID,Integer limit) {
         String sql = "SELECT COUNT(*) FROM Task WHERE userID = ? and status = 'InReview' ";
-        Integer count = jdbcTemplate.queryForObject(sql,Integer.class,userID);
+        Long count = jdbcTemplate.queryForObject(sql,Long.class,userID);
         return count !=null && count >= limit;
+    }
+
+    @Override
+    public List<TaskCardDto> getListUserTasksByIDSortedByDate(Long userID, int page, int pageSize) {
+        String sql = """
+            SELECT
+                t.taskID,
+                t.startDate,
+                t.status,
+                CONCAT(u.firstName, ' ', u.lastName) AS userName,
+                CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
+                s.name AS serviceName,
+                a.city
+            FROM Task t
+                INNER JOIN Users u ON t.userID = u.userID
+                INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
+                INNER JOIN Service s ON t.serviceID = s.serviceID
+                INNER JOIN Address a ON t.addressID = a.addressID
+            WHERE u.userID = ?
+            ORDER BY startDate DESC
+            LIMIT ? OFFSET ?
+            
+            """;
+
+        return jdbcTemplate.query(sql,new TaskCardRowMapper(),userID,pageSize,page * pageSize);
+    }
+
+    @Override
+    public List<TaskCardDto> getListUserTasksByIDAndStatusSortedByDate(Long userID, StatusDto status, int page, int pageSize) {
+        String sql = """
+            SELECT
+                t.taskID,
+                t.startDate,
+                t.status,
+                CONCAT(u.firstName, ' ', u.lastName) AS userName,
+                CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
+                s.name AS serviceName,
+                a.city
+            FROM Task t
+                INNER JOIN Users u ON t.userID = u.userID
+                INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
+                INNER JOIN Service s ON t.serviceID = s.serviceID
+                INNER JOIN Address a ON t.addressID = a.addressID
+            WHERE u.userID = ? and status = ?
+            ORDER BY startDate DESC
+            LIMIT ? OFFSET ?
+            
+            """;
+
+        return jdbcTemplate.query(sql,new TaskCardRowMapper(),userID, status.toString(),pageSize,page * pageSize);
+    }
+
+    @Override
+    public Optional<Long> countTasksByUserID(Long userID) {
+        String sql = "SELECT COUNT(*) FROM Task WHERE userID = ? ";
+        Long count = jdbcTemplate.queryForObject(sql,Long.class,userID);
+        return Optional.ofNullable(count);
+    }
+
+    @Override
+    public Optional<Long> countTasksByUserIDAndStatus(Long userID, StatusDto status) {
+        String sql = "SELECT COUNT(*) FROM Task WHERE userID = ? and status = ? ";
+        Long count = jdbcTemplate.queryForObject(sql,Long.class,userID,status.toString());
+        return Optional.ofNullable(count);
     }
 
 }

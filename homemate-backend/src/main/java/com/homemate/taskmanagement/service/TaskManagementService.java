@@ -2,8 +2,7 @@ package com.homemate.taskmanagement.service;
 
 //import com.homemate.TaskManagement.Dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
-import com.homemate.taskmanagement.dto.TaskDto;
-import com.homemate.taskmanagement.dto.TaskRequestDto;
+import com.homemate.taskmanagement.dto.*;
 import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
 import com.homemate.taskmanagement.exceptions.DuplicateRequestException;
 import com.homemate.taskmanagement.exceptions.RequestLimitExceededException;
@@ -11,6 +10,8 @@ import com.homemate.taskmanagement.mappers.TaskMapper;
 import com.homemate.taskmanagement.model.TaskEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -57,7 +58,42 @@ public class TaskManagementService {
         return taskDao.getTaskDetails(taskID);
     }
 
+    public Optional<PaginatedResponse> getUserTasks(Long userID, StatusDto statusDto, int page, int pageSize){
 
+        if(statusDto == StatusDto.All){
+            Optional<Long> totalCount =  taskDao.countTasksByUserID(userID);
+            if (totalCount.isEmpty() || totalCount.get() == 0){
+                return Optional.empty();
+            }
+            List<TaskCardDto> tasks = taskDao.getListUserTasksByIDSortedByDate(userID,page,pageSize);
+            PaginatedResponse response = PaginatedResponse.builder().
+                    tasks(tasks).
+                    page(page).
+                    pageSize(pageSize).
+                    totalCount(totalCount.get()).
+                    totalPages(Math.ceilDiv(totalCount.get(),pageSize))
+                    .build();
+            return Optional.ofNullable(response);
+
+        }else{
+            Optional<Long> totalCount =  taskDao.countTasksByUserIDAndStatus(userID,statusDto);
+            if (totalCount.isEmpty()){
+                return Optional.empty();
+            }
+            List<TaskCardDto> tasks = taskDao.getListUserTasksByIDAndStatusSortedByDate(userID,statusDto,page,pageSize);
+            PaginatedResponse response = PaginatedResponse.builder().
+                    tasks(tasks).
+                    page(page).
+                    pageSize(pageSize).
+                    totalCount(totalCount.get()).
+                    totalPages(Math.ceilDiv(totalCount.get(),pageSize))
+                    .build();
+
+            return Optional.ofNullable(response);
+
+        }
+
+    }
 
 
 }

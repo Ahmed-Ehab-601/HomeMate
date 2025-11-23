@@ -1,11 +1,10 @@
 package com.homemate.taskmanagementtests;
-
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.homemate.taskmanagement.controller.GlobalExceptionHandler;
 import com.homemate.taskmanagement.controller.TaskManagementController;
-import com.homemate.taskmanagement.dto.TaskDto;
-import com.homemate.taskmanagement.dto.TaskRequestDto;
+import com.homemate.taskmanagement.dto.*;
 import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
 import com.homemate.taskmanagement.exceptions.DuplicateRequestException;
 import com.homemate.taskmanagement.exceptions.RequestLimitExceededException;
@@ -24,6 +23,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -301,4 +301,128 @@ class TaskManagementControllerTest {
                         .content(objectMapper.writeValueAsString(validTaskRequest)))
                 .andExpect(status().isUnsupportedMediaType());
     }
+
+    @Test
+    void testThatGetUserTasksReturnsOkWithValidPaginatedResponse() throws Exception {
+        // Arrange
+        Long userId = 1L;
+        StatusDto status = StatusDto.All;
+        int page = 0;
+        int pageSize = 10;
+
+        List<TaskCardDto> mockTasks = createMockTaskCardList(10);
+        PaginatedResponse paginatedResponse = PaginatedResponse.builder()
+                .tasks(mockTasks)
+                .page(page)
+                .pageSize(pageSize)
+                .totalCount(25L)
+                .totalPages(3L)
+                .build();
+
+        when(taskManagementService.getUserTasks(userId, status, page, pageSize))
+                .thenReturn(Optional.of(paginatedResponse));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/user/tasks/{page}/{pageSize}", page, pageSize)
+                        .param("userID", userId.toString())
+                        .param("statusDto", status.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.tasks", hasSize(10)))
+                .andExpect(jsonPath("$.page", is(0)))
+                .andExpect(jsonPath("$.pageSize", is(10)))
+                .andExpect(jsonPath("$.totalCount", is(25)))
+                .andExpect(jsonPath("$.totalPages", is(3)));
+    }
+
+    @Test
+    void testThatGetUserTasksReturnsOkWithEmptyResponseWhenNoTasks() throws Exception {
+        // Arrange
+        Long userId = 1L;
+        StatusDto status = StatusDto.Done;
+        int page = 0;
+        int pageSize = 10;
+
+        when(taskManagementService.getUserTasks(userId, status, page, pageSize))
+                .thenReturn(Optional.empty());
+
+        // Act & Assert
+        mockMvc.perform(get("/api/user/tasks/{page}/{pageSize}", page, pageSize)
+                        .param("userID", userId.toString())
+                        .param("statusDto", status.toString()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testThatGetUserTasksReturnsBadRequestWhenUserIDIsNull() throws Exception {
+        // Arrange
+        int page = 0;
+        int pageSize = 10;
+
+        // Act & Assert
+        mockMvc.perform(get("/api/user/tasks/{page}/{pageSize}", page, pageSize)
+                        .param("statusDto", StatusDto.All.toString()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testThatGetUserTasksReturnsBadRequestWhenStatusIsNull() throws Exception {
+        // Arrange
+        Long userId = 1L;
+        int page = 0;
+        int pageSize = 10;
+
+        // Act & Assert
+        mockMvc.perform(get("/api/user/tasks/{page}/{pageSize}", page, pageSize)
+                        .param("userID", userId.toString()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testThatGetUserTasksHandlesLargePageNumber() throws Exception {
+        // Arrange
+        Long userId = 1L;
+        int page = 999;
+        int pageSize = 10;
+
+        when(taskManagementService.getUserTasks(userId, StatusDto.All, page, pageSize))
+                .thenReturn(Optional.empty());
+
+        // Act & Assert
+        mockMvc.perform(get("/api/user/tasks/{page}/{pageSize}", page, pageSize)
+                        .param("userID", userId.toString())
+                        .param("statusDto", StatusDto.All.toString()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testThatGetUserTasksReturnsBadRequestWhenBothParametersAreMissing() throws Exception {
+        // Arrange
+        int page = 0;
+        int pageSize = 10;
+
+        // Act & Assert
+        mockMvc.perform(get("/api/user/tasks/{page}/{pageSize}", page, pageSize))
+                .andExpect(status().isBadRequest());
+    }
+
+    // Helper method to create mock TaskCardDto list
+    private List<TaskCardDto> createMockTaskCardList(int size) {
+        List<TaskCardDto> tasks = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            TaskCardDto task = TaskCardDto.builder()
+                    .taskID((long) (i + 1))
+                    .startDate(LocalDateTime.of(2025, 11, 20, 10, 0))
+                    .status(StatusDto.InReview)
+                    .userName("User " + i)
+                    .taskerName("Tasker " + i)
+                    .serviceName("Service " + i)
+                    .addressCity("City " + i)
+                    .build();
+            tasks.add(task);
+        }
+        return tasks;
+    }
+
+
 }
