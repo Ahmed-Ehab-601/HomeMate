@@ -69,6 +69,20 @@ public class ReviewDao {
         return reviews;
     }
 
+    public List<ReviewDTO> getTaskerReviewsPaginated(Long id, int offset, int limit) {
+        String sql = "SELECT r.reviewID, r.text, r.rate, r.time, r.taskID " +
+                     "FROM Reviews r JOIN Task t ON r.taskID = t.taskID " +
+                     "WHERE t.taskerID = ? ORDER BY r.time DESC LIMIT ? OFFSET ?";
+
+        List<ReviewDTO> reviews = jdbcTemplate.query(sql, reviewDTORowMapper, id, limit, offset);
+
+        for (ReviewDTO review : reviews) {
+            List<ReviewImageDTO> images = getReviewImages(review.getReviewId());
+            review.setReviewImages(images);
+        }
+        return reviews;
+    }
+
     private List<ReviewImageDTO> getReviewImages(int reviewId) {
         String sql = "SELECT imgId, format, ImgFile, ImgName " +
                      "FROM Review_Image WHERE review_id = ?";
