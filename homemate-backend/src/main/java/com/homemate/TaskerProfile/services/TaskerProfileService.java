@@ -4,9 +4,6 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.homemate.TaskerProfile.Dao.ReviewDao;
-import com.homemate.TaskerProfile.Dao.ServiceDao;
-import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.TaskerProfile.DTO.ChangeAvailabilityDTO;
 import com.homemate.TaskerProfile.DTO.ChangeBioDTO;
 import com.homemate.TaskerProfile.DTO.ChangeImageDTO;
@@ -19,6 +16,9 @@ import com.homemate.TaskerProfile.DTO.PasswordDTO;
 import com.homemate.TaskerProfile.DTO.PhoneNumberDTO;
 import com.homemate.TaskerProfile.DTO.TaskerProfileDTO;
 import com.homemate.TaskerProfile.DTO.UsernameDTO;
+import com.homemate.TaskerProfile.Dao.ReviewDao;
+import com.homemate.TaskerProfile.Dao.ServiceDao;
+import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.TaskerProfile.models.Services;
 import com.homemate.TaskerProfile.models.Tasker;
 
@@ -35,7 +35,7 @@ public class TaskerProfileService {
     }
 
     public Boolean changePassword(PasswordDTO passwordDTO) {
-        int final int MAX_LENGTH = 255;
+        final int MAX_LENGTH = 255;
         String newPassword = passwordDTO.getNewPassword();
         if (newPassword.length() > MAX_LENGTH) {
             throw new IllegalArgumentException("Password must not exceed 255 characters.");
@@ -49,7 +49,7 @@ public class TaskerProfileService {
 
     public Boolean changeUsername(UsernameDTO usernameDTO) {
         
-        int final int MAX_LENGTH = 50;
+        final int MAX_LENGTH = 50;
         String newUsername = usernameDTO.getNewUsername();
         if (newUsername.length() > MAX_LENGTH) {
             throw new IllegalArgumentException("Username must not exceed 50 characters.");
@@ -62,7 +62,7 @@ public class TaskerProfileService {
     }
 
     public Boolean changePhoneNumber(PhoneNumberDTO phoneNumberDTO) {
-        int final int MAX_LENGTH = 50;
+        final int MAX_LENGTH = 50;
         String newPhoneNumber = phoneNumberDTO.getNewPhoneNumber();
         if (newPhoneNumber.length() > MAX_LENGTH) {
             throw new IllegalArgumentException("Phone number must not exceed 50 characters.");
@@ -74,7 +74,7 @@ public class TaskerProfileService {
     }
 
     public Boolean ChangeEmail(EmailDTO emailDTO) {
-        int final int MAX_LENGTH = 50;
+        final int MAX_LENGTH = 50;
         String newEmail = emailDTO.getNewEmail();
         if (newEmail.length() > MAX_LENGTH) {
             throw new IllegalArgumentException("Email must not exceed 50 characters.");
@@ -139,7 +139,7 @@ public class TaskerProfileService {
             return true;
     }
 
-    public List<services> getAvailableServices() {
+    public List<Services> getAvailableServices() {
         return serviceDao.getAll();
     }
 
