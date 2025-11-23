@@ -111,3 +111,73 @@ export async function fetchTaskerById(taskerId) {
   });
 }
 
+/**
+ * Fetch tasker profile details
+ * @param {number} taskerId - Tasker ID
+ * @returns {Promise<Object>} TaskerProfileDTO
+ */
+export async function fetchTaskerProfile(taskerId) {
+  // TODO: Uncomment when backend is ready
+  // const response = await fetch(`${import.meta.env.VITE_API_URL}/api/taskers/${taskerId}/profile`);
+  // if (!response.ok) {
+  //   throw {
+  //     status: response.status,
+  //     error: "FETCH_ERROR",
+  //     message: "Failed to load tasker profile",
+  //   };
+  // }
+  // return response.json();
+
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const tasker = taskers.find((t) => String(t.id) === String(taskerId));
+      if (!tasker) {
+        reject(new Error("Tasker not found"));
+        return;
+      }
+      resolve(tasker);
+    }, 250);
+  });
+}
+
+/**
+ * Fetch paginated reviews for a tasker
+ * @param {number} taskerId - Tasker ID
+ * @param {number} page - Page number (0-indexed)
+ * @param {number} pageSize - Number of reviews per page
+ * @returns {Promise<Object>} Response with reviews array and pagination metadata
+ */
+export async function fetchTaskerReviews(taskerId, page = 0, pageSize = 5) {
+  // TODO: Uncomment when backend is ready
+  // const url = `${import.meta.env.VITE_API_URL}/api/taskers/${taskerId}/reviews/${page}/${pageSize}`;
+  // const response = await fetch(url, {
+  //   method: "GET",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //   },
+  // });
+  //
+  // if (!response.ok) {
+  //   throw {
+  //     status: response.status,
+  //     error: "FETCH_ERROR",
+  //     message: "Failed to load reviews",
+  //   };
+  // }
+  //
+  // return response.json();
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Mock implementation - will be replaced by actual API call
+      resolve({
+        reviews: [],
+        totalCount: 0,
+        currentPage: page,
+        totalPages: 0,
+        pageSize: pageSize,
+      });
+    }, 200);
+  });
+}
+
