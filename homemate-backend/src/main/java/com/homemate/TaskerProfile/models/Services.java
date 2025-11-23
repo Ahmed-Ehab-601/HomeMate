@@ -1,6 +1,6 @@
 package com.homemate.TaskerProfile.models;
 
-public class Service {
+public class Services {
     private Long serviceID;
     private String name;
     private String description;
