@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ActiveProfiles("service")  // uses application-test.properties
 @Transactional  // Rolls back after each test
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class findServicePart {
+public class FindServicePart {
 
     @Autowired
     private ServiceDaoImpl serviceDao;

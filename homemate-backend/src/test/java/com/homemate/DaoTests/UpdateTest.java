@@ -1,7 +1,6 @@
 package com.homemate.DaoTests;
 
 import com.homemate.Dao.ServiceDaoImpl;
-import com.homemate.MapRow.ServiceMapRow;
 import com.homemate.Model.ServiceEntity;
 
 import org.junit.jupiter.api.Test;
@@ -12,11 +11,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.mockito.Mockito.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
-    public class updateTest {
+    public class UpdateTest {
 
 
         @Mock

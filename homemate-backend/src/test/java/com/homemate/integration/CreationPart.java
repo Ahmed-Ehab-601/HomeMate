@@ -20,44 +20,19 @@ import static org.junit.jupiter.api.AssertionsKt.assertNotNull;
 @ActiveProfiles("service")  // ← Uses application-test.properties
 @Transactional  // ← Rolls back after each test
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class creationPart {
+public class CreationPart {
     @Autowired
     private ServiceDaoImpl serviceDao;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @BeforeEach
-    public void setUp() {
-        // Delete in correct order: children first, then parents
-        try {
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0"); // Temporarily disable
-            jdbcTemplate.execute("DELETE FROM task");            // Delete tasks first
-            jdbcTemplate.execute("DELETE FROM service");         // Then delete services
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1"); // Re-enable
-        } catch (Exception e) {
-            // Log but don't fail if tables are already empty
-            System.out.println("Cleanup warning: " + e.getMessage());
-        }
-    }
-
-    @AfterEach
-    public void tearDown() {
-        try {
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
-            jdbcTemplate.execute("DELETE FROM task");
-            jdbcTemplate.execute("DELETE FROM service");
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
-        } catch (Exception e) {
-            System.out.println("Teardown warning: " + e.getMessage());
-        }
-    }
 
     @Test
     @Order(1)
     public void testCreateServiceAndVerifyInDatabase() throws Exception{
         ServiceEntity service = ServiceEntity.builder()
-                .name("PLUMBING")
+                .name("PLUMB")
                 .description("Professional plumbing services")
                 .imageData(null)
                 .imageType("png")
@@ -66,12 +41,12 @@ public class creationPart {
 
         serviceDao.save(service);
         List<Map<String, Object>> results = jdbcTemplate.queryForList(
-                "SELECT * FROM service WHERE name = ?", "PLUMBING"
+                "SELECT * FROM service WHERE name = ?", "PLUMB"
         );
 
         assertEquals(1, results.size());
         Map<String, Object> row = results.getFirst();
-        assertEquals("PLUMBING", row.get("name"));
+        assertEquals("PLUMB", row.get("name"));
         assertEquals("Professional plumbing services", row.get("description"));
         assertEquals("png", row.get("imageType"));
         assertEquals("plumbing-icon", row.get("imageName"));

@@ -17,7 +17,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 
-public class deleteTest {
+public class DeleteTest {
 
     @Mock
     private JdbcTemplate jdbcTemplate;

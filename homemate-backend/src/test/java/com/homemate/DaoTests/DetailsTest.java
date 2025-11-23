@@ -28,7 +28,7 @@ public class DetailsTest {
     public void testCorrectnessOfNumOFTaskers() throws Exception {
         long serviceId = 5L;
 
-        // Stub query using doReturn()
+        
         doReturn(3)
                 .when(jdbcTemplate)
                 .queryForObject(anyString(), eq(Integer.class), eq(serviceId));
