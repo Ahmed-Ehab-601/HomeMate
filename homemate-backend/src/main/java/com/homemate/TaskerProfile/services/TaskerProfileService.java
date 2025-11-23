@@ -19,7 +19,7 @@ import com.homemate.TaskerProfile.DTO.PasswordDTO;
 import com.homemate.TaskerProfile.DTO.PhoneNumberDTO;
 import com.homemate.TaskerProfile.DTO.TaskerProfileDTO;
 import com.homemate.TaskerProfile.DTO.UsernameDTO;
-import com.homemate.TaskerProfile.models.Service;
+import com.homemate.TaskerProfile.models.Services;
 import com.homemate.TaskerProfile.models.Tasker;
 
 @Service
@@ -35,62 +35,65 @@ public class TaskerProfileService {
     }
 
     public Boolean changePassword(PasswordDTO passwordDTO) {
-        try {
-            Tasker tasker = taskerDao.getByID(passwordDTO.getTaskerID());
-            tasker.setPassword(passwordDTO.getNewPassword());
-            taskerDao.update(tasker);
-            return true;
-        } catch (Exception e) {
-            return false;
+        int final int MAX_LENGTH = 255;
+        String newPassword = passwordDTO.getNewPassword();
+        if (newPassword.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("Password must not exceed 255 characters.");
         }
+        Tasker tasker = taskerDao.getByID(passwordDTO.getTaskerID());
+        tasker.setPassword(passwordDTO.getNewPassword());
+        taskerDao.update(tasker);
+        return true;
+        
     }
 
     public Boolean changeUsername(UsernameDTO usernameDTO) {
-        try {
-            Tasker tasker = taskerDao.getByID(usernameDTO.getTaskerID());
-            tasker.setUsername(usernameDTO.getNewUsername());
-            taskerDao.update(tasker);
-            return true;
-        } catch (Exception e) {
-            return false;
+        
+        int final int MAX_LENGTH = 50;
+        String newUsername = usernameDTO.getNewUsername();
+        if (newUsername.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("Username must not exceed 50 characters.");
         }
+        Tasker tasker = taskerDao.getByID(usernameDTO.getTaskerID());
+        tasker.setUsername(usernameDTO.getNewUsername());
+        taskerDao.update(tasker);
+        return true;
+        
     }
 
     public Boolean changePhoneNumber(PhoneNumberDTO phoneNumberDTO) {
-        try {
-            Tasker tasker = taskerDao.getByID(phoneNumberDTO.getTaskerID());
-            tasker.setPhone(phoneNumberDTO.getNewPhoneNumber());
-            taskerDao.update(tasker);
-            return true;
-        } catch (Exception e) {
-            return false;
+        int final int MAX_LENGTH = 50;
+        String newPhoneNumber = phoneNumberDTO.getNewPhoneNumber();
+        if (newPhoneNumber.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("Phone number must not exceed 50 characters.");
         }
+        Tasker tasker = taskerDao.getByID(phoneNumberDTO.getTaskerID());
+        tasker.setPhone(phoneNumberDTO.getNewPhoneNumber());
+        taskerDao.update(tasker);
+        return true;
     }
 
     public Boolean ChangeEmail(EmailDTO emailDTO) {
-        try {
-            Tasker tasker = taskerDao.getByID(emailDTO.getTaskerID());
-            tasker.setEmail(emailDTO.getNewEmail());
-            taskerDao.update(tasker);
-            return true;
-        } catch (Exception e) {
-            return false;
+        int final int MAX_LENGTH = 50;
+        String newEmail = emailDTO.getNewEmail();
+        if (newEmail.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("Email must not exceed 50 characters.");
         }
+        Tasker tasker = taskerDao.getByID(emailDTO.getTaskerID());
+        tasker.setEmail(emailDTO.getNewEmail());
+        taskerDao.update(tasker);
+        return true;
+        
     }
 
     public Boolean changeDOB(DateOfBirthDTO dateOfBirthDTO) {
-        try {
-            Tasker tasker = taskerDao.getByID(dateOfBirthDTO.getTaskerID());
-            tasker.setBirthDate(dateOfBirthDTO.getNewDateOfBirth());
-            taskerDao.update(tasker);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        Tasker tasker = taskerDao.getByID(dateOfBirthDTO.getTaskerID());
+        tasker.setBirthDate(dateOfBirthDTO.getNewDateOfBirth());
+        taskerDao.update(tasker);
+        return true;
     }
 
     public TaskerProfileDTO getData(Long taskerID) {
-        // Note: taskerID should come from authentication context in production
         return taskerDao.getProfile(taskerID);
     }
 
@@ -123,61 +126,64 @@ public class TaskerProfileService {
     }
 
     public Boolean changeHourRate(HourRateDTO hourRateDTO) {
-        try {
             Tasker tasker = taskerDao.getByID(hourRateDTO.getTaskerID());
             tasker.setHourrate(hourRateDTO.getNewHourRate());
             taskerDao.update(tasker);
             return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
 
     public Boolean changeService(Long taskerID, Long serviceID) {
-        try {
             Tasker tasker = taskerDao.getByID(taskerID);
             tasker.setServiceID(serviceID);
             taskerDao.update(tasker);
             return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
 
-    public List<Service> getAvailableServices() {
+    public List<services> getAvailableServices() {
         return serviceDao.getAll();
     }
 
     public Boolean changeBio(ChangeBioDTO changeBioDTO) {
-        try {
-            Tasker tasker = taskerDao.getByID(changeBioDTO.getTaskerID());
-            tasker.setBio(changeBioDTO.getNewBio());
-            taskerDao.update(tasker);
-            return true;
-        } catch (Exception e) {
-            return false;
+
+        final int MAX_LENGTH = 500;
+
+        String newBio = changeBioDTO.getNewBio();
+        if (newBio.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("Bio must not exceed 500 characters.");
         }
+        
+        Tasker tasker = taskerDao.getByID(changeBioDTO.getTaskerID());
+        tasker.setBio(newBio);
+        taskerDao.update(tasker);
+        return true;
+        
     }
 
     public Boolean changeAvailablity(ChangeAvailabilityDTO changeAvailabilityDTO) {
-        try {
-            Tasker tasker = taskerDao.getByID(changeAvailabilityDTO.getTaskerID());
-            tasker.setAvailability(changeAvailabilityDTO.getNewAvailability());
-            taskerDao.update(tasker);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        Tasker tasker = taskerDao.getByID(changeAvailabilityDTO.getTaskerID());
+        tasker.setAvailability(changeAvailabilityDTO.getNewAvailability());
+        taskerDao.update(tasker);
+        return true;
+        
     }
 
     public Boolean changeImage(ChangeImageDTO changeImageDTO) {
-        try {
-            Tasker tasker = taskerDao.getByID(changeImageDTO.getTaskerID());
-            tasker.setImage(changeImageDTO.getNewImage());
-            taskerDao.update(tasker);
-            return true;
-        } catch (Exception e) {
-            return false;
+
+        final long MAX_SIZE = 64L * 1024 * 1024; // 64 MB
+    
+        byte[] newImage = changeImageDTO.getNewImage();
+        if (newImage == null || newImage.length == 0) {
+            throw new IllegalArgumentException("Image cannot be empty.");
         }
+        if (newImage.length > MAX_SIZE) {
+            throw new IllegalArgumentException("Image size exceeds 64MB limit.");
+        }
+    
+        Tasker tasker = taskerDao.getByID(changeImageDTO.getTaskerID());
+        tasker.setImage(newImage);
+        taskerDao.update(tasker);
+    
+        return true;
     }
+    
 }
