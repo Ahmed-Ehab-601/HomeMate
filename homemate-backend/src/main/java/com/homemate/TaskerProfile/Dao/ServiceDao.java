@@ -6,7 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.homemate.TaskerProfile.mappers.ServiceRowMapper;
-import com.homemate.TaskerProfile.models.Services;
+import com.homemate.TaskerProfile.models.Service;
 
 @Repository
 public class ServiceDao {
@@ -18,7 +18,7 @@ public class ServiceDao {
         this.serviceRowMapper = serviceRowMapper;
     }
 
-    public List<Services> getAll(){
+    public List<Service> getAll(){
         String sql = "SELECT * FROM Service";
         return jdbcTemplate.query(sql, serviceRowMapper);
     }
