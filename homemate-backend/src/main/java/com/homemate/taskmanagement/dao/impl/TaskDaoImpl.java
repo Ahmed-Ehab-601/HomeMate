@@ -213,4 +213,68 @@ public class TaskDaoImpl implements TaskDao {
         return Optional.ofNullable(count);
     }
 
+    @Override
+    public List<TaskCardDto> getListTaskerTasksByIDSortedByDate(Long taskerID, int page, int pageSize) {
+        String sql = """
+            SELECT
+                t.taskID,
+                t.startDate,
+                t.status,
+                CONCAT(u.firstName, ' ', u.lastName) AS userName,
+                CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
+                s.name AS serviceName,
+                a.city
+            FROM Task t
+                INNER JOIN Users u ON t.userID = u.userID
+                INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
+                INNER JOIN Service s ON t.serviceID = s.serviceID
+                INNER JOIN Address a ON t.addressID = a.addressID
+            WHERE tas.taskerID = ?
+            ORDER BY startDate DESC
+            LIMIT ? OFFSET ?
+            
+            """;
+
+        return jdbcTemplate.query(sql,new TaskCardRowMapper(),taskerID,pageSize,page * pageSize);
+    }
+
+    @Override
+    public List<TaskCardDto> getListTaskerTasksByIDAndStatusSortedByDate(Long taskerID, StatusDto status, int page, int pageSize) {
+        String sql = """
+            SELECT
+                t.taskID,
+                t.startDate,
+                t.status,
+                CONCAT(u.firstName, ' ', u.lastName) AS userName,
+                CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
+                s.name AS serviceName,
+                a.city
+            FROM Task t
+                INNER JOIN Users u ON t.userID = u.userID
+                INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
+                INNER JOIN Service s ON t.serviceID = s.serviceID
+                INNER JOIN Address a ON t.addressID = a.addressID
+            WHERE tas.taskerID = ? and status = ?
+            ORDER BY startDate DESC
+            LIMIT ? OFFSET ?
+            
+            """;
+
+        return jdbcTemplate.query(sql,new TaskCardRowMapper(),taskerID, status.toString(),pageSize,page * pageSize);
+    }
+
+    @Override
+    public Optional<Long> countTasksByTaskerID(Long taskerID) {
+        String sql = "SELECT COUNT(*) FROM Task WHERE taskerID = ? ";
+        Long count = jdbcTemplate.queryForObject(sql,Long.class,taskerID);
+        return Optional.ofNullable(count);
+    }
+
+    @Override
+    public Optional<Long> countTasksByTaskerIDAndStatus(Long taskerID, StatusDto status) {
+        String sql = "SELECT COUNT(*) FROM Task WHERE taskerID = ? and status = ? ";
+        Long count = jdbcTemplate.queryForObject(sql,Long.class,taskerID,status.toString());
+        return Optional.ofNullable(count);
+    }
+
 }

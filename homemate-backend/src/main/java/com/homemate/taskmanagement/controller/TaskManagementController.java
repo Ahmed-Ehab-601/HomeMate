@@ -46,6 +46,19 @@ public class TaskManagementController {
             return new ResponseEntity <> (response.get(),HttpStatus.OK);
         }
     }
+    @GetMapping("/tasker/tasks/{page}/{pageSize}")
+    public ResponseEntity<?> getTaskerTasks(@RequestParam @NotNull(message = "taskerID required") Long taskerID,
+                                          @RequestParam @NotNull(message = "Status required") StatusDto statusDto,
+                                          @PathVariable("page") @Min(0)  int page,
+                                          @PathVariable("pageSize")@Min(1) @Max(100) int pageSize){
+
+        Optional<PaginatedResponse> response = taskManagementService.getTaskerTasks(taskerID,statusDto,page,pageSize);
+        if(response.isEmpty()){
+            return new ResponseEntity <> (HttpEntity.EMPTY,HttpStatus.OK);
+        }else{
+            return new ResponseEntity <> (response.get(),HttpStatus.OK);
+        }
+    }
 
 
 }
