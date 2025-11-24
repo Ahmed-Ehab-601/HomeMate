@@ -51,9 +51,10 @@ public class ServiceManagService {
 
     public ServiceDetailsDto getDetails(long serviceID) throws Exception {
          ServiceEntity service= serviceDAO.get(serviceID);
+         ServiceDto serviceDto=serviceMapper.mapToDto(service);
          int count = serviceDAO.countCompletedTasksByServiceId(serviceID);
          int taskers=serviceDAO.countTasker(serviceID);
-        return ServiceDetailsDto.builder().service(service).taskers(taskers).completedTasks(count)
+        return ServiceDetailsDto.builder().service(serviceDto).taskers(taskers).completedTasks(count)
                 .build();
     }
 }

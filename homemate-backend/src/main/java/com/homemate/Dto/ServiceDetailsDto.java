@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @Builder
 public class ServiceDetailsDto {
-    private ServiceEntity service;
+    private ServiceDto service;
     private int completedTasks;
     private int taskers;
 }

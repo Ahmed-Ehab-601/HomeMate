@@ -2,6 +2,7 @@ package com.homemate.Dao;
 import java.sql.SQLException;
 import java.util.List;
 
+import com.homemate.Dto.ServiceDto;
 import com.homemate.MapRow.ServiceMapRow;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;

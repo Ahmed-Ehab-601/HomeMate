@@ -1,5 +1,6 @@
 package com.homemate.Interface;
 
+import com.homemate.Dto.ServiceDto;
 import com.homemate.Model.ServiceEntity;
 
 import java.sql.SQLException;
