@@ -1,12 +1,11 @@
-package com.homemate.Dao;
+package com.homemate.dao;
 
-import com.homemate.Model.Service;
+import com.homemate.model.Service;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
 
 @Component
 public class ServiceRowMapper implements RowMapper<Service> {
@@ -15,10 +14,10 @@ public class ServiceRowMapper implements RowMapper<Service> {
     public Service mapRow(ResultSet rs, int rowNum) throws SQLException {
         Service service = new Service();
 
-        service.setServiceid(rs.getInt("serviceID"));
-        service.setServicename(rs.getString("name"));
+        service.setServiceId(rs.getInt("serviceID"));
+        service.setServiceName(rs.getString("name"));
         service.setDescription(rs.getString("description"));
-        service.setImagedata(rs.getBytes("imagedata"));
+        service.setImageData(rs.getBytes("imagedata"));
         service.setImageName(rs.getString("imageName"));
         service.setImageType(rs.getString("imageType"));
 

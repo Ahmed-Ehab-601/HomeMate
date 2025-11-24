@@ -1,8 +1,8 @@
-package com.homemate.Controller;
+package com.homemate.controller;
 
 
-import com.homemate.Dto.ServiceDto;
-import com.homemate.Service.ServiceDiscoveryService;
+import com.homemate.dto.ServiceDto;
+import com.homemate.service.ServiceDiscoveryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,6 +1,6 @@
-package com.homemate.Dao;
+package com.homemate.dao;
 
-import com.homemate.Model.Tasker;
+import com.homemate.model.Tasker;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;

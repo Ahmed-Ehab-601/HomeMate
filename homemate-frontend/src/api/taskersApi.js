@@ -1,4 +1,4 @@
-import taskers from "../data/taskers";
+// import taskers from "../data/taskers";
 import { normalizeTasker } from "../utils/taskers";
 
 const DEFAULT_API_BASE_URL = "http://localhost:8080";

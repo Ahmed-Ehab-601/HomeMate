@@ -1,8 +1,8 @@
-package com.homemate.Controller;
+package com.homemate.controller;
 
-import com.homemate.Dto.FindTaskerCriteriaDto;
-import com.homemate.Dto.TaskerCardDto;
-import com.homemate.Service.TaskerDiscoveryService;
+import com.homemate.dto.FindTaskerCriteriaDto;
+import com.homemate.dto.TaskerCardDto;
+import com.homemate.service.TaskerDiscoveryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -1,22 +1,23 @@
-package com.homemate.Dto;
+package com.homemate.mapper;
 
-import com.homemate.Model.Service;
+import com.homemate.dto.ServiceDto;
+import com.homemate.model.Service;
 import org.springframework.stereotype.Component;
 
 import java.util.Base64;
 
 @Component
-public class ObjectMapper {
+public class ServiceMapper {
 
     public ServiceDto mapToServiceDto(Service service, int totalTasks) {
 
         ServiceDto dto = new ServiceDto();
-        dto.setServiceid(service.getServiceid());
-        dto.setServicename(service.getServicename());
+        dto.setServiceid(service.getServiceId());
+        dto.setServicename(service.getServiceName());
         dto.setDescription(service.getDescription());
 
-        if (service.getImagedata() != null && service.getImagedata().length > 0) {
-            String base64Image = Base64.getEncoder().encodeToString(service.getImagedata());
+        if (service.getImageData() != null && service.getImageData().length > 0) {
+            String base64Image = Base64.getEncoder().encodeToString(service.getImageData());
             dto.setImageData(base64Image);
             dto.setImageName(service.getImageName());
             dto.setImageType(service.getImageType());

@@ -1,39 +1,31 @@
-package com.homemate.Model;
+package com.homemate.dto;
 
-public class Service {
-    int serviceid ;
+public class ServiceDto {
+    int serviceid;
     String servicename;
     String description;
-    private byte[] imagedata;
+    private String imageData;
     private String imageName;
     private String imageType;
 
 
-    public Service() {}
+    private int totalTasks;
 
-    public Service(int serviceid, String servicename, String description,
-                   byte[] imagedata, String imageName, String imageType) {
-        this.serviceid = serviceid;
-        this.servicename = servicename;
-        this.description = description;
-        this.imagedata = imagedata;
-        this.imageName = imageName;
-        this.imageType = imageType;
+    public ServiceDto() {
     }
 
-
-
     public int getServiceid() {
-
         return serviceid;
     }
 
     public void setServiceid(int serviceid) {
 
         this.serviceid = serviceid;
+        this.totalTasks=0;
     }
 
     public String getServicename() {
+
         return servicename;
     }
 
@@ -47,16 +39,15 @@ public class Service {
     }
 
     public void setDescription(String description) {
-
         this.description = description;
     }
 
-    public byte[] getImagedata() {
-        return imagedata;
+    public String getImageData() {
+        return imageData;
     }
 
-    public void setImagedata(byte[] imagedata) {
-        this.imagedata = imagedata;
+    public void setImageData(String imageData) {
+        this.imageData = imageData;
     }
 
     public String getImageName() {
@@ -75,15 +66,12 @@ public class Service {
         this.imageType = imageType;
     }
 
+    public int getTotalTasks() {
+        return totalTasks;
+    }
+
+    public void setTotalTasks(int totalTasks) {
+        this.totalTasks = totalTasks;
+    }
+
 }
-
-
-//CREATE TABLE Service (
-//        serviceID INT AUTO_INCREMENT PRIMARY KEY,
-//        name VARCHAR(100) NOT NULL UNIQUE,
-//description VARCHAR(500),
-//imagedata LONGBLOB,
-//imageName VARCHAR(200),
-//imageType VARCHAR(200),
-//INDEX idx_service_name (name)
-//);

@@ -1,6 +1,6 @@
-package com.homemate.Dao;
+package com.homemate.dao;
 
-import com.homemate.Model.Service;
+import com.homemate.model.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;

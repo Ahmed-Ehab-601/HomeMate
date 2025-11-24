@@ -1,10 +1,10 @@
-package com.homemate.Service;
+package com.homemate.service;
 
-import com.homemate.Dao.TaskerDao;
-import com.homemate.Dto.FindTaskerCriteriaDto;
-import com.homemate.Dto.TaskerCardDto;
-import com.homemate.Dto.TaskerCardMapper;
-import com.homemate.Model.Tasker;
+import com.homemate.dao.TaskerDao;
+import com.homemate.dto.FindTaskerCriteriaDto;
+import com.homemate.dto.TaskerCardDto;
+import com.homemate.mapper.TaskerCardMapper;
+import com.homemate.model.Tasker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
@@ -32,15 +32,25 @@ public class TaskerDiscoveryService {
             throw new IllegalArgumentException("Service ID is required");
         }
 
-        if (filter.getMinRating() != null && filter.getMaxRating() != null &&
-                filter.getMinRating() > filter.getMaxRating()) {
-            throw new IllegalArgumentException("minRating cannot be greater than maxRating");
+
+        if (filter.getMinRating() != null && filter.getMaxRating() != null) {
+            Double minRating = filter.getMinRating();
+            Double maxRating = filter.getMaxRating();
+            if (minRating > maxRating) {
+                throw new IllegalArgumentException("minRating cannot be greater than maxRating");
+            }
         }
 
-        if (filter.getMinHourRate() != null && filter.getMaxHourRate() != null &&
-                filter.getMinHourRate() > filter.getMaxHourRate()) {
-            throw new IllegalArgumentException("minHourRate cannot be greater than maxHourRate");
+        if (filter.getMinHourRate() != null && filter.getMaxHourRate() != null) {
+
+            Double minHourRate = filter.getMinHourRate();
+            Double maxHourRate = filter.getMaxHourRate();
+
+            if (minHourRate > maxHourRate) {
+                throw new IllegalArgumentException("minHourRate cannot be greater than maxHourRate");
+            }
         }
+
 
         List<Tasker> taskers = taskerDao.findTaskersWithFilters(filter, page, pageSize);
         List<TaskerCardDto> dtos = new ArrayList<>();

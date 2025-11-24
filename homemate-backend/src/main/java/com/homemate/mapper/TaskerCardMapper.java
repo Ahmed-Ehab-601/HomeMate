@@ -1,6 +1,7 @@
-package com.homemate.Dto;
+package com.homemate.mapper;
 
-import com.homemate.Model.Tasker;
+import com.homemate.dto.TaskerCardDto;
+import com.homemate.model.Tasker;
 import org.springframework.stereotype.Component;
 import java.util.Base64;
 

@@ -151,7 +151,7 @@ function HomePage() {
       </section>
 
       {/* Service Discovery Section */}
-      <section id="how-it-works">
+      {/* <section id="how-it-works">
         <div className="section-title">
           <div>
             <p className="section-kicker">Service discovery</p>
@@ -184,7 +184,7 @@ function HomePage() {
             )}
           </>
         )}
-      </section>
+      </section> */}
     </main>
   );
 }

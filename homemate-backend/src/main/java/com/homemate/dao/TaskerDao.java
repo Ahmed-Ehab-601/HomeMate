@@ -1,7 +1,7 @@
-package com.homemate.Dao;
+package com.homemate.dao;
 
-import com.homemate.Dto.FindTaskerCriteriaDto;
-import com.homemate.Model.Tasker;
+import com.homemate.dto.FindTaskerCriteriaDto;
+import com.homemate.model.Tasker;
 import java.util.List;
 
 public interface TaskerDao {

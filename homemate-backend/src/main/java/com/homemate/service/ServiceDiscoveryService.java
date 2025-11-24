@@ -1,9 +1,9 @@
-package com.homemate.Service;
+package com.homemate.service;
 
-import com.homemate.Dto.ObjectMapper;
-import com.homemate.Dto.ServiceDto;
-import com.homemate.Dao.ServiceDao;
-import com.homemate.Model.Service;
+import com.homemate.mapper.ServiceMapper;
+import com.homemate.dto.ServiceDto;
+import com.homemate.dao.ServiceDao;
+import com.homemate.model.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -13,12 +13,12 @@ import java.util.List;
 public class ServiceDiscoveryService {
 
     private final ServiceDao serviceDao;
-    private final ObjectMapper objectMapper;
+    private final ServiceMapper serviceMapper;
 
     @Autowired
-    public ServiceDiscoveryService(ServiceDao serviceDao, ObjectMapper objectMapper) {
+    public ServiceDiscoveryService(ServiceDao serviceDao, ServiceMapper serviceMapper) {
         this.serviceDao = serviceDao;
-        this.objectMapper = objectMapper;
+        this.serviceMapper = serviceMapper;
     }
 
     public List<ServiceDto> getAllServices() {
@@ -26,8 +26,9 @@ public class ServiceDiscoveryService {
         List<ServiceDto> serviceDtos = new ArrayList<>();
 
         for (Service service : services) {
-            int totalTasks = serviceDao.getTotalTasksForService(service.getServiceid());
-            ServiceDto dto = objectMapper.mapToServiceDto(service, totalTasks);
+            int totalTasks = serviceDao.getTotalTasksForService(service.getServiceId());
+            System.out.println(totalTasks);
+            ServiceDto dto = serviceMapper.mapToServiceDto(service, totalTasks);
             serviceDtos.add(dto);
         }
 

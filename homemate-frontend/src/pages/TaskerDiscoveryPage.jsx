@@ -188,8 +188,10 @@ function TaskerDiscoveryPage() {
           onChange={(event) => updateFilters({ rating: event.target.value })}
         >
           <option value="any">Rating • Any</option>
-          <option value="4.5">4.5 ★ & up</option>
+          <option value="3.5">3.5 ★ & up</option>
+          <option value="4">4.0 ★ & up</option>
           <option value="4.8">4.8 ★ & up</option>
+          <option value="5">5.0 ★ </option>
         </select>
 
         <input

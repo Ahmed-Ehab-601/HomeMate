@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import taskersData from "../data/taskers";
+// import taskersData from "../data/taskers";
 import { fetchUserAddresses } from "../api/addressesApi";
 import { requestTask } from "../api/tasksApi";
 import { fetchServices } from "../api/servicesApi";
