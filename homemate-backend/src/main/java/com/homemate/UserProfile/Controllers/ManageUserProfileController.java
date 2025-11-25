@@ -37,7 +37,7 @@ public class ManageUserProfileController {
     }
 
     @GetMapping("/profile")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserProfileDTO> getProfile(@AuthenticationPrincipal AppUserDetails userDetails) {
         return ResponseEntity.ok(userService.getProfile(userDetails.getId()));
     }
