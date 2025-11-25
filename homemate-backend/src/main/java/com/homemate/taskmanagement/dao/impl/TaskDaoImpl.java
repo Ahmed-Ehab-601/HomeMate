@@ -26,10 +26,14 @@ import java.util.Optional;
 public class TaskDaoImpl implements TaskDao {
 
     private final JdbcTemplate jdbcTemplate;
+    private final TaskCardRowMapper taskCardRowMapper;
+    private final TaskRowMapper taskRowMapper;
 
 
-    public TaskDaoImpl(final JdbcTemplate jdbcTemplate) {
+    public TaskDaoImpl(final JdbcTemplate jdbcTemplate, TaskCardRowMapper taskCardRowMapper, TaskRowMapper taskRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
+        this.taskCardRowMapper = taskCardRowMapper;
+        this.taskRowMapper = taskRowMapper;
     }
 
 
@@ -131,7 +135,7 @@ public class TaskDaoImpl implements TaskDao {
             WHERE t.taskID = ?
             """;
 
-        TaskDto taskDto = jdbcTemplate.queryForObject(sql,new TaskRowMapper(),taskID);
+        TaskDto taskDto = jdbcTemplate.queryForObject(sql,taskRowMapper,taskID);
         return Optional.ofNullable(taskDto);
     }
 
@@ -171,7 +175,7 @@ public class TaskDaoImpl implements TaskDao {
             
             """;
 
-        return jdbcTemplate.query(sql,new TaskCardRowMapper(),userID,pageSize,page * pageSize);
+        return jdbcTemplate.query(sql,taskCardRowMapper,userID,pageSize,page * pageSize);
     }
 
     @Override
@@ -196,7 +200,7 @@ public class TaskDaoImpl implements TaskDao {
             
             """;
 
-        return jdbcTemplate.query(sql,new TaskCardRowMapper(),userID, status.toString(),pageSize,page * pageSize);
+        return jdbcTemplate.query(sql,taskCardRowMapper,userID, status.toString(),pageSize,page * pageSize);
     }
 
     @Override
@@ -235,7 +239,7 @@ public class TaskDaoImpl implements TaskDao {
             
             """;
 
-        return jdbcTemplate.query(sql,new TaskCardRowMapper(),taskerID,pageSize,page * pageSize);
+        return jdbcTemplate.query(sql,taskCardRowMapper,taskerID,pageSize,page * pageSize);
     }
 
     @Override
@@ -260,7 +264,7 @@ public class TaskDaoImpl implements TaskDao {
             
             """;
 
-        return jdbcTemplate.query(sql,new TaskCardRowMapper(),taskerID, status.toString(),pageSize,page * pageSize);
+        return jdbcTemplate.query(sql,taskCardRowMapper,taskerID, status.toString(),pageSize,page * pageSize);
     }
 
     @Override
