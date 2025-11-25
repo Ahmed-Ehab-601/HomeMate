@@ -10,6 +10,8 @@ import TaskerProfilePage from "./pages/TaskerProfilePage";
 import RequestTaskPage from "./pages/RequestTaskPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import SignInPage from "./pages/SignInPage";
+import UserTasksPage from "./pages/UserTasksPage";
+import TaskerTasksPage from "./pages/TaskerTasksPage";
 
 // Protected route component
 function ProtectedRoute({ children }) {
@@ -43,6 +45,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/my-tasks" element={<UserTasksPage />} />
+      <Route path="/tasker/my-tasks" element={<TaskerTasksPage />} />
     </Routes>
   );
 }

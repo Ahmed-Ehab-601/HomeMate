@@ -1,3 +1,4 @@
+// pages/HomePage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchServices } from "../api/servicesApi";
@@ -24,9 +25,9 @@ function HomePage() {
           setStatus("success");
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
-          setError("We could not load services. Please try again.");
+          setError(err.message || "We could not load services. Please try again.");
           setStatus("error");
         }
       });
@@ -46,9 +47,15 @@ function HomePage() {
 
   const suggestions = searchText ? matchingServices.slice(0, 4) : [];
   const hasNoMatches = Boolean(searchText) && suggestions.length === 0;
+
+  // Popular services: top 6 by totalTasks, filtered to exclude 0 tasks
   const popularServices = useMemo(
-    () => [...services].sort((a, b) => b.totalTasks - a.totalTasks).slice(0, 6),
-    [services],
+    () =>
+      [...services]
+        .filter((s) => s.totalTasks > 0)
+        .sort((a, b) => b.totalTasks - a.totalTasks)
+        .slice(0, 6),
+    [services]
   );
 
   const handleSelectService = (service) => {
@@ -63,6 +70,7 @@ function HomePage() {
 
   return (
     <main className="page page--wide">
+      {/* Hero Section */}
       <section className="hero">
         <div>
           <p className="hero__eyebrow">Home services on demand</p>
@@ -72,23 +80,18 @@ function HomePage() {
             right tasker in minutes.
           </p>
           <div className="search-panel" aria-live="polite">
-            <div className="search-icon" aria-hidden="true">
-              🔍
-            </div>
-            <label htmlFor="service-search" className="sr-only">
-              Search for a service
-            </label>
+            <div className="search-icon" aria-hidden="true">🔍</div>
+            <label htmlFor="service-search" className="sr-only">Search for a service</label>
             <input
               id="service-search"
               type="search"
               value={searchText}
               placeholder="What service do you need?"
-              onChange={(event) => setSearchText(event.target.value)}
+              onChange={(e) => setSearchText(e.target.value)}
             />
-            <button type="button" onClick={handleSearchSubmit}>
-              Search
-            </button>
+            <button type="button" onClick={handleSearchSubmit}>Search</button>
           </div>
+
           {suggestions.length > 0 && (
             <div className="suggestions">
               {suggestions.map((service) => (
@@ -106,26 +109,35 @@ function HomePage() {
               ))}
             </div>
           )}
-          {hasNoMatches && <div className="no-results">No matching service found.</div>}
+
+          {hasNoMatches && (
+            <div className="no-results">No matching service found.</div>
+          )}
         </div>
         <div className="hero__image">
           <img src={HERO_IMAGE} alt="Professional tasker ready for work" />
         </div>
       </section>
 
+      {/* Popular Services Section */}
       <section>
         <div className="section-title">
           <div>
             <p className="section-kicker">Highly Requested</p>
             <h2 className="section-heading">Popular services near you</h2>
           </div>
-          <button type="button" className="btn btn-ghost" onClick={() => navigate("/services")}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => navigate("/services")}
+          >
             Explore services
           </button>
         </div>
+
         {status === "loading" && <div className="load-indicator">Loading services…</div>}
         {status === "error" && <div className="no-results">{error}</div>}
-        {status === "success" && (
+        {status === "success" && popularServices.length > 0 && (
           <div className="grid grid--services">
             {popularServices.map((service) => (
               <ServiceCard
@@ -139,35 +151,43 @@ function HomePage() {
         )}
       </section>
 
-      <section id="how-it-works">
+      {/* Service Discovery Section */}
+      {/* <section id="how-it-works">
         <div className="section-title">
           <div>
             <p className="section-kicker">Service discovery</p>
             <h2 className="section-heading">
-              {searchText ? `Results for “${searchText}”` : "Explore every HomeMate service"}
+              {searchText ? `Results for "${searchText}"` : "Explore every HomeMate service"}
             </h2>
           </div>
         </div>
-        {hasNoMatches ? (
-          <div className="empty-state">
-            We couldn’t find a service named “{searchText}”. Try another search or browse all taskers
-            below.
-          </div>
-        ) : (
-          <div className="grid grid--services">
-            {matchingServices.map((service) => (
-              <ServiceCard
-                key={service.serviceId}
-                service={service}
-                onSelect={handleSelectService}
-              />
-            ))}
-          </div>
+
+        {status === "loading" && <div className="load-indicator">Loading services…</div>}
+        {status === "error" && <div className="no-results">{error}</div>}
+
+        {status === "success" && (
+          <>
+            {hasNoMatches ? (
+              <div className="empty-state">
+                We couldn't find a service named "{searchText}". Try another search or browse all
+                taskers below.
+              </div>
+            ) : (
+              <div className="grid grid--services">
+                {matchingServices.map((service) => (
+                  <ServiceCard
+                    key={service.serviceId}
+                    service={service}
+                    onSelect={handleSelectService}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
-      </section>
+      </section> */}
     </main>
   );
 }
 
 export default HomePage;
-

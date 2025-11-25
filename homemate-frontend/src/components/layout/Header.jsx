@@ -19,7 +19,10 @@ function Header() {
         </button>
 
         <nav className="nav-links">
-          <NavLink className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} to="/">
+          <NavLink
+            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+            to="/"
+          >
             Home
           </NavLink>
           <NavLink
@@ -36,6 +39,18 @@ function Header() {
               Profile
             </NavLink>
           )}
+          <NavLink
+            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+            to="/my-tasks"
+          >
+            My Tasks
+          </NavLink>
+          <NavLink
+            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+            to="/tasker/my-tasks"
+          >
+            Tasker Tasks
+          </NavLink>
           <a className="nav-link" href="#how-it-works">
             How It Works
           </a>
@@ -48,7 +63,11 @@ function Header() {
           <button type="button" className="btn btn-ghost" onClick={() => navigate("/signin")}>
             Sign in
           </button>
-          <button type="button" className="btn btn-primary" onClick={() => navigate("/services")}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => navigate("/services")}
+          >
             Get Started
           </button>
         </div>
@@ -58,4 +77,3 @@ function Header() {
 }
 
 export default Header;
-

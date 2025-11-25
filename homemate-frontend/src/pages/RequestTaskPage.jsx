@@ -1,17 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import servicesData from "../data/services";
-import taskersData from "../data/taskers";
-import { normalizeService } from "../utils/services";
 import { fetchUserAddresses } from "../api/addressesApi";
 import { requestTask } from "../api/tasksApi";
+import { fetchServices } from "../api/servicesApi";
+
 import Modal from "../components/Modal";
 
 const MOCK_USER_ID = 1;
-const MOCK_USER_NAME = "Demo HomeMate User";
-
-const buildServicesIndex = () => servicesData.map(normalizeService);
-const services = buildServicesIndex();
 
 const timeSlots = Array.from({ length: 25 }, (_, index) => {
   const minutes = index * 30;
@@ -47,14 +42,8 @@ function RequestTaskPage() {
   const stateService = location.state?.service;
   const fromPath = location.state?.from;
 
-  const fallbackTasker = taskersData.find(
-    (t) => String(t.id) === String(taskerId)
-  );
-  const tasker = stateTasker ?? fallbackTasker;
-  const service =
-    stateService ??
-    services.find((svc) => svc.serviceId === tasker?.serviceId) ??
-    services[0];
+  const tasker = stateTasker;
+  const service = stateService;
 
   const [addresses, setAddresses] = useState([]);
   const [addressStatus, setAddressStatus] = useState("loading");
@@ -119,7 +108,7 @@ function RequestTaskPage() {
   }, [successBanner]);
 
   if (!tasker || !service) {
-    return <div className="page">We couldn’t find that tasker.</div>;
+    return <div className="page">We couldn't find that tasker.</div>;
   }
 
   const selectedAddress = addresses.find(
@@ -196,6 +185,13 @@ function RequestTaskPage() {
 
   const submitRequest = () => {
     if (!canSubmit) return;
+    if (!service?.serviceId) {
+      setErrorBanner({
+        message:
+          "Service information is missing. Please return and select the service again.",
+      });
+      return;
+    }
     setIsSubmitting(true);
     setProgressMessage("Submitting request...");
     const requestDto = {
@@ -330,7 +326,7 @@ function RequestTaskPage() {
             )}
             {addressStatus === "error" && (
               <p className="error-text">
-                We couldn’t load your addresses. Please retry.
+                We couldn't load your addresses. Please retry.
               </p>
             )}
             {addressStatus === "success" && addresses.length === 0 && (

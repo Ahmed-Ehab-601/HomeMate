@@ -1,3 +1,5 @@
+// Mock data - kept for development/testing purposes
+// In production, data is fetched from API
 const taskers = [
   {
     id: 1,

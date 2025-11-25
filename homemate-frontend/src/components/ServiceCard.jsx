@@ -2,6 +2,15 @@ import { useNavigate } from "react-router-dom";
 
 function ServiceCard({ service, onSelect, variant = "default" }) {
   const navigate = useNavigate();
+  const hasImage = Boolean(service.image);
+  const initials = service.serviceName
+    ? service.serviceName
+        .split(" ")
+        .map((word) => word[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "HM";
 
   const handleClick = () => {
     if (onSelect) {
@@ -10,6 +19,12 @@ function ServiceCard({ service, onSelect, variant = "default" }) {
     }
     navigate(`/services/${service.slug}/taskers`, { state: { service } });
   };
+
+  const taskCount = Number.isFinite(service.totalTasks) ? service.totalTasks : 0;
+  const taskLabel =
+    taskCount === 1
+      ? "1 task completed"
+      : `${taskCount.toLocaleString()} tasks completed`;
 
   return (
     <article
@@ -24,10 +39,16 @@ function ServiceCard({ service, onSelect, variant = "default" }) {
         }
       }}
     >
-      <figure className="service-card__media">
-        <img src={service.image} alt={`${service.serviceName} preview`} draggable="false" />
+      <figure className={`service-card__media${hasImage ? "" : " service-card__media--fallback"}`}>
+        {hasImage ? (
+          <img src={service.image} alt={`${service.serviceName} preview`} draggable="false" />
+        ) : (
+          <div className="service-card__media-placeholder" aria-hidden="true">
+            {initials}
+          </div>
+        )}
         <figcaption className="service-card__tasks">
-          {service.totalTasks} tasks completed
+          {taskLabel}
         </figcaption>
       </figure>
       <div className="service-card__body">
@@ -39,4 +60,3 @@ function ServiceCard({ service, onSelect, variant = "default" }) {
 }
 
 export default ServiceCard;
-
