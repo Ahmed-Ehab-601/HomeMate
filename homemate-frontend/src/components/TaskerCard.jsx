@@ -59,4 +59,3 @@ function TaskerCard({ tasker, service }) {
 }
 
 export default TaskerCard;
-

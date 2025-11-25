@@ -108,7 +108,7 @@ function RequestTaskPage() {
   }, [successBanner]);
 
   if (!tasker || !service) {
-    return <div className="page">We couldn’t find that tasker.</div>;
+    return <div className="page">We couldn't find that tasker.</div>;
   }
 
   const selectedAddress = addresses.find(
@@ -326,7 +326,7 @@ function RequestTaskPage() {
             )}
             {addressStatus === "error" && (
               <p className="error-text">
-                We couldn’t load your addresses. Please retry.
+                We couldn't load your addresses. Please retry.
               </p>
             )}
             {addressStatus === "success" && addresses.length === 0 && (
