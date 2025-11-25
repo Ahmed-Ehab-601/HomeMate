@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { serviceAPI } from '../services/api';
-import { useNavigate } from 'react-router-dom';  
 import './ServiceList.css';
 
 const AdminServiceList = ({ onServiceClick, onCreateNew }) => {
@@ -8,7 +7,6 @@ const AdminServiceList = ({ onServiceClick, onCreateNew }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate(); 
 
   useEffect(() => {
     loadServices();

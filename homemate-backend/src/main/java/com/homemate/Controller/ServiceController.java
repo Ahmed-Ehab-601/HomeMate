@@ -12,7 +12,7 @@ import com.homemate.Dto.ServiceDto;
 import com.homemate.Service.ServiceManagService;
 @RestController
 @RequestMapping("/service")
-@CrossOrigin(origins = "http://localhost:5174")
+@CrossOrigin(origins = "http://localhost:5175")
 public class ServiceController {
 
         private final ServiceManagService serviceManagService;
