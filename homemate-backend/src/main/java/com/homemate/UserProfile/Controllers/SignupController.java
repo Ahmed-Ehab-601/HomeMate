@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class SignupController {
 
-    @PostMapping("/signup")
-    public ResponseEntity<UserProfileDTO> getProfile(
-            @RequestBody LoginRequestDto loginRequestDto,
-            @AuthenticationPrincipal AppUserDetails userDetails
-    ) {
-        return ResponseEntity.ok(userService.getProfile(userDetails.getId()));
-    }
+//    @PostMapping("/signup")
+//    public ResponseEntity<UserProfileDTO> getProfile(
+//            @RequestBody LoginRequestDto loginRequestDto,
+//            @AuthenticationPrincipal AppUserDetails userDetails
+//    ) {
+//        return ResponseEntity.ok("userService.getProfile(userDetails.getId())");
+//    }
 
 }
