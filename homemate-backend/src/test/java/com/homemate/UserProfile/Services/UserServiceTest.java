@@ -240,7 +240,7 @@ class UserServiceTest {
         userService.addAddress(addressDTO);
         
         // Get addresses
-        AddressDTO[] addresses = userService.getAddresses(1);
+        AddressDTO[] addresses = userService.getAddresses(1L);
         
         assertNotNull(addresses);
         assertTrue(addresses.length > 0);

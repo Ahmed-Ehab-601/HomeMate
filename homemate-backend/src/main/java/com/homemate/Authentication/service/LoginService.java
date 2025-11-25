@@ -2,7 +2,7 @@ package com.homemate.Authentication.service;
 
 import com.homemate.Authentication.Entity.Tasker;
 import com.homemate.Authentication.Entity.User;
-import com.homemate.Authentication.dao.TaskerDao;
+import com.homemate.Authentication.dao.TaskerDaoLogin;
 import com.homemate.Authentication.dao.UserDaoLogin;
 import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class LoginService {
-    TaskerDao taskerDao;
+    TaskerDaoLogin taskerDao;
     UserDaoLogin userDaoLogin;
     JwtService jwtService;
 
-    public LoginService(TaskerDao taskerDao, UserDaoLogin userDaoLogin, JwtService jwtService) {
+    public LoginService(TaskerDaoLogin taskerDao, UserDaoLogin userDaoLogin, JwtService jwtService) {
         this.taskerDao = taskerDao;
         this.userDaoLogin = userDaoLogin;
         this.jwtService = jwtService;
