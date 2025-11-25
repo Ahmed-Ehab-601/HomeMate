@@ -1,12 +1,18 @@
 package com.homemate.TaskerProfile.Dao;
 
+import com.homemate.TaskerProfile.DTO.TaskerSignupDTO;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import com.homemate.TaskerProfile.DTO.TaskerProfileDTO;
 import com.homemate.TaskerProfile.mappers.TaskerProfileDTORowMapper;
 import com.homemate.TaskerProfile.mappers.TaskerRowMapper;
 import com.homemate.TaskerProfile.models.Tasker;
+
+import java.sql.PreparedStatement;
 
 @Repository
 public class TaskerDao {
@@ -65,6 +71,50 @@ public class TaskerDao {
     public TaskerProfileDTO getProfile(Long id){
         String sql = "SELECT * FROM Tasker WHERE taskerID = ?";
         return jdbcTemplate.queryForObject(sql, taskerProfileDTORowMapper, id);
+    }
+
+    public Long saveTasker(TaskerSignupDTO dto) {
+
+        String sql = """
+                INSERT INTO Tasker 
+                (firstName, lastName, username, password, email, birthDate, phone, gender, 
+                 image, availability, rating, hourrate, bio, serviceID, totalEarning, WorkedHours, addressCity)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        try {
+            jdbcTemplate.update(con -> {
+                PreparedStatement ps =
+                        con.prepareStatement(sql, new String[]{"taskerID"});
+
+                ps.setString(1, dto.getFirstName());
+                ps.setString(2, dto.getLastName());
+                ps.setString(3, dto.getUsername());
+                ps.setString(4, dto.getPassword());
+                ps.setString(5, dto.getEmail());
+                ps.setString(6, dto.getDateOfBirth());
+                ps.setString(7, dto.getPhoneNumber());
+                ps.setString(8, "M");
+                ps.setBytes(9, dto.getProfileImage());
+                ps.setString(10, "AVAILABLE");
+                ps.setDouble(11, 0.0);
+                ps.setDouble(12, dto.getHourRate());
+                ps.setString(13, dto.getBio());
+                ps.setLong(14, dto.getServiceID());
+                ps.setDouble(15, 0.0);
+                ps.setDouble(16, 0.0);
+                ps.setString(17, dto.getCity());
+                return ps;
+            }, keyHolder);
+
+        } catch (DataIntegrityViolationException ex) {
+            System.out.println(ex.getMessage());
+            return -1L;
+        }
+
+        return keyHolder.getKey().longValue();
     }
     
 }
