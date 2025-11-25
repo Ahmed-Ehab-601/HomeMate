@@ -100,3 +100,23 @@ export function deleteUserAccount() {
   });
 }
 
+function putJson(url, payload) {
+  return request(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateUserName(payload) {
+  return putJson(`${USERS_ENDPOINT}/name`, payload);
+}
+
+export function updateUserPassword(payload) {
+  return putJson(`${USERS_ENDPOINT}/password`, payload);
+}
+
+export function updateUserPhone(payload) {
+  return putJson(`${USERS_ENDPOINT}/phone`, payload);
+}
+

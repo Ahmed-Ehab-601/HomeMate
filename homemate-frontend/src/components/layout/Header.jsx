@@ -30,12 +30,14 @@ function Header() {
           </NavLink>
           {isAuthenticated && (
             <>
-              <NavLink
-                className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-                to="/profile"
-              >
-                Profile
-              </NavLink>
+              {user?.role !== "ROLE_TASKER" && (
+                <NavLink
+                  className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+                  to="/profile"
+                >
+                  Profile
+                </NavLink>
+              )}
               {user?.role === "ROLE_TASKER" && (
                 <NavLink
                   className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}

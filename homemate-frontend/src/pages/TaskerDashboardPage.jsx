@@ -63,7 +63,7 @@ function TaskerDashboardPage() {
     contact: { email: "", phone: "" },
     service: { hourRate: "", serviceId: "" },
     availability: { availability: "", bio: "" },
-    password: { newPassword: "" },
+    password: { oldPassword: "", newPassword: "" },
   });
 
   const [feedback, setFeedback] = useState(null);
@@ -106,7 +106,7 @@ function TaskerDashboardPage() {
             availability: data?.availability ?? "",
             bio: data?.bio ?? "",
           },
-          password: { newPassword: "" },
+          password: { oldPassword: "", newPassword: "" },
         });
         setImagePreview(normalizeImage(data?.image) ?? null);
         setProfileStatus("success");
@@ -268,17 +268,24 @@ function TaskerDashboardPage() {
 
   const handlePasswordSubmit = (event) => {
     event.preventDefault();
+    if (!forms.password.oldPassword?.trim()) {
+      setFeedback({ type: "error", message: "Enter your current password first." });
+      return;
+    }
     if (!forms.password.newPassword?.trim()) {
-      setFeedback({ type: "error", message: "Enter a new password first." });
+      setFeedback({ type: "error", message: "Enter a new password." });
       return;
     }
     setSubmitting("password");
-    updateTaskerPassword({ newPassword: forms.password.newPassword })
+    updateTaskerPassword({
+      oldPassword: forms.password.oldPassword,
+      newPassword: forms.password.newPassword,
+    })
       .then(() => {
         setFeedback({ type: "success", message: "Password updated." });
         setForms((prev) => ({
           ...prev,
-          password: { newPassword: "" },
+          password: { oldPassword: "", newPassword: "" },
         }));
       })
       .catch((error) =>
@@ -626,9 +633,19 @@ function TaskerDashboardPage() {
             <h2 className="section-heading">Update password</h2>
             <form className="profile-form" onSubmit={handlePasswordSubmit}>
               <div className="form-field">
-                <label htmlFor="password-input">New password</label>
+                <label htmlFor="old-password-input">Current password</label>
                 <input
-                  id="password-input"
+                  id="old-password-input"
+                  type="password"
+                  className="input"
+                  value={forms.password.oldPassword}
+                  onChange={(event) => handleChange("password", "oldPassword", event.target.value)}
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="new-password-input">New password</label>
+                <input
+                  id="new-password-input"
                   type="password"
                   className="input"
                   value={forms.password.newPassword}

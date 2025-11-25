@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.homemate.UserProfile.DTO.AddressDTO;
 import com.homemate.UserProfile.DTO.DeleteAccountRequestDTO;
+import com.homemate.UserProfile.DTO.NameDTO;
+import com.homemate.UserProfile.DTO.PasswordDTO;
+import com.homemate.UserProfile.DTO.PhoneNumberDTO;
 import com.homemate.UserProfile.DTO.RemoveAddressDTO;
 import com.homemate.UserProfile.DTO.UserProfileDTO;
 import com.homemate.UserProfile.DTO.UserRequestTaskerDTO;
@@ -98,5 +101,38 @@ public class ManageUserProfileController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<AddressDTO[]> getAddressesForUser(@AuthenticationPrincipal AppUserDetails userDetails) {
         return ResponseEntity.ok(userService.getAddresses(userDetails.getId()));
+    }
+
+    @PutMapping("/name")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, String>> changeName(@AuthenticationPrincipal AppUserDetails userDetails,
+                                                          @RequestBody NameDTO nameDTO) {
+        nameDTO.setUserId(userDetails.getId());
+        userService.changeName(nameDTO);
+        return ResponseEntity.ok(Collections.singletonMap("status", "Name updated"));
+    }
+
+    @PutMapping("/password")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, String>> changePassword(@AuthenticationPrincipal AppUserDetails userDetails,
+                                                              @RequestBody PasswordDTO passwordDTO) {
+        if (passwordDTO.getOldPassword() == null || passwordDTO.getOldPassword().isEmpty()) {
+            throw new IllegalArgumentException("Old password is required.");
+        }
+        if (passwordDTO.getNewPassword() == null || passwordDTO.getNewPassword().isEmpty()) {
+            throw new IllegalArgumentException("New password is required.");
+        }
+        passwordDTO.setUserId(userDetails.getId());
+        userService.changePassword(passwordDTO);
+        return ResponseEntity.ok(Collections.singletonMap("status", "Password updated"));
+    }
+
+    @PutMapping("/phone")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, String>> changePhone(@AuthenticationPrincipal AppUserDetails userDetails,
+                                                            @RequestBody PhoneNumberDTO phoneNumberDTO) {
+        phoneNumberDTO.setUserId(userDetails.getId());
+        userService.changePhoneNumber(phoneNumberDTO);
+        return ResponseEntity.ok(Collections.singletonMap("status", "Phone number updated"));
     }
 }

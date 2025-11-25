@@ -10,6 +10,7 @@ import com.homemate.UserProfile.DTO.AddressDTO;
 import com.homemate.UserProfile.DTO.DateOfBirthDTO;
 import com.homemate.UserProfile.DTO.DeleteAccountRequestDTO;
 import com.homemate.UserProfile.DTO.EmailDTO;
+import com.homemate.UserProfile.DTO.NameDTO;
 import com.homemate.UserProfile.DTO.PasswordDTO;
 import com.homemate.UserProfile.DTO.PhoneNumberDTO;
 import com.homemate.UserProfile.DTO.RemoveAddressDTO;
@@ -45,10 +46,36 @@ public class UserService {
     //     return "User created successfully";
     // }
 
-    public Boolean changePassword(PasswordDTO newPasswordDTO) {
-        Objects.requireNonNull(newPasswordDTO, "newPasswordDTO cannot be null");
-        User user = requireUser(newPasswordDTO.getUserId());
-        user.setPassword(newPasswordDTO.getNewPassword());
+    public Boolean changePassword(PasswordDTO passwordDTO) {
+        Objects.requireNonNull(passwordDTO, "passwordDTO cannot be null");
+        
+        String oldPassword = passwordDTO.getOldPassword();
+        String newPassword = passwordDTO.getNewPassword();
+        
+        if (oldPassword == null || oldPassword.isEmpty()) {
+            throw new IllegalArgumentException("Old password is required.");
+        }
+        
+        if (newPassword == null || newPassword.isEmpty()) {
+            throw new IllegalArgumentException("New password is required.");
+        }
+        
+        User user = requireUser(passwordDTO.getUserId());
+        
+        if (!user.getPassword().equals(oldPassword)) {
+            throw new IllegalArgumentException("Old password is incorrect.");
+        }
+        
+        user.setPassword(newPassword);
+        userDao.update(user);
+        return Boolean.TRUE;
+    }
+    
+    public Boolean changeName(NameDTO nameDTO) {
+        Objects.requireNonNull(nameDTO, "nameDTO cannot be null");
+        User user = requireUser(nameDTO.getUserId());
+        user.setFirstName(nameDTO.getNewFirstName());
+        user.setLastName(nameDTO.getNewLastName());
         userDao.update(user);
         return Boolean.TRUE;
     }

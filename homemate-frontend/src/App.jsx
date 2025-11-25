@@ -31,6 +31,17 @@ function ProtectedRoute({ children, requiredRole }) {
   return children;
 }
 
+// User profile route that redirects taskers to tasker hub
+function UserProfileRoute() {
+  const { user } = useAuth();
+  
+  if (user?.role === "ROLE_TASKER") {
+    return <Navigate to="/tasker/profile" replace />;
+  }
+  
+  return <UserProfilePage />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -44,7 +55,7 @@ function AppRoutes() {
         path="/profile"
         element={
           <ProtectedRoute>
-            <UserProfilePage />
+            <UserProfileRoute />
           </ProtectedRoute>
         }
       />

@@ -37,12 +37,28 @@ public class TaskerProfileService {
 
     public Boolean changePassword(PasswordDTO passwordDTO) {
         final int MAX_LENGTH = 255;
+        String oldPassword = passwordDTO.getOldPassword();
         String newPassword = passwordDTO.getNewPassword();
+        
+        if (oldPassword == null || oldPassword.isEmpty()) {
+            throw new IllegalArgumentException("Old password is required.");
+        }
+        
+        if (newPassword == null || newPassword.isEmpty()) {
+            throw new IllegalArgumentException("New password is required.");
+        }
+        
         if (newPassword.length() > MAX_LENGTH) {
             throw new IllegalArgumentException("Password must not exceed 255 characters.");
         }
+        
         Tasker tasker = taskerDao.getByID(passwordDTO.getTaskerID());
-        tasker.setPassword(passwordDTO.getNewPassword());
+        
+        if (!tasker.getPassword().equals(oldPassword)) {
+            throw new IllegalArgumentException("Old password is incorrect.");
+        }
+        
+        tasker.setPassword(newPassword);
         taskerDao.update(tasker);
         return true;
         
