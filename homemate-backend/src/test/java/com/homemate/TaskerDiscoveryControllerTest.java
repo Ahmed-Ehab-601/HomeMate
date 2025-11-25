@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-
 class TaskerDiscoveryControllerTest {
 
     @Mock
@@ -43,7 +42,7 @@ class TaskerDiscoveryControllerTest {
     }
 
     @Test
-    void findTaskers_ShouldReturnOkWithTaskerList() {
+    void findTaskersShouldReturnOkWithTaskerList() {
         List<TaskerCardDto> dtos = Arrays.asList(dto);
         when(taskerDiscoveryService.getTaskerCardsByFilters(criteria, 1, 10)).thenReturn(dtos);
 
@@ -58,7 +57,7 @@ class TaskerDiscoveryControllerTest {
     }
 
     @Test
-    void findTaskers_ShouldReturnEmptyList_WhenNoTaskersFound() {
+    void findTaskersShouldReturnEmptyListWhenNoTaskersFound() {
         when(taskerDiscoveryService.getTaskerCardsByFilters(criteria, 1, 10)).thenReturn(Arrays.asList());
 
         ResponseEntity<List<TaskerCardDto>> response = taskerDiscoveryController.findTaskers(criteria, 1, 10);
@@ -68,7 +67,7 @@ class TaskerDiscoveryControllerTest {
     }
 
     @Test
-    void findTaskers_ShouldHandleDifferentPageSizes() {
+    void findTaskersShouldHandleDifferentPageSizes() {
         when(taskerDiscoveryService.getTaskerCardsByFilters(criteria, 2, 20)).thenReturn(Arrays.asList(dto));
 
         ResponseEntity<List<TaskerCardDto>> response = taskerDiscoveryController.findTaskers(criteria, 2, 20);
@@ -77,9 +76,8 @@ class TaskerDiscoveryControllerTest {
         verify(taskerDiscoveryService, times(1)).getTaskerCardsByFilters(criteria, 2, 20);
     }
 
-
     @Test
-    void findTaskers_ShouldFilterByAvailability() {
+    void findTaskersShouldFilterByAvailability() {
         criteria.setAvailability("available");
         when(taskerDiscoveryService.getTaskerCardsByFilters(criteria, 1, 10)).thenReturn(Arrays.asList(dto));
 
@@ -91,7 +89,7 @@ class TaskerDiscoveryControllerTest {
     }
 
     @Test
-    void findTaskers_ShouldFilterByGender() {
+    void findTaskersShouldFilterByGender() {
         criteria.setGender("M");
         when(taskerDiscoveryService.getTaskerCardsByFilters(criteria, 1, 10)).thenReturn(Arrays.asList(dto));
 
@@ -103,7 +101,7 @@ class TaskerDiscoveryControllerTest {
     }
 
     @Test
-    void findTaskers_ShouldFilterByRatingRange() {
+    void findTaskersShouldFilterByRatingRange() {
         criteria.setMinRating(3.5);
         criteria.setMaxRating(5.0);
         when(taskerDiscoveryService.getTaskerCardsByFilters(criteria, 1, 10)).thenReturn(Arrays.asList(dto));
@@ -116,7 +114,7 @@ class TaskerDiscoveryControllerTest {
     }
 
     @Test
-    void findTaskers_ShouldFilterByHourlyRate() {
+    void findTaskersShouldFilterByHourlyRate() {
         criteria.setMinHourRate(10.0);
         criteria.setMaxHourRate(50.0);
         when(taskerDiscoveryService.getTaskerCardsByFilters(criteria, 1, 10)).thenReturn(Arrays.asList(dto));
@@ -129,7 +127,7 @@ class TaskerDiscoveryControllerTest {
     }
 
     @Test
-    void findTaskers_ShouldFilterByCity() {
+    void findTaskersShouldFilterByCity() {
         criteria.setCity("Cairo");
         when(taskerDiscoveryService.getTaskerCardsByFilters(criteria, 1, 10)).thenReturn(Arrays.asList(dto));
 
@@ -141,7 +139,7 @@ class TaskerDiscoveryControllerTest {
     }
 
     @Test
-    void findTaskers_ShouldFilterBySearchTerm() {
+    void findTaskersShouldFilterBySearchTerm() {
         criteria.setSearch("John");
         when(taskerDiscoveryService.getTaskerCardsByFilters(criteria, 1, 10)).thenReturn(Arrays.asList(dto));
 
@@ -154,7 +152,7 @@ class TaskerDiscoveryControllerTest {
     }
 
     @Test
-    void findTaskers_ShouldSortByNameAscending() {
+    void findTaskersShouldSortByNameAscending() {
         criteria.setSortBy("name");
         criteria.setSortOrder("asc");
         when(taskerDiscoveryService.getTaskerCardsByFilters(criteria, 1, 10)).thenReturn(Arrays.asList(dto));
@@ -162,6 +160,23 @@ class TaskerDiscoveryControllerTest {
         ResponseEntity<List<TaskerCardDto>> response = taskerDiscoveryController.findTaskers(criteria, 1, 10);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(taskerDiscoveryService, times(1)).getTaskerCardsByFilters(criteria, 1, 10);
+    }
+
+    @Test
+    void findTaskersinvalidServiceIDReturnsBadRequest() {
+        criteria.setServiceID(-1); // invalid ID
+        when(taskerDiscoveryService.getTaskerCardsByFilters(criteria, 1, 10))
+                .thenThrow(new IllegalArgumentException("Invalid Service ID"));
+
+        ResponseEntity<List<TaskerCardDto>> response;
+        try {
+            response = taskerDiscoveryController.findTaskers(criteria, 1, 10);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException ex) {
+            assertEquals("Invalid Service ID", ex.getMessage());
+        }
+
         verify(taskerDiscoveryService, times(1)).getTaskerCardsByFilters(criteria, 1, 10);
     }
 }

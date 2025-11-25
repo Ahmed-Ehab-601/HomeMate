@@ -32,7 +32,7 @@ public class ServiceDaoImpIntegrationTest {
     }
 
     @Test
-    void getTotalTasksForService_countsCorrectly() {
+    void getTotalTasksForServiceCountsCorrectly() {
         int service1 = serviceDao.getTotalTasksForService(1);
         int service50 = serviceDao.getTotalTasksForService(50);
         assertThat(service1).isEqualTo(2);

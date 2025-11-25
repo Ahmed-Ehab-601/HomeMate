@@ -3,6 +3,7 @@ package com.homemate.controller;
 import com.homemate.dto.FindTaskerCriteriaDto;
 import com.homemate.dto.TaskerCardDto;
 import com.homemate.service.TaskerDiscoveryService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class TaskerDiscoveryController {
 
     @PostMapping("/search")
     public ResponseEntity<List<TaskerCardDto>> findTaskers(
-            @RequestBody FindTaskerCriteriaDto criteria,
+            @RequestBody @Valid FindTaskerCriteriaDto criteria,
             @RequestParam int page,
             @RequestParam int size) {
 

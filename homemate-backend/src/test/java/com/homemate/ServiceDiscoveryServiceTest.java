@@ -43,13 +43,13 @@ class ServiceDiscoveryServiceTest {
                 new byte[]{4, 5, 6}, "cleaning.jpg", "image/jpeg");
 
         testServiceDto1 = new ServiceDto();
-        testServiceDto1.setServiceid(1);
-        testServiceDto1.setServicename("Plumbing");
+        testServiceDto1.setServiceId(1);
+        testServiceDto1.setServiceName("Plumbing");
         testServiceDto1.setTotalTasks(10);
 
         testServiceDto2 = new ServiceDto();
-        testServiceDto2.setServiceid(2);
-        testServiceDto2.setServicename("Cleaning");
+        testServiceDto2.setServiceId(2);
+        testServiceDto2.setServiceName("Cleaning");
         testServiceDto2.setTotalTasks(15);
     }
 
@@ -67,15 +67,15 @@ class ServiceDiscoveryServiceTest {
 
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertEquals("Plumbing", result.get(0).getServicename());
-        assertEquals("Cleaning", result.get(1).getServicename());
+        assertEquals("Plumbing", result.get(0).getServiceName());
+        assertEquals("Cleaning", result.get(1).getServiceName());
         verify(serviceDao, times(1)).getAllServices();
         verify(serviceDao, times(1)).getTotalTasksForService(1);
         verify(serviceDao, times(1)).getTotalTasksForService(2);
     }
 
     @Test
-    void getAllServices_ShouldReturnEmptyList_WhenNoServicesExist() {
+    void getAllServicesShouldReturnEmptyListWhenNoServicesExist() {
 
         when(serviceDao.getAllServices()).thenReturn(Arrays.asList());
 

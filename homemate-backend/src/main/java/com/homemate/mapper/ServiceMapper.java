@@ -12,8 +12,8 @@ public class ServiceMapper {
     public ServiceDto mapToServiceDto(Service service, int totalTasks) {
 
         ServiceDto dto = new ServiceDto();
-        dto.setServiceid(service.getServiceId());
-        dto.setServicename(service.getServiceName());
+        dto.setServiceId(service.getServiceId());
+        dto.setServiceName(service.getServiceName());
         dto.setDescription(service.getDescription());
 
         if (service.getImageData() != null && service.getImageData().length > 0) {

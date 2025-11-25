@@ -67,7 +67,7 @@ class TaskerDiscoveryServiceTest {
     }
 
     @Test
-    void getTaskerCardsByFilters_ShouldReturnTaskerList() {
+    void getTaskerCardsByFiltersShouldReturnTaskerList() {
 
         List<Tasker> taskers = Arrays.asList(tasker1, tasker2);
         when(taskerDao.findTaskersWithFilters(criteria, 1, 10)).thenReturn(taskers);
@@ -84,7 +84,7 @@ class TaskerDiscoveryServiceTest {
     }
 
     @Test
-    void getTaskerCardsByFilters_ShouldThrowException_WhenFilterIsNull() {
+    void getTaskerCardsByFiltersShouldThrowExceptionWhenFilterIsNull() {
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             taskerDiscoveryService.getTaskerCardsByFilters(null, 1, 10);
@@ -93,7 +93,7 @@ class TaskerDiscoveryServiceTest {
     }
 
     @Test
-    void getTaskerCardsByFilters_ShouldThrowException_WhenServiceIdIsNull() {
+    void getTaskerCardsByFiltersShouldThrowExceptionWhenServiceIdIsNull() {
 
         criteria.setServiceID(null);
 
@@ -104,7 +104,7 @@ class TaskerDiscoveryServiceTest {
     }
 
     @Test
-    void getTaskerCardsByFilters_ShouldThrowException_WhenMinRatingGreaterThanMaxRating() {
+    void getTaskerCardsByFiltersShouldThrowExceptionWhenMinRatingGreaterThanMaxRating() {
 
         criteria.setMinRating(5.0);
         criteria.setMaxRating(3.0);
@@ -116,7 +116,7 @@ class TaskerDiscoveryServiceTest {
     }
 
     @Test
-    void getTaskerCardsByFilters_ShouldThrowException_WhenMinHourRateGreaterThanMaxHourRate() {
+    void getTaskerCardsByFiltersShouldThrowExceptionWhenMinHourRateGreaterThanMaxHourRate() {
 
         criteria.setMinHourRate(100.0);
         criteria.setMaxHourRate(50.0);
@@ -128,7 +128,7 @@ class TaskerDiscoveryServiceTest {
     }
 
     @Test
-    void getTaskerCardsByFilters_ShouldReturnEmptyList_WhenNoTaskersFound() {
+    void getTaskerCardsByFiltersShouldReturnEmptyListWhenNoTaskersFound() {
 
         when(taskerDao.findTaskersWithFilters(criteria, 1, 10)).thenReturn(Arrays.asList());
 

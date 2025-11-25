@@ -26,7 +26,7 @@ public class TaskerDaoIntegrationTest {
     private TaskerDao taskerDao;
 
     @Test
-    void findTaskers_noFilters_returnsAll() {
+    void findTaskersNoFiltersReturnsAll() {
         FindTaskerCriteriaDto criteria = new FindTaskerCriteriaDto();
         List<Tasker> taskers = taskerDao.findTaskersWithFilters(criteria, 1, 20);
 
@@ -37,7 +37,7 @@ public class TaskerDaoIntegrationTest {
 
 
     @Test
-    void findTaskers_filterByAvailability_returnsCorrectTaskers() {
+    void findTaskersFilterByAvailabilityReturnsCorrectTaskers() {
         FindTaskerCriteriaDto criteria = new FindTaskerCriteriaDto();
         criteria.setAvailability("available");
 
@@ -49,7 +49,7 @@ public class TaskerDaoIntegrationTest {
 
 
     @Test
-    void findTaskers_filterByRatingAndHourRate_returnsCorrectTaskers() {
+    void findTaskersFilterByRatingAndHourRateReturnsCorrectTaskers() {
 
         FindTaskerCriteriaDto criteria = new FindTaskerCriteriaDto();
         criteria.setMinRating(4.7);
@@ -75,7 +75,7 @@ public class TaskerDaoIntegrationTest {
 
 
     @Test
-    void findTaskers_sortByRatingDescending_returnsSorted() {
+    void findTaskersSortByRatingDescendingReturnsSorted() {
         FindTaskerCriteriaDto criteria = new FindTaskerCriteriaDto();
         criteria.setSortBy("rating");
         criteria.setSortOrder("DESC");
