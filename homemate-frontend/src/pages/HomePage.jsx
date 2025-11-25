@@ -37,9 +37,10 @@ function HomePage() {
     };
   }, []);
 
-  // Search filtering
   const matchingServices = useMemo(() => {
-    if (!searchText) return services;
+    if (!searchText) {
+      return services;
+    }
     const query = searchText.toLowerCase();
     return services.filter((svc) => svc.serviceName.toLowerCase().includes(query));
   }, [services, searchText]);

@@ -6,6 +6,7 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { fetchServices } from "../api/servicesApi";
 
 const PAGE_SIZE = 12;
+import { normalizeService } from "../utils/services";
 
 function TaskerDiscoveryPage() {
   const { slug } = useParams();

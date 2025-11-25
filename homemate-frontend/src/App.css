@@ -489,12 +489,6 @@
   background: #fff;
 }
 
-.load-more-wrapper {
-  display: flex;
-  justify-content: center;
-  margin: 32px 0 0;
-}
-
 .request-shell {
   display: flex;
   flex-direction: column;
