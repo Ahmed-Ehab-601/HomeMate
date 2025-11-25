@@ -52,9 +52,9 @@ class AddressDaoTest {
         jdbcTemplate.update("DELETE FROM Address");
         jdbcTemplate.update("DELETE FROM Tasker");
         jdbcTemplate.update("DELETE FROM Service");
-        jdbcTemplate.update("DELETE FROM User");
+        jdbcTemplate.update("DELETE FROM Users");
         // Reset auto-increment counters
-        jdbcTemplate.update("ALTER TABLE User AUTO_INCREMENT = 1");
+        jdbcTemplate.update("ALTER TABLE Users AUTO_INCREMENT = 1");
         jdbcTemplate.update("ALTER TABLE Address AUTO_INCREMENT = 1");
         jdbcTemplate.update("SET FOREIGN_KEY_CHECKS = 1");
         
@@ -66,7 +66,7 @@ class AddressDaoTest {
     }
 
     private void insertTestUsers() {
-        String insertUserSQL = "INSERT INTO User (firstName, lastName, username, password, email, birthDate, gender, phone, admin, suspended) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertUserSQL = "INSERT INTO Users (firstName, lastName, username, password, email, birthDate, gender, phone, admin, suspended) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         jdbcTemplate.update(insertUserSQL, "John", "Smith", "jsmith", "$2a$10$test123456789", "john.smith@email.com", 
             Timestamp.valueOf(LocalDateTime.of(1990, 5, 15, 0, 0)), "M", "+1-555-0101", false, false);

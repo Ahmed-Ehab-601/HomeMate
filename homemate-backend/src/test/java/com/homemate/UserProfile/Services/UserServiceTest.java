@@ -52,9 +52,9 @@ class UserServiceTest {
         jdbcTemplate.update("DELETE FROM Address");
         jdbcTemplate.update("DELETE FROM Tasker");
         jdbcTemplate.update("DELETE FROM Service");
-        jdbcTemplate.update("DELETE FROM User");
+        jdbcTemplate.update("DELETE FROM Users");
         // Reset auto-increment counters
-        jdbcTemplate.update("ALTER TABLE User AUTO_INCREMENT = 1");
+        jdbcTemplate.update("ALTER TABLE Users AUTO_INCREMENT = 1");
         jdbcTemplate.update("ALTER TABLE Address AUTO_INCREMENT = 1");
         jdbcTemplate.update("SET FOREIGN_KEY_CHECKS = 1");
         
@@ -64,7 +64,7 @@ class UserServiceTest {
 
     private void insertTestUsers() {
         // Insert 12 test users with fake data similar to data.sql
-        String insertUserSQL = "INSERT INTO User (firstName, lastName, username, password, email, birthDate, gender, phone, admin, suspended) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertUserSQL = "INSERT INTO Users (firstName, lastName, username, password, email, birthDate, gender, phone, admin, suspended) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         jdbcTemplate.update(insertUserSQL, "John", "Smith", "jsmith", "$2a$10$test123456789", "john.smith@email.com", 
             Timestamp.valueOf(LocalDateTime.of(1990, 5, 15, 0, 0)), "M", "+1-555-0101", false, false);
@@ -126,6 +126,7 @@ class UserServiceTest {
     void testChangePassword() {
         PasswordDTO passwordDTO = new PasswordDTO();
         passwordDTO.setUserId(1L);
+        passwordDTO.setOldPassword("$2a$10$test123456789");
         passwordDTO.setNewPassword("$2a$10$newPasswordHash123");
         
         Boolean result = userService.changePassword(passwordDTO);
@@ -134,7 +135,7 @@ class UserServiceTest {
         
         // Verify password was changed
         String newPassword = jdbcTemplate.queryForObject(
-            "SELECT password FROM User WHERE userID = ?", 
+            "SELECT password FROM Users WHERE userID = ?", 
             String.class, 1L);
         assertEquals("$2a$10$newPasswordHash123", newPassword);
     }
@@ -151,7 +152,7 @@ class UserServiceTest {
         
         // Verify username was changed
         String newUsername = jdbcTemplate.queryForObject(
-            "SELECT username FROM User WHERE userID = ?", 
+            "SELECT username FROM Users WHERE userID = ?", 
             String.class, 1L);
         assertEquals("newusername", newUsername);
     }
@@ -168,7 +169,7 @@ class UserServiceTest {
         
         // Verify email was changed
         String newEmail = jdbcTemplate.queryForObject(
-            "SELECT email FROM User WHERE userID = ?", 
+            "SELECT email FROM Users WHERE userID = ?", 
             String.class, 1L);
         assertEquals("newemail@test.com", newEmail);
     }
@@ -185,7 +186,7 @@ class UserServiceTest {
         
         // Verify phone was changed
         String newPhone = jdbcTemplate.queryForObject(
-            "SELECT phone FROM User WHERE userID = ?", 
+            "SELECT phone FROM Users WHERE userID = ?", 
             String.class, 1L);
         assertEquals("+1-555-9999", newPhone);
     }
@@ -202,7 +203,7 @@ class UserServiceTest {
         
         // Verify DOB was changed
         Timestamp newDOB = jdbcTemplate.queryForObject(
-            "SELECT birthDate FROM User WHERE userID = ?", 
+            "SELECT birthDate FROM Users WHERE userID = ?", 
             Timestamp.class, 1L);
         assertNotNull(newDOB);
     }
@@ -325,7 +326,7 @@ class UserServiceTest {
         
         // Verify user was deleted
         Integer count = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM User WHERE userID = ?", 
+            "SELECT COUNT(*) FROM Users WHERE userID = ?", 
             Integer.class, 1L);
         assertEquals(0, count);
     }

@@ -51,8 +51,12 @@ class TaskerProfileServiceTest {
         jdbcTemplate.update("DELETE FROM Address");
         jdbcTemplate.update("DELETE FROM Tasker");
         jdbcTemplate.update("DELETE FROM Service");
-        jdbcTemplate.update("DELETE FROM User");
+        jdbcTemplate.update("DELETE FROM Users");
         jdbcTemplate.update("SET FOREIGN_KEY_CHECKS = 1");
+
+        // Reset auto-increment counters
+        jdbcTemplate.update("ALTER TABLE Service AUTO_INCREMENT = 1");
+        jdbcTemplate.update("ALTER TABLE Tasker AUTO_INCREMENT = 1");
 
         // Insert test service
         jdbcTemplate.update(

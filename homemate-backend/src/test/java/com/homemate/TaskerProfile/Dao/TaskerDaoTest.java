@@ -52,8 +52,12 @@ class TaskerDaoTest {
         jdbcTemplate.update("DELETE FROM Address");
         jdbcTemplate.update("DELETE FROM Tasker");
         jdbcTemplate.update("DELETE FROM Service");
-        jdbcTemplate.update("DELETE FROM User");
+        jdbcTemplate.update("DELETE FROM Users");
         jdbcTemplate.update("SET FOREIGN_KEY_CHECKS = 1");
+
+        // Reset auto-increment counters
+        jdbcTemplate.update("ALTER TABLE Service AUTO_INCREMENT = 1");
+        jdbcTemplate.update("ALTER TABLE Tasker AUTO_INCREMENT = 1");
 
         // Insert test service
         jdbcTemplate.update(
@@ -98,10 +102,10 @@ class TaskerDaoTest {
             "Test bio", 1L, 500.0, 10.0, "Chicago"
         );
 
-        // Tasker with max length email (50 chars)
+        // Tasker with max length email (50 chars total, so 40 chars + "@email.com" = 50)
         jdbcTemplate.update(sql,
-            "Email", "Test", "emailtest", "a".repeat(50) + "@e.com",
-            "a".repeat(50) + "@e.com",
+            "Email", "Test", "emailtest", "password123",
+            "a".repeat(40) + "@email.com",
             Timestamp.valueOf(LocalDateTime.of(1995, 11, 30, 0, 0)),
             "+1-555-0104", "F", "available", 4.2, 55.0,
             "Email test", 2L, 750.0, 15.0, "Houston"
@@ -277,10 +281,10 @@ class TaskerDaoTest {
         assertEquals("a".repeat(50), tasker1.getUsername());
 
         // Test max length email
-        Tasker tasker2 = taskerDao.getByEmail("a".repeat(50) + "@e.com");
+        Tasker tasker2 = taskerDao.getByEmail("a".repeat(40) + "@email.com");
         assertNotNull(tasker2);
         assertEquals(4L, tasker2.getTaskerID());
-        assertEquals("a".repeat(50) + "@e.com", tasker2.getEmail());
+        assertEquals("a".repeat(40) + "@email.com", tasker2.getEmail());
 
         // Test max length phone
         Tasker tasker3 = taskerDao.getByID(5L);
