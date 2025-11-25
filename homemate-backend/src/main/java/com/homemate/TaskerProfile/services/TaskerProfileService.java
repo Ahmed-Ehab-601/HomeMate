@@ -68,7 +68,7 @@ public class TaskerProfileService {
         
         final int MAX_LENGTH = 50;
         String newUsername = usernameDTO.getNewUsername();
-        if (newUsername.length() > MAX_LENGTH) {
+        if (newUsername.length() > MAX_LENGTH  || newUsername.length() == 0 ) {
             throw new IllegalArgumentException("Username must not exceed 50 characters.");
         }
         Tasker tasker = taskerDao.getByID(usernameDTO.getTaskerID());
@@ -81,7 +81,7 @@ public class TaskerProfileService {
     public Boolean changePhoneNumber(PhoneNumberDTO phoneNumberDTO) {
         final int MAX_LENGTH = 50;
         String newPhoneNumber = phoneNumberDTO.getNewPhoneNumber();
-        if (newPhoneNumber.length() > MAX_LENGTH) {
+        if (newPhoneNumber.length() > MAX_LENGTH || newPhoneNumber.length() == 0) {
             throw new IllegalArgumentException("Phone number must not exceed 50 characters.");
         }
         Tasker tasker = taskerDao.getByID(phoneNumberDTO.getTaskerID());
@@ -93,7 +93,7 @@ public class TaskerProfileService {
     public Boolean ChangeEmail(EmailDTO emailDTO) {
         final int MAX_LENGTH = 50;
         String newEmail = emailDTO.getNewEmail();
-        if (newEmail.length() > MAX_LENGTH) {
+        if (newEmail.length() > MAX_LENGTH || newEmail.length() == 0) {
             throw new IllegalArgumentException("Email must not exceed 50 characters.");
         }
         Tasker tasker = taskerDao.getByID(emailDTO.getTaskerID());
@@ -223,7 +223,6 @@ public class TaskerProfileService {
         return true;
     }
     public Boolean deleteAccount(Long taskerID) {
-        Tasker tasker = taskerDao.getByID(taskerID);
         taskerDao.delete(taskerID);
         return true;
     }
