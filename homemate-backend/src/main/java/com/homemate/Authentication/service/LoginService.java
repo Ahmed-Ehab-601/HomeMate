@@ -3,7 +3,7 @@ package com.homemate.Authentication.service;
 import com.homemate.Authentication.Entity.Tasker;
 import com.homemate.Authentication.Entity.User;
 import com.homemate.Authentication.dao.TaskerDao;
-import com.homemate.Authentication.dao.UserDao;
+import com.homemate.Authentication.dao.UserDaoLogin;
 import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
 import com.homemate.security.service.JwtService;
@@ -13,12 +13,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class LoginService {
     TaskerDao taskerDao;
-    UserDao userDao;
+    UserDaoLogin userDaoLogin;
     JwtService jwtService;
 
-    public LoginService(TaskerDao taskerDao, UserDao userDao, JwtService jwtService) {
+    public LoginService(TaskerDao taskerDao, UserDaoLogin userDaoLogin, JwtService jwtService) {
         this.taskerDao = taskerDao;
-        this.userDao = userDao;
+        this.userDaoLogin = userDaoLogin;
         this.jwtService = jwtService;
     }
 
@@ -33,7 +33,7 @@ public class LoginService {
 
         try {
 
-            User user = userDao.getUserByEmail(loginRequestDto.getEmail());
+            User user = userDaoLogin.getUserByEmail(loginRequestDto.getEmail());
             if (user.getPassword().equals(loginRequestDto.getPassword())) {
 
                 String role = "ROLE_USER";

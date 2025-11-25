@@ -43,7 +43,8 @@ async function request(url, options = {}) {
     ...options,
     headers,
   };
-
+  console.log(requestOptions);
+  console.log(url);
   let response;
   try {
     response = await fetch(url, requestOptions);
@@ -53,6 +54,7 @@ async function request(url, options = {}) {
     );
   }
 
+  console.log(response);
   const data = await safeJson(response);
 
   if (!response.ok) {
@@ -63,11 +65,11 @@ async function request(url, options = {}) {
 }
 
 export function getUserProfile(userId) {
-  return request(`${USERS_ENDPOINT}/${userId}/profile`);
+  return request(`${USERS_ENDPOINT}/profile`);
 }
 
 export function getUserAddresses(userId) {
-  return request(`${USERS_ENDPOINT}/${userId}/addresses`);
+  return request(`${USERS_ENDPOINT}/addresses`);
 }
 
 export function addUserAddress(userId, payload) {

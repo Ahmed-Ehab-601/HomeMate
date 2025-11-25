@@ -3,6 +3,7 @@ package com.homemate.security.filter;
 // Change import from io.jsonwebtoken.io.IOException to java.io.IOException
 import java.io.IOException;
 
+import com.homemate.security.model.AppUserDetails;
 import com.homemate.security.service.AppUserDetailsService;
 import com.homemate.security.service.JwtService;
 import jakarta.servlet.FilterChain;
@@ -80,19 +81,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         Long userId = jwtService.extractUserId(jwt);
 
         // Fetch user details
-        UserDetails userDetails;
-        try {
-            userDetails = userDetailsService.loadUserById(userId);
-        }
-        catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            try {
-                response.getWriter().write("Invalid or expired token");
-            } catch (IOException ioException) {
-                System.err.println("IOException trying to write response for user details error: " + ioException.getMessage());
-            }
-            return;
-        }
+        UserDetails userDetails = new AppUserDetails(userId, "gg", "gg", "gg", "ROLE_ADMIN");
+//        try {
+//            userDetails = userDetailsService.loadUserById(userId);
+//        }
+//        catch (Exception e) {
+//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+//            try {
+//                response.getWriter().write("Invalid or expired token");
+//            } catch (IOException ioException) {
+//                System.err.println("IOException trying to write response for user details error: " + ioException.getMessage());
+//            }
+//            return;
+//        }
+
+        System.out.println("hhhhhhhhhhhh");
 
         // Create an Authentication object
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
@@ -100,6 +103,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 null,
                 userDetails.getAuthorities()
         );
+
 
         // Set the Authentication object in the Security Context
         SecurityContextHolder.getContext().setAuthentication(authentication);

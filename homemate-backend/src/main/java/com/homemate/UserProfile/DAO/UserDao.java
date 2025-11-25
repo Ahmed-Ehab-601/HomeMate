@@ -33,7 +33,7 @@ public class UserDao {
      */
     private static final String GET_BY_ID_SQL =
     "SELECT userID, username, password, firstName, lastName, email, birthDate, gender, phone, admin, suspended " +
-    "FROM User WHERE userID = ?";
+    "FROM users WHERE userID = ?";
 
     /**
      * Get a user by their ID
@@ -54,7 +54,7 @@ public class UserDao {
 
     private static final String GET_BY_EMAIL_SQL =
     "SELECT userID, username, password, firstName, lastName, email, birthDate, gender, phone, admin, suspended " +
-    "FROM User WHERE email = ?";
+    "FROM users WHERE email = ?";
 
     /**
      * Get a user by their email
@@ -74,7 +74,7 @@ public class UserDao {
      * SQL query to update a user
      */
     private static final String UPDATE_USER_SQL =
-    "UPDATE User SET username = ?, email = ?, birthDate = ?, gender = ?, phone = ?, admin = ?, suspended = ?, password = ?, firstName = ?, lastName = ? WHERE userID = ?";
+    "UPDATE users SET username = ?, email = ?, birthDate = ?, gender = ?, phone = ?, admin = ?, suspended = ?, password = ?, firstName = ?, lastName = ? WHERE userID = ?";
 
     /**
      * Update a user
@@ -100,7 +100,7 @@ public class UserDao {
      * SQL query to delete a user
      */
     private static final String DELETE_USER_SQL =
-    "DELETE FROM User WHERE userID = ?";
+    "DELETE FROM users WHERE userID = ?";
 
     /**
      * Delete a user
@@ -114,7 +114,7 @@ public class UserDao {
      * SQL query to sign up a user
      */
     private static final String SIGNUP_USER_SQL =
-    "INSERT INTO User (username, firstName, lastName, email, password, birthDate, gender, phone, admin, suspended) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO users (username, firstName, lastName, email, password, birthDate, gender, phone, admin, suspended) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     /**
      * Sign up a user
      * @param user The user to sign up
@@ -135,7 +135,7 @@ public class UserDao {
 
     private static final String GET_PROFILE_SQL =
     "SELECT userID, username, password, firstName, lastName, email, birthDate, gender, phone, admin, suspended " +
-    "FROM User WHERE userID = ? ";
+    "FROM users WHERE userID = ? ";
 
     /**
      * Get a user's profile
@@ -150,7 +150,7 @@ public class UserDao {
 
     private static final String GET_PROFILE_DTO_SQL =
     "SELECT userID, username, firstName, lastName, email, birthDate, gender, phone, admin AS isAdmin, suspended AS isSuspended " +
-    "FROM User WHERE userID = ?";
+    "FROM users WHERE userID = ?";
 
     @SuppressWarnings("null")
     public UserProfileDTO getProfile(Long id) {

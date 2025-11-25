@@ -3,7 +3,10 @@ package com.homemate.UserProfile.Controllers;
 import java.util.Collections;
 import java.util.Map;
 
+import com.homemate.security.model.AppUserDetails;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +24,8 @@ import com.homemate.UserProfile.DTO.UserProfileDTO;
 import com.homemate.UserProfile.DTO.UserRequestTaskerDTO;
 import com.homemate.UserProfile.Services.UserService;
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
+
 @RestController
 @RequestMapping("/api/users")
 public class ManageUserProfileController {
@@ -31,9 +36,9 @@ public class ManageUserProfileController {
         this.userService = userService;
     }
 
-    @GetMapping("/{userId}/profile")
-    public ResponseEntity<UserProfileDTO> getProfile(@PathVariable Long userId) {
-        return ResponseEntity.ok(userService.getProfile(userId));
+    @GetMapping("/profile")
+    public ResponseEntity<UserProfileDTO> getProfile() {
+        return ResponseEntity.ok(userService.getProfile(1L));
     }
 
     @PostMapping("/{userId}/addresses")
@@ -81,15 +86,13 @@ public class ManageUserProfileController {
         return ResponseEntity.ok(userService.getTaskerProfile(taskerId));
     }
 
-    @GetMapping(value = "/addresses", params = "userId")
-    public ResponseEntity<AddressDTO[]> getAddresses(@RequestParam("userId") Integer userID) {
-        return ResponseEntity.ok(userService.getAddresses(userID));
-    }
+//    @GetMapping(value = "/addresses", params = "userId")
+//    public ResponseEntity<AddressDTO[]> getAddresses(@RequestParam("userId") Integer userID) {
+//        return ResponseEntity.ok(userService.getAddresses(userID));
+//    }
 
-   
-
-    @GetMapping("/{userId}/addresses")
-    public ResponseEntity<AddressDTO[]> getAddressesForUser(@PathVariable Integer userId) {
-        return ResponseEntity.ok(userService.getAddresses(userId));
+    @GetMapping("/addresses")
+    public ResponseEntity<AddressDTO[]> getAddressesForUser() {
+        return ResponseEntity.ok(userService.getAddresses(1));
     }
 }

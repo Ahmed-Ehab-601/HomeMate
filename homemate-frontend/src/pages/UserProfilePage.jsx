@@ -51,16 +51,17 @@ function UserProfilePage() {
   const [isDeletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
+    console.log("aaaaa");
     if (!user) {
       navigate("/");
       return;
     }
+    console.log("2xaaaaa");
     loadProfile();
     loadAddresses();
   }, [user, navigate]);
 
   const loadProfile = () => {
-    if (!user?.userID) return;
     setProfileStatus("loading");
     setProfileError(null);
     getUserProfile(user.userID)
@@ -75,7 +76,6 @@ function UserProfilePage() {
   };
 
   const loadAddresses = () => {
-    if (!user?.userID) return;
     setAddressesStatus("loading");
     setAddressesError(null);
     getUserAddresses(user.userID)

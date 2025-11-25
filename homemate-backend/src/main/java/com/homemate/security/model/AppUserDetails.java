@@ -19,7 +19,6 @@ public class AppUserDetails implements UserDetails {
         this.id = id;
         this.username = username;
         this.email = email;
-        this.password = password;
 
         // Populate the authorities based on the determined role string
         this.authorities = List.of(new SimpleGrantedAuthority(role));
