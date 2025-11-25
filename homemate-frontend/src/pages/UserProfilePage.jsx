@@ -31,7 +31,7 @@ const normalizeAddress = (address) => {
 };
 
 function UserProfilePage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [profileStatus, setProfileStatus] = useState("loading");
@@ -208,6 +208,11 @@ function UserProfilePage() {
       .finally(() => setDeletingAccount(false));
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   const renderAddressesSection = () => {
     if (addressesStatus === "loading") {
       return <p className="tasker-card__meta">Loading your saved addresses…</p>;
@@ -278,6 +283,11 @@ function UserProfilePage() {
           <p className="tasker-card__meta">
             Keep your personal information and service addresses up to date.
           </p>
+          <div className="form-actions" style={{ justifyContent: "flex-start" }}>
+            <button type="button" className="btn btn-secondary" onClick={handleLogout}>
+              Sign out
+            </button>
+          </div>
         </header>
 
         {feedback && (

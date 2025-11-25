@@ -19,9 +19,28 @@ import {
 
 const REVIEW_PAGE_SIZE = 4;
 
+const normalizeImage = (imageValue) => {
+  if (!imageValue) return null;
+  if (typeof imageValue === "string") {
+    if (imageValue.startsWith("data:")) return imageValue;
+    return `data:image/jpeg;base64,${imageValue}`;
+  }
+  if (Array.isArray(imageValue)) {
+    if (typeof window === "undefined" || typeof window.btoa !== "function") {
+      return null;
+    }
+    let binary = "";
+    for (let i = 0; i < imageValue.length; i += 1) {
+      binary += String.fromCharCode(imageValue[i] & 0xff);
+    }
+    return `data:image/jpeg;base64,${window.btoa(binary)}`;
+  }
+  return null;
+};
+
 function TaskerDashboardPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const [profile, setProfile] = useState(null);
   const [profileStatus, setProfileStatus] = useState("loading");
@@ -89,6 +108,7 @@ function TaskerDashboardPage() {
           },
           password: { newPassword: "" },
         });
+        setImagePreview(normalizeImage(data?.image) ?? null);
         setProfileStatus("success");
       })
       .catch((error) => {
@@ -287,6 +307,7 @@ function TaskerDashboardPage() {
       const payload = base64.includes(",") ? base64.split(",")[1] : base64;
       await updateTaskerImage({ newImage: payload });
       setImagePreview(base64);
+      loadProfile();
       setFeedback({ type: "success", message: "Profile photo updated." });
     } catch (error) {
       setFeedback({
@@ -326,6 +347,11 @@ function TaskerDashboardPage() {
     );
   };
 
+  const handleTaskerLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <main className="page page--wide">
       <div className="profile-shell">
@@ -336,6 +362,11 @@ function TaskerDashboardPage() {
             Keep your availability, service details, and contact information up to date so clients can
             find you easily.
           </p>
+          <div className="form-actions" style={{ justifyContent: "flex-start" }}>
+            <button type="button" className="btn btn-secondary" onClick={handleTaskerLogout}>
+              Sign out
+            </button>
+          </div>
         </header>
 
         {feedback && (
@@ -366,12 +397,21 @@ function TaskerDashboardPage() {
           )}
           {profileStatus === "success" && profile && (
             <div className="profile-summary">
-              <div>
-                <p className="section-kicker">Profile overview</p>
-                <h2 className="section-heading" style={{ marginBottom: "8px" }}>
-                  {fullName || "Tasker"}
-                </h2>
-                <p className="tasker-card__meta">Username: {profile.username}</p>
+              <div className="profile-summary__header">
+                <div className="profile-avatar">
+                  {imagePreview ? (
+                    <img src={imagePreview} alt="Tasker avatar" />
+                  ) : (
+                    <div className="avatar-placeholder">No photo</div>
+                  )}
+                </div>
+                <div>
+                  <p className="section-kicker">Profile overview</p>
+                  <h2 className="section-heading" style={{ marginBottom: "8px" }}>
+                    {fullName || "Tasker"}
+                  </h2>
+                  <p className="tasker-card__meta">Username: {profile.username}</p>
+                </div>
               </div>
               <dl className="profile-summary__grid">
                 <div>

@@ -21,12 +21,12 @@ public class TaskerDao {
     }
 
     public Tasker getByID(Long ID){
-        String sql =  "SELECT * FROM Tasker Where TaskerID = ?";
+        String sql =  "SELECT t.*, s.name AS serviceName FROM Tasker t LEFT JOIN Service s ON t.serviceID = s.serviceID WHERE t.taskerID = ?";
         return jdbcTemplate.queryForObject(sql, taskerRowMapper,ID);
     }
 
     public Tasker getByEmail(String email){
-        String sql = "SELECT * FROM Tasker WHERE email = ?";
+        String sql = "SELECT t.*, s.name AS serviceName FROM Tasker t LEFT JOIN Service s ON t.serviceID = s.serviceID WHERE t.email = ?";
         return jdbcTemplate.queryForObject(sql, taskerRowMapper, email);
     }
 

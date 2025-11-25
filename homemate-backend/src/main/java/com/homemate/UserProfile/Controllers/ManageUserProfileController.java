@@ -84,10 +84,10 @@ public class ManageUserProfileController {
     //     return ResponseEntity.status(HttpStatus.CREATED).body(Collections.singletonMap("message", message));
     // }
 
-    @GetMapping("/taskers/{taskerId}")
-    public ResponseEntity<UserRequestTaskerDTO> getTaskerProfile(@PathVariable Long taskerId) {
-        return ResponseEntity.ok(userService.getTaskerProfile(taskerId));
-    }
+    // @GetMapping("/taskers/{taskerId}")
+    // public ResponseEntity<UserRequestTaskerDTO> getTaskerProfile(@PathVariable Long taskerId) {
+    //     return ResponseEntity.ok(userService.getTaskerProfile(taskerId));
+    // }
 
 //    @GetMapping(value = "/addresses", params = "userId")
 //    public ResponseEntity<AddressDTO[]> getAddresses(@RequestParam("userId") Integer userID) {
