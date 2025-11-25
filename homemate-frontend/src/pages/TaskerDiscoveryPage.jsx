@@ -6,7 +6,6 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { fetchServices } from "../api/servicesApi";
 
 const PAGE_SIZE = 12;
-import { normalizeService } from "../utils/services";
 
 function TaskerDiscoveryPage() {
   const { slug } = useParams();
@@ -122,6 +121,35 @@ function TaskerDiscoveryPage() {
     sortOption,
   ]);
 
+  const observerRef = useRef(null);
+  const sentinelRef = useRef(null);
+
+  useEffect(() => {
+    if (!sentinelRef.current) return () => {};
+
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && hasMore && !loading) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { rootMargin: "200px 0px 200px 0px" },
+    );
+
+    observerRef.current.observe(sentinelRef.current);
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasMore, loading]);
+
   const resetPagination = () => {
     setTaskers([]);
     setPage(0);
@@ -144,7 +172,7 @@ function TaskerDiscoveryPage() {
   }
 
   if (!service) {
-    return <main className="page">We couldn’t find that service.</main>;
+    return <main className="page">We couldn't find that service.</main>;
   }
 
   return (
@@ -153,7 +181,7 @@ function TaskerDiscoveryPage() {
         <div>
           <p className="section-kicker">Tasker discovery</p>
           <h1 className="section-heading">
-            {service ? `${service.serviceName} taskers` : "Find taskers"} 
+            {service ? `${service.serviceName} taskers` : "Find taskers"}
           </h1>
           {service && <p className="tasker-card__meta">{service.description}</p>}
         </div>
@@ -191,6 +219,7 @@ function TaskerDiscoveryPage() {
           <option value="any">Rating • Any</option>
           <option value="3.5">3.5 ★ & up</option>
           <option value="4">4.0 ★ & up</option>
+          <option value="4.5">4.5 ★ & up</option>
           <option value="4.8">4.8 ★ & up</option>
           <option value="5">5.0 ★ </option>
         </select>
@@ -228,19 +257,13 @@ function TaskerDiscoveryPage() {
         </div>
       )}
 
-      <div className="load-more-wrapper">
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => setPage((prev) => prev + 1)}
-          disabled={loading || !hasMore}
-        >
-          {loading ? "Loading…" : hasMore ? "View more taskers" : "No more taskers"}
-        </button>
-      </div>
+      {(loading || hasMore) && (
+        <div ref={sentinelRef} className="load-indicator">
+          {loading ? "Loading taskers…" : "Scroll for more taskers"}
+        </div>
+      )}
     </main>
   );
 }
 
 export default TaskerDiscoveryPage;
-

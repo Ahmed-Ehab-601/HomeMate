@@ -54,7 +54,7 @@ function HomePage() {
       [...services]
         .filter((s) => s.totalTasks > 0)
         .sort((a, b) => b.totalTasks - a.totalTasks)
-        .slice(0, 2),
+        .slice(0, 6),
     [services]
   );
 

@@ -1,8 +1,6 @@
 // import taskers from "../data/taskers";
 import { normalizeTasker } from "../utils/taskers";
-
-const DEFAULT_API_BASE_URL = "http://localhost:8080";
-const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
+import { baseUrl, apiRequest } from "../utils/apiClient";
 
 const RATE_BUCKETS = {
   low: { minHourRate: 0, maxHourRate: 35 },
@@ -61,20 +59,10 @@ export async function fetchTaskers({
     size: String(size),
   });
 
-  const response = await fetch(`${baseUrl}/api/taskers/search?${params.toString()}`, {
+  const body = await apiRequest(`${baseUrl}/api/taskers/search?${params.toString()}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(criteria),
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => null);
-    throw error ?? new Error("Failed to load taskers.");
-  }
-
-  const body = await response.json();
   const list = Array.isArray(body) ? body : [];
   return {
     data: list.map(normalizeTasker),
@@ -84,14 +72,16 @@ export async function fetchTaskers({
 }
 
 export async function fetchTaskerById(taskerId) {
+  // TODO: Uncomment when backend is ready
+  // const response = await fetch(`${baseUrl}/api/taskers/${taskerId}`);
+  // if (!response.ok) throw new Error("Failed to load tasker profile");
+  // return response.json();
+
+  // Mock implementation - keeping for backward compatibility
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      const tasker = taskers.find((t) => String(t.id) === String(taskerId));
-      if (!tasker) {
-        reject(new Error("Tasker not found"));
-        return;
-      }
-      resolve(tasker);
+      // This would normally fetch from API
+      reject(new Error("Tasker not found - API not implemented"));
     }, 250);
   });
 }
@@ -103,7 +93,7 @@ export async function fetchTaskerById(taskerId) {
  */
 export async function fetchTaskerProfile(taskerId) {
   // TODO: Uncomment when backend is ready
-  // const response = await fetch(`${import.meta.env.VITE_API_URL}/api/taskers/${taskerId}/profile`);
+  // const response = await fetch(`${baseUrl}/api/taskers/${taskerId}/profile`);
   // if (!response.ok) {
   //   throw {
   //     status: response.status,
@@ -113,14 +103,10 @@ export async function fetchTaskerProfile(taskerId) {
   // }
   // return response.json();
 
+  // Mock implementation - keeping for backward compatibility
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      const tasker = taskers.find((t) => String(t.id) === String(taskerId));
-      if (!tasker) {
-        reject(new Error("Tasker not found"));
-        return;
-      }
-      resolve(tasker);
+      reject(new Error("Tasker profile not found - API not implemented"));
     }, 250);
   });
 }
@@ -134,7 +120,7 @@ export async function fetchTaskerProfile(taskerId) {
  */
 export async function fetchTaskerReviews(taskerId, page = 0, pageSize = 5) {
   // TODO: Uncomment when backend is ready
-  // const url = `${import.meta.env.VITE_API_URL}/api/taskers/${taskerId}/reviews/${page}/${pageSize}`;
+  // const url = `${baseUrl}/api/taskers/${taskerId}/reviews/${page}/${pageSize}`;
   // const response = await fetch(url, {
   //   method: "GET",
   //   headers: {
@@ -165,4 +151,3 @@ export async function fetchTaskerReviews(taskerId, page = 0, pageSize = 5) {
     }, 200);
   });
 }
-

@@ -60,4 +60,3 @@ function ServiceCard({ service, onSelect, variant = "default" }) {
 }
 
 export default ServiceCard;
-
