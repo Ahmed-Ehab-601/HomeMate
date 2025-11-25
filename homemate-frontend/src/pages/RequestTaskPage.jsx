@@ -1,21 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-// import taskersData from "../data/taskers";
 import { fetchUserAddresses } from "../api/addressesApi";
 import { requestTask } from "../api/tasksApi";
 import { fetchServices } from "../api/servicesApi";
-import servicesData from "../data/services";
-import taskersData from "../data/taskers";
-import { normalizeService } from "../utils/services";
-import { fetchUserAddresses } from "../api/addressesApi";
-import { requestTask } from "../api/tasksApi";
+
 import Modal from "../components/Modal";
 
 const MOCK_USER_ID = 1;
-const MOCK_USER_NAME = "Demo HomeMate User";
-
-const buildServicesIndex = () => servicesData.map(normalizeService);
-const services = buildServicesIndex();
 
 const timeSlots = Array.from({ length: 25 }, (_, index) => {
   const minutes = index * 30;
@@ -51,49 +42,8 @@ function RequestTaskPage() {
   const stateService = location.state?.service;
   const fromPath = location.state?.from;
 
-  const fallbackTasker = taskersData.find(
-    (t) => String(t.id) === String(taskerId)
-  );
-  const tasker = stateTasker ?? fallbackTasker;
-//   const [services, setServices] = useState(stateService ? [stateService] : []);
-//   const [service, setService] = useState(
-//     stateService ??
-//       services.find((svc) => svc.serviceId === tasker?.serviceId) ??
-//       null,
-//   );
-//   useEffect(() => {
-//     if (stateService) return undefined;
-//     let cancelled = false;
-//     fetchServices()
-//       .then((data) => {
-//         if (!cancelled) {
-//           setServices(data);
-//         }
-//       })
-//       .catch(() => {
-//         if (!cancelled) {
-//           setServices([]);
-//         }
-//       });
-//     return () => {
-//       cancelled = true;
-//     };
-//   }, [stateService]);
-
-//   useEffect(() => {
-//     if (stateService) {
-//       setService(stateService);
-//       return;
-//     }
-//     if (!tasker) return;
-//     const derived = services.find((svc) => svc.serviceId === tasker.serviceId);
-//     setService(derived ?? null);
-//   }, [stateService, services, tasker]);
-  // try to see diffrence
-  const service =
-    stateService ??
-    services.find((svc) => svc.serviceId === tasker?.serviceId) ??
-    services[0];
+  const tasker = stateTasker;
+  const service = stateService;
 
   const [addresses, setAddresses] = useState([]);
   const [addressStatus, setAddressStatus] = useState("loading");
@@ -235,10 +185,10 @@ function RequestTaskPage() {
 
   const submitRequest = () => {
     if (!canSubmit) return;
-    const serviceIdForRequest = service?.serviceId ?? tasker?.serviceId;
-    if (!serviceIdForRequest) {
+    if (!service?.serviceId) {
       setErrorBanner({
-        message: "Service information is missing. Please return and select the service again.",
+        message:
+          "Service information is missing. Please return and select the service again.",
       });
       return;
     }
@@ -247,8 +197,6 @@ function RequestTaskPage() {
     const requestDto = {
       userId: MOCK_USER_ID,
       taskerId: tasker.id,
-//       serviceId: serviceIdForRequest,
-      // try with try
       serviceId: service.serviceId,
       addressId: Number(selectedAddressId),
       startDate: `${dateValue}T${timeValue}:00`,

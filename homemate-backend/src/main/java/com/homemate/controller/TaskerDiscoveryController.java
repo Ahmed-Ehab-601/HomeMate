@@ -10,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/taskers")
+@CrossOrigin("*")
 public class TaskerDiscoveryController {
 
     private final TaskerDiscoveryService taskerDiscoveryService;
