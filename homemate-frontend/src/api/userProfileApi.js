@@ -64,38 +64,38 @@ async function request(url, options = {}) {
   return data;
 }
 
-export function getUserProfile(userId) {
+export function getUserProfile() {
   return request(`${USERS_ENDPOINT}/profile`);
 }
 
-export function getUserAddresses(userId) {
+export function getUserAddresses() {
   return request(`${USERS_ENDPOINT}/addresses`);
 }
 
-export function addUserAddress(userId, payload) {
-  return request(`${USERS_ENDPOINT}/${userId}/addresses`, {
+export function addUserAddress(payload) {
+  return request(`${USERS_ENDPOINT}/addresses`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 }
 
-export function updateUserAddress(userId, addressId, payload) {
-  return request(`${USERS_ENDPOINT}/${userId}/addresses/${addressId}`, {
+export function updateUserAddress(addressId, payload) {
+  return request(`${USERS_ENDPOINT}/addresses/${addressId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 }
 
-export function deleteUserAddress(userId, addressId) {
-  return request(`${USERS_ENDPOINT}/${userId}/addresses/${addressId}`, {
+export function deleteUserAddress(addressId) {
+  return request(`${USERS_ENDPOINT}/addresses/${addressId}`, {
     method: "DELETE",
   });
 }
 
-export function deleteUserAccount(userId) {
-  return request(`${USERS_ENDPOINT}/${userId}/account`, {
+export function deleteUserAccount() {
+  return request(`${USERS_ENDPOINT}/account`, {
     method: "DELETE",
   });
 }

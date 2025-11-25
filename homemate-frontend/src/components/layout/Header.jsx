@@ -3,7 +3,7 @@ import { useAuth } from "../../contexts/AuthContext";
 
 function Header() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <header className="sticky-header">
@@ -29,12 +29,22 @@ function Header() {
             Explore Services
           </NavLink>
           {isAuthenticated && (
-            <NavLink
-              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-              to="/profile"
-            >
-              Profile
-            </NavLink>
+            <>
+              <NavLink
+                className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+                to="/profile"
+              >
+                Profile
+              </NavLink>
+              {user?.role === "ROLE_TASKER" && (
+                <NavLink
+                  className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+                  to="/tasker/profile"
+                >
+                  Tasker Hub
+                </NavLink>
+              )}
+            </>
           )}
           <a className="nav-link" href="#how-it-works">
             How It Works

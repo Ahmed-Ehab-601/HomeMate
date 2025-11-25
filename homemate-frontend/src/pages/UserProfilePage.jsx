@@ -51,12 +51,10 @@ function UserProfilePage() {
   const [isDeletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
-    console.log("aaaaa");
     if (!user) {
       navigate("/");
       return;
     }
-    console.log("2xaaaaa");
     loadProfile();
     loadAddresses();
   }, [user, navigate]);
@@ -64,7 +62,7 @@ function UserProfilePage() {
   const loadProfile = () => {
     setProfileStatus("loading");
     setProfileError(null);
-    getUserProfile(user.userID)
+    getUserProfile()
       .then((data) => {
         setProfile(data);
         setProfileStatus("success");
@@ -78,7 +76,7 @@ function UserProfilePage() {
   const loadAddresses = () => {
     setAddressesStatus("loading");
     setAddressesError(null);
-    getUserAddresses(user.userID)
+    getUserAddresses()
       .then((data) => {
         setAddresses((data ?? []).map(normalizeAddress).filter(Boolean));
         setAddressesStatus("success");
@@ -116,12 +114,12 @@ function UserProfilePage() {
 
   const handleAddAddressSubmit = (event) => {
     event.preventDefault();
-    if (!user?.userID) return;
+    if (!user) return;
     const errors = validateAddress(addForm);
     setFormErrors(errors);
     if (Object.keys(errors).length) return;
     setSavingAddress(true);
-    addUserAddress(user.userID, { ...addForm, userId: user.userID })
+    addUserAddress(addForm)
       .then(() => {
         setAddForm(emptyAddress);
         setFeedback({ type: "success", message: "Address added successfully." });
@@ -147,14 +145,13 @@ function UserProfilePage() {
 
   const handleUpdateAddressSubmit = (event) => {
     event.preventDefault();
-    if (!editDraft || !user?.userID) return;
+    if (!editDraft || !user) return;
     const errors = validateAddress(editDraft);
     setFormErrors(errors);
     if (Object.keys(errors).length) return;
     setSavingAddress(true);
-    updateUserAddress(user.userID, editDraft.addressId, {
+    updateUserAddress(editDraft.addressId, {
       ...editDraft,
-      userId: user.userID,
     })
       .then(() => {
         setFeedback({ type: "success", message: "Address updated." });
@@ -171,10 +168,10 @@ function UserProfilePage() {
   };
 
   const handleDeleteAddress = (addressId) => {
-    if (!addressId || !user?.userID) return;
+    if (!addressId || !user) return;
     const confirmed = window.confirm("Remove this address from your profile?");
     if (!confirmed) return;
-    deleteUserAddress(user.userID, addressId)
+    deleteUserAddress(addressId)
       .then(() => {
         setFeedback({ type: "success", message: "Address removed." });
         loadAddresses();
@@ -188,9 +185,9 @@ function UserProfilePage() {
   };
 
   const handleDeleteAccount = () => {
-    if (!user?.userID) return;
+    if (!user) return;
     setDeletingAccount(true);
-    deleteUserAccount(user.userID)
+    deleteUserAccount()
       .then(() => {
         setFeedback({
           type: "success",

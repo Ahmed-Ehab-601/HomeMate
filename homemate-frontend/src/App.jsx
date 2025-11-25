@@ -10,16 +10,21 @@ import TaskerProfilePage from "./pages/TaskerProfilePage";
 import RequestTaskPage from "./pages/RequestTaskPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import SignInPage from "./pages/SignInPage";
+import TaskerDashboardPage from "./pages/TaskerDashboardPage";
 
 // Protected route component
-function ProtectedRoute({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
+function ProtectedRoute({ children, requiredRole }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return <div className="page">Loading...</div>;
   }
 
   if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (requiredRole && user?.role !== requiredRole) {
     return <Navigate to="/" replace />;
   }
 
@@ -40,6 +45,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <UserProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tasker/profile"
+        element={
+          <ProtectedRoute requiredRole="ROLE_TASKER">
+            <TaskerDashboardPage />
           </ProtectedRoute>
         }
       />

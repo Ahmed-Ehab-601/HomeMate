@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.homemate.UserProfile.DTO.AddressDTO;
@@ -23,8 +22,6 @@ import com.homemate.UserProfile.DTO.RemoveAddressDTO;
 import com.homemate.UserProfile.DTO.UserProfileDTO;
 import com.homemate.UserProfile.DTO.UserRequestTaskerDTO;
 import com.homemate.UserProfile.Services.UserService;
-
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 
 @RestController
 @RequestMapping("/api/users")
@@ -42,36 +39,41 @@ public class ManageUserProfileController {
         return ResponseEntity.ok(userService.getProfile(userDetails.getId()));
     }
 
-    @PostMapping("/{userId}/addresses")
-    public ResponseEntity<Map<String, Long>> addAddress(@PathVariable Long userId, @RequestBody AddressDTO newAddress) {
+    @PostMapping("/addresses")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, Long>> addAddress(@AuthenticationPrincipal AppUserDetails userDetails, @RequestBody AddressDTO newAddress) {
+        Long userId = userDetails.getId();
         newAddress.setUserId(userId);
         userService.addAddress(newAddress);
         return ResponseEntity.ok(Collections.singletonMap("userId", userId));
     }
 
-    @DeleteMapping("/{userId}/addresses/{addressId}")
-    public ResponseEntity<Map<String, String>> removeAddress(@PathVariable Long userId, @PathVariable Long addressId) {
+    @DeleteMapping("/addresses/{addressId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, String>> removeAddress(@AuthenticationPrincipal AppUserDetails userDetails, @PathVariable Long addressId) {
         RemoveAddressDTO removeAddressDTO = new RemoveAddressDTO();
-        removeAddressDTO.setUserId(userId);
+        removeAddressDTO.setUserId(userDetails.getId());
         removeAddressDTO.setAddressId(addressId);
         userService.removeAddress(removeAddressDTO);
         return ResponseEntity.ok(Collections.singletonMap("status", "Address removed"));
     }
 
-    @PutMapping("/{userId}/addresses/{addressId}")
-    public ResponseEntity<Map<String, String>> updateAddress(@PathVariable Long userId,
+    @PutMapping("/addresses/{addressId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, String>> updateAddress(@AuthenticationPrincipal AppUserDetails userDetails,
                                                              @PathVariable Long addressId,
                                                              @RequestBody AddressDTO updateAddress) {
-        updateAddress.setUserId(userId);
+        updateAddress.setUserId(userDetails.getId());
         updateAddress.setAddressId(addressId);
         userService.updateAddress(updateAddress);
         return ResponseEntity.ok(Collections.singletonMap("status", "Address updated"));
     }
 
-    @DeleteMapping("/{userId}/account")
-    public ResponseEntity<Map<String, String>> deleteAccount(@PathVariable Long userId) {
+    @DeleteMapping("/account")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, String>> deleteAccount(@AuthenticationPrincipal AppUserDetails userDetails) {
         DeleteAccountRequestDTO request = new DeleteAccountRequestDTO();
-        request.setUserId(userId);
+        request.setUserId(userDetails.getId());
         userService.deleteAccount(request);
         return ResponseEntity.ok(Collections.singletonMap("status", "Account deleted"));
     }

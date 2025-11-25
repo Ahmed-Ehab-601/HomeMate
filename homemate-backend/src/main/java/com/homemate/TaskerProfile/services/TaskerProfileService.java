@@ -10,6 +10,7 @@ import com.homemate.TaskerProfile.DTO.ChangeImageDTO;
 import com.homemate.TaskerProfile.DTO.DateOfBirthDTO;
 import com.homemate.TaskerProfile.DTO.EmailDTO;
 import com.homemate.TaskerProfile.DTO.HourRateDTO;
+import com.homemate.TaskerProfile.DTO.NameDTO;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewRequest;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewResponse;
 import com.homemate.TaskerProfile.DTO.PasswordDTO;
@@ -132,6 +133,26 @@ public class TaskerProfileService {
             return true;
     }
 
+    public Boolean changeName(NameDTO nameDTO) {
+        final int MAX_LENGTH = 50;
+
+        String newFirstName = nameDTO.getNewFirstName();
+        String newLastName = nameDTO.getNewLastName();
+
+        if (newFirstName != null && newFirstName.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("First name must not exceed 50 characters.");
+        }
+        if (newLastName != null && newLastName.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("Last name must not exceed 50 characters.");
+        }
+
+        Tasker tasker = taskerDao.getByID(nameDTO.getTaskerID());
+        tasker.setFirstName(newFirstName);
+        tasker.setLastName(newLastName);
+        taskerDao.update(tasker);
+        return true;
+    }
+
     public Boolean changeService(Long taskerID, Long serviceID) {
             Tasker tasker = taskerDao.getByID(taskerID);
             tasker.setServiceID(serviceID);
@@ -183,6 +204,11 @@ public class TaskerProfileService {
         tasker.setImage(newImage);
         taskerDao.update(tasker);
     
+        return true;
+    }
+    public Boolean deleteAccount(Long taskerID) {
+        Tasker tasker = taskerDao.getByID(taskerID);
+        taskerDao.delete(taskerID);
         return true;
     }
     
