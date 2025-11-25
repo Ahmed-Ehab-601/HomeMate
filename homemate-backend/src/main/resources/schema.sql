@@ -3,7 +3,7 @@
 -- ======================================================
 
 -- create database HomeMate;
--- use HomeMate;
+use HomeMate;
 
 -- Drop tables in correct order (optional)
 SET FOREIGN_KEY_CHECKS = 0;

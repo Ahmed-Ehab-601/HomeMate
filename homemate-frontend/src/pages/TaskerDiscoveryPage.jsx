@@ -3,18 +3,21 @@ import { useLocation, useParams } from "react-router-dom";
 import TaskerCard from "../components/TaskerCard";
 import { fetchTaskers } from "../api/taskersApi";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import servicesData from "../data/services";
+import { fetchServices } from "../api/servicesApi";
+
+const PAGE_SIZE = 12;
 import { normalizeService } from "../utils/services";
 
 function TaskerDiscoveryPage() {
   const { slug } = useParams();
   const location = useLocation();
   const serviceFromState = location.state?.service;
-  const services = useMemo(() => servicesData.map(normalizeService), []);
-  const service = serviceFromState ?? services.find((candidate) => candidate.slug === slug) ?? null;
+  const [services, setServices] = useState([]);
+  const [servicesError, setServicesError] = useState("");
+  const [servicesLoading, setServicesLoading] = useState(false);
 
   const [taskers, setTaskers] = useState([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -30,28 +33,68 @@ function TaskerDiscoveryPage() {
   const debouncedSearch = useDebouncedValue(search, 350);
 
   useEffect(() => {
+    let cancelled = false;
+    if (serviceFromState) {
+      setServices([serviceFromState]);
+      return () => {};
+    }
+    setServicesLoading(true);
+    setServicesError("");
+    fetchServices()
+      .then((data) => {
+        if (!cancelled) {
+          setServices(data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setServicesError("Unable to load services right now.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setServicesLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [serviceFromState]);
+
+  const service = useMemo(() => {
+    if (serviceFromState) return serviceFromState;
+    return services.find((candidate) => candidate.slug === slug) ?? null;
+  }, [serviceFromState, services, slug]);
+
+  const serviceId = service?.serviceId ?? null;
+
+  useEffect(() => {
     setTaskers([]);
-    setPage(1);
+    setPage(0);
     setHasMore(true);
-  }, [slug, debouncedSearch]);
+  }, [serviceId, debouncedSearch]);
 
   useEffect(() => {
     let cancelled = false;
-    if (!slug) return;
+    if (!serviceId) return;
 
     setLoading(true);
     setError("");
 
     fetchTaskers({
-      serviceSlug: slug,
+      serviceId,
       page,
+      size: PAGE_SIZE,
       searchTerm: debouncedSearch,
       filters,
       sortOption,
     })
       .then((response) => {
         if (cancelled) return;
-        setTaskers((previous) => (page === 1 ? response.data : [...previous, ...response.data]));
+        const enriched = response.data.map((tasker) =>
+          tasker.serviceId ? tasker : { ...tasker, serviceId },
+        );
+        setTaskers((previous) => (page === 0 ? enriched : [...previous, ...enriched]));
         setHasMore(response.hasMore);
       })
       .catch(() => {
@@ -69,7 +112,7 @@ function TaskerDiscoveryPage() {
       cancelled = true;
     };
   }, [
-    slug,
+    serviceId,
     page,
     debouncedSearch,
     filters.rate,
@@ -79,38 +122,9 @@ function TaskerDiscoveryPage() {
     sortOption,
   ]);
 
-  const observerRef = useRef(null);
-  const sentinelRef = useRef(null);
-
-  useEffect(() => {
-    if (!sentinelRef.current) return () => {};
-
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting && hasMore && !loading) {
-          setPage((prev) => prev + 1);
-        }
-      },
-      { rootMargin: "200px 0px 200px 0px" },
-    );
-
-    observerRef.current.observe(sentinelRef.current);
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [hasMore, loading]);
-
   const resetPagination = () => {
     setTaskers([]);
-    setPage(1);
+    setPage(0);
     setHasMore(true);
   };
 
@@ -121,13 +135,25 @@ function TaskerDiscoveryPage() {
 
   const showEmptyState = !loading && taskers.length === 0;
 
+  if (!service && servicesLoading) {
+    return <main className="page">Loading services…</main>;
+  }
+
+  if (!service && servicesError) {
+    return <main className="page">{servicesError}</main>;
+  }
+
+  if (!service) {
+    return <main className="page">We couldn’t find that service.</main>;
+  }
+
   return (
     <main className="page">
       <header className="section-title">
         <div>
           <p className="section-kicker">Tasker discovery</p>
           <h1 className="section-heading">
-            {service ? `${service.serviceName} taskers` : "Find taskers"} ({taskers.length})
+            {service ? `${service.serviceName} taskers` : "Find taskers"} 
           </h1>
           {service && <p className="tasker-card__meta">{service.description}</p>}
         </div>
@@ -163,8 +189,10 @@ function TaskerDiscoveryPage() {
           onChange={(event) => updateFilters({ rating: event.target.value })}
         >
           <option value="any">Rating • Any</option>
-          <option value="4.5">4.5 ★ & up</option>
+          <option value="3.5">3.5 ★ & up</option>
+          <option value="4">4.0 ★ & up</option>
           <option value="4.8">4.8 ★ & up</option>
+          <option value="5">5.0 ★ </option>
         </select>
 
         <input
@@ -195,16 +223,21 @@ function TaskerDiscoveryPage() {
       ) : (
         <div className="grid grid--taskers">
           {taskers.map((tasker) => (
-            <TaskerCard key={tasker.id} tasker={tasker} />
+            <TaskerCard key={tasker.id} tasker={tasker} service={service} />
           ))}
         </div>
       )}
 
-      {(loading || hasMore) && (
-        <div ref={sentinelRef} className="load-indicator">
-          {loading ? "Loading taskers…" : "Scroll for more taskers"}
-        </div>
-      )}
+      <div className="load-more-wrapper">
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setPage((prev) => prev + 1)}
+          disabled={loading || !hasMore}
+        >
+          {loading ? "Loading…" : hasMore ? "View more taskers" : "No more taskers"}
+        </button>
+      </div>
     </main>
   );
 }
