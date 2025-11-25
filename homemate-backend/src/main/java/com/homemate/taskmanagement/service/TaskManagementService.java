@@ -88,11 +88,44 @@ public class TaskManagementService {
                     totalCount(totalCount.get()).
                     totalPages(Math.ceilDiv(totalCount.get(),pageSize))
                     .build();
-
             return Optional.ofNullable(response);
 
         }
+    }
 
+    public Optional<PaginatedResponse> getTaskerTasks(Long taskerID, StatusDto statusDto, int page, int pageSize) {
+
+        if (statusDto == StatusDto.All) {
+            Optional<Long> totalCount = taskDao.countTasksByTaskerID(taskerID);
+            if (totalCount.isEmpty() || totalCount.get() == 0) {
+                return Optional.empty();
+            }
+            List<TaskCardDto> tasks = taskDao.getListTaskerTasksByIDSortedByDate(taskerID, page, pageSize);
+            PaginatedResponse response = PaginatedResponse.builder().
+                    tasks(tasks).
+                    page(page).
+                    pageSize(pageSize).
+                    totalCount(totalCount.get()).
+                    totalPages(Math.ceilDiv(totalCount.get(), pageSize))
+                    .build();
+            return Optional.ofNullable(response);
+
+        } else {
+            Optional<Long> totalCount = taskDao.countTasksByTaskerIDAndStatus(taskerID, statusDto);
+            if (totalCount.isEmpty()) {
+                return Optional.empty();
+            }
+            List<TaskCardDto> tasks = taskDao.getListTaskerTasksByIDAndStatusSortedByDate(taskerID, statusDto, page, pageSize);
+            PaginatedResponse response = PaginatedResponse.builder().
+                    tasks(tasks).
+                    page(page).
+                    pageSize(pageSize).
+                    totalCount(totalCount.get()).
+                    totalPages(Math.ceilDiv(totalCount.get(), pageSize))
+                    .build();
+            return Optional.ofNullable(response);
+
+        }
     }
 
 

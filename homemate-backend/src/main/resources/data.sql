@@ -133,7 +133,14 @@ INSERT INTO Task (startDate, workedHours, userID, taskerID, serviceID, endDate, 
 ('2024-11-14 11:00:00', 2, 2, 3, 3, NULL, 7, 120.00, 'InProgress', '2024-11-14 11:00:00', 3, 'Replace electrical outlet'),
 ('2024-11-15 09:00:00', 0, 6, 6, 6, NULL, 8, 0, 'InReview', NULL, 7, 'Build custom bookshelf'),
 ('2024-11-16 13:00:00', 0, 7, 7, 7, NULL, 9, 0, 'InReview', NULL, 8, 'Move furniture to new apartment'),
-('2024-11-08 15:00:00', 4, 8, 8, 8, '2024-11-08 19:00:00', 10, 260.00, 'Done', '2024-11-08 15:00:00', 9, 'AC maintenance and filter replacement');
+('2024-11-08 15:00:00', 4, 8, 8, 8, '2024-11-08 19:00:00', 10, 260.00, 'Done', '2024-11-08 15:00:00', 9, 'AC maintenance and filter replacement'),
+('2024-11-18 10:00:00', 0, 1, 1, 3, NULL, 1, 0, 'InReview', NULL, 1, 'Install ceiling fan'),
+('2024-11-19 14:00:00', 0, 1, 1, 4, NULL, 1, 0, 'Accepted', NULL, 1, 'Garden maintenance'),
+('2024-11-20 09:00:00', 3, 1, 1, 5, '2024-11-20 12:00:00', 1, 180.00, 'Done', '2024-11-20 09:00:00', 1, 'Interior painting touch-up'),
+('2024-11-21 11:00:00', 0, 1, 2, 1, NULL, 1, 0, 'InReview', NULL, 2, 'Window cleaning'),
+('2024-11-22 08:00:00', 0, 1, 1, 2, NULL, 1, 0, 'Accepted', NULL, 2, 'Pipe leak repair'),
+('2024-11-23 15:00:00', 2, 1, 1, 3, NULL, 1, 100.00, 'InProgress', '2024-11-23 15:00:00', 1, 'Light switch installation'),
+('2024-11-17 13:00:00', 5, 1, 1, 2, '2024-11-17 18:00:00', 1, 250.00, 'Done', '2024-11-17 13:00:00', 1, 'Kitchen faucet replacement');
 
 -- ======================================================
 -- POPULATE REVIEWS

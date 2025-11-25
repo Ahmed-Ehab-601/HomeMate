@@ -406,6 +406,110 @@ class TaskManagementControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void testThatGetTaskerTasksReturnsOkWithValidPaginatedResponse() throws Exception {
+        // Arrange
+        Long taskerId = 1L;
+        StatusDto status = StatusDto.All;
+        int page = 0;
+        int pageSize = 10;
+
+        List<TaskCardDto> mockTasks = createMockTaskCardList(10);
+        PaginatedResponse paginatedResponse = PaginatedResponse.builder()
+                .tasks(mockTasks)
+                .page(page)
+                .pageSize(pageSize)
+                .totalCount(25L)
+                .totalPages(3L)
+                .build();
+
+        when(taskManagementService.getTaskerTasks(taskerId, status, page, pageSize))
+                .thenReturn(Optional.of(paginatedResponse));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/tasker/tasks/{page}/{pageSize}", page, pageSize)
+                        .param("taskerID", taskerId.toString())
+                        .param("statusDto", status.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.tasks", hasSize(10)))
+                .andExpect(jsonPath("$.page", is(0)))
+                .andExpect(jsonPath("$.pageSize", is(10)))
+                .andExpect(jsonPath("$.totalCount", is(25)))
+                .andExpect(jsonPath("$.totalPages", is(3)));
+    }
+
+    @Test
+    void testThatGetTaskerTasksReturnsOkWithEmptyResponseWhenNoTasks() throws Exception {
+        // Arrange
+        Long taskerId = 1L;
+        StatusDto status = StatusDto.Done;
+        int page = 0;
+        int pageSize = 10;
+
+        when(taskManagementService.getTaskerTasks(taskerId, status, page, pageSize))
+                .thenReturn(Optional.empty());
+
+        // Act & Assert
+        mockMvc.perform(get("/api/tasker/tasks/{page}/{pageSize}", page, pageSize)
+                        .param("taskerID", taskerId.toString())
+                        .param("statusDto", status.toString()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testThatGetTaskerTasksReturnsBadRequestWhenTaskerIDIsNull() throws Exception {
+        // Arrange
+        int page = 0;
+        int pageSize = 10;
+
+        // Act & Assert
+        mockMvc.perform(get("/api/tasker/tasks/{page}/{pageSize}", page, pageSize)
+                        .param("statusDto", StatusDto.All.toString()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testThatGetTaskerTasksReturnsBadRequestWhenStatusIsNull() throws Exception {
+        // Arrange
+        Long taskerId = 1L;
+        int page = 0;
+        int pageSize = 10;
+
+        // Act & Assert
+        mockMvc.perform(get("/api/tasker/tasks/{page}/{pageSize}", page, pageSize)
+                        .param("taskerID", taskerId.toString()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testThatGetTaskerTasksHandlesLargePageNumber() throws Exception {
+        // Arrange
+        Long taskerId = 1L;
+        int page = 999;
+        int pageSize = 10;
+
+        when(taskManagementService.getTaskerTasks(taskerId, StatusDto.All, page, pageSize))
+                .thenReturn(Optional.empty());
+
+        // Act & Assert
+        mockMvc.perform(get("/api/tasker/tasks/{page}/{pageSize}", page, pageSize)
+                        .param("taskerID", taskerId.toString())
+                        .param("statusDto", StatusDto.All.toString()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testThatGetTaskerTasksReturnsBadRequestWhenBothParametersAreMissing() throws Exception {
+        // Arrange
+        int page = 0;
+        int pageSize = 10;
+
+        // Act & Assert
+        mockMvc.perform(get("/api/tasker/tasks/{page}/{pageSize}", page, pageSize))
+                .andExpect(status().isBadRequest());
+    }
+
     // Helper method to create mock TaskCardDto list
     private List<TaskCardDto> createMockTaskCardList(int size) {
         List<TaskCardDto> tasks = new ArrayList<>();

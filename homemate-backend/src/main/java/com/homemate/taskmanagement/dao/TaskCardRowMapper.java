@@ -6,12 +6,13 @@ import com.homemate.taskmanagement.dto.TaskCardDto;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.model.Status;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-
+@Component
 public class TaskCardRowMapper implements RowMapper<TaskCardDto> {
     @Override
     public TaskCardDto mapRow(ResultSet rs, int rowNum) throws SQLException {
