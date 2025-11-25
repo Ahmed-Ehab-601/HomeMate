@@ -17,7 +17,7 @@ import com.homemate.TaskerProfile.DTO.PhoneNumberDTO;
 import com.homemate.TaskerProfile.DTO.TaskerProfileDTO;
 import com.homemate.TaskerProfile.DTO.UsernameDTO;
 import com.homemate.TaskerProfile.Dao.ReviewDao;
-import com.homemate.TaskerProfile.Dao.ServiceDao;
+import com.homemate.TaskerProfile.Dao.TaskerProfileServiceDao;
 import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.TaskerProfile.models.Services;
 import com.homemate.TaskerProfile.models.Tasker;
@@ -25,10 +25,10 @@ import com.homemate.TaskerProfile.models.Tasker;
 @Service
 public class TaskerProfileService {
     private final TaskerDao taskerDao;
-    private final ServiceDao serviceDao;
+    private final TaskerProfileServiceDao serviceDao;
     private final ReviewDao reviewDao;
 
-    public TaskerProfileService(TaskerDao taskerDao, ServiceDao serviceDao, ReviewDao reviewDao) {
+    public TaskerProfileService(TaskerDao taskerDao, TaskerProfileServiceDao serviceDao, ReviewDao reviewDao) {
         this.taskerDao = taskerDao;
         this.serviceDao = serviceDao;
         this.reviewDao = reviewDao;

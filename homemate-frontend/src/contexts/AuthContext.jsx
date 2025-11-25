@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
   const login = (loginResponse) => {
     // loginResponse contains: role, username, firstname, lastname, token
     const userData = {
-      role: loginResponse.role,
+      role: loginResponse.role || "ROLE_USER", // Default to USER if no role
       username: loginResponse.username,
       firstname: loginResponse.firstname,
       lastname: loginResponse.lastname,
@@ -36,6 +36,21 @@ export function AuthProvider({ children }) {
     setToken(loginResponse.token);
     localStorage.setItem("homemate_user", JSON.stringify(userData));
     localStorage.setItem("homemate_token", loginResponse.token);
+  };
+
+  const signup = (signupResponse, role) => {
+    // signupResponse is just the JWT token string
+    // We need to extract user info from token or use defaults
+    const userData = {
+      role: role || "ROLE_USER",
+      username: "", // Will be populated from token or user input
+      firstname: "",
+      lastname: "",
+    };
+    setUser(userData);
+    setToken(signupResponse);
+    localStorage.setItem("homemate_user", JSON.stringify(userData));
+    localStorage.setItem("homemate_token", signupResponse);
   };
 
   const logout = () => {
@@ -49,14 +64,34 @@ export function AuthProvider({ children }) {
     return token || localStorage.getItem("homemate_token");
   };
 
+  // Get user role, default to ROLE_USER if not authenticated
+  const getUserRole = () => {
+    if (!user) return "ROLE_USER"; // Default to regular user
+    return user.role || "ROLE_USER";
+  };
+
+  // Check if user is a tasker
+  const isTasker = () => {
+    return getUserRole() === "ROLE_TASKER";
+  };
+
+  // Check if user is a regular user
+  const isRegularUser = () => {
+    return getUserRole() === "ROLE_USER" || getUserRole() === "ROLE_ADMIN";
+  };
+
   const value = {
     user,
     token,
     isAuthenticated: !!user && !!token,
     isLoading,
     login,
+    signup,
     logout,
     getToken,
+    getUserRole,
+    isTasker,
+    isRegularUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

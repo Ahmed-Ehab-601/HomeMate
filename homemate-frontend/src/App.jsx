@@ -10,10 +10,11 @@ import TaskerProfilePage from "./pages/TaskerProfilePage";
 import RequestTaskPage from "./pages/RequestTaskPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import SignInPage from "./pages/SignInPage";
+import SignUpPage from "./pages/SignUpPage";
 import UserTasksPage from "./pages/UserTasksPage";
 import TaskerTasksPage from "./pages/TaskerTasksPage";
 
-// Protected route component
+// Protected route component - redirects to signin on 401
 function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -22,7 +23,7 @@ function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/signin" replace />;
   }
 
   return children;
@@ -37,6 +38,7 @@ function AppRoutes() {
       <Route path="/taskers/:taskerId" element={<TaskerProfilePage />} />
       <Route path="/taskers/:taskerId/request" element={<RequestTaskPage />} />
       <Route path="/signin" element={<SignInPage />} />
+      <Route path="/signup" element={<SignUpPage />} />
       <Route
         path="/profile"
         element={

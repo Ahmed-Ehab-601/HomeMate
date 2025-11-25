@@ -3,7 +3,11 @@ import { useAuth } from "../../contexts/AuthContext";
 
 function Header() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isTasker, isRegularUser, logout } = useAuth();
+
+  // Default to showing regular user menu if not authenticated
+  const showUserMenu = !isAuthenticated || isRegularUser();
+  const showTaskerMenu = isAuthenticated && isTasker();
 
   return (
     <header className="sticky-header">
@@ -25,12 +29,16 @@ function Header() {
           >
             Home
           </NavLink>
-          <NavLink
-            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-            to="/services"
-          >
-            Explore Services
-          </NavLink>
+          
+          {showUserMenu && (
+            <NavLink
+              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+              to="/services"
+            >
+              Explore Services
+            </NavLink>
+          )}
+
           {isAuthenticated && (
             <NavLink
               className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
@@ -39,18 +47,25 @@ function Header() {
               Profile
             </NavLink>
           )}
-          <NavLink
-            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-            to="/my-tasks"
-          >
-            My Tasks
-          </NavLink>
-          <NavLink
-            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-            to="/tasker/my-tasks"
-          >
-            Tasker Tasks
-          </NavLink>
+
+          {showUserMenu && (
+            <NavLink
+              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+              to="/my-tasks"
+            >
+              My Tasks
+            </NavLink>
+          )}
+
+          {showTaskerMenu && (
+            <NavLink
+              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+              to="/tasker/my-tasks"
+            >
+              Tasker Tasks
+            </NavLink>
+          )}
+
           <a className="nav-link" href="#how-it-works">
             How It Works
           </a>
@@ -60,16 +75,24 @@ function Header() {
         </nav>
 
         <div className="header-cta">
-          <button type="button" className="btn btn-ghost" onClick={() => navigate("/signin")}>
-            Sign in
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => navigate("/services")}
-          >
-            Get Started
-          </button>
+          {isAuthenticated ? (
+            <button type="button" className="btn btn-ghost" onClick={logout}>
+              Sign out
+            </button>
+          ) : (
+            <>
+              <button type="button" className="btn btn-ghost" onClick={() => navigate("/signin")}>
+                Sign in
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => navigate("/signup")}
+              >
+                Get Started
+              </button>
+            </>
+          )}
         </div>
       </div>
     </header>

@@ -1,7 +1,7 @@
 package com.homemate.UserProfile.Models;
 
 public class Address {
-    
+
     private Long addressId;
     private Long userId;
     private String country;

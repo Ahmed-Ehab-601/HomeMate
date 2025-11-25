@@ -1,8 +1,6 @@
 // import taskers from "../data/taskers";
 import { normalizeTasker } from "../utils/taskers";
-
-const DEFAULT_API_BASE_URL = "http://localhost:8080";
-const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
+import { baseUrl, apiRequest } from "../utils/apiClient";
 
 const RATE_BUCKETS = {
   low: { minHourRate: 0, maxHourRate: 35 },
@@ -61,20 +59,10 @@ export async function fetchTaskers({
     size: String(size),
   });
 
-  const response = await fetch(`${baseUrl}/api/taskers/search?${params.toString()}`, {
+  const body = await apiRequest(`${baseUrl}/api/taskers/search?${params.toString()}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(criteria),
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => null);
-    throw error ?? new Error("Failed to load taskers.");
-  }
-
-  const body = await response.json();
   const list = Array.isArray(body) ? body : [];
   return {
     data: list.map(normalizeTasker),

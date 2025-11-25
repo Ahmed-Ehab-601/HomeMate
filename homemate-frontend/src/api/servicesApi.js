@@ -1,14 +1,11 @@
 // api/servicesApi.js
 import { normalizeService } from "../utils/services";
-
-const DEFAULT_API_BASE_URL = "http://localhost:8080";
-const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
+import { baseUrl, apiRequest } from "../utils/apiClient";
 
 export async function fetchServices() {
-  const response = await fetch(`${baseUrl}/api/services`);
-  if (!response.ok) {
-    throw new Error("Failed to load services");
-  }
-  const services = await response.json();
+  // Services endpoint doesn't require authentication
+  const services = await apiRequest(`${baseUrl}/api/services`, {
+    method: "GET",
+  }, false);
   return Array.isArray(services) ? services.map(normalizeService) : [];
 }
