@@ -12,8 +12,6 @@ public class SignupUserDTO {
     private Timestamp birthDate;
     private Character gender;
     private String phone;
-    private Boolean admin;
-    private Boolean suspended;
 
     public String getUsername() {
         return username;
@@ -77,22 +75,6 @@ public class SignupUserDTO {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public Boolean getAdmin() {
-        return admin;
-    }
-
-    public void setAdmin(Boolean admin) {
-        this.admin = admin;
-    }
-
-    public Boolean getSuspended() {
-        return suspended;
-    }
-
-    public void setSuspended(Boolean suspended) {
-        this.suspended = suspended;
     }
 }
 

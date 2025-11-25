@@ -1,7 +1,9 @@
 package com.homemate.UserProfile.Controllers;
 
 import com.homemate.Authentication.dto.LoginRequestDto;
+import com.homemate.UserProfile.DTO.SignupUserDTO;
 import com.homemate.UserProfile.DTO.UserProfileDTO;
+import com.homemate.UserProfile.Services.UserSignupService;
 import com.homemate.security.model.AppUserDetails;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,12 +17,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class SignupController {
 
-//    @PostMapping("/signup")
-//    public ResponseEntity<UserProfileDTO> getProfile(
-//            @RequestBody LoginRequestDto loginRequestDto,
-//            @AuthenticationPrincipal AppUserDetails userDetails
-//    ) {
-//        return ResponseEntity.ok("userService.getProfile(userDetails.getId())");
-//    }
+    UserSignupService userSignupService;
+
+    SignupController(UserSignupService userSignupService) {
+        this.userSignupService = userSignupService;
+    }
+
+    @PostMapping("/signup")
+    public ResponseEntity<String> signupUser(@RequestBody SignupUserDTO signupUserDTO) {
+        String result = userSignupService.signup(signupUserDTO);
+        if (result == null) {
+            return ResponseEntity.status(403).body("Invalid Credentials");
+        }
+        return ResponseEntity.ok(result);
+    }
 
 }

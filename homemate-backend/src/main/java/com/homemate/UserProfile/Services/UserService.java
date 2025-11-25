@@ -28,22 +28,7 @@ public class UserService {
         this.addressDao = addressDao;
     }
 
-    // public String signup(SignupUserDTO userData) {
-    //     Objects.requireNonNull(userData, "userData cannot be null");
-    //     User user = new User();
-    //     user.setUsername(userData.getUsername());
-    //     user.setFirstName(userData.getFirstName());
-    //     user.setLastName(userData.getLastName());
-    //     user.setEmail(userData.getEmail());
-    //     user.setPassword(userData.getPassword());
-    //     user.setBirthDate(userData.getBirthDate());
-    //     user.setGender(userData.getGender());
-    //     user.setPhone(userData.getPhone());
-    //     user.setIsAdmin(Boolean.TRUE.equals(userData.getAdmin()));
-    //     user.setIsSuspended(Boolean.TRUE.equals(userData.getSuspended()));
-    //     userDao.signup(user);
-    //     return "User created successfully";
-    // }
+
 
     public Boolean changePassword(PasswordDTO newPasswordDTO) {
         Objects.requireNonNull(newPasswordDTO, "newPasswordDTO cannot be null");
