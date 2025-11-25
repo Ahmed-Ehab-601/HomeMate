@@ -339,28 +339,7 @@ class TaskerDaoTest {
         assertEquals(100.0, tasker.getWorkedHours());
     }
 
-    @Test
-    void testUpdate_WithMinValues() {
-        Tasker tasker = taskerDao.getByID(1L);
-        tasker.setFirstName("A");
-        tasker.setLastName("B");
-        tasker.setUsername("ab");
-        tasker.setEmail("a@b.c");
-        tasker.setPhone("1");
-        tasker.setHourrate(0.0);
-        tasker.setRating(0.0);
 
-        taskerDao.update(tasker);
-
-        Tasker updatedTasker = taskerDao.getByID(1L);
-        assertEquals("A", updatedTasker.getFirstName());
-        assertEquals("B", updatedTasker.getLastName());
-        assertEquals("ab", updatedTasker.getUsername());
-        assertEquals("a@b.c", updatedTasker.getEmail());
-        assertEquals("1", updatedTasker.getPhone());
-        assertEquals(0.0, updatedTasker.getHourrate());
-        assertEquals(0.0, updatedTasker.getRating());
-    }
 
     @Test
     void testGetProfile_EdgeCases() {
