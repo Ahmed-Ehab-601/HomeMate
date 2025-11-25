@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("task")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class TaskDaoImpIntegrationTest {
 
     private final TaskDaoImpl underTest;
