@@ -1,5 +1,6 @@
 package com.homemate.security.service;
 
+import com.homemate.security.model.AppUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -16,10 +17,12 @@ public class JwtService {
     private static final String SECRET = "NOT_SECRET_KEY_123456789012345678";
     private static final long EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-    // Create JWT with only the userId inside
-    public String generateToken(Long userId) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("id", userId);
+    public String generateToken(Long userId, String username, String email, String role) {
+        Map<String, String> claims = new HashMap<>();
+        claims.put("id", String.valueOf(userId));
+        claims.put("username", username);
+        claims.put("email", email);
+        claims.put("role", role);
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -30,30 +33,37 @@ public class JwtService {
                 .compact();
     }
 
-    // Extract the userId
-    public Long extractUserId(String jwt) {
-        return Long.parseLong(extractAllClaims(jwt).get("id").toString());
+    public AppUserDetails extractUserDetails(String jwt) {
+        Claims claims = extractAllClaims(jwt);
+        if (claims == null) return null;
+        return new AppUserDetails(
+                Long.valueOf((String) claims.get("id")),
+                (String) claims.get("username"),
+                (String) claims.get("email"),
+                (String) claims.get("role")
+        );
     }
 
-    // Validate token (signature + expiration)
+    // Validate token
     public boolean isTokenValid(String jwt) {
         try {
             Claims claims = extractAllClaims(jwt);
-            return !isExpired(claims);
+            return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    private boolean isExpired(Claims claims) {
-        return claims.getExpiration().before(new Date());
-    }
-
     private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET.getBytes())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts.parser()
+                    .setSigningKey(SECRET.getBytes())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        }
+        catch (Exception e) {
+            return null;
+        }
     }
 }

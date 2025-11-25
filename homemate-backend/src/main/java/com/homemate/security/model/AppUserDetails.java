@@ -15,10 +15,11 @@ public class AppUserDetails implements UserDetails {
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public AppUserDetails(Long id, String username, String email, String password, String role) {
+    public AppUserDetails(Long id, String username, String email, String role) {
         this.id = id;
         this.username = username;
         this.email = email;
+        this.password = "";
 
         // Populate the authorities based on the determined role string
         this.authorities = List.of(new SimpleGrantedAuthority(role));

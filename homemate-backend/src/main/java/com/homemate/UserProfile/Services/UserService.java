@@ -94,7 +94,7 @@ public class UserService {
         userDao.update(user);
         return Boolean.TRUE;
     }
-    public AddressDTO[] getAddresses(int userID) {
+    public AddressDTO[] getAddresses(Long userID) {
         return addressDao.getByUserID((long) userID).toArray(new AddressDTO[0]);
     }
 

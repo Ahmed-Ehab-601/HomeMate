@@ -37,8 +37,9 @@ public class ManageUserProfileController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<UserProfileDTO> getProfile() {
-        return ResponseEntity.ok(userService.getProfile(1L));
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<UserProfileDTO> getProfile(@AuthenticationPrincipal AppUserDetails userDetails) {
+        return ResponseEntity.ok(userService.getProfile(userDetails.getId()));
     }
 
     @PostMapping("/{userId}/addresses")
@@ -92,7 +93,8 @@ public class ManageUserProfileController {
 //    }
 
     @GetMapping("/addresses")
-    public ResponseEntity<AddressDTO[]> getAddressesForUser() {
-        return ResponseEntity.ok(userService.getAddresses(1));
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<AddressDTO[]> getAddressesForUser(@AuthenticationPrincipal AppUserDetails userDetails) {
+        return ResponseEntity.ok(userService.getAddresses(userDetails.getId()));
     }
 }

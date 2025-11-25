@@ -4,7 +4,6 @@ package com.homemate.security.filter;
 import java.io.IOException;
 
 import com.homemate.security.model.AppUserDetails;
-import com.homemate.security.service.AppUserDetailsService;
 import com.homemate.security.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -26,11 +25,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     );
 
     private final JwtService jwtService;
-    private final AppUserDetailsService userDetailsService;
 
-    JwtAuthFilter(JwtService jwtService, AppUserDetailsService userDetailsService) {
+    JwtAuthFilter(JwtService jwtService) {
         this.jwtService = jwtService;
-        this.userDetailsService = userDetailsService;
     }
 
     @Override
@@ -68,44 +65,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String jwt = authHeader.substring(7);
 
-        if (!jwtService.isTokenValid(jwt)) {
+        UserDetails userDetails = jwtService.extractUserDetails(jwt);
+
+        if (userDetails == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             try {
                 response.getWriter().write("Invalid or expired token");
             } catch (IOException e) {
                 System.err.println("IOException trying to write response for invalid token: " + e.getMessage());
             }
-            return;
         }
 
-        Long userId = jwtService.extractUserId(jwt);
-
-        // Fetch user details
-        UserDetails userDetails = new AppUserDetails(userId, "gg", "gg", "gg", "ROLE_ADMIN");
-//        try {
-//            userDetails = userDetailsService.loadUserById(userId);
-//        }
-//        catch (Exception e) {
-//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//            try {
-//                response.getWriter().write("Invalid or expired token");
-//            } catch (IOException ioException) {
-//                System.err.println("IOException trying to write response for user details error: " + ioException.getMessage());
-//            }
-//            return;
-//        }
-
-        System.out.println("hhhhhhhhhhhh");
-
-        // Create an Authentication object
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                 userDetails,
                 null,
                 userDetails.getAuthorities()
         );
 
-
-        // Set the Authentication object in the Security Context
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         try {

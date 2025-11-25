@@ -40,7 +40,12 @@ public class LoginService {
                 if (user.isAdmin())
                     role = "ROLE_ADMIN";
 
-                String token = jwtService.generateToken(Long.valueOf(user.getUserID()));
+                String token = jwtService.generateToken(
+                        Long.valueOf(user.getUserID()),
+                        user.getUsername(),
+                        user.getEmail(),
+                        role
+                );
 
                 return new LoginResponseDto(
                         role,
@@ -60,7 +65,12 @@ public class LoginService {
             if (tasker.getPassword().equals(loginRequestDto.getPassword())) {
 
                 String role = "ROLE_TASKER";
-                String token = jwtService.generateToken(Long.valueOf(tasker.getTaskerID()));
+                String token = jwtService.generateToken(
+                        Long.valueOf(tasker.getTaskerID()),
+                        tasker.getUsername(),
+                        tasker.getEmail(),
+                        role
+                );
 
                 return new LoginResponseDto(
                         role,
