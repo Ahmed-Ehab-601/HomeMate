@@ -1,6 +1,7 @@
 package com.homemate.taskmanagement.dto;
 
 import com.homemate.taskmanagement.model.Status;
+import jakarta.validation.constraints.Email;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -27,7 +28,9 @@ public class TaskDto {
     private Double rate;
     private String review;
     private List<ReviewImageDto> reviewImageDtoList;
+    @Email
     private String userMail;
+    @Email
     private String taskerMail;
 
 }
