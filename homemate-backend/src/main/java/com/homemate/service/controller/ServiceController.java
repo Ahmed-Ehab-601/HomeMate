@@ -25,7 +25,7 @@ public class ServiceController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<String> createService(@Valid @RequestBody ServiceDto serviceDto) throws SQLException {
+    public ResponseEntity<String> createService(@Valid @RequestBody ServiceDto serviceDto) throws Exception {
         try {
             if (serviceDto.getId() != null && serviceDto.getId() != 0) {
                 return ResponseEntity.badRequest().body("ID should not be provided when creating a service");

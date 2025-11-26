@@ -26,7 +26,10 @@ public class ServiceManagService {
         this.serviceMapper = serviceMapper;
     }
 
-    public void createService(ServiceDto serviceDto) throws SQLException {
+    public void createService(ServiceDto serviceDto) throws Exception {
+        if(serviceDAO.findIdByName(serviceDto.getName())>0){
+            throw new Exception("There is an Exisiting Service with that same Name");
+        }
         ServiceEntity service=serviceMapper.mapFromDto(serviceDto);
         serviceDAO.save(service);
         }
