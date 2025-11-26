@@ -1,13 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useMemo } from "react";
-import servicesData from "../data/services";
-import { normalizeService } from "../utils/services";
 
-function TaskerCard({ tasker }) {
+function TaskerCard({ tasker, service }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const services = useMemo(() => servicesData.map(normalizeService), []);
-  const service = services.find((svc) => svc.serviceId === tasker.serviceId) ?? null;
   const hasPhoto = Boolean(tasker.photo);
   const initials = tasker.name
     .split(" ")
@@ -16,18 +11,29 @@ function TaskerCard({ tasker }) {
     .slice(0, 2)
     .toUpperCase();
 
+  const rating =
+    Number.isFinite(tasker.rating) && tasker.rating > 0 ? tasker.rating : 5;
+  const locationText = tasker.location || "Not specified";
+  const availabilityText = tasker.availability || "N/A";
+
   return (
     <article className="card tasker-card">
       <div className="tasker-card__header">
         <div className="tasker-card__avatar" aria-hidden="true">
-          {hasPhoto ? <img src={tasker.photo} alt={`${tasker.name} avatar`} /> : initials}
+          {hasPhoto ? (
+            <img src={tasker.photo} alt={`${tasker.name} avatar`} />
+          ) : (
+            initials
+          )}
         </div>
         <div>
           <h3 className="tasker-card__name">{tasker.name}</h3>
           <p className="tasker-card__meta">
-            {service?.serviceName ?? "Home service"} • {tasker.location}
+            {service?.serviceName ?? "Home service"} • {locationText}
           </p>
-          <p className="tasker-card__meta">Rating {tasker.rating.toFixed(1)} ★ • Status {tasker.availability}</p>
+          <p className="tasker-card__meta">
+            Rating {rating.toFixed(1)} ★ • Status {availabilityText}
+          </p>
         </div>
       </div>
       <div className="tasker-card__stats">
@@ -48,7 +54,9 @@ function TaskerCard({ tasker }) {
         <button
           type="button"
           className="btn btn-ghost"
-          onClick={() => navigate(`/taskers/${tasker.id}`, { state: { tasker, service } })}
+          onClick={() =>
+            navigate(`/taskers/${tasker.id}`, { state: { tasker, service } })
+          }
         >
           View Profile
         </button>
@@ -58,4 +66,3 @@ function TaskerCard({ tasker }) {
 }
 
 export default TaskerCard;
-

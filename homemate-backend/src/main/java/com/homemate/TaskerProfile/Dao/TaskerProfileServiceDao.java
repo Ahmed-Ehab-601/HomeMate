@@ -5,15 +5,15 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import com.homemate.TaskerProfile.mappers.ServiceRowMapper;
+import com.homemate.TaskerProfile.mappers.TaskerProfileServiceRowMapper;
 import com.homemate.TaskerProfile.models.Services;
 
-@Repository
-public class ServiceDao {
+@Repository("taskerProfileServiceDao")
+public class TaskerProfileServiceDao {
     private final JdbcTemplate jdbcTemplate;
-    private final ServiceRowMapper serviceRowMapper;
+    private final TaskerProfileServiceRowMapper serviceRowMapper;
 
-    public ServiceDao(JdbcTemplate jdbcTemplate, ServiceRowMapper serviceRowMapper){
+    public TaskerProfileServiceDao(JdbcTemplate jdbcTemplate, TaskerProfileServiceRowMapper serviceRowMapper){
         this.jdbcTemplate = jdbcTemplate;
         this.serviceRowMapper = serviceRowMapper;
     }

@@ -1,7 +1,7 @@
 // Authentication API
+// Note: Login requests should NOT include the Authorization header since we're getting the token
 
-const DEFAULT_API_BASE_URL = "http://localhost:8080";
-const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
+import { baseUrl } from "../utils/apiClient";
 
 export async function login(email, password) {
   const response = await fetch(`${baseUrl}/api/login`, {

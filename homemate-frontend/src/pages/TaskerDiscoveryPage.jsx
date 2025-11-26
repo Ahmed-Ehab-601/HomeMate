@@ -3,26 +3,29 @@ import { useLocation, useParams } from "react-router-dom";
 import TaskerCard from "../components/TaskerCard";
 import { fetchTaskers } from "../api/taskersApi";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import servicesData from "../data/services";
-import { normalizeService } from "../utils/services";
+import { fetchServices } from "../api/servicesApi";
+
+const PAGE_SIZE = 12;
 
 function TaskerDiscoveryPage() {
   const { slug } = useParams();
   const location = useLocation();
   const serviceFromState = location.state?.service;
-  const services = useMemo(() => servicesData.map(normalizeService), []);
-  const service = serviceFromState ?? services.find((candidate) => candidate.slug === slug) ?? null;
+  const [services, setServices] = useState([]);
+  const [servicesError, setServicesError] = useState("");
+  const [servicesLoading, setServicesLoading] = useState(false);
 
   const [taskers, setTaskers] = useState([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [filters, setFilters] = useState({
-    rate: "any",
+    minHourlyRate: 0,
+    maxHourlyRate: 500,
     availability: "any",
-    rating: "any",
+    minRating: 0,
     location: "",
   });
   const [sortOption, setSortOption] = useState("rating-desc");
@@ -30,28 +33,70 @@ function TaskerDiscoveryPage() {
   const debouncedSearch = useDebouncedValue(search, 350);
 
   useEffect(() => {
+    let cancelled = false;
+    if (serviceFromState) {
+      setServices([serviceFromState]);
+      return () => {};
+    }
+    setServicesLoading(true);
+    setServicesError("");
+    fetchServices()
+      .then((data) => {
+        if (!cancelled) {
+          setServices(data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setServicesError("Unable to load services right now.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setServicesLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [serviceFromState]);
+
+  const service = useMemo(() => {
+    if (serviceFromState) return serviceFromState;
+    return services.find((candidate) => candidate.slug === slug) ?? null;
+  }, [serviceFromState, services, slug]);
+
+  const serviceId = service?.serviceId ?? null;
+
+  useEffect(() => {
     setTaskers([]);
-    setPage(1);
+    setPage(0);
     setHasMore(true);
-  }, [slug, debouncedSearch]);
+  }, [serviceId, debouncedSearch]);
 
   useEffect(() => {
     let cancelled = false;
-    if (!slug) return;
+    if (!serviceId) return;
 
     setLoading(true);
     setError("");
 
     fetchTaskers({
-      serviceSlug: slug,
+      serviceId,
       page,
+      size: PAGE_SIZE,
       searchTerm: debouncedSearch,
       filters,
       sortOption,
     })
       .then((response) => {
         if (cancelled) return;
-        setTaskers((previous) => (page === 1 ? response.data : [...previous, ...response.data]));
+        const enriched = response.data.map((tasker) =>
+          tasker.serviceId ? tasker : { ...tasker, serviceId }
+        );
+        setTaskers((previous) =>
+          page === 0 ? enriched : [...previous, ...enriched]
+        );
         setHasMore(response.hasMore);
       })
       .catch(() => {
@@ -69,12 +114,13 @@ function TaskerDiscoveryPage() {
       cancelled = true;
     };
   }, [
-    slug,
+    serviceId,
     page,
     debouncedSearch,
-    filters.rate,
+    filters.minHourlyRate,
+    filters.maxHourlyRate,
     filters.availability,
-    filters.rating,
+    filters.minRating,
     filters.location,
     sortOption,
   ]);
@@ -96,7 +142,7 @@ function TaskerDiscoveryPage() {
           setPage((prev) => prev + 1);
         }
       },
-      { rootMargin: "200px 0px 200px 0px" },
+      { rootMargin: "200px 0px 200px 0px" }
     );
 
     observerRef.current.observe(sentinelRef.current);
@@ -110,16 +156,30 @@ function TaskerDiscoveryPage() {
 
   const resetPagination = () => {
     setTaskers([]);
-    setPage(1);
+    setPage(0);
     setHasMore(true);
   };
 
   const updateFilters = (partial) => {
-    resetPagination();
     setFilters((previous) => ({ ...previous, ...partial }));
+    setTaskers([]);
+    setPage(0);
+    setHasMore(true);
   };
 
   const showEmptyState = !loading && taskers.length === 0;
+
+  if (!service && servicesLoading) {
+    return <main className="page">Loading services…</main>;
+  }
+
+  if (!service && servicesError) {
+    return <main className="page">{servicesError}</main>;
+  }
+
+  if (!service) {
+    return <main className="page">We couldn't find that service.</main>;
+  }
 
   return (
     <main className="page">
@@ -127,9 +187,11 @@ function TaskerDiscoveryPage() {
         <div>
           <p className="section-kicker">Tasker discovery</p>
           <h1 className="section-heading">
-            {service ? `${service.serviceName} taskers` : "Find taskers"} ({taskers.length})
+            {service ? `${service.serviceName} taskers` : "Find taskers"}
           </h1>
-          {service && <p className="tasker-card__meta">{service.description}</p>}
+          {service && (
+            <p className="tasker-card__meta">{service.description}</p>
+          )}
         </div>
       </header>
 
@@ -142,29 +204,61 @@ function TaskerDiscoveryPage() {
       />
 
       <section className="filters-bar">
-        <select value={filters.rate} onChange={(event) => updateFilters({ rate: event.target.value })}>
-          <option value="any">Hourly rate • Any</option>
-          <option value="low">Under $35/hr</option>
-          <option value="medium">$35-$55/hr</option>
-          <option value="premium">$55+/hr</option>
-        </select>
+        <input
+          type="number"
+          min="0"
+          max="500"
+          value={filters.minHourlyRate}
+          onChange={(e) =>
+            updateFilters({
+              minHourlyRate: Math.max(
+                0,
+                Math.min(500, Number(e.target.value) || 0)
+              ),
+            })
+          }
+          placeholder="Min Hourly Rate ($)"
+        />
+
+        <input
+          type="number"
+          min="0"
+          max="500"
+          value={filters.maxHourlyRate}
+          onChange={(e) =>
+            updateFilters({
+              maxHourlyRate: Math.max(
+                0,
+                Math.min(500, Number(e.target.value) || 0)
+              ),
+            })
+          }
+          placeholder="Max Hourly Rate ($)"
+        />
+
+        <input
+          type="number"
+          min="0"
+          max="5"
+          step="0.5"
+          value={filters.minRating}
+          onChange={(e) =>
+            updateFilters({
+              minRating: Math.max(0, Math.min(5, Number(e.target.value) || 0)),
+            })
+          }
+          placeholder="Min Rating (0-5 ★)"
+        />
 
         <select
           value={filters.availability}
-          onChange={(event) => updateFilters({ availability: event.target.value })}
+          onChange={(event) =>
+            updateFilters({ availability: event.target.value })
+          }
         >
           <option value="any">Availability • Any</option>
           <option value="available">Available</option>
           <option value="unavailable">Unavailable</option>
-        </select>
-
-        <select
-          value={filters.rating}
-          onChange={(event) => updateFilters({ rating: event.target.value })}
-        >
-          <option value="any">Rating • Any</option>
-          <option value="4.5">4.5 ★ & up</option>
-          <option value="4.8">4.8 ★ & up</option>
         </select>
 
         <input
@@ -195,7 +289,7 @@ function TaskerDiscoveryPage() {
       ) : (
         <div className="grid grid--taskers">
           {taskers.map((tasker) => (
-            <TaskerCard key={tasker.id} tasker={tasker} />
+            <TaskerCard key={tasker.id} tasker={tasker} service={service} />
           ))}
         </div>
       )}
@@ -210,4 +304,3 @@ function TaskerDiscoveryPage() {
 }
 
 export default TaskerDiscoveryPage;
-

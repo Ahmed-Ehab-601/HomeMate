@@ -1,7 +1,10 @@
 package com.homemate.UserProfile.DAO;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import com.homemate.UserProfile.DTO.UserProfileDTO;
@@ -10,6 +13,10 @@ import com.homemate.UserProfile.Mappers.UserProfileDTORowMapper;
 import com.homemate.UserProfile.Mappers.UserRequestTaskerDTORowMapper;
 import com.homemate.UserProfile.Mappers.UserRowMapper;
 import com.homemate.UserProfile.Models.User;
+
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.sql.Timestamp;
 
 @Repository
 public class UserDao {
@@ -110,28 +117,36 @@ public class UserDao {
         jdbcTemplate.update(DELETE_USER_SQL, userID);
     }
 
-    /**
-     * SQL query to sign up a user
-     */
-    private static final String SIGNUP_USER_SQL =
-    "INSERT INTO users (username, firstName, lastName, email, password, birthDate, gender, phone, admin, suspended) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    /**
-     * Sign up a user
-     * @param user The user to sign up
-     */
-    public void signup(User user) {
-        jdbcTemplate.update(SIGNUP_USER_SQL,
-            user.getUsername(),
-            user.getFirstName(),
-            user.getLastName(),
-            user.getEmail(),
-            user.getPassword(),
-            user.getBirthDate(),
-            user.getGender() != null ? user.getGender().toString() : null,
-            user.getPhone(),
-            user.getIsAdmin(),
-            user.getIsSuspended());
+    public Long signup(User user) {
+        String sql = "INSERT INTO users " +
+                "(username, firstName, lastName, email, password, birthDate, gender, phone, admin, suspended) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        try {
+            jdbcTemplate.update(conn -> {
+                PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, user.getUsername());
+                ps.setString(2, user.getFirstName());
+                ps.setString(3, user.getLastName());
+                ps.setString(4, user.getEmail());
+                ps.setString(5, user.getPassword());
+                ps.setTimestamp(6, user.getBirthDate());
+                ps.setString(7, user.getGender().toString());
+                ps.setString(8, user.getPhone());
+                ps.setBoolean(9, user.getIsAdmin());
+                ps.setBoolean(10, user.getIsSuspended());
+                return ps;
+            }, keyHolder);
+
+            // Return generated user ID
+            return keyHolder.getKey().longValue();
+        } catch (DataAccessException e) {
+            return -1L;
+        }
     }
+
 
     private static final String GET_PROFILE_SQL =
     "SELECT userID, username, password, firstName, lastName, email, birthDate, gender, phone, admin, suspended " +

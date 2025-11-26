@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 import com.homemate.TaskerProfile.models.Services;
 
-@Component
-public class ServiceRowMapper implements RowMapper<Services> {
+@Component("taskerProfileServiceRowMapper")
+public class TaskerProfileServiceRowMapper implements RowMapper<Services> {
 
     @Override
     public Services mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
@@ -24,3 +24,4 @@ public class ServiceRowMapper implements RowMapper<Services> {
         return service;
     }
 }
+

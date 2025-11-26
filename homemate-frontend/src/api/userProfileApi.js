@@ -1,5 +1,5 @@
-const DEFAULT_API_BASE_URL = "http://localhost:8080";
-const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
+import { baseUrl,apiRequest } from "../utils/apiClient";
+
 const USERS_ENDPOINT = `${baseUrl}/api/users`;
 
 const buildError = (status, body) => {
@@ -75,7 +75,6 @@ export function getUserAddresses() {
 export function addUserAddress(payload) {
   return request(`${USERS_ENDPOINT}/addresses`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 }
@@ -83,7 +82,6 @@ export function addUserAddress(payload) {
 export function updateUserAddress(addressId, payload) {
   return request(`${USERS_ENDPOINT}/addresses/${addressId}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 }
