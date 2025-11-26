@@ -50,6 +50,8 @@ const UsersPage = () => {
     [filters],
   );
 
+  
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
@@ -76,11 +78,13 @@ const UsersPage = () => {
     fetchUsers();
   }, [fetchUsers]);
 
-  // on mount: try restoring from localStorage (localStorage takes precedence)
+  // on mount: try restoring from sessionStorage first, then localStorage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      console.debug('UsersPage: restoring from localStorage key', LOCAL_STORAGE_KEY, 'raw=', saved);
+      const rawSession = sessionStorage.getItem(LOCAL_STORAGE_KEY);
+      const rawLocal = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const saved = rawSession ?? rawLocal;
+      console.debug('UsersPage: restoring from storage key', LOCAL_STORAGE_KEY, 'session=', rawSession, 'local=', rawLocal);
       if (saved) {
         const parsed = JSON.parse(saved);
         console.debug('UsersPage: parsed stored filters', parsed);
@@ -102,9 +106,11 @@ const UsersPage = () => {
         }
         console.debug('UsersPage: updating URL search params with restored values', nextParams);
         setSearchParams(nextParams, { replace: true });
+        // ensure backend is queried with restored filters immediately
+        try { fetchUsers(); } catch (e) { console.debug('UsersPage: fetch after restore failed', e); }
       }
     } catch (e) {
-      console.debug('UsersPage: failed to restore from localStorage', e);
+      console.debug('UsersPage: failed to restore from storage', e);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -116,8 +122,10 @@ const UsersPage = () => {
     if (!location.pathname.includes('/users')) return;
 
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      console.debug('UsersPage: route-activated force restore, raw=', saved);
+      const rawSession = sessionStorage.getItem(LOCAL_STORAGE_KEY);
+      const rawLocal = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const saved = rawSession ?? rawLocal;
+      console.debug('UsersPage: route-activated force restore, session=', rawSession, 'local=', rawLocal);
       if (saved) {
         const parsed = JSON.parse(saved);
         console.debug('UsersPage: force-restored parsed', parsed);
@@ -135,6 +143,8 @@ const UsersPage = () => {
         }
         console.debug('UsersPage: replacing URL search params with', nextParams);
         setSearchParams(nextParams, { replace: true });
+        // ensure backend is queried with restored filters when route becomes active
+        try { fetchUsers(); } catch (e) { console.debug('UsersPage: fetch after route-restore failed', e); }
       }
     } catch (e) {
       console.debug('UsersPage: route force restore failed', e);
@@ -147,7 +157,8 @@ const UsersPage = () => {
     try {
       const toSave = { filters, pagination: { page: pagination.page, size: pagination.size } };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
-      console.debug('UsersPage: saved filters to localStorage', LOCAL_STORAGE_KEY, toSave);
+      try { sessionStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave)); } catch (_e) {}
+      console.debug('UsersPage: saved filters to storages', LOCAL_STORAGE_KEY, toSave);
     } catch (e) {
       console.debug('UsersPage: failed to save filters', e);
     }
@@ -182,7 +193,8 @@ const UsersPage = () => {
     try {
       const toSave = { filters: newFilters, pagination: { page: 0, size: pagination.size } };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
-      console.debug('UsersPage: immediate save to localStorage', toSave);
+      try { sessionStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave)); } catch (_e) {}
+      console.debug('UsersPage: immediate save to storages', toSave);
     } catch (e) {
       console.debug('UsersPage: failed immediate save', e);
     }
@@ -199,9 +211,10 @@ const UsersPage = () => {
     setSearchParams(next);
     try {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
-      console.debug('UsersPage: removed localStorage entry on clear');
+      try { sessionStorage.removeItem(LOCAL_STORAGE_KEY); } catch (_e) {}
+      console.debug('UsersPage: removed storage entries on clear');
     } catch (e) {
-      console.debug('UsersPage: failed to remove localStorage entry', e);
+      console.debug('UsersPage: failed to remove storage entries', e);
     }
   };
 
@@ -219,7 +232,8 @@ const UsersPage = () => {
     try {
       const toSave = { filters, pagination: { page, size: pagination.size } };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
-      console.debug('UsersPage: saved page change to localStorage', toSave);
+      try { sessionStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave)); } catch (_e) {}
+      console.debug('UsersPage: saved page change to storages', toSave);
     } catch (e) {
       console.debug('UsersPage: failed to save page change', e);
     }
@@ -236,7 +250,8 @@ const UsersPage = () => {
     try {
       const toSave = { filters, pagination: { page: 0, size } };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
-      console.debug('UsersPage: saved rows-per-page to localStorage', toSave);
+      try { sessionStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave)); } catch (_e) {}
+      console.debug('UsersPage: saved rows-per-page to storages', toSave);
     } catch (e) {
       console.debug('UsersPage: failed to save rows-per-page', e);
     }

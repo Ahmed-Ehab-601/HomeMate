@@ -70,16 +70,19 @@ const TaskersPage = () => {
       setLoading(false);
     }
   }, [pagination.page, pagination.size, normalizedFilters]);
+ 
 
   useEffect(() => {
     fetchTaskers();
   }, [fetchTaskers]);
 
-  // on mount: try restoring from localStorage (localStorage takes precedence)
+  // on mount: try restoring from sessionStorage first, then localStorage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      console.debug('TaskersPage: restoring from localStorage key', LOCAL_STORAGE_KEY, 'raw=', saved);
+      const rawSession = sessionStorage.getItem(LOCAL_STORAGE_KEY);
+      const rawLocal = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const saved = rawSession ?? rawLocal;
+      console.debug('TaskersPage: restoring from storage key', LOCAL_STORAGE_KEY, 'session=', rawSession, 'local=', rawLocal);
       if (saved) {
         const parsed = JSON.parse(saved);
         console.debug('TaskersPage: parsed stored filters', parsed);
@@ -100,9 +103,11 @@ const TaskersPage = () => {
         }
         console.debug('TaskersPage: updating URL search params with restored values', nextParams);
         setSearchParams(nextParams, { replace: true });
+        // ensure backend is queried with restored filters immediately
+        try { fetchTaskers(); } catch (e) { console.debug('TaskersPage: fetch after restore failed', e); }
       }
     } catch (e) {
-      console.debug('TaskersPage: failed to restore from localStorage', e);
+      console.debug('TaskersPage: failed to restore from storage', e);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -114,8 +119,10 @@ const TaskersPage = () => {
     if (!location.pathname.includes('/taskers')) return;
 
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      console.debug('TaskersPage: route-activated force restore, raw=', saved);
+      const rawSession = sessionStorage.getItem(LOCAL_STORAGE_KEY);
+      const rawLocal = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const saved = rawSession ?? rawLocal;
+      console.debug('TaskersPage: route-activated force restore, session=', rawSession, 'local=', rawLocal);
       if (saved) {
         const parsed = JSON.parse(saved);
         console.debug('TaskersPage: force-restored parsed', parsed);
@@ -133,6 +140,8 @@ const TaskersPage = () => {
         }
         console.debug('TaskersPage: replacing URL search params with', nextParams);
         setSearchParams(nextParams, { replace: true });
+        // ensure backend is queried with restored filters when route becomes active
+        try { fetchTaskers(); } catch (e) { console.debug('TaskersPage: fetch after route-restore failed', e); }
       }
     } catch (e) {
       console.debug('TaskersPage: route force restore failed', e);
@@ -145,7 +154,8 @@ const TaskersPage = () => {
     try {
       const toSave = { filters, pagination: { page: pagination.page, size: pagination.size } };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
-      console.debug('TaskersPage: saved filters to localStorage', LOCAL_STORAGE_KEY, toSave);
+      try { sessionStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave)); } catch (_e) {}
+      console.debug('TaskersPage: saved filters to storages', LOCAL_STORAGE_KEY, toSave);
     } catch (e) {
       console.debug('TaskersPage: failed to save filters', e);
     }
@@ -179,7 +189,8 @@ const TaskersPage = () => {
     try {
       const toSave = { filters: newFilters, pagination: { page: 0, size: pagination.size } };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
-      console.debug('TaskersPage: immediate save to localStorage', toSave);
+      try { sessionStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave)); } catch (_e) {}
+      console.debug('TaskersPage: immediate save to storages', toSave);
     } catch (e) {
       console.debug('TaskersPage: failed immediate save', e);
     }
@@ -196,11 +207,13 @@ const TaskersPage = () => {
     setSearchParams(next);
     try {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
-      console.debug('TaskersPage: removed localStorage entry on clear');
+      try { sessionStorage.removeItem(LOCAL_STORAGE_KEY); } catch (_e) {}
+      console.debug('TaskersPage: removed storage entries on clear');
     } catch (e) {
-      console.debug('TaskersPage: failed to remove localStorage entry', e);
+      console.debug('TaskersPage: failed to remove storage entries', e);
     }
   };
+ 
 
   const handlePageChange = (page) => {
     setPagination((prev) => ({ ...prev, page }));
@@ -212,7 +225,8 @@ const TaskersPage = () => {
     try {
       const toSave = { filters, pagination: { page, size: pagination.size } };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
-      console.debug('TaskersPage: saved page change to localStorage', toSave);
+      try { sessionStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave)); } catch (_e) {}
+      console.debug('TaskersPage: saved page change to storages', toSave);
     } catch (e) {
       console.debug('TaskersPage: failed to save page change', e);
     }
@@ -229,7 +243,8 @@ const TaskersPage = () => {
     try {
       const toSave = { filters, pagination: { page: 0, size } };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
-      console.debug('TaskersPage: saved rows-per-page to localStorage', toSave);
+      try { sessionStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave)); } catch (_e) {}
+      console.debug('TaskersPage: saved rows-per-page to storages', toSave);
     } catch (e) {
       console.debug('TaskersPage: failed to save rows-per-page', e);
     }

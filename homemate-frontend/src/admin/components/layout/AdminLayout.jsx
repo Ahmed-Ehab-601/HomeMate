@@ -14,7 +14,7 @@ import {
   Button,
   IconButton,
 } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
+// Dashboard (overview) removed — icon import dropped
 import PeopleIcon from '@mui/icons-material/People';
 import HandymanIcon from '@mui/icons-material/Handyman';
 import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
