@@ -27,7 +27,6 @@ export async function loginWithGoogle(idToken) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      // Google ID token from @react-oauth/google (or placeholder if not provided)
       idToken,
     }),
   });

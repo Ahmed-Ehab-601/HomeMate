@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { GoogleLogin as GoogleOAuthLogin } from "@react-oauth/google";
 import { signupUser, signupTasker } from "../api/signupApi";
 import { useAuth } from "../contexts/AuthContext";
 import { fetchServices } from "../api/servicesApi";
+import Modal from "../components/Modal";
+import ServiceCard from "../components/ServiceCard";
 
 function SignUpPage() {
   const navigate = useNavigate();
@@ -11,6 +14,9 @@ function SignUpPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [services, setServices] = useState([]);
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  const [userEmailLocked, setUserEmailLocked] = useState(false);
+  const [taskerEmailLocked, setTaskerEmailLocked] = useState(false);
 
   // User form fields
   const [userForm, setUserForm] = useState({
@@ -41,6 +47,19 @@ function SignUpPage() {
     city: "",
     profileImage: null,
   });
+
+  const decodeGoogleToken = (token) => {
+    if (!token) return null;
+    try {
+      const payload = token.split(".")[1];
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const decoded = JSON.parse(atob(base64));
+      console.log(decoded);
+      return decoded;
+    } catch {
+      return null;
+    }
+  };
 
   // Load services when tasker is selected
   useEffect(() => {
@@ -152,11 +171,81 @@ function SignUpPage() {
     }
   };
 
+  const handleGoogleUserSignup = (credentialResponse) => {
+    const decoded = decodeGoogleToken(credentialResponse?.credential);
+    if (!decoded) {
+      setError("Failed to read Google account information. Please try again.");
+      return;
+    }
+
+    const email = decoded.email || "";
+    const firstName = decoded.given_name || "";
+    const lastName = decoded.family_name || "";
+    const usernameFromEmail = email ? email.split("@")[0] : "";
+
+    setUserForm((prev) => ({
+      ...prev,
+      email: email || prev.email,
+      firstName: firstName || prev.firstName,
+      lastName: lastName || prev.lastName,
+      username: usernameFromEmail || prev.username,
+    }));
+
+    if (email) {
+      setUserEmailLocked(true);
+    }
+  };
+
+  const handleGoogleTaskerSignup = (credentialResponse) => {
+    const decoded = decodeGoogleToken(credentialResponse?.credential);
+    if (!decoded) {
+      setError("Failed to read Google account information. Please try again.");
+      return;
+    }
+
+    const email = decoded.email || "";
+    const firstName = decoded.given_name || "";
+    const lastName = decoded.family_name || "";
+    const usernameFromEmail = email ? email.split("@")[0] : "";
+
+    setTaskerForm((prev) => ({
+      ...prev,
+      email: email || prev.email,
+      firstName: firstName || prev.firstName,
+      lastName: lastName || prev.lastName,
+      username: usernameFromEmail || prev.username,
+    }));
+
+    if (email) {
+      setTaskerEmailLocked(true);
+    }
+  };
+
+  const handleGoogleSignupError = () => {
+    setError("Failed to sign up with Google. Please try again.");
+  };
+
+  const handleOpenServiceModal = () => {
+    setIsServiceModalOpen(true);
+  };
+
+  const handleCloseServiceModal = () => {
+    setIsServiceModalOpen(false);
+  };
+
+  const handleSelectServiceForTasker = (service) => {
+    setTaskerForm((prev) => ({
+      ...prev,
+      serviceID: service.serviceId ? String(service.serviceId) : "",
+    }));
+    setIsServiceModalOpen(false);
+  };
+
   if (!userType) {
     return (
       <main className="page page--signup">
         <div className="signin-container">
-          <div className="signin-card">
+          <div className="signin-card" style={{ maxWidth: "540px" }}>
             <h1 className="signin-title">Join HomeMate</h1>
             <p className="signin-subtitle">Choose how you want to use HomeMate</p>
 
@@ -218,7 +307,22 @@ function SignUpPage() {
           )}
 
           {userType === "user" ? (
-            <form onSubmit={handleUserSignup} className="signin-form">
+            <>
+              <div style={{ marginBottom: "16px" }}>
+                <p style={{ marginBottom: "8px", fontWeight: 500 }}>Sign up with Google</p>
+                <div className="signin-google">
+                  <GoogleOAuthLogin
+                    onSuccess={handleGoogleUserSignup}
+                    onError={handleGoogleSignupError}
+                    theme="outline"
+                    shape="pill"
+                    size="large"
+                    width="wide"
+                  />
+                </div>
+              </div>
+
+              <form onSubmit={handleUserSignup} className="signin-form">
               <div className="form-field">
                 <label htmlFor="username" className="form-label">
                   Username *
@@ -281,7 +385,8 @@ function SignUpPage() {
                   value={userForm.email}
                   onChange={handleUserFormChange}
                   required
-                  disabled={isLoading}
+                  disabled={isLoading || userEmailLocked}
+                  readOnly={userEmailLocked}
                 />
               </div>
 
@@ -378,8 +483,24 @@ function SignUpPage() {
                 {isLoading ? "Signing up..." : "Sign up"}
               </button>
             </form>
+            </>
           ) : (
-            <form onSubmit={handleTaskerSignup} className="signin-form">
+            <>
+              <div style={{ marginBottom: "16px" }}>
+                <p style={{ marginBottom: "8px", fontWeight: 500 }}>Sign up with Google</p>
+                <div className="signin-google">
+                  <GoogleOAuthLogin
+                    onSuccess={handleGoogleTaskerSignup}
+                    onError={handleGoogleSignupError}
+                    theme="outline"
+                    shape="pill"
+                    size="large"
+                    width="wide"
+                  />
+                </div>
+              </div>
+
+              <form onSubmit={handleTaskerSignup} className="signin-form">
               <div className="form-field">
                 <label htmlFor="tasker-username" className="form-label">
                   Username *
@@ -442,7 +563,8 @@ function SignUpPage() {
                   value={taskerForm.email}
                   onChange={handleTaskerFormChange}
                   required
-                  disabled={isLoading}
+                  disabled={isLoading || taskerEmailLocked}
+                  readOnly={taskerEmailLocked}
                 />
               </div>
 
@@ -499,22 +621,30 @@ function SignUpPage() {
                   <label htmlFor="tasker-serviceID" className="form-label">
                     Service *
                   </label>
-                  <select
-                    id="tasker-serviceID"
-                    name="serviceID"
-                    className="input"
-                    value={taskerForm.serviceID}
-                    onChange={handleTaskerFormChange}
-                    required
-                    disabled={isLoading}
-                  >
-                    <option value="">Select a service</option>
-                    {services.map((service) => (
-                      <option key={service.serviceId} value={service.serviceId}>
-                        {service.serviceName}
-                      </option>
-                    ))}
-                  </select>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <input
+                      id="tasker-serviceID"
+                      type="text"
+                      className="input"
+                      value={
+                        taskerForm.serviceID
+                          ? services.find((s) => String(s.serviceId) === String(taskerForm.serviceID))
+                              ?.serviceName || ""
+                          : ""
+                      }
+                      placeholder="Choose a service"
+                      readOnly
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={handleOpenServiceModal}
+                      disabled={isLoading || services.length === 0}
+                    >
+                      Choose
+                    </button>
+                  </div>
                 </div>
 
                 <div className="form-field">
@@ -606,6 +736,32 @@ function SignUpPage() {
                 {isLoading ? "Signing up..." : "Sign up as Tasker"}
               </button>
             </form>
+
+            {isServiceModalOpen && (
+              <Modal
+                title="Choose a service"
+                onClose={handleCloseServiceModal}
+                width={800}
+              >
+                <div style={{ maxHeight: "80vh", overflowY: "auto" }}>
+                  {services.length === 0 ? (
+                    <div className="load-indicator">Loading services…</div>
+                  ) : (
+                    <div className="grid grid--services">
+                      {services.map((service) => (
+                        <ServiceCard
+                          key={service.serviceId}
+                          service={service}
+                          onSelect={handleSelectServiceForTasker}
+                          variant="compact"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Modal>
+            )}
+            </>
           )}
 
           <div style={{ marginTop: "24px", textAlign: "center" }}>

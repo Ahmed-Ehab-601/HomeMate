@@ -2306,7 +2306,6 @@
 
 .signin-card {
   width: 100%;
-  max-width: 440px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 24px;
@@ -2319,12 +2318,14 @@
   font-weight: 700;
   margin: 0 0 8px;
   color: var(--text-primary);
+  text-align: center;
 }
 
 .signin-subtitle {
   font-size: 0.95rem;
   color: var(--text-secondary);
   margin: 0 0 32px;
+  text-align: center;
 }
 
 .signin-form {
@@ -2385,6 +2386,18 @@
 .signin-submit:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.signin-google {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.signin-google > div {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .signin-divider {

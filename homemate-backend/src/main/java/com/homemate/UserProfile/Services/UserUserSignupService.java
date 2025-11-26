@@ -1,7 +1,6 @@
 package com.homemate.UserProfile.Services;
 
 import com.homemate.Authentication.dao.TaskerDaoLogin;
-import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.UserProfile.DTO.SignupUserDTO;
 import com.homemate.UserProfile.Models.User;
@@ -10,13 +9,13 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserSignupService {
+public class UserUserSignupService {
 
     UserDao userDao;
     JwtService jwtService;
     TaskerDaoLogin taskerDaoLogin;
 
-    public UserSignupService(UserDao userDao, JwtService jwtService, TaskerDaoLogin taskerDaoLogin) {
+    public UserUserSignupService(UserDao userDao, JwtService jwtService, TaskerDaoLogin taskerDaoLogin) {
         this.userDao = userDao;
         this.jwtService = jwtService;
         this.taskerDaoLogin = taskerDaoLogin;

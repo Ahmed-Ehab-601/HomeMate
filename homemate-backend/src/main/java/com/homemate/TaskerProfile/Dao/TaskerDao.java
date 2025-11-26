@@ -94,7 +94,7 @@ public class TaskerDao {
                 ps.setString(3, dto.getUsername());
                 ps.setString(4, dto.getPassword());
                 ps.setString(5, dto.getEmail());
-                ps.setString(6, dto.getDateOfBirth());
+                ps.setTimestamp(6, dto.getDateOfBirth());
                 ps.setString(7, dto.getPhoneNumber());
                 ps.setString(8, "M");
                 ps.setBytes(9, dto.getProfileImage());
