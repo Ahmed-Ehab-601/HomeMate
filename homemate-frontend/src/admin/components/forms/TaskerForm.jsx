@@ -22,6 +22,7 @@ const defaultValues = {
   suspended: false,
   gender: 'M',
   hourRate: '',
+  numberOfTasks: 0,
 };
 
 const genders = [
@@ -44,7 +45,11 @@ const TaskerForm = ({ open, initialValues, onClose, onSubmit }) => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    onSubmit({ ...values, hourRate: Number(values.hourRate || 0) });
+    onSubmit({
+      ...values,
+      hourRate: Number(values.hourRate || 0),
+      numberOfTasks: Number(values.numberOfTasks || 0),
+    });
   };
 
   return (
@@ -81,6 +86,16 @@ const TaskerForm = ({ open, initialValues, onClose, onSubmit }) => {
               value={values.hourRate}
               onChange={handleChange('hourRate')}
               required
+              inputProps={{ min: 0, step: 1 }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Number of tasks"
+              type="number"
+              fullWidth
+              value={values.numberOfTasks}
+              onChange={handleChange('numberOfTasks')}
               inputProps={{ min: 0, step: 1 }}
             />
           </Grid>

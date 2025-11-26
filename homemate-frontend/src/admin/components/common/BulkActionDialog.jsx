@@ -9,13 +9,18 @@ import {
   FormControlLabel,
   Radio,
   Typography,
+  TextField,
 } from '@mui/material';
 
 const BulkActionDialog = ({ open, onClose, onConfirm, type = 'user', count = 0 }) => {
   const [action, setAction] = useState('');
+  const [reason, setReason] = useState('');
 
   useEffect(() => {
-    if (!open) setAction('');
+    if (!open) {
+      setAction('');
+      setReason('');
+    }
   }, [open]);
 
   const userOptions = [
@@ -44,13 +49,25 @@ const BulkActionDialog = ({ open, onClose, onConfirm, type = 'user', count = 0 }
             <FormControlLabel key={opt.value} value={opt.value} control={<Radio />} label={opt.label} />
           ))}
         </RadioGroup>
+        {action === 'suspend' && (
+          <TextField
+            fullWidth
+            multiline
+            minRows={2}
+            label="Reason (optional)"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Provide a reason for suspending the selected items"
+            sx={{ mt: 2 }}
+          />
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button
           variant="contained"
           onClick={() => {
-            onConfirm(action);
+            onConfirm(action, reason || '');
           }}
           disabled={!action}
         >

@@ -53,8 +53,8 @@ export const updateTasker = async (taskerId, payload) => {
   return data;
 };
 
-export const suspendTasker = async (taskerId, suspended = true) => {
-  const payload = { userId: taskerId, userType: 'TASKER', reason: '' };
+export const suspendTasker = async (taskerId, suspended = true, reason = '') => {
+  const payload = { userId: taskerId, userType: 'TASKER', reason };
   const { data } = await client.patch(`${ADMIN_PREFIX}/tasker/suspend`, payload);
   return data;
 };
@@ -104,8 +104,8 @@ export const reactiveTasker = async (taskerId) => {
   return data;
 };
 
-export const suspendTaskers = async (taskerIds = []) => {
-  const promises = taskerIds.map((id) => client.patch(`${ADMIN_PREFIX}/tasker/suspend`, { userId: id, userType: 'TASKER', reason: '' }));
+export const suspendTaskers = async (taskerIds = [], reason = '') => {
+  const promises = taskerIds.map((id) => client.patch(`${ADMIN_PREFIX}/tasker/suspend`, { userId: id, userType: 'TASKER', reason }));
   const results = await Promise.all(promises);
   return results.map((r) => r.data);
 };

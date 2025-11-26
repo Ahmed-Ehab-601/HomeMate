@@ -17,6 +17,7 @@ import {
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import HandymanIcon from '@mui/icons-material/Handyman';
+import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
 import LogoutIcon from '@mui/icons-material/Logout';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -26,6 +27,7 @@ import { useAdminThemeMode } from '../../theme/ThemeProviderSwitcher';
 const navItems = [
   { label: 'Users', path: '/admin/users', icon: <PeopleIcon fontSize="small" /> },
   { label: 'Taskers', path: '/admin/taskers', icon: <HandymanIcon fontSize="small" /> },
+  { label: 'Services', path: '/admin/services', icon: <MiscellaneousServicesIcon fontSize="small" /> },
 ];
 
 const AdminLayout = () => {
@@ -35,6 +37,7 @@ const AdminLayout = () => {
 
   const activePath = useMemo(() => {
     if (location.pathname.startsWith('/admin/taskers')) return '/admin/taskers';
+    if (location.pathname.startsWith('/admin/services')) return '/admin/services';
     if (location.pathname.startsWith('/admin/users')) return '/admin/users';
     return '/admin/users';
   }, [location.pathname]);

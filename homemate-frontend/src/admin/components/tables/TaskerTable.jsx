@@ -55,10 +55,11 @@ const TaskerTable = ({
   >
     {loading && <LinearProgress />}
     <CardContent sx={{ p: 0, display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <div style={{ width: '100%', overflowX: 'auto' }}>
+      <div style={{ width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}>
         <TableContainer
           sx={{
-            width: '100%',
+            width: 'fit-content',
+            maxWidth: '100%',
             overflowX: 'auto',
             '&::-webkit-scrollbar': {
               height: '8px',
@@ -75,8 +76,9 @@ const TaskerTable = ({
           <Table
             size="small"
             sx={{
-              width: '100%',
-              tableLayout: 'fixed',
+              width: 'auto',
+              minWidth: { xs: 700, sm: 900, md: 1100 },
+              tableLayout: 'auto',
               '& .MuiTableCell-root': {
                 color: (theme) =>
                   theme.palette.mode === 'dark'
@@ -126,6 +128,7 @@ const TaskerTable = ({
                 <TableCell sx={{ width: '12%' }}>Phone</TableCell>
                 <TableCell sx={{ width: '10%' }}>Avg Rating</TableCell>
                 <TableCell sx={{ width: '10%' }}>Hour Rate</TableCell>
+                <TableCell sx={{ width: '8%' }}>Tasks</TableCell>
                 <TableCell sx={{ width: '8%' }}>Status</TableCell>
                 <TableCell align="right" sx={{ width: '6%' }}>Actions</TableCell>
               </TableRow>
@@ -163,6 +166,7 @@ const TaskerTable = ({
                   <TableCell>
                     {row.hourRate != null ? `$${Number(row.hourRate).toFixed(2)}` : '-'}
                   </TableCell>
+                  <TableCell>{row.numberOfTasks != null ? Number(row.numberOfTasks) : '-'}</TableCell>
                   <TableCell>
                     <Chip
                       size="small"
@@ -195,7 +199,7 @@ const TaskerTable = ({
               ))}
               {!rows.length && !loading && (
                 <TableRow>
-                  <TableCell colSpan={8} align="center">
+                  <TableCell colSpan={10} align="center">
                     No taskers found.
                   </TableCell>
                 </TableRow>

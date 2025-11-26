@@ -59,10 +59,11 @@ const UserTable = ({
   >
     {loading && <LinearProgress />}
     <CardContent sx={{ p: 0, display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <div style={{ width: '100%', overflowX: 'auto' }}>
+      <div style={{ width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}>
         <TableContainer
           sx={{
-            width: '100%',
+            width: 'fit-content',
+            maxWidth: '100%',
             overflowX: 'auto',
             '&::-webkit-scrollbar': {
               height: '8px',
@@ -79,8 +80,9 @@ const UserTable = ({
           <Table
             size="small"
             sx={{
-              width: '100%',
-              tableLayout: 'fixed',
+              width: 'auto',
+              minWidth: { xs: 700, sm: 900, md: 1100 },
+              tableLayout: 'auto',
               '& .MuiTableCell-root': {
                 color: (theme) =>
                   theme.palette.mode === 'dark'

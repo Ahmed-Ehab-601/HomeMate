@@ -55,7 +55,7 @@ const TaskerFilters = ({ values, onChange, onClear, onSearch }) => (
         ))}
       </TextField>
       <TextField
-        label="Min hour rate"
+        label="Min rate"
         type="number"
         value={values.minRate ?? ''}
         onChange={(event) => onChange('minRate', event.target.value)}
