@@ -30,9 +30,10 @@ public class ServiceTest {
                 .imageType("jpeg")
                 .imageName("img")
                 .build();
-
+        when(undertest.findIdByName("cleaning")).thenReturn(1L);
+        when(undertest.isServiceInUse(1L)).thenReturn(0);
         undertest.save(serviceEntity);
-
+        undertest.isServiceInUse(undertest.findIdByName("cleaning"));
         verify(jdbcTemplate).update(
                 "INSERT INTO service(name, description, imageData, imageName, imageType) VALUES (?, ?, ?, ?, ?)",
                 "cleaning",

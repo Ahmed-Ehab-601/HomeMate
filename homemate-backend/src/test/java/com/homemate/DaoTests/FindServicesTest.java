@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.SQLException;
@@ -69,17 +70,17 @@ public class FindServicesTest {
         assertTrue(result.isEmpty());
     }
     @Test
-    void testGetAllThrowsException() {
+    void testGetAllThrowsException() throws Exception {
 
         when(jdbcTemplate.query(anyString(), any(ServiceMapRow.class)))
-                .thenThrow(new RuntimeException("DB error"));
+                .thenThrow(new DataAccessException("DB error") {});
 
         SQLException ex = assertThrows(
                 SQLException.class,
                 () -> undertest.getAll()
         );
 
-        assertEquals("Failed to fetch services", ex.getMessage());
+        assertEquals("Failed to fetch services: DB error", ex.getMessage());
     }
 
 }

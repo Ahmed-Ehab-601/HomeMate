@@ -36,7 +36,7 @@ public class ServiceManagTest {
     }
 
     @Test
-    void testGetAllService() throws SQLException {
+    void testGetAllService() throws Exception {
         ServiceEntity e1 = ServiceEntity.builder()
                 .id(1L).name("Cleaning").description("Clean house").build();
 
@@ -64,15 +64,17 @@ public class ServiceManagTest {
     }
 
     @Test
-    void testEditService() throws SQLException {
+    void testEditService() throws Exception {
         long serviceId = 1L;
 
         ServiceDto dto = ServiceDto.builder()
+                .id(1L)
                 .name("Updated Cleaning")
                 .description("Updated description")
                 .build();
 
         ServiceEntity entity = ServiceEntity.builder()
+                .id(1L)
                 .name("Updated Cleaning")
                 .description("Updated description")
                 .build();
@@ -86,8 +88,14 @@ public class ServiceManagTest {
     }
 
     @Test
-    void testDeleteService() throws SQLException {
+    void testDeleteService() throws Exception {
         long serviceId = 1L;
+        ServiceEntity mockService = new ServiceEntity();
+        mockService.setId(serviceId);
+        mockService.setName("Test Service");
+
+        when(serviceDAO.findById(serviceId)).thenReturn((mockService));
+        doNothing().when(serviceDAO).delete(serviceId);
 
         serviceManagService.deleteService(serviceId);
 

@@ -7,14 +7,16 @@ import com.homemate.Dto.ServiceDto;
 import com.homemate.Service.ServiceManagService;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultMatcher;
 
+import javax.management.ServiceNotFoundException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,8 +47,7 @@ class ControllerTest {
     @Test
     void testCreateService_Success() throws Exception {
         ServiceDto Dto = ServiceDto.builder()
-                .id(5L)
-                .name("Cleaning")
+                .name("Clean")
                 .description("Best cleaning service")
                 .imageData(null)
                 .imageName("img1")
@@ -62,43 +63,68 @@ class ControllerTest {
     @Test
     void testCreateService_Failure() throws Exception {
         ServiceDto Dto = ServiceDto.builder()
-                .id(5L)
                 .name("Cleaning")
                 .description("Best cleaning service")
                 .imageData(null)
                 .imageName("img1")
                 .imageType("png")
                 .build();
-        doThrow(new SQLException("DB Error"))
+        doThrow(new SQLException("Service not found"))
                 .when(serviceManagService)
-                .createService(any());
+                .editService(eq(5L), any(ServiceDto.class));
 
-        mockMvc.perform(post("/service/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Dto)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().string("Failed to create service"));
-    }
-
-    // ---------------------------
-    // EDIT SERVICE
-    // ---------------------------
-    @Test
-    void testEditService_Success() throws Exception {
-        ServiceDto Dto = ServiceDto.builder()
-                .id(5L)
-                .name("Cleaning")
-                .description("Best cleaning service")
-                .imageData(null)
-                .imageName("img1")
-                .imageType("png")
-                .build();
         mockMvc.perform(post("/service/edit/5")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Dto)))
-                .andExpect(status().isCreated())
-                .andExpect(content().string("Service edited successfully!"));
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().string("Failed to edit service: Service not found"));
+
+        verify(serviceManagService).editService(eq(5L), any(ServiceDto.class));
     }
+    @Test
+    void testEditService_Success() throws Exception {
+        ServiceDto dto = ServiceDto.builder()
+                .id(5L)
+                .name("Cleaning")
+                .description("Best cleaning service")
+                .imageData(null)
+                .imageName("img1")
+                .imageType("png")
+                .build();
+
+        mockMvc.perform(post("/service/edit/5")
+                        .contentType(MediaType.APPLICATION_JSON)  // Add this
+                        .content(objectMapper.writeValueAsString(dto)))  // Add this
+                .andExpect(status().isOk())  // Changed from isCreated() to isOk()
+                .andExpect(content().string("Service edited successfully!"));
+
+        verify(serviceManagService).editService(eq(5L), any(ServiceDto.class));
+    }
+    @Test
+    void testEditService_Failure() throws Exception {
+        ServiceDto dto = ServiceDto.builder()
+                .id(5L)
+                .name("Cleaning")
+                .description("Best cleaning service")
+                .imageData(null)
+                .imageName("img1")
+                .imageType("png")
+                .build();
+
+        doThrow(new SQLException("Service not found"))
+                .when(serviceManagService)
+                .editService(eq(5L), any(ServiceDto.class));
+
+        mockMvc.perform(post("/service/edit/5")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().string("Failed to edit service: Service not found"));
+
+        verify(serviceManagService).editService(eq(5L), any(ServiceDto.class));
+
+    }
+
     @Test
     void testDeleteService_Success() throws Exception {
         mockMvc.perform(delete("/service/delete/5"))
@@ -116,10 +142,18 @@ class ControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().string("Failed to delete service: Error"));
     }
+    @Test
+    void testDeleteService_NotFound() throws Exception {
+        doThrow(new ServiceNotFoundException("Service with ID 5 not found"))
+                .when(serviceManagService)
+                .deleteService(5L);
 
-    // ---------------------------
-    // GET ALL SERVICES
-    // ---------------------------
+        mockMvc.perform(delete("/service/delete/5"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Service with ID 5 not found"));
+
+        verify(serviceManagService).deleteService(5L);
+    }
     @Test
     void testGetAllServices_Success() throws Exception {
         ServiceDto Dto = ServiceDto.builder()
@@ -164,14 +198,14 @@ class ControllerTest {
                 .name("Cleaning")
                 .description("Best cleaning service")
                 .build();
-        ServiceDetailsDto serviceDetailsDto=ServiceDetailsDto.builder().serviceDto(Dto).taskers(0).completedTasks(0)
+        ServiceDetailsDto serviceDetailsDto=ServiceDetailsDto.builder().service(Dto).taskers(0).completedTasks(0)
         .build();
         when(serviceManagService.getDetails(5L)).thenReturn(serviceDetailsDto);
         mockMvc.perform(get("/service/getservicedetails/5"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.serviceDto.id").value(5))
-                .andExpect(jsonPath("$.serviceDto.name").value("Cleaning"))
-                .andExpect(jsonPath("$.serviceDto.description").value("Best cleaning service"))
+                .andExpect(jsonPath("$.service.id").value(5))
+                .andExpect(jsonPath("$.service.name").value("Cleaning"))
+                .andExpect(jsonPath("$.service.description").value("Best cleaning service"))
                 .andExpect(jsonPath("$.taskers").value(0))
                 .andExpect(jsonPath("$.completedTasks").value(0));
 

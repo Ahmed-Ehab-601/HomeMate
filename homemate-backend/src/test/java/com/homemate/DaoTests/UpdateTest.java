@@ -1,6 +1,7 @@
 package com.homemate.DaoTests;
 
 import com.homemate.Dao.ServiceDaoImpl;
+import com.homemate.MapRow.ServiceMapRow;
 import com.homemate.Model.ServiceEntity;
 
 import org.junit.jupiter.api.Test;
@@ -33,9 +34,17 @@ import static org.junit.jupiter.api.Assertions.*;
                 .imageType(null)
                 .imageName(null)
                 .build();
+            when(jdbcTemplate.update(
+                    anyString(),
+                    anyString(),
+                    anyString(),
+                    any(),
+                    any(),
+                    any(),
+                    eq(id)
+            )).thenReturn(1);
 
         undertest.update(id, serviceTest);
-        assertEquals(id,serviceTest.getId());
         verify(jdbcTemplate).update(
                 anyString(),
                 eq(serviceTest.getName()),

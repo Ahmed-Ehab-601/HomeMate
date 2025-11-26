@@ -1,16 +1,10 @@
 // Update this to match your backend URL and base path
-// Your controller has @RequestMapping("/service"), so all endpoints are under /service
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/service';
-
-// If using Vite proxy, you might want to use relative URLs
-// Uncomment the line below and comment the line above if using proxy
-// const API_BASE_URL = '';
 
 // Helper function to convert byte array to base64
 const convertImageData = (service) => {
   if (service?.imageData && Array.isArray(service.imageData)) {
     try {
-      // Convert byte array to base64 string
       const base64 = btoa(
         service.imageData.map(byte => String.fromCharCode(byte)).join('')
       );
@@ -20,6 +14,34 @@ const convertImageData = (service) => {
     }
   }
   return service;
+};
+
+// Helper function to handle API errors
+const handleApiError = async (response) => {
+  const contentType = response.headers.get('content-type');
+  
+  if (contentType && contentType.includes('application/json')) {
+    const errorData = await response.json();
+    
+    // Handle Spring Boot validation errors (from GlobalExceptionHandler)
+    if (errorData.errors) {
+      // Format: { status: "error", errors: { fieldName: "error message" } }
+      const errorMessages = Object.entries(errorData.errors)
+        .map(([field, message]) => `${field}: ${message}`)
+        .join('\n');
+      throw new Error(errorMessages);
+    }
+    
+    // Handle other structured errors
+    if (errorData.message) {
+      throw new Error(errorData.message);
+    }
+    
+    throw new Error(JSON.stringify(errorData));
+  } else {
+    const errorText = await response.text();
+    throw new Error(errorText || `Request failed with status ${response.status}`);
+  }
 };
 
 export const serviceAPI = {
@@ -34,18 +56,12 @@ export const serviceAPI = {
         },
       });
       
-      console.log('Response status:', response.status);
-      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`Failed to fetch services: ${response.status} ${response.statusText}`);
+        await handleApiError(response);
       }
       
       const data = await response.json();
-      console.log('Services data:', data);
       
-      // Convert image data for each service
       if (Array.isArray(data)) {
         return data.map(service => convertImageData(service));
       }
@@ -69,15 +85,11 @@ export const serviceAPI = {
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`Failed to fetch service details: ${response.status} ${response.statusText}`);
+        await handleApiError(response);
       }
       
       const data = await response.json();
-      console.log('Service details received:', data);
       
-      // Convert image data for the service within serviceDetails
       if (data?.service) {
         data.service = convertImageData(data.service);
       }
@@ -102,12 +114,10 @@ export const serviceAPI = {
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`Failed to create service: ${response.status} ${response.statusText}`);
+        await handleApiError(response);
       }
       
-      return response.text(); // Returns "Service created successfully!"
+      return response.text();
     } catch (err) {
       console.error('Create error:', err);
       throw err;
@@ -127,12 +137,10 @@ export const serviceAPI = {
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`Failed to edit service: ${response.status} ${response.statusText}`);
+        await handleApiError(response);
       }
       
-      return response.text(); // Returns "Service edited successfully!"
+      return response.text();
     } catch (err) {
       console.error('Edit error:', err);
       throw err;
@@ -151,9 +159,7 @@ export const serviceAPI = {
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`Failed to delete service: ${response.status} ${response.statusText}`);
+        await handleApiError(response);
       }
       
       return response.text(); 

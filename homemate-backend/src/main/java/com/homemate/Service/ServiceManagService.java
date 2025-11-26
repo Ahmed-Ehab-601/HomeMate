@@ -6,12 +6,18 @@ import java.util.List;
 
 import com.homemate.Dto.ServiceDetailsDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.homemate.Dao.ServiceDaoImpl;
 import com.homemate.Dto.ServiceDto;
 import com.homemate.Mapper.ServiceMapper;
 import com.homemate.Model.ServiceEntity;
+
+import javax.management.ServiceNotFoundException;
+
+import static org.springframework.web.servlet.function.ServerResponse.badRequest;
+
 @Service
 public class ServiceManagService {
     @Autowired
@@ -29,17 +35,30 @@ public class ServiceManagService {
         }
 
 
-    public void editService(long id ,ServiceDto serviceDto) throws SQLException {
+    public void editService(long id ,ServiceDto serviceDto) throws Exception {
+
         ServiceEntity service=serviceMapper.mapFromDto(serviceDto);
         serviceDAO.update(id,service);
 
     }
 
-    public void deleteService(long id) throws SQLException {
+    public void deleteService(long id) throws Exception {
+        if (serviceDAO.findById(id) == null) {
+            throw new ServiceNotFoundException("Service with ID " + id + " not found");
+        }
+
+        // Check if service is in use (has active tasks or taskers)
+        if (serviceDAO.countTasker(id)>0||serviceDAO.isServiceInUse(id)>0) {
+            throw new Exception(
+                    "Cannot delete this service.Taskers currently using it."
+            );}
+        if(serviceDAO.isServiceInUse(id)>0){throw new Exception(
+                "Cannot delete this service. It has active tasks"
+        );}
         serviceDAO.delete(id);
     }
 
-    public List<ServiceDto> getAllService() throws SQLException{
+    public List<ServiceDto> getAllService() throws Exception{
         List<ServiceEntity> listOfEntities=serviceDAO.getAll();
         List<ServiceDto> listOfDtos=new ArrayList<>(listOfEntities.size());
         for (ServiceEntity entity : listOfEntities) {

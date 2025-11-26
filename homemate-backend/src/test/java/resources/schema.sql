@@ -60,7 +60,7 @@ CREATE INDEX idx_address_city ON Address(city);
 CREATE TABLE Service (
     serviceID INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
-    description VARCHAR(500),
+    description VARCHAR(100),
     imageData BLOB,
     imageName VARCHAR(200),
     imageType VARCHAR(200)

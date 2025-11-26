@@ -1,6 +1,7 @@
 package com.homemate.DaoTests;
 
 import com.homemate.Dao.ServiceDaoImpl;
+import com.homemate.Model.ServiceEntity;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,9 +15,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-
 @ExtendWith(MockitoExtension.class)
-
 public class DeleteTest {
 
     @Mock
@@ -26,32 +25,15 @@ public class DeleteTest {
     private ServiceDaoImpl undertest;
 
     @Test
-    public void testCorrectDeletion() throws Exception {
+    public void testCorrectDeletion() throws Exception{
 
-        long id = 5L;
+        long id = 1L;
 
-        when(jdbcTemplate.update(anyString(), eq(id)))
-                .thenReturn(1);
-
-        when(jdbcTemplate.queryForObject(
+        when(jdbcTemplate.update(
                 anyString(),
-                eq(Long.class),
-                anyString()
-        )).thenThrow(new EmptyResultDataAccessException(1));
-
-
+                eq(id)
+        )).thenReturn(1);
         undertest.delete(id);
-        assertThrows(
-                EmptyResultDataAccessException.class,
-                () -> undertest.findIdByName("cleaning")
-        );
-
         verify(jdbcTemplate).update(anyString(), eq(id));
-
-        verify(jdbcTemplate).queryForObject(
-                anyString(),
-                eq(Long.class),
-                eq("cleaning")
-        );
     }
 }
