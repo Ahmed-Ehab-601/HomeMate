@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,9 +48,16 @@ public class TaskerProfileController {
     @PreAuthorize("hasRole('ROLE_TASKER')")
     public ResponseEntity<Map<String, String>> changeImage(@AuthenticationPrincipal AppUserDetails taskerDetails,
                                                            @RequestBody ChangeImageDTO changeImageDTO) {
-        changeImageDTO.setTaskerID(taskerDetails.getId());
-        taskerProfileService.changeImage(changeImageDTO);
-        return okStatus("Image updated");
+        try{
+            changeImageDTO.setTaskerID(taskerDetails.getId());
+            taskerProfileService.changeImage(changeImageDTO);
+            return okStatus("Image updated");
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
     @GetMapping("/profile")
@@ -92,9 +100,16 @@ public class TaskerProfileController {
     @PreAuthorize("hasRole('ROLE_TASKER')")
     public ResponseEntity<Map<String, String>> changeBio(@AuthenticationPrincipal AppUserDetails taskerDetails,
                                                          @RequestBody ChangeBioDTO changeBioDTO) {
-        changeBioDTO.setTaskerID(taskerDetails.getId());
-        taskerProfileService.changeBio(changeBioDTO);
-        return okStatus("Bio updated");
+        try{                                                    
+            changeBioDTO.setTaskerID(taskerDetails.getId());
+            taskerProfileService.changeBio(changeBioDTO);
+            return okStatus("Bio updated");
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
     @PutMapping("/availability")
@@ -110,53 +125,95 @@ public class TaskerProfileController {
     @PreAuthorize("hasRole('ROLE_TASKER')")
     public ResponseEntity<Map<String, String>> changePassword(@AuthenticationPrincipal AppUserDetails taskerDetails,
                                                               @RequestBody PasswordDTO passwordDTO) {
-        passwordDTO.setTaskerID(taskerDetails.getId());
-        taskerProfileService.changePassword(passwordDTO);
-        return okStatus("Password updated");
+        try {
+            passwordDTO.setTaskerID(taskerDetails.getId());
+            taskerProfileService.changePassword(passwordDTO);
+            return okStatus("Password updated");
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
     @PutMapping("/email")
     @PreAuthorize("hasRole('ROLE_TASKER')")
     public ResponseEntity<Map<String, String>> changeEmail(@AuthenticationPrincipal AppUserDetails taskerDetails,
                                                            @RequestBody EmailDTO emailDTO) {
-        emailDTO.setTaskerID(taskerDetails.getId());
-        taskerProfileService.ChangeEmail(emailDTO);
-        return okStatus("Email updated");
+        try{                                                    
+            emailDTO.setTaskerID(taskerDetails.getId());
+            taskerProfileService.ChangeEmail(emailDTO);
+            return okStatus("Email updated");
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
     @PutMapping("/username")
     @PreAuthorize("hasRole('ROLE_TASKER')")
     public ResponseEntity<Map<String, String>> changeUsername(@AuthenticationPrincipal AppUserDetails taskerDetails,
                                                               @RequestBody UsernameDTO usernameDTO) {
-        usernameDTO.setTaskerID(taskerDetails.getId());
-        taskerProfileService.changeUsername(usernameDTO);
-        return okStatus("Username updated");
+        try{
+            usernameDTO.setTaskerID(taskerDetails.getId());
+            taskerProfileService.changeUsername(usernameDTO);
+            return okStatus("Username updated");
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
     @PutMapping("/phone")
     @PreAuthorize("hasRole('ROLE_TASKER')")
     public ResponseEntity<Map<String, String>> changePhone(@AuthenticationPrincipal AppUserDetails taskerDetails,
                                                            @RequestBody PhoneNumberDTO phoneNumberDTO) {
-        phoneNumberDTO.setTaskerID(taskerDetails.getId());
-        taskerProfileService.changePhoneNumber(phoneNumberDTO);
-        return okStatus("Phone number updated");
+        try{                                                    
+            phoneNumberDTO.setTaskerID(taskerDetails.getId());
+            taskerProfileService.changePhoneNumber(phoneNumberDTO);
+            return okStatus("Phone number updated");
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
     @PutMapping("/name")
     @PreAuthorize("hasRole('ROLE_TASKER')")
     public ResponseEntity<Map<String, String>> changeName(@AuthenticationPrincipal AppUserDetails taskerDetails,
                                                           @RequestBody NameDTO nameDTO) {
-        nameDTO.setTaskerID(taskerDetails.getId());
-        taskerProfileService.changeName(nameDTO);
-        return okStatus("Name updated");
+        try{
+            nameDTO.setTaskerID(taskerDetails.getId());
+            taskerProfileService.changeName(nameDTO);
+            return okStatus("Name updated");
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
     @PutMapping("/city")
     @PreAuthorize("hasRole('ROLE_TASKER')")
     public ResponseEntity<Map<String, String>> changeCity(@AuthenticationPrincipal AppUserDetails taskerDetails,
                                                           @RequestBody AddressCityDTO addressCityDTO) {
-        addressCityDTO.setTaskerID(taskerDetails.getId());
-        taskerProfileService.changeAddressCity(addressCityDTO);
-        return okStatus("City updated");
+        try{
+            addressCityDTO.setTaskerID(taskerDetails.getId());
+            taskerProfileService.changeAddressCity(addressCityDTO);
+            return okStatus("City updated");
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
 

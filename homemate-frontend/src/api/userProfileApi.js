@@ -3,7 +3,8 @@ import { baseUrl,apiRequest } from "../utils/apiClient";
 const USERS_ENDPOINT = `${baseUrl}/api/users`;
 
 const buildError = (status, body) => {
-  const error = new Error(body?.message ?? "HomeMate profile service request failed.");
+  
+  const error = new Error(body?.error ?? "HomeMate profile service request failed.");
   error.status = status;
   error.body = body;
   return error;
@@ -38,6 +39,9 @@ async function request(url, options = {}) {
     ...authHeaders,
     ...(options.headers || {}),
   };
+  if (options.body && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
 
   const requestOptions = {
     ...options,

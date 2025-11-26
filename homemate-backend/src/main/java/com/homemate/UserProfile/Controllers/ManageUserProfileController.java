@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.Map;
 
 import com.homemate.security.model.AppUserDetails;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -88,7 +90,7 @@ public class ManageUserProfileController {
     // }
 
     @GetMapping("/taskers/{taskerId}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+   
     public ResponseEntity<UserRequestTaskerDTO> getTaskerProfile(@PathVariable Long taskerId) {
         UserRequestTaskerDTO tasker = userService.getTaskerProfile(taskerId);
         if (tasker == null) {
@@ -113,32 +115,47 @@ public class ManageUserProfileController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Map<String, String>> changeName(@AuthenticationPrincipal AppUserDetails userDetails,
                                                           @RequestBody NameDTO nameDTO) {
-        nameDTO.setUserId(userDetails.getId());
-        userService.changeName(nameDTO);
-        return ResponseEntity.ok(Collections.singletonMap("status", "Name updated"));
+        try{                                                     
+            nameDTO.setUserId(userDetails.getId());
+            userService.changeName(nameDTO);
+            return ResponseEntity.ok(Collections.singletonMap("status", "Name updated"));
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
     @PutMapping("/password")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Map<String, String>> changePassword(@AuthenticationPrincipal AppUserDetails userDetails,
                                                               @RequestBody PasswordDTO passwordDTO) {
-        if (passwordDTO.getOldPassword() == null || passwordDTO.getOldPassword().isEmpty()) {
-            throw new IllegalArgumentException("Old password is required.");
+        try{                                                      
+            passwordDTO.setUserId(userDetails.getId());
+            userService.changePassword(passwordDTO);
+            return ResponseEntity.ok(Collections.singletonMap("status", "Password updated"));
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
         }
-        if (passwordDTO.getNewPassword() == null || passwordDTO.getNewPassword().isEmpty()) {
-            throw new IllegalArgumentException("New password is required.");
-        }
-        passwordDTO.setUserId(userDetails.getId());
-        userService.changePassword(passwordDTO);
-        return ResponseEntity.ok(Collections.singletonMap("status", "Password updated"));
     }
 
     @PutMapping("/phone")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Map<String, String>> changePhone(@AuthenticationPrincipal AppUserDetails userDetails,
                                                             @RequestBody PhoneNumberDTO phoneNumberDTO) {
-        phoneNumberDTO.setUserId(userDetails.getId());
-        userService.changePhoneNumber(phoneNumberDTO);
-        return ResponseEntity.ok(Collections.singletonMap("status", "Phone number updated"));
+        try{                                                         
+            phoneNumberDTO.setUserId(userDetails.getId());
+            userService.changePhoneNumber(phoneNumberDTO);
+            return ResponseEntity.ok(Collections.singletonMap("status", "Phone number updated"));
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 }

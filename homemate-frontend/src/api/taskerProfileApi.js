@@ -3,7 +3,7 @@ const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/
 const TASKER_PROFILE_ENDPOINT = `${baseUrl}/api/tasker-profile`;
 
 function buildError(status, body) {
-  const error = new Error(body?.message ?? "Tasker profile service request failed.");
+  const error = new Error(body?.error ?? "Tasker profile service request failed.");
   error.status = status;
   error.body = body;
   return error;

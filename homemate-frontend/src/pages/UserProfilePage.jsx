@@ -281,7 +281,7 @@ function UserProfilePage() {
       .catch((error) =>
         setFeedback({
           type: "error",
-          message: error?.message ?? "Failed to update password.",
+          message:  "Failed to update password.",
         }),
       )
       .finally(() => setSubmitting(null));
