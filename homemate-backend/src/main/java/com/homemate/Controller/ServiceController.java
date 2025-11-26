@@ -15,7 +15,7 @@ import javax.management.ServiceNotFoundException;
 
 @RestController
 @RequestMapping("/service")
-@CrossOrigin(origins = "http://localhost:5175")
+@CrossOrigin(origins = "http://localhost:5173")
 public class ServiceController {
 
     private final ServiceManagService serviceManagService;

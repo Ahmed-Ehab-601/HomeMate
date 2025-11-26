@@ -145,9 +145,6 @@ const AdminServiceList = ({ onServiceClick, onCreateNew }) => {
       <div className="service-list-wrapper">
         <div className="service-list-header">
           <div>
-            <button className="btn btn-primary" onClick={() => navigate('/')}>
-            Back
-          </button>
             <h1>Manage Services</h1>
           </div>
           <button className="btn btn-primary" onClick={onCreateNew}>
