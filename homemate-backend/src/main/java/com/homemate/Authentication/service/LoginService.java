@@ -22,7 +22,7 @@ public class LoginService {
         this.jwtService = jwtService;
     }
 
-    public LoginResponseDto login(LoginRequestDto loginRequestDto) {
+    public LoginResponseDto loginWithEmailPassword(LoginRequestDto loginRequestDto) {
 
         if (
                 loginRequestDto.getPassword() == null ||
@@ -31,10 +31,14 @@ public class LoginService {
                 loginRequestDto.getEmail().isEmpty()
         ) return null;
 
+        return login(loginRequestDto.getEmail(), loginRequestDto.getPassword());
+    }
+
+    public LoginResponseDto login(String email, String password) {
         try {
 
-            User user = userDaoLogin.getUserByEmail(loginRequestDto.getEmail());
-            if (user.getPassword().equals(loginRequestDto.getPassword())) {
+            User user = userDaoLogin.getUserByEmail(email);
+            if (user.getPassword().equals(password)) {
 
                 String role = "ROLE_USER";
                 if (user.isAdmin())
@@ -61,8 +65,8 @@ public class LoginService {
 
         try {
 
-            Tasker tasker = taskerDao.getTaskerByEmail(loginRequestDto.getEmail());
-            if (tasker.getPassword().equals(loginRequestDto.getPassword())) {
+            Tasker tasker = taskerDao.getTaskerByEmail(email);
+            if (tasker.getPassword().equals(password)) {
 
                 String role = "ROLE_TASKER";
                 String token = jwtService.generateToken(
@@ -83,7 +87,55 @@ public class LoginService {
             return null;
 
         } catch (EmptyResultDataAccessException e) {}
+        return null;
+    }
 
+    public LoginResponseDto login(String email) {
+        try {
+            User user = userDaoLogin.getUserByEmail(email);
+
+            String role = "ROLE_USER";
+            if (user.isAdmin())
+                role = "ROLE_ADMIN";
+
+            String token = jwtService.generateToken(
+                    Long.valueOf(user.getUserID()),
+                    user.getUsername(),
+                    user.getEmail(),
+                    role
+            );
+
+            return new LoginResponseDto(
+                    role,
+                    user.getUsername(),
+                    user.getFirstName(),
+                    user.getLastName(),
+                    token
+            );
+
+        } catch (EmptyResultDataAccessException e) {}
+
+        try {
+
+            Tasker tasker = taskerDao.getTaskerByEmail(email);
+
+            String role = "ROLE_TASKER";
+            String token = jwtService.generateToken(
+                    Long.valueOf(tasker.getTaskerID()),
+                    tasker.getUsername(),
+                    tasker.getEmail(),
+                    role
+            );
+
+            return new LoginResponseDto(
+                    role,
+                    tasker.getUsername(),
+                    tasker.getFirstName(),
+                    tasker.getLastName(),
+                    token
+            );
+
+        } catch (EmptyResultDataAccessException e) {}
         return null;
     }
 }

@@ -1,26 +1,34 @@
 package com.homemate.Authentication.controller;
 
+import com.homemate.Authentication.dto.GoogleTokenDto;
+import com.homemate.Authentication.dto.GoogleUserDto;
 import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
+import com.homemate.Authentication.service.GoogleTokenVerifierService;
 import com.homemate.Authentication.service.LoginService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
+@RequestMapping("/api/auth")
 public class LoginController {
 
     LoginService loginService;
+    GoogleTokenVerifierService googleTokenVerifierService;
 
-    LoginController(LoginService loginService) {
+
+    LoginController(LoginService loginService, GoogleTokenVerifierService googleTokenVerifierService) {
         this.loginService = loginService;
+        this.googleTokenVerifierService = googleTokenVerifierService;
     }
 
-    @PostMapping("/api/login")
+    @PostMapping("/login")
     ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) {
-        LoginResponseDto response = loginService.login(loginRequestDto);
+        LoginResponseDto response = loginService.loginWithEmailPassword(loginRequestDto);
 
         if (response == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -29,6 +37,22 @@ public class LoginController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponseDto> googleSignIn(@RequestBody GoogleTokenDto request) {
+        if (request == null || request.getIdToken() == null) {
+            return ResponseEntity.badRequest().build();
+        }
 
+        GoogleUserDto googleUser = googleTokenVerifierService.verify(request.getIdToken());
+        if (googleUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        LoginResponseDto dto = loginService.login(googleUser.getEmail());
+
+        if (dto == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        return ResponseEntity.ok(dto);
+    }
 
 }

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login, loginWithGoogle } from "../api/authApi";
+import { login } from "../api/authApi";
 import { useAuth } from "../contexts/AuthContext";
+import GoogleLogin from "../components/GoogleLogin";
 
 function SignInPage() {
   const navigate = useNavigate();
@@ -31,25 +32,21 @@ function SignInPage() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setError("");
-    setIsGoogleLoading(true);
+  const handleGoogleLoginSuccess = (response) => {
+    // Store user data in AuthContext
+    loginUser(response);
+    // On successful login, redirect to home page
+    navigate("/");
+  };
 
-    try {
-      await loginWithGoogle();
-      // On successful login, redirect to home page
-      navigate("/");
-    } catch (err) {
-      setError("Failed to sign in with Google. Please try again.");
-    } finally {
-      setIsGoogleLoading(false);
-    }
+  const handleGoogleLoginError = () => {
+    setError("Failed to sign in with Google. Please try again.");
   };
 
   return (
     <main className="page page--signin">
       <div className="signin-container">
-        <div className="signin-card">
+        <div className="signin-card" style={{ maxWidth: "540px" }}>
           <h1 className="signin-title">Sign in to HomeMate</h1>
           <p className="signin-subtitle">Welcome back! Please enter your details.</p>
 
@@ -138,6 +135,11 @@ function SignInPage() {
             >
               {isLoading ? "Signing in..." : "Sign in"}
             </button>
+            <GoogleLogin
+              onSuccess={handleGoogleLoginSuccess}
+              onError={handleGoogleLoginError}
+              disabled={isLoading || isGoogleLoading}
+            />
           </form>
 
           <div style={{ marginTop: "24px", textAlign: "center" }}>
