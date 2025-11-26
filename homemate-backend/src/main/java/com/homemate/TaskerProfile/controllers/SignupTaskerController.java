@@ -2,7 +2,7 @@ package com.homemate.TaskerProfile.controllers;
 
 import com.homemate.TaskerProfile.DTO.TaskerSignupDTO;
 import com.homemate.TaskerProfile.services.TaskerSignupService;
-import com.homemate.security.service.ValidateSignup;
+import com.homemate.security.service.ValidateSignupService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,11 +16,11 @@ import org.springframework.http.HttpStatus;
 public class SignupTaskerController {
 
     private TaskerSignupService taskerSignupService;
-    private ValidateSignup validateSignup;
+    private ValidateSignupService validateSignup;
 
     SignupTaskerController(
         TaskerSignupService taskerSignupService, 
-        ValidateSignup validateSignup
+        ValidateSignupService validateSignup
     ) {
         this.taskerSignupService = taskerSignupService;
         this.validateSignup = validateSignup;

@@ -10,7 +10,7 @@ import java.util.Date;
 import java.sql.Timestamp;
 
 @Service
-public class ValidateSignup {
+public class ValidateSignupService {
     
     public String validateUserSignup(SignupUserDTO userData) {
 
