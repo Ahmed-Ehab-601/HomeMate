@@ -13,6 +13,7 @@ import com.homemate.TaskerProfile.DTO.HourRateDTO;
 import com.homemate.TaskerProfile.DTO.NameDTO;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewRequest;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewResponse;
+import com.homemate.TaskerProfile.DTO.AddressCityDTO;
 import com.homemate.TaskerProfile.DTO.PasswordDTO;
 import com.homemate.TaskerProfile.DTO.PhoneNumberDTO;
 import com.homemate.TaskerProfile.DTO.TaskerProfileDTO;
@@ -226,5 +227,21 @@ public class TaskerProfileService {
         taskerDao.delete(taskerID);
         return true;
     }
+
+    public Boolean changeAddressCity(AddressCityDTO addressCityDTO) {
+        final int MAX_LENGTH = 200;
+        String newCity = addressCityDTO.getNewAddressCity();
+        if (newCity == null || newCity.isBlank()) {
+            throw new IllegalArgumentException("City is required.");
+        }
+        if (newCity.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("City must not exceed 200 characters.");
+        }
+        Tasker tasker = taskerDao.getByID(addressCityDTO.getTaskerID());
+        tasker.setAddressCity(newCity);
+        taskerDao.update(tasker);
+        return true;
+    }
+
     
 }

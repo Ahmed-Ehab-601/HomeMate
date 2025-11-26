@@ -20,6 +20,7 @@ import com.homemate.TaskerProfile.DTO.ChangeBioDTO;
 import com.homemate.TaskerProfile.DTO.ChangeImageDTO;
 import com.homemate.TaskerProfile.DTO.EmailDTO;
 import com.homemate.TaskerProfile.DTO.HourRateDTO;
+import com.homemate.TaskerProfile.DTO.AddressCityDTO;
 import com.homemate.TaskerProfile.DTO.NameDTO;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewRequest;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewResponse;
@@ -148,6 +149,15 @@ public class TaskerProfileController {
         taskerProfileService.changeName(nameDTO);
         return okStatus("Name updated");
     }
+    @PutMapping("/city")
+    @PreAuthorize("hasRole('ROLE_TASKER')")
+    public ResponseEntity<Map<String, String>> changeCity(@AuthenticationPrincipal AppUserDetails taskerDetails,
+                                                          @RequestBody AddressCityDTO addressCityDTO) {
+        addressCityDTO.setTaskerID(taskerDetails.getId());
+        taskerProfileService.changeAddressCity(addressCityDTO);
+        return okStatus("City updated");
+    }
+
 
     private ResponseEntity<Map<String, String>> okStatus(String message) {
         return ResponseEntity.ok(Collections.singletonMap("status", message));

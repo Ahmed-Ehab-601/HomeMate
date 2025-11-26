@@ -87,10 +87,16 @@ public class ManageUserProfileController {
     //     return ResponseEntity.status(HttpStatus.CREATED).body(Collections.singletonMap("message", message));
     // }
 
-    // @GetMapping("/taskers/{taskerId}")
-    // public ResponseEntity<UserRequestTaskerDTO> getTaskerProfile(@PathVariable Long taskerId) {
-    //     return ResponseEntity.ok(userService.getTaskerProfile(taskerId));
-    // }
+    @GetMapping("/taskers/{taskerId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<UserRequestTaskerDTO> getTaskerProfile(@PathVariable Long taskerId) {
+        UserRequestTaskerDTO tasker = userService.getTaskerProfile(taskerId);
+        if (tasker == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(tasker);
+    }
+
 
 //    @GetMapping(value = "/addresses", params = "userId")
 //    public ResponseEntity<AddressDTO[]> getAddresses(@RequestParam("userId") Integer userID) {
