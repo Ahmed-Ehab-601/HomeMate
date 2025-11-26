@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -269,6 +270,151 @@ class TaskerProfileServiceTest {
             taskerProfileService.ChangeEmail(emailDTO);
         });
         assertEquals("Email must not exceed 50 characters.", exception.getMessage());
+    }
+    @Test
+    void testChangeDOB_Success() {
+        DateOfBirthDTO dto = new DateOfBirthDTO();
+        dto.setTaskerID(1L);
+        dto.setNewDateOfBirth(Timestamp.valueOf("2000-01-01 00:00:00"));
+
+        Boolean result = taskerProfileService.changeDOB(dto);
+        assertTrue(result);
+
+        Timestamp dob = jdbcTemplate.queryForObject(
+            "SELECT birthDate FROM Tasker WHERE taskerID = ?", Timestamp.class, 1L);
+        
+        assertEquals(Timestamp.valueOf("2000-01-01 00:00:00"), dob);
+    }
+    @Test
+    void testGetData_ReturnsCorrectProfile() {
+        TaskerProfileDTO profile = taskerProfileService.getData(1L);
+
+        assertNotNull(profile);
+        assertEquals("John", profile.getFirstName());
+        assertEquals("Doe", profile.getLastName());
+    }
+    @Test
+    void testGetReviews_Empty() {
+        PaginatedReviewRequest req = new PaginatedReviewRequest();
+        req.setTaskerID(1L);
+        req.setPage(1);
+        req.setPageSize(10);
+
+        var response = taskerProfileService.getReviews(req);
+
+        assertEquals(0, response.getTotalReviews());
+        assertTrue(response.getReviews().isEmpty());
+        assertEquals(1, response.getCurrentPage());
+    }
+    @Test
+    void testChangeHourRate_Success() {
+        HourRateDTO dto = new HourRateDTO();
+        dto.setTaskerID(1L);
+        dto.setNewHourRate(75.5);
+
+        Boolean result = taskerProfileService.changeHourRate(dto);
+        assertTrue(result);
+
+        Double rate = jdbcTemplate.queryForObject(
+            "SELECT hourrate FROM Tasker WHERE taskerID = ?", Double.class, 1L);
+
+        assertEquals(75.5, rate);
+    }
+    @Test
+    void testChangeService_Success() {
+        Boolean result = taskerProfileService.changeService(1L, 1L);
+        assertTrue(result);
+
+        Long serviceID = jdbcTemplate.queryForObject(
+            "SELECT serviceID FROM Tasker WHERE taskerID = ?", Long.class, 1L);
+
+        assertEquals(1L, serviceID);
+    }
+    @Test
+    void testGetAvailableServices() {
+        List<?> services = taskerProfileService.getAvailableServices();
+        assertEquals(1, services.size());
+    }
+    @Test
+    void testChangeAvailability_Success() {
+        ChangeAvailabilityDTO dto = new ChangeAvailabilityDTO();
+        dto.setTaskerID(1L);
+        dto.setNewAvailability("UNAVAILABLE");
+
+        Boolean result = taskerProfileService.changeAvailablity(dto);
+        assertTrue(result);
+
+        String availability = jdbcTemplate.queryForObject(
+            "SELECT availability FROM Tasker WHERE taskerID = ?", String.class, 1L);
+
+        assertEquals("unavailable", availability);
+    }
+    @Test
+    void testDeleteAccount_Success() {
+        Boolean result = taskerProfileService.deleteAccount(1L);
+        assertTrue(result);
+
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM Tasker WHERE taskerID = ?", Integer.class, 1L);
+
+        assertEquals(0, count);
+    }
+    @Test
+    void testChangeImage_EmptyImage() {
+        ChangeImageDTO dto = new ChangeImageDTO();
+        dto.setTaskerID(1L);
+        dto.setNewImage(new byte[0]);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            taskerProfileService.changeImage(dto);
+        });
+
+        assertEquals("Image cannot be empty.", ex.getMessage());
+    }
+    @Test
+    void testChangeBio_Success() {
+        ChangeBioDTO dto = new ChangeBioDTO();
+        dto.setTaskerID(1L);
+        dto.setNewBio("Updated bio");
+
+        Boolean result = taskerProfileService.changeBio(dto);
+        assertTrue(result);
+
+        String bio = jdbcTemplate.queryForObject(
+            "SELECT bio FROM Tasker WHERE taskerID = ?", String.class, 1L);
+
+        assertEquals("Updated bio", bio);
+    }
+    @Test
+    void testChangePhoneNumber_Success() {
+        PhoneNumberDTO dto = new PhoneNumberDTO();
+        dto.setTaskerID(1L);
+        dto.setNewPhoneNumber("01234567890");
+
+        Boolean result = taskerProfileService.changePhoneNumber(dto);
+        assertTrue(result);
+    }
+    @Test
+    void testChangeEmail_Success() {
+        EmailDTO dto = new EmailDTO();
+        dto.setTaskerID(1L);
+        dto.setNewEmail("new.email@test.com");
+
+        Boolean result = taskerProfileService.ChangeEmail(dto);
+        assertTrue(result);
+    }
+
+    @Test
+    void testChangeUsername_EmptyShouldFail() {
+        UsernameDTO dto = new UsernameDTO();
+        dto.setTaskerID(1L);
+        dto.setNewUsername("");
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            taskerProfileService.changeUsername(dto);
+        });
+
+        assertEquals("Username must not exceed 50 characters.", ex.getMessage());
     }
 
     @Test
