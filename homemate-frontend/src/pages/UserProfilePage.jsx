@@ -9,6 +9,9 @@ import {
   getUserAddresses,
   getUserProfile,
   updateUserAddress,
+  updateUserName,
+  updateUserPassword,
+  updateUserPhone,
 } from "../api/userProfileApi";
 
 const emptyAddress = {
@@ -31,7 +34,7 @@ const normalizeAddress = (address) => {
 };
 
 function UserProfilePage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [profileStatus, setProfileStatus] = useState("loading");
@@ -50,13 +53,18 @@ function UserProfilePage() {
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeletingAccount, setDeletingAccount] = useState(false);
 
+  const [forms, setForms] = useState({
+    name: { firstName: "", lastName: "" },
+    password: { oldPassword: "", newPassword: "" },
+    phone: { phoneNumber: "" },
+  });
+  const [submitting, setSubmitting] = useState(null);
+
   useEffect(() => {
-    console.log("aaaaa");
     if (!user) {
       navigate("/");
       return;
     }
-    console.log("2xaaaaa");
     loadProfile();
     loadAddresses();
   }, [user, navigate]);
@@ -64,9 +72,17 @@ function UserProfilePage() {
   const loadProfile = () => {
     setProfileStatus("loading");
     setProfileError(null);
-    getUserProfile(user.userID)
+    getUserProfile()
       .then((data) => {
         setProfile(data);
+        setForms({
+          name: {
+            firstName: data?.firstName ?? "",
+            lastName: data?.lastName ?? "",
+          },
+          password: { oldPassword: "", newPassword: "" },
+          phone: { phoneNumber: data?.phone ?? "" },
+        });
         setProfileStatus("success");
       })
       .catch((error) => {
@@ -78,7 +94,7 @@ function UserProfilePage() {
   const loadAddresses = () => {
     setAddressesStatus("loading");
     setAddressesError(null);
-    getUserAddresses(user.userID)
+    getUserAddresses()
       .then((data) => {
         setAddresses((data ?? []).map(normalizeAddress).filter(Boolean));
         setAddressesStatus("success");
@@ -116,12 +132,12 @@ function UserProfilePage() {
 
   const handleAddAddressSubmit = (event) => {
     event.preventDefault();
-    if (!user?.userID) return;
+    if (!user) return;
     const errors = validateAddress(addForm);
     setFormErrors(errors);
     if (Object.keys(errors).length) return;
     setSavingAddress(true);
-    addUserAddress(user.userID, { ...addForm, userId: user.userID })
+    addUserAddress(addForm)
       .then(() => {
         setAddForm(emptyAddress);
         setFeedback({ type: "success", message: "Address added successfully." });
@@ -147,14 +163,13 @@ function UserProfilePage() {
 
   const handleUpdateAddressSubmit = (event) => {
     event.preventDefault();
-    if (!editDraft || !user?.userID) return;
+    if (!editDraft || !user) return;
     const errors = validateAddress(editDraft);
     setFormErrors(errors);
     if (Object.keys(errors).length) return;
     setSavingAddress(true);
-    updateUserAddress(user.userID, editDraft.addressId, {
+    updateUserAddress(editDraft.addressId, {
       ...editDraft,
-      userId: user.userID,
     })
       .then(() => {
         setFeedback({ type: "success", message: "Address updated." });
@@ -171,10 +186,10 @@ function UserProfilePage() {
   };
 
   const handleDeleteAddress = (addressId) => {
-    if (!addressId || !user?.userID) return;
+    if (!addressId || !user) return;
     const confirmed = window.confirm("Remove this address from your profile?");
     if (!confirmed) return;
-    deleteUserAddress(user.userID, addressId)
+    deleteUserAddress(addressId)
       .then(() => {
         setFeedback({ type: "success", message: "Address removed." });
         loadAddresses();
@@ -188,9 +203,9 @@ function UserProfilePage() {
   };
 
   const handleDeleteAccount = () => {
-    if (!user?.userID) return;
+    if (!user) return;
     setDeletingAccount(true);
-    deleteUserAccount(user.userID)
+    deleteUserAccount()
       .then(() => {
         setFeedback({
           type: "success",
@@ -209,6 +224,89 @@ function UserProfilePage() {
         });
       })
       .finally(() => setDeletingAccount(false));
+  };
+
+  const handleChange = (section, field, value) => {
+    setForms((prev) => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleNameSubmit = (event) => {
+    event.preventDefault();
+    setSubmitting("name");
+    updateUserName({
+      newFirstName: forms.name.firstName ?? "",
+      newLastName: forms.name.lastName ?? "",
+    })
+      .then(() => {
+        setFeedback({ type: "success", message: "Name updated." });
+        loadProfile();
+      })
+      .catch((error) =>
+        setFeedback({
+          type: "error",
+          message: error?.message ?? "Failed to update name.",
+        }),
+      )
+      .finally(() => setSubmitting(null));
+  };
+
+  const handlePasswordSubmit = (event) => {
+    event.preventDefault();
+    if (!forms.password.oldPassword?.trim()) {
+      setFeedback({ type: "error", message: "Enter your current password first." });
+      return;
+    }
+    if (!forms.password.newPassword?.trim()) {
+      setFeedback({ type: "error", message: "Enter a new password." });
+      return;
+    }
+    setSubmitting("password");
+    updateUserPassword({
+      oldPassword: forms.password.oldPassword,
+      newPassword: forms.password.newPassword,
+    })
+      .then(() => {
+        setFeedback({ type: "success", message: "Password updated." });
+        setForms((prev) => ({
+          ...prev,
+          password: { oldPassword: "", newPassword: "" },
+        }));
+      })
+      .catch((error) =>
+        setFeedback({
+          type: "error",
+          message:  "Failed to update password.",
+        }),
+      )
+      .finally(() => setSubmitting(null));
+  };
+
+  const handlePhoneSubmit = (event) => {
+    event.preventDefault();
+    setSubmitting("phone");
+    updateUserPhone({ phoneNumber: forms.phone.phoneNumber ?? "" })
+      .then(() => {
+        setFeedback({ type: "success", message: "Phone number updated." });
+        loadProfile();
+      })
+      .catch((error) =>
+        setFeedback({
+          type: "error",
+          message: error?.message ?? "Failed to update phone number.",
+        }),
+      )
+      .finally(() => setSubmitting(null));
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   const renderAddressesSection = () => {
@@ -281,6 +379,11 @@ function UserProfilePage() {
           <p className="tasker-card__meta">
             Keep your personal information and service addresses up to date.
           </p>
+          <div className="form-actions" style={{ justifyContent: "flex-start" }}>
+            <button type="button" className="btn btn-secondary" onClick={handleLogout}>
+              Sign out
+            </button>
+          </div>
         </header>
 
         {feedback && (
@@ -450,6 +553,101 @@ function UserProfilePage() {
                 )}
                 <button type="submit" className="btn btn-primary" disabled={isSavingAddress}>
                   {isSavingAddress ? "Saving…" : editDraft ? "Update address" : "Add address"}
+                </button>
+              </div>
+            </form>
+          </article>
+        </section>
+
+        <section className="profile-grid">
+          <article className="card profile-panel">
+            <p className="section-kicker">Identity</p>
+            <h2 className="section-heading">Name</h2>
+            <form className="profile-form" onSubmit={handleNameSubmit}>
+              <div className="form-field">
+                <label htmlFor="first-name-input">First name</label>
+                <input
+                  id="first-name-input"
+                  className="input"
+                  value={forms.name.firstName}
+                  onChange={(event) => handleChange("name", "firstName", event.target.value)}
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="last-name-input">Last name</label>
+                <input
+                  id="last-name-input"
+                  className="input"
+                  value={forms.name.lastName}
+                  onChange={(event) => handleChange("name", "lastName", event.target.value)}
+                />
+              </div>
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary" disabled={submitting === "name"}>
+                  {submitting === "name" ? "Saving…" : "Save name"}
+                </button>
+              </div>
+            </form>
+          </article>
+
+          <article className="card profile-panel">
+            <p className="section-kicker">Account security</p>
+            <h2 className="section-heading">Update password</h2>
+            <form className="profile-form" onSubmit={handlePasswordSubmit}>
+              <div className="form-field">
+                <label htmlFor="old-password-input">Current password</label>
+                <input
+                  id="old-password-input"
+                  type="password"
+                  className="input"
+                  value={forms.password.oldPassword}
+                  onChange={(event) => handleChange("password", "oldPassword", event.target.value)}
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="new-password-input">New password</label>
+                <input
+                  id="new-password-input"
+                  type="password"
+                  className="input"
+                  value={forms.password.newPassword}
+                  onChange={(event) => handleChange("password", "newPassword", event.target.value)}
+                />
+              </div>
+              <div className="form-actions">
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={submitting === "password"}
+                >
+                  {submitting === "password" ? "Saving…" : "Save password"}
+                </button>
+              </div>
+            </form>
+          </article>
+        </section>
+
+        <section className="profile-grid">
+          <article className="card profile-panel">
+            <p className="section-kicker">Contact</p>
+            <h2 className="section-heading">Phone number</h2>
+            <form className="profile-form" onSubmit={handlePhoneSubmit}>
+              <div className="form-field">
+                <label htmlFor="phone-input">Phone number</label>
+                <input
+                  id="phone-input"
+                  className="input"
+                  value={forms.phone.phoneNumber}
+                  onChange={(event) => handleChange("phone", "phoneNumber", event.target.value)}
+                />
+              </div>
+              <div className="form-actions">
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={submitting === "phone"}
+                >
+                  {submitting === "phone" ? "Saving…" : "Save phone"}
                 </button>
               </div>
             </form>

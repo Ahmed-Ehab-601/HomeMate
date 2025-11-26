@@ -40,12 +40,24 @@ function Header() {
           )}
 
           {isAuthenticated && (
-            <NavLink
-              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-              to="/profile"
-            >
-              Profile
-            </NavLink>
+            <>
+              {showUserMenu && (
+                <NavLink
+                  className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+                  to="/profile"
+                >
+                  Profile
+                </NavLink>
+              )}
+              {showTaskerMenu && (
+                <NavLink
+                  className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+                  to="/tasker/profile"
+                >
+                  Tasker Hub
+                </NavLink>
+              )}
+            </>
           )}
 
           {showUserMenu && (

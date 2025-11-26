@@ -21,7 +21,11 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private static final List<String> PUBLIC_URLS = List.of(
-            "/api/login", "/api/user/signup", "/api/tasker/signup", "/api/services", "/api/taskers/search"
+            "/api/login", "/api/user/signup", "/api/tasker/signup", "/api/services", "/api/taskers/search","/api/users/taskers/"
+    );
+
+    private static final List<String> PUBLIC_URL_PREFIXES = List.of(
+            "/api/users/taskers/"
     );
 
     private final JwtService jwtService;
@@ -46,6 +50,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     System.err.println("Exception thrown during filterChain.doFilter for public path: " + e.getMessage());
                     throw e;
                 }
+                return;
+            }
+        }
+        for (String prefix : PUBLIC_URL_PREFIXES) {
+            if (path.startsWith(prefix)) {
+                filterChain.doFilter(request, response);
                 return;
             }
         }

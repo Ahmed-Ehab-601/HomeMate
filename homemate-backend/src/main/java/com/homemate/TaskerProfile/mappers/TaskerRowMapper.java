@@ -31,6 +31,7 @@ public class TaskerRowMapper implements RowMapper<Tasker> {
         tasker.setHourrate(rs.getObject("hourrate") != null ? rs.getDouble("hourrate") : null);
         tasker.setBio(rs.getString("bio"));
         tasker.setServiceID(rs.getLong("serviceID"));
+        tasker.setServiceName(rs.getString("serviceName"));
         tasker.setTotalEarning(rs.getObject("totalEarning") != null ? rs.getDouble("totalEarning") : null);
         tasker.setWorkedHours(rs.getObject("WorkedHours") != null ? rs.getDouble("WorkedHours") : null);
         tasker.setAddressCity(rs.getString("addressCity"));

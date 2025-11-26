@@ -19,6 +19,7 @@ public class TaskerProfileDTO {
     private Double totalEarning;
     private Double workedHours;
     private String addressCity;
+    private byte[] image;
 
     // Getters and Setters
     public Long getTaskerID() {
@@ -147,6 +148,14 @@ public class TaskerProfileDTO {
 
     public void setAddressCity(String addressCity) {
         this.addressCity = addressCity;
+    }
+
+    public byte[] getImage() {
+        return image;
+    }
+
+    public void setImage(byte[] image) {
+        this.image = image;
     }
 }
 

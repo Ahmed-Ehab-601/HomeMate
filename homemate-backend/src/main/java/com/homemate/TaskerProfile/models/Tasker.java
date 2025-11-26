@@ -21,6 +21,7 @@ public class Tasker {
     private Double totalEarning;
     private Double workedHours;
     private String addressCity;
+    private String serviceName;
 
     // Getters and Setters
     public Long getTaskerID() {
@@ -165,5 +166,13 @@ public class Tasker {
 
     public void setAddressCity(String addressCity) {
         this.addressCity = addressCity;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
     }
 }

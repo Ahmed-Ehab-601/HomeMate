@@ -3,6 +3,7 @@ package com.homemate.UserProfile.DTO;
 public class PasswordDTO {
     
     private Long userId;
+    private String oldPassword;
     private String newPassword;
 
     public Long getUserId() {
@@ -11,6 +12,14 @@ public class PasswordDTO {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public String getOldPassword() {
+        return oldPassword;
+    }
+
+    public void setOldPassword(String oldPassword) {
+        this.oldPassword = oldPassword;
     }
 
     public String getNewPassword() {

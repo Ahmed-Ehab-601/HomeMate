@@ -4,14 +4,17 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.homemate.TaskerProfile.DTO.AddressCityDTO;
 import com.homemate.TaskerProfile.DTO.ChangeAvailabilityDTO;
 import com.homemate.TaskerProfile.DTO.ChangeBioDTO;
 import com.homemate.TaskerProfile.DTO.ChangeImageDTO;
 import com.homemate.TaskerProfile.DTO.DateOfBirthDTO;
 import com.homemate.TaskerProfile.DTO.EmailDTO;
 import com.homemate.TaskerProfile.DTO.HourRateDTO;
+import com.homemate.TaskerProfile.DTO.NameDTO;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewRequest;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewResponse;
+import com.homemate.TaskerProfile.DTO.AddressCityDTO;
 import com.homemate.TaskerProfile.DTO.PasswordDTO;
 import com.homemate.TaskerProfile.DTO.PhoneNumberDTO;
 import com.homemate.TaskerProfile.DTO.TaskerProfileDTO;
@@ -36,12 +39,28 @@ public class TaskerProfileService {
 
     public Boolean changePassword(PasswordDTO passwordDTO) {
         final int MAX_LENGTH = 255;
+        String oldPassword = passwordDTO.getOldPassword();
         String newPassword = passwordDTO.getNewPassword();
+        
+        if (oldPassword == null || oldPassword.isEmpty()) {
+            throw new IllegalArgumentException("Old password is required.");
+        }
+        
+        if (newPassword == null || newPassword.isEmpty()) {
+            throw new IllegalArgumentException("New password is required.");
+        }
+        
         if (newPassword.length() > MAX_LENGTH) {
             throw new IllegalArgumentException("Password must not exceed 255 characters.");
         }
+        
         Tasker tasker = taskerDao.getByID(passwordDTO.getTaskerID());
-        tasker.setPassword(passwordDTO.getNewPassword());
+        
+        if (!tasker.getPassword().equals(oldPassword)) {
+            throw new IllegalArgumentException("Old password is incorrect.");
+        }
+        
+        tasker.setPassword(newPassword);
         taskerDao.update(tasker);
         return true;
         
@@ -51,7 +70,7 @@ public class TaskerProfileService {
         
         final int MAX_LENGTH = 50;
         String newUsername = usernameDTO.getNewUsername();
-        if (newUsername.length() > MAX_LENGTH) {
+        if (newUsername.length() > MAX_LENGTH  || newUsername.length() == 0 ) {
             throw new IllegalArgumentException("Username must not exceed 50 characters.");
         }
         Tasker tasker = taskerDao.getByID(usernameDTO.getTaskerID());
@@ -64,7 +83,7 @@ public class TaskerProfileService {
     public Boolean changePhoneNumber(PhoneNumberDTO phoneNumberDTO) {
         final int MAX_LENGTH = 50;
         String newPhoneNumber = phoneNumberDTO.getNewPhoneNumber();
-        if (newPhoneNumber.length() > MAX_LENGTH) {
+        if (newPhoneNumber.length() > MAX_LENGTH || newPhoneNumber.length() == 0) {
             throw new IllegalArgumentException("Phone number must not exceed 50 characters.");
         }
         Tasker tasker = taskerDao.getByID(phoneNumberDTO.getTaskerID());
@@ -76,7 +95,7 @@ public class TaskerProfileService {
     public Boolean ChangeEmail(EmailDTO emailDTO) {
         final int MAX_LENGTH = 50;
         String newEmail = emailDTO.getNewEmail();
-        if (newEmail.length() > MAX_LENGTH) {
+        if (newEmail.length() > MAX_LENGTH || newEmail.length() == 0) {
             throw new IllegalArgumentException("Email must not exceed 50 characters.");
         }
         Tasker tasker = taskerDao.getByID(emailDTO.getTaskerID());
@@ -132,6 +151,26 @@ public class TaskerProfileService {
             return true;
     }
 
+    public Boolean changeName(NameDTO nameDTO) {
+        final int MAX_LENGTH = 50;
+
+        String newFirstName = nameDTO.getNewFirstName();
+        String newLastName = nameDTO.getNewLastName();
+
+        if (newFirstName != null && newFirstName.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("First name must not exceed 50 characters.");
+        }
+        if (newLastName != null && newLastName.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("Last name must not exceed 50 characters.");
+        }
+
+        Tasker tasker = taskerDao.getByID(nameDTO.getTaskerID());
+        tasker.setFirstName(newFirstName);
+        tasker.setLastName(newLastName);
+        taskerDao.update(tasker);
+        return true;
+    }
+
     public Boolean changeService(Long taskerID, Long serviceID) {
             Tasker tasker = taskerDao.getByID(taskerID);
             tasker.setServiceID(serviceID);
@@ -185,5 +224,25 @@ public class TaskerProfileService {
     
         return true;
     }
+    public Boolean deleteAccount(Long taskerID) {
+        taskerDao.delete(taskerID);
+        return true;
+    }
+
+    public Boolean changeAddressCity(AddressCityDTO addressCityDTO) {
+        final int MAX_LENGTH = 200;
+        String newCity = addressCityDTO.getNewAddressCity();
+        if (newCity == null || newCity.isBlank()) {
+            throw new IllegalArgumentException("City is required.");
+        }
+        if (newCity.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("City must not exceed 200 characters.");
+        }
+        Tasker tasker = taskerDao.getByID(addressCityDTO.getTaskerID());
+        tasker.setAddressCity(newCity);
+        taskerDao.update(tasker);
+        return true;
+    }
+
     
 }

@@ -173,8 +173,14 @@ public class UserDao {
     }
 
     private static final String GET_TASKER_PROFILE_SQL =
-    "SELECT taskerID, firstName, lastName, email, phone, rating " +
-    "FROM Tasker WHERE taskerID = ?";
+    "SELECT t.taskerID, t.firstName, t.lastName, t.username, t.email, t.phone, t.rating, " +
+    "t.availability, t.hourRate, t.bio, t.addressCity, t.WorkedHours, t.image, " +
+    "s.name AS serviceName " +
+    "FROM Tasker t " +
+    "JOIN Service s ON t.serviceID = s.serviceID " +
+    "WHERE t.taskerID = ?";
+
+
 
     @SuppressWarnings("null")
     public UserRequestTaskerDTO getTaskerProfile(Long id) {

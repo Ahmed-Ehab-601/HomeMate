@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.Map;
 
 import com.homemate.security.model.AppUserDetails;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,17 +16,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.homemate.UserProfile.DTO.AddressDTO;
 import com.homemate.UserProfile.DTO.DeleteAccountRequestDTO;
+import com.homemate.UserProfile.DTO.NameDTO;
+import com.homemate.UserProfile.DTO.PasswordDTO;
+import com.homemate.UserProfile.DTO.PhoneNumberDTO;
 import com.homemate.UserProfile.DTO.RemoveAddressDTO;
 import com.homemate.UserProfile.DTO.UserProfileDTO;
 import com.homemate.UserProfile.DTO.UserRequestTaskerDTO;
 import com.homemate.UserProfile.Services.UserService;
-
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 
 @RestController
 @RequestMapping("/api/users")
@@ -42,36 +44,41 @@ public class ManageUserProfileController {
         return ResponseEntity.ok(userService.getProfile(userDetails.getId()));
     }
 
-    @PostMapping("/{userId}/addresses")
-    public ResponseEntity<Map<String, Long>> addAddress(@PathVariable Long userId, @RequestBody AddressDTO newAddress) {
+    @PostMapping("/addresses")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, Long>> addAddress(@AuthenticationPrincipal AppUserDetails userDetails, @RequestBody AddressDTO newAddress) {
+        Long userId = userDetails.getId();
         newAddress.setUserId(userId);
         userService.addAddress(newAddress);
         return ResponseEntity.ok(Collections.singletonMap("userId", userId));
     }
 
-    @DeleteMapping("/{userId}/addresses/{addressId}")
-    public ResponseEntity<Map<String, String>> removeAddress(@PathVariable Long userId, @PathVariable Long addressId) {
+    @DeleteMapping("/addresses/{addressId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, String>> removeAddress(@AuthenticationPrincipal AppUserDetails userDetails, @PathVariable Long addressId) {
         RemoveAddressDTO removeAddressDTO = new RemoveAddressDTO();
-        removeAddressDTO.setUserId(userId);
+        removeAddressDTO.setUserId(userDetails.getId());
         removeAddressDTO.setAddressId(addressId);
         userService.removeAddress(removeAddressDTO);
         return ResponseEntity.ok(Collections.singletonMap("status", "Address removed"));
     }
 
-    @PutMapping("/{userId}/addresses/{addressId}")
-    public ResponseEntity<Map<String, String>> updateAddress(@PathVariable Long userId,
+    @PutMapping("/addresses/{addressId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, String>> updateAddress(@AuthenticationPrincipal AppUserDetails userDetails,
                                                              @PathVariable Long addressId,
                                                              @RequestBody AddressDTO updateAddress) {
-        updateAddress.setUserId(userId);
+        updateAddress.setUserId(userDetails.getId());
         updateAddress.setAddressId(addressId);
         userService.updateAddress(updateAddress);
         return ResponseEntity.ok(Collections.singletonMap("status", "Address updated"));
     }
 
-    @DeleteMapping("/{userId}/account")
-    public ResponseEntity<Map<String, String>> deleteAccount(@PathVariable Long userId) {
+    @DeleteMapping("/account")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, String>> deleteAccount(@AuthenticationPrincipal AppUserDetails userDetails) {
         DeleteAccountRequestDTO request = new DeleteAccountRequestDTO();
-        request.setUserId(userId);
+        request.setUserId(userDetails.getId());
         userService.deleteAccount(request);
         return ResponseEntity.ok(Collections.singletonMap("status", "Account deleted"));
     }
@@ -83,9 +90,15 @@ public class ManageUserProfileController {
     // }
 
     @GetMapping("/taskers/{taskerId}")
+   
     public ResponseEntity<UserRequestTaskerDTO> getTaskerProfile(@PathVariable Long taskerId) {
-        return ResponseEntity.ok(userService.getTaskerProfile(taskerId));
+        UserRequestTaskerDTO tasker = userService.getTaskerProfile(taskerId);
+        if (tasker == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(tasker);
     }
+
 
 //    @GetMapping(value = "/addresses", params = "userId")
 //    public ResponseEntity<AddressDTO[]> getAddresses(@RequestParam("userId") Integer userID) {
@@ -96,5 +109,53 @@ public class ManageUserProfileController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<AddressDTO[]> getAddressesForUser(@AuthenticationPrincipal AppUserDetails userDetails) {
         return ResponseEntity.ok(userService.getAddresses(userDetails.getId()));
+    }
+
+    @PutMapping("/name")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, String>> changeName(@AuthenticationPrincipal AppUserDetails userDetails,
+                                                          @RequestBody NameDTO nameDTO) {
+        try{                                                     
+            nameDTO.setUserId(userDetails.getId());
+            userService.changeName(nameDTO);
+            return ResponseEntity.ok(Collections.singletonMap("status", "Name updated"));
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
+    @PutMapping("/password")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, String>> changePassword(@AuthenticationPrincipal AppUserDetails userDetails,
+                                                              @RequestBody PasswordDTO passwordDTO) {
+        try{                                                      
+            passwordDTO.setUserId(userDetails.getId());
+            userService.changePassword(passwordDTO);
+            return ResponseEntity.ok(Collections.singletonMap("status", "Password updated"));
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
+    @PutMapping("/phone")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Map<String, String>> changePhone(@AuthenticationPrincipal AppUserDetails userDetails,
+                                                            @RequestBody PhoneNumberDTO phoneNumberDTO) {
+        try{                                                         
+            phoneNumberDTO.setUserId(userDetails.getId());
+            userService.changePhoneNumber(phoneNumberDTO);
+            return ResponseEntity.ok(Collections.singletonMap("status", "Phone number updated"));
+        }catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 }

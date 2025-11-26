@@ -67,11 +67,11 @@ function TaskCard({ task, viewType = "user" }) {
     navigate(`/tasks/${task.taskId}`);
   };
 
-  const handleViewTasker = () => {
-    // Mock tasker ID for now
-    const taskerId = 1;
-    navigate(`/taskers/${taskerId}`);
-  };
+  // const handleViewTasker = () => {
+  //   // Mock tasker ID for now
+  //   const taskerId = 1;
+  //   navigate(`/taskers/${taskerId}`);
+  // };
 
   return (
     <article className="task-card">
@@ -121,7 +121,7 @@ function TaskCard({ task, viewType = "user" }) {
         >
           View Details
         </button>
-        {viewType === "user" && (
+        {/* {viewType === "user" && (
           <button
             type="button"
             className="btn btn-primary"
@@ -129,7 +129,7 @@ function TaskCard({ task, viewType = "user" }) {
           >
             View Tasker
           </button>
-        )}
+        )} */}
       </div>
     </article>
   );

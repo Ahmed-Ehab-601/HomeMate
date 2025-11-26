@@ -10,12 +10,15 @@ import TaskerProfilePage from "./pages/TaskerProfilePage";
 import RequestTaskPage from "./pages/RequestTaskPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import SignInPage from "./pages/SignInPage";
+import TaskerDashboardPage from "./pages/TaskerDashboardPage";
 import SignUpPage from "./pages/SignUpPage";
 import UserTasksPage from "./pages/UserTasksPage";
 import TaskerTasksPage from "./pages/TaskerTasksPage";
 
+
+
 // Protected route component - redirects to signin on 401
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, requiredRole }) {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -26,7 +29,22 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/signin" replace />;
   }
 
+  // if (requiredRole ) {
+  //   return <Navigate to="/" replace />;
+  // }
+
   return children;
+}
+
+// User profile route that redirects taskers to tasker hub
+function UserProfileRoute() {
+  const { user } = useAuth();
+  
+  if (user?.role === "ROLE_TASKER") {
+    return <Navigate to="/tasker/profile" replace />;
+  }
+  
+  return <UserProfilePage />;
 }
 
 function AppRoutes() {
@@ -43,7 +61,15 @@ function AppRoutes() {
         path="/profile"
         element={
           <ProtectedRoute>
-            <UserProfilePage />
+            <UserProfileRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tasker/profile"
+        element={
+          <ProtectedRoute requiredRole="ROLE_TASKER">
+            <TaskerDashboardPage />
           </ProtectedRoute>
         }
       />

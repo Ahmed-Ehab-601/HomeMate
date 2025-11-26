@@ -10,6 +10,7 @@ import com.homemate.UserProfile.DTO.AddressDTO;
 import com.homemate.UserProfile.DTO.DateOfBirthDTO;
 import com.homemate.UserProfile.DTO.DeleteAccountRequestDTO;
 import com.homemate.UserProfile.DTO.EmailDTO;
+import com.homemate.UserProfile.DTO.NameDTO;
 import com.homemate.UserProfile.DTO.PasswordDTO;
 import com.homemate.UserProfile.DTO.PhoneNumberDTO;
 import com.homemate.UserProfile.DTO.RemoveAddressDTO;
@@ -30,10 +31,42 @@ public class UserService {
 
 
 
-    public Boolean changePassword(PasswordDTO newPasswordDTO) {
-        Objects.requireNonNull(newPasswordDTO, "newPasswordDTO cannot be null");
-        User user = requireUser(newPasswordDTO.getUserId());
-        user.setPassword(newPasswordDTO.getNewPassword());
+    public Boolean changePassword(PasswordDTO passwordDTO) {
+        Objects.requireNonNull(passwordDTO, "passwordDTO cannot be null");
+        
+        String oldPassword = passwordDTO.getOldPassword();
+        String newPassword = passwordDTO.getNewPassword();
+        
+        if (oldPassword == null || oldPassword.isEmpty()) {
+            throw new IllegalArgumentException("Old password is required.");
+        }
+        
+        if (newPassword == null || newPassword.isEmpty()) {
+            throw new IllegalArgumentException("New password is required.");
+        }
+        
+        User user = requireUser(passwordDTO.getUserId());
+        
+        if (!user.getPassword().equals(oldPassword)) {
+            throw new IllegalArgumentException("Old password is incorrect.");
+        }
+        
+        user.setPassword(newPassword);
+        userDao.update(user);
+        return Boolean.TRUE;
+    }
+    
+    public Boolean changeName(NameDTO nameDTO) {
+        final int  max_len = 50;
+        User user = requireUser(nameDTO.getUserId());
+        if (nameDTO.getNewFirstName().length() > max_len) {
+            throw new IllegalArgumentException("New first name is too long.");
+        }
+        if (nameDTO.getNewLastName().length() > max_len) {
+            throw new IllegalArgumentException("New last name is too long.");
+        }
+        user.setFirstName(nameDTO.getNewFirstName());
+        user.setLastName(nameDTO.getNewLastName());
         userDao.update(user);
         return Boolean.TRUE;
     }
@@ -41,6 +74,11 @@ public class UserService {
     public Boolean changeUsername(UsernameDTO newUsernameDTO) {
         Objects.requireNonNull(newUsernameDTO, "newUsernameDTO cannot be null");
         User user = requireUser(newUsernameDTO.getUserId());
+        final int  max_len = 50;
+
+        if (newUsernameDTO.getUsername().length() > max_len) {
+            throw new IllegalArgumentException("New Username is too long.");
+        }
         user.setUsername(newUsernameDTO.getUsername());
         userDao.update(user);
         return Boolean.TRUE;
@@ -48,6 +86,11 @@ public class UserService {
 
     public Boolean changePhoneNumber(PhoneNumberDTO newPhoneNumberDTO) {
         Objects.requireNonNull(newPhoneNumberDTO, "newPhoneNumberDTO cannot be null");
+        final int  max_len = 50;
+
+        if (newPhoneNumberDTO.getPhoneNumber().length() > max_len) {
+            throw new IllegalArgumentException("New phone number is too long.");
+        }
         User user = requireUser(newPhoneNumberDTO.getUserId());
         user.setPhone(newPhoneNumberDTO.getPhoneNumber());
         userDao.update(user);
@@ -74,6 +117,11 @@ public class UserService {
 
     public Boolean changeEmail(EmailDTO newEmailDTO) {
         Objects.requireNonNull(newEmailDTO, "newEmailDTO cannot be null");
+        final int  max_len = 255;
+
+        if (newEmailDTO.getEmail().length() > max_len) {
+            throw new IllegalArgumentException("New email is too long.");
+        }
         User user = requireUser(newEmailDTO.getUserId());
         user.setEmail(newEmailDTO.getEmail());
         userDao.update(user);

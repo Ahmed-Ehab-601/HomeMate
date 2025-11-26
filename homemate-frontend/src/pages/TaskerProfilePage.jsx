@@ -1,6 +1,27 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { getTaskerById } from "../api/userProfileApi";
+import { useAuth } from "../contexts/AuthContext";
 // import { fetchTaskerProfile, fetchTaskerReviews } from "../api/taskersApi";
+
+const normalizeImage = (imageValue) => {
+  if (!imageValue) return null;
+  if (typeof imageValue === "string") {
+    if (imageValue.startsWith("data:")) return imageValue;
+    return `data:image/jpeg;base64,${imageValue}`;
+  }
+  if (Array.isArray(imageValue)) {
+    if (typeof window === "undefined" || typeof window.btoa !== "function") {
+      return null;
+    }
+    let binary = "";
+    for (let i = 0; i < imageValue.length; i += 1) {
+      binary += String.fromCharCode(imageValue[i] & 0xff);
+    }
+    return `data:image/jpeg;base64,${window.btoa(binary)}`;
+  }
+  return null;
+};
 
 // Mock data for tasker profile
 const MOCK_TASKER = {
@@ -72,10 +93,12 @@ function TaskerProfilePage() {
   const { taskerId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isTasker } = useAuth();
 
   const initialPage = parseInt(searchParams.get("page") || "0", 10);
 
   const [tasker, setTasker] = useState(null);
+
   const [reviews, setReviews] = useState([]);
   const [reviewsTotal, setReviewsTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -92,54 +115,46 @@ function TaskerProfilePage() {
   }, [taskerId]);
 
   // Fetch reviews when page changes
-  useEffect(() => {
-    if (tasker) {
-      loadReviews();
-    }
-  }, [currentPage, tasker]);
+  // useEffect(() => {
+  //   if (tasker) {
+  //     loadReviews();
+  //   }
+  // }, [currentPage, tasker]);
 
   const loadTaskerProfile = async () => {
     setLoading(true);
     setError(null);
-
+    console.log("tasker prop:", taskerId);
     try {
-      // TODO: Uncomment when backend is ready
-      // const response = await fetchTaskerProfile(taskerId);
-      // setTasker(response);
-
-      // Mock implementation
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setTasker(MOCK_TASKER);
+      const response = await getTaskerById(taskerId);
+      console.log("res", response);
+      if (!response) {
+        setError("Tasker profile not found.");
+        return;
+      }
+      // Normalize the profile image from backend
+      const normalizedTasker = {
+        ...response,
+        profileImage: normalizeImage(response.image || response.profileImage),
+      };
+      setTasker(normalizedTasker);
     } catch (err) {
-      setError("Failed to load tasker profile. Please try again.");
+      console.error("Failed to load tasker profile:", err);
+
+      let errorMessage = "Failed to load tasker profile. Please try again.";
+      if (err.status === 0 || err.error === "NETWORK_ERROR") {
+        errorMessage = "No internet connection. Please check your network.";
+      } else if (err.status === 404) {
+        errorMessage = "Tasker not found.";
+      } else if (err.status === 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadReviews = async () => {
-    setReviewsLoading(true);
-
-    try {
-      // TODO: Uncomment when backend is ready
-      // const response = await fetchTaskerReviews(taskerId, currentPage, pageSize);
-      // setReviews(response.reviews || []);
-      // setReviewsTotal(response.totalCount || 0);
-      // setTotalPages(response.totalPages || 0);
-
-      // Mock implementation with pagination
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      const start = currentPage * pageSize;
-      const end = start + pageSize;
-      const paginatedReviews = MOCK_REVIEWS.slice(start, end);
-
-      setReviews(paginatedReviews);
-      setReviewsTotal(MOCK_REVIEWS.length);
-      setTotalPages(Math.ceil(MOCK_REVIEWS.length / pageSize));
-    } catch (err) {
-      console.error("Failed to load reviews:", err);
-    } finally {
-      setReviewsLoading(false);
     }
   };
 
@@ -168,8 +183,28 @@ function TaskerProfilePage() {
   };
 
   const handleRequestTask = () => {
+    // Ensure the tasker object has an 'id' field for RequestTaskPage
+    const taskerWithId = {
+      ...tasker,
+      id: tasker.id || tasker.taskerId || taskerId,
+      name:
+        tasker.name ||
+        `${tasker.firstName} ${tasker.lastName}`.trim() ||
+        tasker.username,
+      hourRate: tasker.hourRate || tasker.hourrate || 0,
+    };
+
+    // Create service object that RequestTaskPage expects
+    const serviceInfo = {
+      serviceId: tasker.serviceID || tasker.serviceId,
+      serviceName: tasker.serviceName || "Service",
+    };
+
     navigate(`/taskers/${taskerId}/request`, {
-      state: { tasker },
+      state: {
+        tasker: taskerWithId,
+        service: serviceInfo,
+      },
     });
   };
 
@@ -251,7 +286,7 @@ function TaskerProfilePage() {
           <div className="profile-header__meta">
             <span className="profile-meta-item">
               <span className="profile-meta-icon">📍</span>
-              {tasker.city}
+              {tasker.addressCity}
             </span>
             <span className="profile-meta-item">
               <span className="profile-meta-icon">💼</span>
@@ -264,13 +299,15 @@ function TaskerProfilePage() {
           </div>
         </div>
         <div className="profile-header__actions">
-          <button
-            type="button"
-            className="btn btn-primary btn-large"
-            onClick={handleRequestTask}
-          >
-            Request Task
-          </button>
+          {!isTasker() && (
+            <button
+              type="button"
+              className="btn btn-primary btn-large"
+              onClick={handleRequestTask}
+            >
+              Request Task
+            </button>
+          )}
         </div>
       </section>
 
@@ -290,13 +327,13 @@ function TaskerProfilePage() {
             <div className="profile-stat-label">Hourly Rate</div>
           </div>
         </div>
-        <div className="profile-stat-card">
+        {/* <div className="profile-stat-card">
           <div className="profile-stat-icon">📝</div>
           <div className="profile-stat-content">
             <div className="profile-stat-value">{tasker.totalReviews}</div>
             <div className="profile-stat-label">Reviews</div>
           </div>
-        </div>
+        </div> */}
         <div className="profile-stat-card">
           <div className="profile-stat-icon">🕐</div>
           <div className="profile-stat-content">
@@ -316,7 +353,7 @@ function TaskerProfilePage() {
         </div>
       </section>
 
-      {/* Reviews Section */}
+      {/* Reviews Section 
       <section className="profile-section" id="reviews-section">
         <h2 className="profile-section__title">Reviews ({reviewsTotal})</h2>
         <div className="profile-section__content">
@@ -398,7 +435,7 @@ function TaskerProfilePage() {
             </>
           )}
         </div>
-      </section>
+      </section>*/}
     </main>
   );
 }

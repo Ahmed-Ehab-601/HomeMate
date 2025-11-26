@@ -27,7 +27,7 @@ public class ServiceDiscoveryService {
 
         for (Service service : services) {
             int totalTasks = serviceDao.getTotalTasksForService(service.getServiceId());
-            System.out.println(totalTasks);
+            
             ServiceDto dto = serviceMapper.mapToServiceDto(service, totalTasks);
             serviceDtos.add(dto);
         }
