@@ -1,7 +1,27 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { getTaskerById } from "../api/userProfileApi"; 
+import { getTaskerById } from "../api/userProfileApi";
+import { useAuth } from "../contexts/AuthContext";
 // import { fetchTaskerProfile, fetchTaskerReviews } from "../api/taskersApi";
+
+const normalizeImage = (imageValue) => {
+  if (!imageValue) return null;
+  if (typeof imageValue === "string") {
+    if (imageValue.startsWith("data:")) return imageValue;
+    return `data:image/jpeg;base64,${imageValue}`;
+  }
+  if (Array.isArray(imageValue)) {
+    if (typeof window === "undefined" || typeof window.btoa !== "function") {
+      return null;
+    }
+    let binary = "";
+    for (let i = 0; i < imageValue.length; i += 1) {
+      binary += String.fromCharCode(imageValue[i] & 0xff);
+    }
+    return `data:image/jpeg;base64,${window.btoa(binary)}`;
+  }
+  return null;
+};
 
 // Mock data for tasker profile
 const MOCK_TASKER = {
@@ -73,6 +93,7 @@ function TaskerProfilePage() {
   const { taskerId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isTasker } = useAuth();
 
   const initialPage = parseInt(searchParams.get("page") || "0", 10);
 
@@ -105,15 +126,18 @@ function TaskerProfilePage() {
     setError(null);
     console.log("tasker prop:", taskerId);
     try {
-      
-
-      const response = await getTaskerById(taskerId); 
-      console.log("res",response)
+      const response = await getTaskerById(taskerId);
+      console.log("res", response);
       if (!response) {
         setError("Tasker profile not found.");
         return;
       }
-      setTasker(response);
+      // Normalize the profile image from backend
+      const normalizedTasker = {
+        ...response,
+        profileImage: normalizeImage(response.image || response.profileImage),
+      };
+      setTasker(normalizedTasker);
     } catch (err) {
       console.error("Failed to load tasker profile:", err);
 
@@ -133,7 +157,6 @@ function TaskerProfilePage() {
       setLoading(false);
     }
   };
-
 
   const handlePreviousPage = () => {
     if (currentPage > 0) {
@@ -160,8 +183,28 @@ function TaskerProfilePage() {
   };
 
   const handleRequestTask = () => {
+    // Ensure the tasker object has an 'id' field for RequestTaskPage
+    const taskerWithId = {
+      ...tasker,
+      id: tasker.id || tasker.taskerId || taskerId,
+      name:
+        tasker.name ||
+        `${tasker.firstName} ${tasker.lastName}`.trim() ||
+        tasker.username,
+      hourRate: tasker.hourRate || tasker.hourrate || 0,
+    };
+
+    // Create service object that RequestTaskPage expects
+    const serviceInfo = {
+      serviceId: tasker.serviceID || tasker.serviceId,
+      serviceName: tasker.serviceName || "Service",
+    };
+
     navigate(`/taskers/${taskerId}/request`, {
-      state: { tasker },
+      state: {
+        tasker: taskerWithId,
+        service: serviceInfo,
+      },
     });
   };
 
@@ -256,13 +299,15 @@ function TaskerProfilePage() {
           </div>
         </div>
         <div className="profile-header__actions">
-          <button
-            type="button"
-            className="btn btn-primary btn-large"
-            onClick={handleRequestTask}
-          >
-            Request Task
-          </button>
+          {!isTasker() && (
+            <button
+              type="button"
+              className="btn btn-primary btn-large"
+              onClick={handleRequestTask}
+            >
+              Request Task
+            </button>
+          )}
         </div>
       </section>
 

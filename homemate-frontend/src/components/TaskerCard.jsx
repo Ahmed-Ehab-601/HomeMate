@@ -1,9 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { getTaskerById } from "../api/userProfileApi"; 
+import { getTaskerById } from "../api/userProfileApi";
+import { useAuth } from "../contexts/AuthContext";
 
 function TaskerCard({ tasker, service }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isTasker } = useAuth();
   const hasPhoto = Boolean(tasker.photo);
   const initials = tasker.name
     .split(" ")
@@ -58,17 +60,19 @@ function TaskerCard({ tasker, service }) {
         <span>${tasker.hourRate}/hr starting</span>
       </div>
       <div className="tasker-card__actions">
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() =>
-            navigate(`/taskers/${tasker.id}/request`, {
-              state: { tasker, service, from: location.pathname },
-            })
-          }
-        >
-          Request Task
-        </button>
+        {!isTasker() && (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() =>
+              navigate(`/taskers/${tasker.id}/request`, {
+                state: { tasker, service, from: location.pathname },
+              })
+            }
+          >
+            Request Task
+          </button>
+        )}
         <button
           type="button"
           className="btn btn-ghost"
