@@ -56,7 +56,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 return;
             }
         }
-        for (String prefix : PUBLIC_URL_PREFIXES) {
+        for (String prefix : PUBLIC_URLS) {
             if (path.startsWith(prefix)) {
                 filterChain.doFilter(request, response);
                 return;

@@ -21,13 +21,13 @@ public class LoginController {
     GoogleTokenVerifierService googleTokenVerifierService;
 
 
-    LoginController(LoginService loginService, GoogleTokenVerifierService googleTokenVerifierService) {
+    public LoginController(LoginService loginService, GoogleTokenVerifierService googleTokenVerifierService) {
         this.loginService = loginService;
         this.googleTokenVerifierService = googleTokenVerifierService;
     }
 
     @PostMapping("/login")
-    ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) {
         LoginResponseDto response = loginService.loginWithEmailPassword(loginRequestDto);
 
         if (response == null) {

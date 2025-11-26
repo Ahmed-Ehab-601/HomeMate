@@ -9,13 +9,13 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserUserSignupService {
+public class UserSignupService {
 
     UserDao userDao;
     JwtService jwtService;
     TaskerDaoLogin taskerDaoLogin;
 
-    public UserUserSignupService(UserDao userDao, JwtService jwtService, TaskerDaoLogin taskerDaoLogin) {
+    public UserSignupService(UserDao userDao, JwtService jwtService, TaskerDaoLogin taskerDaoLogin) {
         this.userDao = userDao;
         this.jwtService = jwtService;
         this.taskerDaoLogin = taskerDaoLogin;

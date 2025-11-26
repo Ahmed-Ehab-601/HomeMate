@@ -3,7 +3,7 @@ package com.homemate.UserProfile.Controllers;
 import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.UserProfile.DTO.SignupUserDTO;
 import com.homemate.UserProfile.DTO.UserProfileDTO;
-import com.homemate.UserProfile.Services.UserUserSignupService;
+import com.homemate.UserProfile.Services.UserSignupService;
 import com.homemate.security.model.AppUserDetails;
 import com.homemate.security.service.ValidateSignupService;
 
@@ -20,11 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/user")
 public class SignupController {
 
-    UserUserSignupService userSignupService;
+    UserSignupService userSignupService;
     ValidateSignupService validateSignup;
 
     SignupController(
-        UserUserSignupService userSignupService,
+        UserSignupService userSignupService,
         ValidateSignupService validateSignup
     ) {
         this.userSignupService = userSignupService;
