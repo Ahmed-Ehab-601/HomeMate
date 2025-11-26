@@ -193,4 +193,14 @@ public class TaskerDaoImpIntegrationTest {
 
     }
 
+    @Test
+    @DisplayName("ComputeNumberOfTasks - Should return total tasks for a tasker")
+    public void testComputeNumberOfTasksReturnsCorrectCount() {
+        Long count = taskerDao.computeNumberOfTasks(1L);
+        assertThat(count).isNotNull();
+        assertThat(count).isEqualTo(0L);
+    }
+
 }
+
+

@@ -175,6 +175,10 @@ public class AdminServiceImp implements IAdminService {
         List<TaskerDto> taskerDtos = taskers.stream()
                 .map(taskerMapper::mapTO)
                 .toList();
+        for (TaskerDto taskerDto : taskerDtos) {
+            Long numberOfTasks = taskerDao.computeNumberOfTasks(taskerDto.getTaskerID());
+            taskerDto.setNumberOfTasks(numberOfTasks);
+        }
 
         Long totalPages = (totalElements + pageRequest.getSize() - 1) / pageRequest.getSize();
 

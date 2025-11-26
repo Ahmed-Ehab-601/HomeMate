@@ -10,6 +10,7 @@ public interface TaskerDao {
     Long countTaskers(List<Filter> filters);
     Tasker findById(Long taskerId);
     boolean updateTaskerSuspended(Long taskerId, boolean suspended);
+    Long computeNumberOfTasks(Long taskerId);
 
 
 }

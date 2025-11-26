@@ -68,6 +68,12 @@ public class TaskerDaoImp implements TaskerDao {
     }
 
 
+    @Override
+    public Long computeNumberOfTasks(Long taskerId) {
+        String sql = "SELECT COUNT(*) FROM Task WHERE taskerID = ?";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class, taskerId);
+        return count != null ? count : 0L;
+    }
 
 
     private static class RowMapperTasker implements RowMapper<Tasker> {

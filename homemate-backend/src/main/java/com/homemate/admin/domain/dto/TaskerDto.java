@@ -22,7 +22,7 @@ public class TaskerDto {
     String lName;
     Double hourRate;
     Gender gender;
-
+    Long numberOfTasks;
     public enum Gender {
         M,
         F,
