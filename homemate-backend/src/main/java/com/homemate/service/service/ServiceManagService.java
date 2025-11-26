@@ -27,18 +27,22 @@ public class ServiceManagService {
     }
 
     public void createService(ServiceDto serviceDto) throws Exception {
-        if(serviceDAO.findIdByName(serviceDto.getName())>0){
-            throw new Exception("There is an Exisiting Service with that same Name");
-        }
-        ServiceEntity service=serviceMapper.mapFromDto(serviceDto);
+        if(serviceDAO.findIdByName(serviceDto.getName())==null)
+        {ServiceEntity service=serviceMapper.mapFromDto(serviceDto);
         serviceDAO.save(service);
         }
+        else if(serviceDAO.findIdByName(serviceDto.getName())>0){
+            throw new Exception("There is an Exisiting Service with that same Name");
+        }
+    }
 
 
     public void editService(long id ,ServiceDto serviceDto) throws Exception {
-
+        if(serviceDAO.findIdByName(serviceDto.getName())==null){
         ServiceEntity service=serviceMapper.mapFromDto(serviceDto);
-        serviceDAO.update(id,service);
+        serviceDAO.update(id,service);}
+        else throw new Exception("There is an Exisiting Service with that same Name");
+
 
     }
 
