@@ -95,6 +95,10 @@ export function updateTaskerPhone(payload) {
   return putJson(`${TASKER_PROFILE_ENDPOINT}/phone`, payload);
 }
 
+export function updateTaskerCity(payload) {
+  return putJson(`${TASKER_PROFILE_ENDPOINT}/city`, payload);
+}
+
 export function updateTaskerHourRate(payload) {
   return putJson(`${TASKER_PROFILE_ENDPOINT}/hour-rate`, payload);
 }

@@ -7,6 +7,7 @@ import {
   getTaskerReviews,
   updateTaskerAvailability,
   updateTaskerBio,
+  updateTaskerCity,
   updateTaskerEmail,
   updateTaskerHourRate,
   updateTaskerImage,
@@ -60,7 +61,7 @@ function TaskerDashboardPage() {
   const [forms, setForms] = useState({
     identity: { firstName: "", lastName: "" },
     username: { username: "" },
-    contact: { email: "", phone: "" },
+    contact: { email: "", phone: "", city: "" },
     service: { hourRate: "", serviceId: "" },
     availability: { availability: "", bio: "" },
     password: { oldPassword: "", newPassword: "" },
@@ -97,6 +98,7 @@ function TaskerDashboardPage() {
           contact: {
             email: data?.email ?? "",
             phone: data?.phone ?? "",
+            city: data?.addressCity ?? "",
           },
           service: {
             hourRate: data?.hourrate ?? "",
@@ -204,10 +206,15 @@ function TaskerDashboardPage() {
 
   const handleContactSubmit = (event) => {
     event.preventDefault();
+    if (!forms.contact.city?.trim()) {
+      setFeedback({ type: "error", message: "Enter your city before saving." });
+      return;
+    }
     setSubmitting("contact");
     Promise.all([
       updateTaskerEmail({ newEmail: forms.contact.email ?? "" }),
       updateTaskerPhone({ newPhoneNumber: forms.contact.phone ?? "" }),
+      updateTaskerCity({ newAddressCity: forms.contact.city.trim() }),
     ])
       .then(() => {
         setFeedback({ type: "success", message: "Contact info updated." });
@@ -430,6 +437,10 @@ function TaskerDashboardPage() {
                   <dd>{profile.phone ?? "—"}</dd>
                 </div>
                 <div>
+                  <dt>City</dt>
+                  <dd>{profile.addressCity ?? "—"}</dd>
+                </div>
+                <div>
                   <dt>Rating</dt>
                   <dd>{profile.rating ? `${profile.rating.toFixed(1)} ★` : "—"}</dd>
                 </div>
@@ -527,6 +538,16 @@ function TaskerDashboardPage() {
                   className="input"
                   value={forms.contact.phone}
                   onChange={(event) => handleChange("contact", "phone", event.target.value)}
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="city-input">City</label>
+                <input
+                  id="city-input"
+                  className="input"
+                  value={forms.contact.city}
+                  onChange={(event) => handleChange("contact", "city", event.target.value)}
+                  placeholder="e.g., New York City"
                 />
               </div>
               <div className="form-actions">

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.homemate.TaskerProfile.DTO.AddressCityDTO;
 import com.homemate.TaskerProfile.DTO.ChangeAvailabilityDTO;
 import com.homemate.TaskerProfile.DTO.ChangeBioDTO;
 import com.homemate.TaskerProfile.DTO.ChangeImageDTO;
@@ -225,6 +226,21 @@ public class TaskerProfileService {
     public Boolean deleteAccount(Long taskerID) {
         Tasker tasker = taskerDao.getByID(taskerID);
         taskerDao.delete(taskerID);
+        return true;
+    }
+
+    public Boolean changeAddressCity(AddressCityDTO addressCityDTO) {
+        final int MAX_LENGTH = 200;
+        String newCity = addressCityDTO.getNewAddressCity();
+        if (newCity == null || newCity.isBlank()) {
+            throw new IllegalArgumentException("City is required.");
+        }
+        if (newCity.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("City must not exceed 200 characters.");
+        }
+        Tasker tasker = taskerDao.getByID(addressCityDTO.getTaskerID());
+        tasker.setAddressCity(newCity);
+        taskerDao.update(tasker);
         return true;
     }
     

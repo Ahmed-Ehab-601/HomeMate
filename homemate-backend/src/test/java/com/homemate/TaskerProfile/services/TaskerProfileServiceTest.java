@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.homemate.TaskerProfile.DTO.AddressCityDTO;
 import com.homemate.TaskerProfile.DTO.ChangeAvailabilityDTO;
 import com.homemate.TaskerProfile.DTO.ChangeBioDTO;
 import com.homemate.TaskerProfile.DTO.ChangeImageDTO;
@@ -268,6 +269,42 @@ class TaskerProfileServiceTest {
             taskerProfileService.ChangeEmail(emailDTO);
         });
         assertEquals("Email must not exceed 50 characters.", exception.getMessage());
+    }
+
+    @Test
+    void testChangeAddressCity_Success() {
+        AddressCityDTO cityDTO = new AddressCityDTO();
+        cityDTO.setTaskerID(1L);
+        cityDTO.setNewAddressCity("San Francisco");
+
+        Boolean result = taskerProfileService.changeAddressCity(cityDTO);
+        assertTrue(result);
+
+        String city = jdbcTemplate.queryForObject(
+            "SELECT addressCity FROM Tasker WHERE taskerID = ?",
+            String.class, 1L);
+        assertEquals("San Francisco", city);
+    }
+
+    @Test
+    void testChangeAddressCity_Validation() {
+        AddressCityDTO emptyCityDTO = new AddressCityDTO();
+        emptyCityDTO.setTaskerID(1L);
+        emptyCityDTO.setNewAddressCity("   ");
+
+        IllegalArgumentException missingException = assertThrows(IllegalArgumentException.class, () -> {
+            taskerProfileService.changeAddressCity(emptyCityDTO);
+        });
+        assertEquals("City is required.", missingException.getMessage());
+
+        AddressCityDTO longCityDTO = new AddressCityDTO();
+        longCityDTO.setTaskerID(1L);
+        longCityDTO.setNewAddressCity("a".repeat(201));
+
+        IllegalArgumentException longException = assertThrows(IllegalArgumentException.class, () -> {
+            taskerProfileService.changeAddressCity(longCityDTO);
+        });
+        assertEquals("City must not exceed 200 characters.", longException.getMessage());
     }
 
 }
