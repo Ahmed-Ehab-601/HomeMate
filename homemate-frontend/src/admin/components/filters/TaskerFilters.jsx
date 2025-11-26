@@ -1,5 +1,5 @@
 import { Paper, Stack, TextField, MenuItem, Button, InputAdornment } from '@mui/material';
-import PriceChangeIcon from '@mui/icons-material/PriceChange';
+import StarIcon from '@mui/icons-material/Star';
 import ShieldMoonIcon from '@mui/icons-material/ShieldMoon';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -64,7 +64,7 @@ const TaskerFilters = ({ values, onChange, onClear, onSearch }) => (
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <PriceChangeIcon fontSize="small" />
+              <StarIcon fontSize="small" />
             </InputAdornment>
           ),
         }}
