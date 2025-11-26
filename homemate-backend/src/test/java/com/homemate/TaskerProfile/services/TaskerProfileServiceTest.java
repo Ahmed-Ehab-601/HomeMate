@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
+
 import com.homemate.TaskerProfile.DTO.AddressCityDTO;
 import com.homemate.TaskerProfile.DTO.ChangeAvailabilityDTO;
 import com.homemate.TaskerProfile.DTO.ChangeBioDTO;
@@ -452,6 +453,8 @@ class TaskerProfileServiceTest {
 
         assertEquals("Username must not exceed 50 characters.", ex.getMessage());
     }
+
+   
 
 }
 

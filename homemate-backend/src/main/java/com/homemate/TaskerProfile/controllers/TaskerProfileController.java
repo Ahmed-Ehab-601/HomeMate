@@ -15,12 +15,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
+import com.homemate.TaskerProfile.DTO.AddressCityDTO;
 import com.homemate.TaskerProfile.DTO.ChangeAvailabilityDTO;
 import com.homemate.TaskerProfile.DTO.ChangeBioDTO;
 import com.homemate.TaskerProfile.DTO.ChangeImageDTO;
 import com.homemate.TaskerProfile.DTO.EmailDTO;
 import com.homemate.TaskerProfile.DTO.HourRateDTO;
-import com.homemate.TaskerProfile.DTO.AddressCityDTO;
+
 import com.homemate.TaskerProfile.DTO.NameDTO;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewRequest;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewResponse;
@@ -159,6 +160,7 @@ public class TaskerProfileController {
     }
 
 
+    
     private ResponseEntity<Map<String, String>> okStatus(String message) {
         return ResponseEntity.ok(Collections.singletonMap("status", message));
     }
