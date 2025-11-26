@@ -25,7 +25,7 @@ public class TaskerDaoImp implements TaskerDao {
     @Override
     public List<Tasker> findTaskers(List<Filter> filters, Long limit, Long offest) {
 
-        StringBuilder sql=new StringBuilder("SELECT * FROM Taskers ");
+        StringBuilder sql=new StringBuilder("SELECT * FROM Tasker ");
         String whereConditions=buildWhere(filters);
         sql.append(whereConditions);
         sql.append(" ORDER BY taskerID ASC");
@@ -40,7 +40,7 @@ public class TaskerDaoImp implements TaskerDao {
 
     @Override
     public Long countTaskers(List<Filter> filters) {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Taskers");
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Tasker");
         String whereConditions = buildWhere(filters);
         sql.append(whereConditions);
 
@@ -53,7 +53,7 @@ public class TaskerDaoImp implements TaskerDao {
     @Override
     public Tasker findById(Long taskerId) {
         try {
-            String sql = "SELECT * FROM Taskers WHERE taskerID = ?";
+            String sql = "SELECT * FROM Tasker WHERE taskerID = ?";
             return jdbcTemplate.queryForObject(sql, TASKER_ROW_MAPPER, taskerId);
         } catch (Exception e) {
             return null;
@@ -62,7 +62,7 @@ public class TaskerDaoImp implements TaskerDao {
 
     @Override
     public boolean updateTaskerSuspended(Long taskerId, boolean suspended) {
-        String sql = "UPDATE Taskers SET suspended = ? WHERE taskerID = ?";
+        String sql = "UPDATE Tasker SET suspended = ? WHERE taskerID = ?";
         int updated = jdbcTemplate.update(sql, suspended, taskerId);
         return updated == 1;
     }
@@ -85,7 +85,7 @@ public class TaskerDaoImp implements TaskerDao {
             tasker.setSuspended(rs.getBoolean("suspended"));
             Double avgRating = rs.getObject("rating", Double.class);
             tasker.setAvgRating(avgRating);
-            Double hourRate = rs.getObject("hourrate", Double.class);
+            Double hourRate = rs.getObject("hourRate", Double.class);
             tasker.setHourRate(hourRate);
             String genderStr = rs.getString("gender");
             if (genderStr != null) {

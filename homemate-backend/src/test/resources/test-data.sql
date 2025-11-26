@@ -7,7 +7,7 @@ DELETE FROM Reviews;
 DELETE FROM Report;
 DELETE FROM Task;
 DELETE FROM Address;
-DELETE FROM Taskers;
+DELETE FROM Tasker;
 DELETE FROM Service;
 DELETE FROM Users;
 
@@ -26,7 +26,7 @@ VALUES
     (3, 'Cleaning', 'House cleaning services');
 
 -- Insert test taskers (with all required NOT NULL fields)
-INSERT INTO Taskers (taskerID, firstName, lastName, username, password, email, birthDate, phone, gender, availability, rating, hourrate, bio, serviceID, totalEarning, WorkedHours, addressCity, suspended)
+INSERT INTO Tasker (taskerID, firstName, lastName, username, password, email, birthDate, phone, gender, availability, rating, hourRate, bio, serviceID, totalEarning, WorkedHours, addressCity, suspended)
 VALUES 
     (1, 'Tasker', 'One', 'samaa', 'pass123', 'tasker1@test.com', '1985-03-10 00:00:00', '1111111111', 'M', 'available', 4.5, 25.50, 'Experienced worker', 1, 0.00, 0.00, 'New York', false),
     (2, 'Tasker', 'Two', 'tasker2', 'pass456', 'tasker2@test.com', '1990-07-22 00:00:00', '2222222222', 'F', 'available', 4.8, 30.00, 'Professional', 2, 0.00, 0.00, 'Los Angeles', false),

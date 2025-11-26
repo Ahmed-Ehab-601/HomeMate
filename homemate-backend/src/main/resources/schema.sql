@@ -16,7 +16,7 @@ DROP TABLE IF EXISTS Reviews;
 DROP TABLE IF EXISTS Report;
 DROP TABLE IF EXISTS Task;
 DROP TABLE IF EXISTS Address;
-DROP TABLE IF EXISTS Taskers;
+DROP TABLE IF EXISTS Tasker;
 DROP TABLE IF EXISTS Service;
 DROP TABLE IF EXISTS Users;
 
@@ -73,7 +73,7 @@ CREATE TABLE Service (
 -- ======================================================
 -- TASKER
 -- ======================================================
-CREATE TABLE Taskers (
+CREATE TABLE Tasker (
     taskerID INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(50) NOT NULL,
     lastName VARCHAR(50) NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE Taskers (
     image LONGBLOB,
     availability ENUM('available','unavailable') DEFAULT 'available' NOT NULL,
     rating DECIMAL(5,2) DEFAULT 0.00,
-    hourrate DECIMAL(10,2) NOT NULL,
+    hourRate DECIMAL(10,2) NOT NULL,
     bio VARCHAR(500),
     serviceID INT NOT NULL,
     totalEarning DOUBLE DEFAULT 0.00 NOT NULL,
@@ -113,7 +113,7 @@ CREATE TABLE Chat (
     taskeris_active BOOLEAN DEFAULT TRUE NOT NULL,
     UNIQUE KEY unique_chat (user_id, tasker_id),
     FOREIGN KEY (user_id) REFERENCES Users(userID) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (tasker_id) REFERENCES Taskers(taskerID) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (tasker_id) REFERENCES Tasker(taskerID) ON DELETE CASCADE ON UPDATE CASCADE,
     INDEX idx_chat_user (user_id),
     INDEX idx_chat_tasker (tasker_id)
 );
@@ -136,7 +136,7 @@ CREATE TABLE Task (
     addressID INT NOT NULL,
     descriptionNotes VARCHAR(500),
     FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (taskerID) REFERENCES Taskers(taskerID) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (taskerID) REFERENCES Tasker(taskerID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (chatID) REFERENCES Chat(chat_id) ON DELETE SET NULL ON UPDATE CASCADE,
     FOREIGN KEY (addressID) REFERENCES Address(addressID) ON DELETE RESTRICT ON UPDATE CASCADE,

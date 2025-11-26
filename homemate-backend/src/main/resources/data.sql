@@ -54,7 +54,7 @@ INSERT INTO Service (name, description, imageData, imageName, imageType) VALUES
 -- ======================================================
 -- POPULATE TASKERS
 -- ======================================================
-INSERT INTO Taskers (firstName, lastName, username, password, email, birthDate, phone, gender, image, availability, rating, hourrate, bio, serviceID, totalEarning, WorkedHours, addressCity) VALUES
+INSERT INTO Tasker (firstName, lastName, username, password, email, birthDate, phone, gender, image, availability, rating, hourrate, bio, serviceID, totalEarning, WorkedHours, addressCity) VALUES
 ('Tom', 'Anderson', 'tanderson', '$2a$10$tasker123456789abcdefghij', 'tom.a@tasker.com', '1985-03-20', '+1-555-1001', 'M', NULL, 'available', 4.8, 35.00, 'Experienced cleaner with 10 years in the business.', 1, 15400.00, 440.00, 'New York'),
 ('Lisa', 'Thompson', 'lthompson', '$2a$10$tasker223456789abcdefghij', 'lisa.t@tasker.com', '1982-07-14', '+1-555-1002', 'F', NULL, 'available', 4.9, 55.00, 'Licensed plumber with expertise in residential repairs.', 2, 28600.00, 520.00, 'Los Angeles'),
 ('Mark', 'White', 'mwhite', '$2a$10$tasker323456789abcdefghij', 'mark.w@tasker.com', '1988-11-02', '+1-555-1003', 'M', NULL, 'available', 4.7, 60.00, 'Certified electrician, safety is my priority.', 3, 19800.00, 330.00, 'Chicago'),
