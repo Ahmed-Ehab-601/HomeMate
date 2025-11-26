@@ -2,6 +2,7 @@ package com.homemate.taskmanagement.dto;
 
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 public class TaskRequestDto {
     @NotNull(message = "Start date is required")
     private LocalDateTime startDate;
+    @Size(max = 500, message = "Description must be at most 500 characters")
     private String description;
     @NotNull(message = "userID is required")
     private Long userID;
