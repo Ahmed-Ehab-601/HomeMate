@@ -77,7 +77,7 @@ public class ServiceManagTest {
                 .name("Updated Cleaning")
                 .description("Updated description")
                 .build();
-
+        when(serviceDAO.findIdByName(dto.getName())).thenReturn(null);
         when(serviceMapper.mapFromDto(dto)).thenReturn(entity);
 
         serviceManagService.editService(serviceId, dto);

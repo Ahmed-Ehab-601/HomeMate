@@ -38,7 +38,7 @@ public class ServiceManagService {
 
 
     public void editService(long id ,ServiceDto serviceDto) throws Exception {
-        if(serviceDAO.findIdByName(serviceDto.getName())==null){
+        if(serviceDAO.findIdByName(serviceDto.getName())==null ||serviceDAO.findIdByName(serviceDto.getName())==id){
         ServiceEntity service=serviceMapper.mapFromDto(serviceDto);
         serviceDAO.update(id,service);}
         else throw new Exception("There is an Exisiting Service with that same Name");
