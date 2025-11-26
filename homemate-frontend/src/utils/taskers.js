@@ -20,6 +20,9 @@ const buildName = (tasker) => {
 const buildPhoto = (tasker) => {
   if (tasker.photoUrl) return tasker.photoUrl;
   if (tasker.photo) return tasker.photo;
+  if (tasker.imageBase64) {
+    return `data:image/jpeg;base64,${tasker.imageBase64}`;
+  }
   if (tasker.photoData && tasker.photoType) {
     return `data:${tasker.photoType};base64,${tasker.photoData}`;
   }
@@ -48,15 +51,16 @@ export const normalizeTasker = (tasker = {}) => {
   const serviceName =
     tasker.serviceName ?? tasker.servicename ?? tasker.service?.serviceName ?? "";
 
+  const rating = tasker.rating ?? tasker.averageRating;
+  const location = tasker.location || [tasker.addressCity, tasker.city, tasker.state, tasker.country].filter(Boolean).join(", ") || "";
+
   return {
     id: String(tasker.taskerId ?? tasker.id ?? fallbackId()),
     name: buildName(tasker),
     photo: buildPhoto(tasker),
-    rating: Number(tasker.rating ?? tasker.averageRating ?? 0),
+    rating: rating != null && rating > 0 ? Number(rating) : 5,
     hourRate: Number(tasker.hourRate ?? tasker.price ?? 0),
-    location:
-      tasker.location ??
-      [tasker.city, tasker.state, tasker.country].filter(Boolean).join(", "),
+    location,
     availability: tasker.availability ?? tasker.schedule ?? "",
     availabilityTag: mapAvailabilityTag(tasker.availability ?? ""),
     bio: tasker.bio ?? tasker.description ?? "",

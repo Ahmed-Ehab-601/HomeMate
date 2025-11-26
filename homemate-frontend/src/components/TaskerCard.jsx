@@ -11,7 +11,8 @@ function TaskerCard({ tasker, service }) {
     .slice(0, 2)
     .toUpperCase();
 
-  const rating = Number.isFinite(tasker.rating) ? tasker.rating : 0;
+  const rating =
+    Number.isFinite(tasker.rating) && tasker.rating > 0 ? tasker.rating : 5;
   const locationText = tasker.location || "Not specified";
   const availabilityText = tasker.availability || "N/A";
 
@@ -19,7 +20,11 @@ function TaskerCard({ tasker, service }) {
     <article className="card tasker-card">
       <div className="tasker-card__header">
         <div className="tasker-card__avatar" aria-hidden="true">
-          {hasPhoto ? <img src={tasker.photo} alt={`${tasker.name} avatar`} /> : initials}
+          {hasPhoto ? (
+            <img src={tasker.photo} alt={`${tasker.name} avatar`} />
+          ) : (
+            initials
+          )}
         </div>
         <div>
           <h3 className="tasker-card__name">{tasker.name}</h3>
@@ -49,7 +54,9 @@ function TaskerCard({ tasker, service }) {
         <button
           type="button"
           className="btn btn-ghost"
-          onClick={() => navigate(`/taskers/${tasker.id}`, { state: { tasker, service } })}
+          onClick={() =>
+            navigate(`/taskers/${tasker.id}`, { state: { tasker, service } })
+          }
         >
           View Profile
         </button>

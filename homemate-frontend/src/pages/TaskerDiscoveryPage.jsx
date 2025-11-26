@@ -22,9 +22,10 @@ function TaskerDiscoveryPage() {
   const [error, setError] = useState("");
 
   const [filters, setFilters] = useState({
-    rate: "any",
+    minHourlyRate: 0,
+    maxHourlyRate: 500,
     availability: "any",
-    rating: "any",
+    minRating: 0,
     location: "",
   });
   const [sortOption, setSortOption] = useState("rating-desc");
@@ -91,9 +92,11 @@ function TaskerDiscoveryPage() {
       .then((response) => {
         if (cancelled) return;
         const enriched = response.data.map((tasker) =>
-          tasker.serviceId ? tasker : { ...tasker, serviceId },
+          tasker.serviceId ? tasker : { ...tasker, serviceId }
         );
-        setTaskers((previous) => (page === 0 ? enriched : [...previous, ...enriched]));
+        setTaskers((previous) =>
+          page === 0 ? enriched : [...previous, ...enriched]
+        );
         setHasMore(response.hasMore);
       })
       .catch(() => {
@@ -114,9 +117,10 @@ function TaskerDiscoveryPage() {
     serviceId,
     page,
     debouncedSearch,
-    filters.rate,
+    filters.minHourlyRate,
+    filters.maxHourlyRate,
     filters.availability,
-    filters.rating,
+    filters.minRating,
     filters.location,
     sortOption,
   ]);
@@ -138,7 +142,7 @@ function TaskerDiscoveryPage() {
           setPage((prev) => prev + 1);
         }
       },
-      { rootMargin: "200px 0px 200px 0px" },
+      { rootMargin: "200px 0px 200px 0px" }
     );
 
     observerRef.current.observe(sentinelRef.current);
@@ -157,8 +161,10 @@ function TaskerDiscoveryPage() {
   };
 
   const updateFilters = (partial) => {
-    resetPagination();
     setFilters((previous) => ({ ...previous, ...partial }));
+    setTaskers([]);
+    setPage(0);
+    setHasMore(true);
   };
 
   const showEmptyState = !loading && taskers.length === 0;
@@ -183,7 +189,9 @@ function TaskerDiscoveryPage() {
           <h1 className="section-heading">
             {service ? `${service.serviceName} taskers` : "Find taskers"}
           </h1>
-          {service && <p className="tasker-card__meta">{service.description}</p>}
+          {service && (
+            <p className="tasker-card__meta">{service.description}</p>
+          )}
         </div>
       </header>
 
@@ -196,32 +204,61 @@ function TaskerDiscoveryPage() {
       />
 
       <section className="filters-bar">
-        <select value={filters.rate} onChange={(event) => updateFilters({ rate: event.target.value })}>
-          <option value="any">Hourly rate • Any</option>
-          <option value="low">Under $35/hr</option>
-          <option value="medium">$35-$55/hr</option>
-          <option value="premium">$55+/hr</option>
-        </select>
+        <input
+          type="number"
+          min="0"
+          max="500"
+          value={filters.minHourlyRate}
+          onChange={(e) =>
+            updateFilters({
+              minHourlyRate: Math.max(
+                0,
+                Math.min(500, Number(e.target.value) || 0)
+              ),
+            })
+          }
+          placeholder="Min Hourly Rate ($)"
+        />
+
+        <input
+          type="number"
+          min="0"
+          max="500"
+          value={filters.maxHourlyRate}
+          onChange={(e) =>
+            updateFilters({
+              maxHourlyRate: Math.max(
+                0,
+                Math.min(500, Number(e.target.value) || 0)
+              ),
+            })
+          }
+          placeholder="Max Hourly Rate ($)"
+        />
+
+        <input
+          type="number"
+          min="0"
+          max="5"
+          step="0.5"
+          value={filters.minRating}
+          onChange={(e) =>
+            updateFilters({
+              minRating: Math.max(0, Math.min(5, Number(e.target.value) || 0)),
+            })
+          }
+          placeholder="Min Rating (0-5 ★)"
+        />
 
         <select
           value={filters.availability}
-          onChange={(event) => updateFilters({ availability: event.target.value })}
+          onChange={(event) =>
+            updateFilters({ availability: event.target.value })
+          }
         >
           <option value="any">Availability • Any</option>
           <option value="available">Available</option>
           <option value="unavailable">Unavailable</option>
-        </select>
-
-        <select
-          value={filters.rating}
-          onChange={(event) => updateFilters({ rating: event.target.value })}
-        >
-          <option value="any">Rating • Any</option>
-          <option value="3.5">3.5 ★ & up</option>
-          <option value="4">4.0 ★ & up</option>
-          <option value="4.5">4.5 ★ & up</option>
-          <option value="4.8">4.8 ★ & up</option>
-          <option value="5">5.0 ★ </option>
         </select>
 
         <input

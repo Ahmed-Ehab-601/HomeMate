@@ -2,12 +2,6 @@
 import { normalizeTasker } from "../utils/taskers";
 import { baseUrl, apiRequest } from "../utils/apiClient";
 
-const RATE_BUCKETS = {
-  low: { minHourRate: 0, maxHourRate: 35 },
-  medium: { minHourRate: 35, maxHourRate: 55 },
-  premium: { minHourRate: 55, maxHourRate: null },
-};
-
 const SORT_MAP = {
   "price-asc": { sortBy: "hourRate", sortOrder: "ASC" },
   "price-desc": { sortBy: "hourRate", sortOrder: "DESC" },
@@ -28,7 +22,7 @@ const cleanPayload = (payload) =>
 
 export async function fetchTaskers({
   serviceId,
-  page = 0,
+  page = 1,
   size = 12,
   searchTerm = "",
   filters = {},
@@ -38,24 +32,23 @@ export async function fetchTaskers({
     throw new Error("serviceId is required to fetch taskers.");
   }
 
-  const rateRange = filters.rate && RATE_BUCKETS[filters.rate] ? RATE_BUCKETS[filters.rate] : {};
   const sort = SORT_MAP[sortOption] ?? SORT_MAP["rating-desc"];
 
   const criteria = cleanPayload({
     serviceID: Number(serviceId),
     availability: filters.availability !== "any" ? filters.availability : null,
     search: searchTerm || null,
-    minRating: filters.rating && filters.rating !== "any" ? Number(filters.rating) : null,
-    minHourRate: rateRange.minHourRate ?? null,
-    maxHourRate: rateRange.maxHourRate ?? null,
+    minRating: filters.minRating > 0 ? Number(filters.minRating) : null,
+    minHourlyRate: filters.minHourlyRate > 0 ? Number(filters.minHourlyRate) : null,
+    maxHourlyRate: filters.maxHourlyRate < 500 ? Number(filters.maxHourlyRate) : null,
     city: filters.location || null,
     sortBy: sort.sortBy,
     sortOrder: sort.sortOrder,
   });
 
-  const backendPage = Math.max(1, page + 1);
   const params = new URLSearchParams({
-    page: String(backendPage),
+    // backend expects 1-based page index while frontend uses 0-based
+    page: String(Math.max(1, page + 1)),
     size: String(size),
   });
 
@@ -64,6 +57,7 @@ export async function fetchTaskers({
     body: JSON.stringify(criteria),
   });
   const list = Array.isArray(body) ? body : [];
+
   return {
     data: list.map(normalizeTasker),
     page,
