@@ -54,7 +54,7 @@ async function request(url, options = {}) {
     );
   }
 
-  console.log(response);
+  //console.log(response);
   const data = await safeJson(response);
 
   if (!response.ok) {
@@ -116,5 +116,11 @@ export function updateUserPassword(payload) {
 
 export function updateUserPhone(payload) {
   return putJson(`${USERS_ENDPOINT}/phone`, payload);
+}
+
+const TASKERS_ENDPOINT = `${baseUrl}/api/users/taskers`;
+
+export function getTaskerById(taskerId) {
+  return request(`${TASKERS_ENDPOINT}/${taskerId}`);
 }
 

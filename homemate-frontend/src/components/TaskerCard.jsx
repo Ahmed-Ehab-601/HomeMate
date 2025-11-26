@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { getTaskerById } from "../api/userProfileApi"; 
 
 function TaskerCard({ tasker, service }) {
   const navigate = useNavigate();
@@ -15,6 +16,23 @@ function TaskerCard({ tasker, service }) {
     Number.isFinite(tasker.rating) && tasker.rating > 0 ? tasker.rating : 5;
   const locationText = tasker.location || "Not specified";
   const availabilityText = tasker.availability || "N/A";
+
+  const handleViewProfile = async () => {
+  
+  try {
+   
+    
+    if (tasker) {
+      navigate(`/taskers/${tasker.id}`);
+    } else {
+      alert("Tasker profile not found.");
+    }
+  } catch (error) {
+    console.error("Failed to fetch tasker:", error);
+    alert("Could not load tasker profile.");
+  }
+};
+
 
   return (
     <article className="card tasker-card">
@@ -54,9 +72,7 @@ function TaskerCard({ tasker, service }) {
         <button
           type="button"
           className="btn btn-ghost"
-          onClick={() =>
-            navigate(`/taskers/${tasker.id}`, { state: { tasker, service } })
-          }
+          onClick={handleViewProfile}
         >
           View Profile
         </button>
