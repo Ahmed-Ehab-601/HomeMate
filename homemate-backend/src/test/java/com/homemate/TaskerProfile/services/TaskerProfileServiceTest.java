@@ -43,10 +43,10 @@ class TaskerProfileServiceTest {
     void setUp() {
         // Clean up before each test
         jdbcTemplate.update("SET FOREIGN_KEY_CHECKS = 0");
-        jdbcTemplate.update("DELETE FROM Review_Image");
+
         jdbcTemplate.update("DELETE FROM Reviews");
         jdbcTemplate.update("DELETE FROM Report");
-        jdbcTemplate.update("DELETE FROM message_img");
+
         jdbcTemplate.update("DELETE FROM Message");
         jdbcTemplate.update("DELETE FROM Chat");
         jdbcTemplate.update("DELETE FROM Task");
