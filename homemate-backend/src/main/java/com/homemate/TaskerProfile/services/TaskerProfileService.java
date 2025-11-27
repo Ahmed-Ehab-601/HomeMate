@@ -14,14 +14,13 @@ import com.homemate.TaskerProfile.DTO.HourRateDTO;
 import com.homemate.TaskerProfile.DTO.NameDTO;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewRequest;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewResponse;
-import com.homemate.TaskerProfile.DTO.AddressCityDTO;
 import com.homemate.TaskerProfile.DTO.PasswordDTO;
 import com.homemate.TaskerProfile.DTO.PhoneNumberDTO;
 import com.homemate.TaskerProfile.DTO.TaskerProfileDTO;
 import com.homemate.TaskerProfile.DTO.UsernameDTO;
 import com.homemate.TaskerProfile.Dao.ReviewDao;
-import com.homemate.TaskerProfile.Dao.TaskerProfileServiceDao;
 import com.homemate.TaskerProfile.Dao.TaskerDao;
+import com.homemate.TaskerProfile.Dao.TaskerProfileServiceDao;
 import com.homemate.TaskerProfile.models.Services;
 import com.homemate.TaskerProfile.models.Tasker;
 
@@ -59,6 +58,14 @@ public class TaskerProfileService {
         if (!tasker.getPassword().equals(oldPassword)) {
             throw new IllegalArgumentException("Old password is incorrect.");
         }
+         String passwordPattern = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}\\|;:'\",.<>/?]).{8,}$";
+
+        if (!newPassword.matches(passwordPattern)) {
+            throw new IllegalArgumentException(
+                "New password must be at least 8 characters long and include " +
+                "uppercase, lowercase, digit, and special character."
+            );
+        }
         
         tasker.setPassword(newPassword);
         taskerDao.update(tasker);
@@ -86,6 +93,9 @@ public class TaskerProfileService {
         if (newPhoneNumber.length() > MAX_LENGTH || newPhoneNumber.length() == 0) {
             throw new IllegalArgumentException("Phone number must not exceed 50 characters.");
         }
+        if (!phoneNumberDTO.getNewPhoneNumber().matches("^\\+?[0-9\\-]+$")) {
+            throw new IllegalArgumentException("Phone number can only contain digits and an optional + or - sign.");
+        }
         Tasker tasker = taskerDao.getByID(phoneNumberDTO.getTaskerID());
         tasker.setPhone(phoneNumberDTO.getNewPhoneNumber());
         taskerDao.update(tasker);
@@ -96,7 +106,7 @@ public class TaskerProfileService {
         final int MAX_LENGTH = 50;
         String newEmail = emailDTO.getNewEmail();
         if (newEmail.length() > MAX_LENGTH || newEmail.length() == 0) {
-            throw new IllegalArgumentException("Email must not exceed 50 characters.");
+            throw new IllegalArgumentException("Email must not exceed 50 characters nor empty.");
         }
         Tasker tasker = taskerDao.getByID(emailDTO.getTaskerID());
         tasker.setEmail(emailDTO.getNewEmail());
@@ -146,6 +156,10 @@ public class TaskerProfileService {
 
     public Boolean changeHourRate(HourRateDTO hourRateDTO) {
             Tasker tasker = taskerDao.getByID(hourRateDTO.getTaskerID());
+
+            if(hourRateDTO.getNewHourRate() <= 0){
+                return false;
+            }
             tasker.setHourrate(hourRateDTO.getNewHourRate());
             taskerDao.update(tasker);
             return true;
@@ -230,13 +244,13 @@ public class TaskerProfileService {
     }
 
     public Boolean changeAddressCity(AddressCityDTO addressCityDTO) {
-        final int MAX_LENGTH = 200;
+        final int MAX_LENGTH = 50;
         String newCity = addressCityDTO.getNewAddressCity();
         if (newCity == null || newCity.isBlank()) {
             throw new IllegalArgumentException("City is required.");
         }
         if (newCity.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("City must not exceed 200 characters.");
+            throw new IllegalArgumentException("City must not exceed 50 characters.");
         }
         Tasker tasker = taskerDao.getByID(addressCityDTO.getTaskerID());
         tasker.setAddressCity(newCity);

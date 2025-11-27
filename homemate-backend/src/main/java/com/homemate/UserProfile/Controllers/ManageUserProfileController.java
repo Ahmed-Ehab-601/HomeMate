@@ -3,8 +3,6 @@ package com.homemate.UserProfile.Controllers;
 import java.util.Collections;
 import java.util.Map;
 
-import com.homemate.security.model.AppUserDetails;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,10 +25,17 @@ import com.homemate.UserProfile.DTO.RemoveAddressDTO;
 import com.homemate.UserProfile.DTO.UserProfileDTO;
 import com.homemate.UserProfile.DTO.UserRequestTaskerDTO;
 import com.homemate.UserProfile.Services.UserService;
+import com.homemate.security.model.AppUserDetails;
 
 @RestController
 @RequestMapping("/api/users")
 public class ManageUserProfileController {
+    private static final String ADDRESS_IN_USE_ERROR =
+            "This address is used in a task and cannot be deleted.";
+    private static final String ACCOUNT_IN_USE_ERROR =
+            "This account have related tasks and cannot be deleted.";
+    private static final String ADDRESS_MAX_LENGHT_ERROR =
+            "ALL ADDRESS ATTRIBUTES MUST BE < 50 ";
 
     private final UserService userService;
 
@@ -46,11 +51,19 @@ public class ManageUserProfileController {
 
     @PostMapping("/addresses")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<Map<String, Long>> addAddress(@AuthenticationPrincipal AppUserDetails userDetails, @RequestBody AddressDTO newAddress) {
+    public ResponseEntity<?> addAddress(@AuthenticationPrincipal AppUserDetails userDetails, @RequestBody AddressDTO newAddress) {
         Long userId = userDetails.getId();
         newAddress.setUserId(userId);
-        userService.addAddress(newAddress);
-        return ResponseEntity.ok(Collections.singletonMap("userId", userId));
+        boolean flag = userService.addAddress(newAddress);
+        
+        
+        if (flag){
+               return ResponseEntity.ok(Collections.singletonMap("userId", userId));
+        }else{
+            return new ResponseEntity<>(
+                                    Map.of("error",ADDRESS_MAX_LENGHT_ERROR ),
+                                    HttpStatus.BAD_REQUEST);
+        }
     }
 
     @DeleteMapping("/addresses/{addressId}")
@@ -59,8 +72,15 @@ public class ManageUserProfileController {
         RemoveAddressDTO removeAddressDTO = new RemoveAddressDTO();
         removeAddressDTO.setUserId(userDetails.getId());
         removeAddressDTO.setAddressId(addressId);
-        userService.removeAddress(removeAddressDTO);
-        return ResponseEntity.ok(Collections.singletonMap("status", "Address removed"));
+        boolean flag =userService.removeAddress(removeAddressDTO);
+        
+        if (flag){
+                return ResponseEntity.ok(Collections.singletonMap("status", "Address removed"));
+        }else{
+            return new ResponseEntity<>(
+                                    Map.of("error",ADDRESS_IN_USE_ERROR ),
+                                    HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PutMapping("/addresses/{addressId}")
@@ -70,8 +90,15 @@ public class ManageUserProfileController {
                                                              @RequestBody AddressDTO updateAddress) {
         updateAddress.setUserId(userDetails.getId());
         updateAddress.setAddressId(addressId);
-        userService.updateAddress(updateAddress);
-        return ResponseEntity.ok(Collections.singletonMap("status", "Address updated"));
+        Boolean flag =userService.updateAddress(updateAddress);
+        
+        if (flag.booleanValue()){
+                return ResponseEntity.ok(Collections.singletonMap("status", "Address updated"));
+        }else{
+            return new ResponseEntity<>(
+                                    Map.of("error",ADDRESS_MAX_LENGHT_ERROR ),
+                                    HttpStatus.BAD_REQUEST);
+        }
     }
 
     @DeleteMapping("/account")
@@ -79,8 +106,15 @@ public class ManageUserProfileController {
     public ResponseEntity<Map<String, String>> deleteAccount(@AuthenticationPrincipal AppUserDetails userDetails) {
         DeleteAccountRequestDTO request = new DeleteAccountRequestDTO();
         request.setUserId(userDetails.getId());
-        userService.deleteAccount(request);
-        return ResponseEntity.ok(Collections.singletonMap("status", "Account deleted"));
+        Boolean flag =userService.deleteAccount(request);
+    
+        if (flag.booleanValue()){
+                return ResponseEntity.ok(Collections.singletonMap("status", "Account deleted"));
+        }else{
+            return new ResponseEntity<>(
+                                    Map.of("error", ACCOUNT_IN_USE_ERROR),
+                                    HttpStatus.BAD_REQUEST);
+        }
     }
 
     // @PostMapping("/signup")

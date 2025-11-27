@@ -617,14 +617,20 @@ function TaskerDashboardPage() {
             <form className="profile-form" onSubmit={handleAvailabilitySubmit}>
               <div className="form-field">
                 <label htmlFor="availability-input">Availability</label>
-                <input
+                <select
                   id="availability-input"
                   className="input"
-                  value={forms.availability.availability}
-                  onChange={(event) => handleChange("availability", "availability", event.target.value)}
-                  placeholder="e.g., Weekdays 9-5, weekends only"
-                />
+                  value={forms.availability.availability || ""}
+                  onChange={(event) =>
+                    handleChange("availability", "availability", event.target.value)
+                  }
+                >
+                  <option value="">—</option> {/* placeholder */}
+                  <option value="AVAILABLE">Available</option>
+                  <option value="UNAVAILABLE">Unavailable</option>
+                </select>
               </div>
+
               <div className="form-field">
                 <label htmlFor="bio-input">Bio</label>
                 <textarea
