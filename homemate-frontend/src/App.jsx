@@ -1,4 +1,10 @@
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import "./App.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Header from "./components/layout/Header";
@@ -91,17 +97,26 @@ function AppRoutes() {
 }
 
 function App() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
+  return (
+    <div className="app-shell">
+      {!isAdminRoute && <Header />}
+      <AppRoutes />
+      <Footer />
+    </div>
+  );
+}
+
+function AppWrapper() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <div className="app-shell">
-          <Header />
-          <AppRoutes />
-          <Footer />
-        </div>
+        <App />
       </AuthProvider>
     </BrowserRouter>
   );
 }
 
-export default App;
+export default AppWrapper;

@@ -19,7 +19,7 @@ INSERT INTO Users (firstName, lastName, username, password, email, birthDate, ge
 ('Robert', 'Garcia', 'rgarcia', '$2a$10$abcdefghijklmnopqrstuvwxyz123462', 'robert.g@email.com', '1991-09-05', 'M', '+1-555-0107', FALSE, FALSE),
 ('Amanda', 'Rodriguez', 'arodriguez', '$2a$10$abcdefghijklmnopqrstuvwxyz123463', 'amanda.r@email.com', '1989-12-12', 'F', '+1-555-0108', FALSE, FALSE),
 ('Admin', 'User', 'admin',  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'admin@homemate.com', '1985-06-20', 'M', '+1-555-0001', TRUE, FALSE),
-('Chris', 'Taylor', 'ctaylor', '$2a$10$abcdefghijklmnopqrstuvwxyz123465', 'chris.t@email.com', '1994-04-08', 'M', '+1-555-0109', FALSE, FALSE);
+('Chris', 'Taylor', 'ctaylor', '$2a$10$abcdefghijklmnopqrstuvwxyz123465', 'chris.t@email.com', '1994-04-08', 'M', '+1-555-0109', FALSE, TRUE);
 
 -- ======================================================
 -- POPULATE ADDRESSES

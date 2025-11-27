@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { getTaskerById } from "../api/userProfileApi";
 import { useAuth } from "../contexts/AuthContext";
 // import { fetchTaskerProfile, fetchTaskerReviews } from "../api/taskersApi";
@@ -92,8 +97,12 @@ const MOCK_REVIEWS = [
 function TaskerProfilePage() {
   const { taskerId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isTasker } = useAuth();
+
+  // Get service from navigation state (passed from TaskerCard)
+  const serviceFromState = location.state?.service;
 
   const initialPage = parseInt(searchParams.get("page") || "0", 10);
 
@@ -127,7 +136,8 @@ function TaskerProfilePage() {
     console.log("tasker prop:", taskerId);
     try {
       const response = await getTaskerById(taskerId);
-      console.log("res", response);
+      console.log("🔍 [TASKER PROFILE] Full API Response:", response);
+      console.log("🔍 [TASKER PROFILE] Response Keys:", Object.keys(response));
       if (!response) {
         setError("Tasker profile not found.");
         return;
@@ -137,6 +147,7 @@ function TaskerProfilePage() {
         ...response,
         profileImage: normalizeImage(response.image || response.profileImage),
       };
+      console.log("🔍 [TASKER PROFILE] Normalized Tasker:", normalizedTasker);
       setTasker(normalizedTasker);
     } catch (err) {
       console.error("Failed to load tasker profile:", err);
@@ -194,11 +205,26 @@ function TaskerProfilePage() {
       hourRate: tasker.hourRate || tasker.hourrate || 0,
     };
 
-    // Create service object that RequestTaskPage expects
-    const serviceInfo = {
-      serviceId: tasker.serviceID || tasker.serviceId,
-      serviceName: tasker.serviceName || "Service",
-    };
+    // Use service from navigation state (passed from TaskerCard)
+    // Fallback to creating service object from tasker data if not available
+    let serviceInfo;
+    if (serviceFromState) {
+      serviceInfo = serviceFromState;
+    } else {
+      // Fallback: try to construct from tasker data
+      const serviceId =
+        tasker.serviceID || tasker.serviceId || tasker.service_id;
+      serviceInfo = {
+        serviceId: serviceId,
+        serviceName: tasker.serviceName || "Service",
+      };
+    }
+
+    console.log("🔵 [TASKER PROFILE] Navigation to request task:", {
+      tasker: taskerWithId,
+      service: serviceInfo,
+      serviceFromState,
+    });
 
     navigate(`/taskers/${taskerId}/request`, {
       state: {

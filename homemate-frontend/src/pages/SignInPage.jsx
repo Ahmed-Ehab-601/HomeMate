@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login, loginWithGoogle } from "../api/authApi";
+import { login } from "../api/authApi";
 import { useAuth } from "../contexts/AuthContext";
+import GoogleLogin from "../components/GoogleLogin";
 
 function SignInPage() {
   const navigate = useNavigate();
@@ -23,11 +24,15 @@ function SignInPage() {
       // Store user data in AuthContext
       loginUser(response);
 
+
+
       // Redirect based on role
       if (response.role === "ROLE_ADMIN") {
         navigate("/admin/users");
       } else if (response.role === "ROLE_TASKER") {
         navigate("/tasker/profile");
+      } else if (response.role === "SUSPENDED"){
+        setError("User is suspended");
       } else {
         navigate("/");
       }
@@ -38,25 +43,27 @@ function SignInPage() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setError("");
-    setIsGoogleLoading(true);
+  const handleGoogleLoginSuccess = (response) => {
+    // Store user data in AuthContext
+    loginUser(response);
 
-    try {
-      await loginWithGoogle();
-      // On successful login, redirect to home page
+    if (response.role === "ROLE_ADMIN") {
+      navigate("/admin/users");
+    } else if (response.role === "ROLE_TASKER") {
+      navigate("/tasker/profile");
+    } else {
       navigate("/");
-    } catch (err) {
-      setError("Failed to sign in with Google. Please try again.");
-    } finally {
-      setIsGoogleLoading(false);
     }
+  };
+
+  const handleGoogleLoginError = () => {
+    setError("Failed to sign in with Google. Please try again.");
   };
 
   return (
     <main className="page page--signin">
       <div className="signin-container">
-        <div className="signin-card">
+        <div className="signin-card" style={{ maxWidth: "540px" }}>
           <h1 className="signin-title">Sign in to HomeMate</h1>
           <p className="signin-subtitle">
             Welcome back! Please enter your details.
@@ -147,6 +154,11 @@ function SignInPage() {
             >
               {isLoading ? "Signing in..." : "Sign in"}
             </button>
+            <GoogleLogin
+              onSuccess={handleGoogleLoginSuccess}
+              onError={handleGoogleLoginError}
+              disabled={isLoading || isGoogleLoading}
+            />
           </form>
 
           <div style={{ marginTop: "24px", textAlign: "center" }}>

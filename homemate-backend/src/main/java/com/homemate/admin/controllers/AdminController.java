@@ -3,6 +3,7 @@ package com.homemate.admin.controllers;
 import com.homemate.admin.domain.dto.*;
 import com.homemate.admin.domain.dto.*;
 import com.homemate.admin.services.IAdminService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,8 +19,8 @@ public class AdminController {
     @GetMapping("/users")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<PageResponse<UserDto>> getUsers(
-           @ModelAttribute PageRequest pageRequest,
-            @ModelAttribute UserFilterDto userFilterDto) {
+           @ModelAttribute  PageRequest pageRequest,
+            @ModelAttribute @Valid UserFilterDto userFilterDto) {
 
         PageResponse<UserDto> response = adminService.getUsers(userFilterDto, pageRequest);
         return ResponseEntity.ok(response);
@@ -29,7 +30,7 @@ public class AdminController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<PageResponse<TaskerDto>> getTaskers(
              @ModelAttribute PageRequest pageRequest,
-            @ModelAttribute TaskerFilterDto taskerFilterDto) {
+            @ModelAttribute @Valid TaskerFilterDto taskerFilterDto) {
 
         PageResponse<TaskerDto> response = adminService.getTaskers(taskerFilterDto, pageRequest);
         return ResponseEntity.ok(response);

@@ -78,7 +78,7 @@ CREATE TABLE Tasker (
     firstName VARCHAR(50) NOT NULL,
     lastName VARCHAR(50) NOT NULL,
     username VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL, -- Increased for hashed passwords
+    password VARCHAR(255) NOT NULL,
     email VARCHAR(50) NOT NULL UNIQUE,
     birthDate TIMESTAMP NULL,
     phone VARCHAR(50),

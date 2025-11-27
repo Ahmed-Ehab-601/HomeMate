@@ -1,11 +1,12 @@
 package com.homemate.TaskerProfile.DTO;
 
+import java.sql.Timestamp;
 public class TaskerSignupDTO {
     private String username;
     private String email;
     private String password;
     private String phoneNumber;
-    private String dateOfBirth;
+    private Timestamp dateOfBirth;
     private String bio;
     private byte[] profileImage;
     private Long serviceID;
@@ -46,11 +47,11 @@ public class TaskerSignupDTO {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getDateOfBirth() {
+    public Timestamp getDateOfBirth() {
         return dateOfBirth;
     }
 
-    public void setDateOfBirth(String dateOfBirth) {
+    public void setDateOfBirth(Timestamp dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
     }
 

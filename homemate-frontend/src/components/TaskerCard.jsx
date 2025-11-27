@@ -20,21 +20,19 @@ function TaskerCard({ tasker, service }) {
   const availabilityText = tasker.availability || "N/A";
 
   const handleViewProfile = async () => {
-  
-  try {
-   
-    
-    if (tasker) {
-      navigate(`/taskers/${tasker.id}`);
-    } else {
-      alert("Tasker profile not found.");
+    try {
+      if (tasker) {
+        navigate(`/taskers/${tasker.id}`, {
+          state: { service },
+        });
+      } else {
+        alert("Tasker profile not found.");
+      }
+    } catch (error) {
+      console.error("Failed to fetch tasker:", error);
+      alert("Could not load tasker profile.");
     }
-  } catch (error) {
-    console.error("Failed to fetch tasker:", error);
-    alert("Could not load tasker profile.");
-  }
-};
-
+  };
 
   return (
     <article className="card tasker-card">
