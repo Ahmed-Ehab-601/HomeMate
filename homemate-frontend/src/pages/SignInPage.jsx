@@ -22,8 +22,15 @@ function SignInPage() {
       const response = await login(email, password);
       // Store user data in AuthContext
       loginUser(response);
-      // On successful login, redirect to home page
-      navigate("/");
+
+      // Redirect based on role
+      if (response.role === "ROLE_ADMIN") {
+        navigate("/admin/users");
+      } else if (response.role === "ROLE_TASKER") {
+        navigate("/tasker/profile");
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       setError("Invalid email or password");
     } finally {
@@ -51,7 +58,9 @@ function SignInPage() {
       <div className="signin-container">
         <div className="signin-card">
           <h1 className="signin-title">Sign in to HomeMate</h1>
-          <p className="signin-subtitle">Welcome back! Please enter your details.</p>
+          <p className="signin-subtitle">
+            Welcome back! Please enter your details.
+          </p>
 
           {error && (
             <div className="alert alert-error" role="alert">
@@ -143,7 +152,10 @@ function SignInPage() {
           <div style={{ marginTop: "24px", textAlign: "center" }}>
             <p>
               Don't have an account?{" "}
-              <a href="/signup" style={{ color: "var(--primary)", textDecoration: "underline" }}>
+              <a
+                href="/signup"
+                style={{ color: "var(--primary)", textDecoration: "underline" }}
+              >
                 Sign up
               </a>
             </p>
@@ -155,4 +167,3 @@ function SignInPage() {
 }
 
 export default SignInPage;
-

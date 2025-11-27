@@ -3,11 +3,13 @@ import { useAuth } from "../../contexts/AuthContext";
 
 function Header() {
   const navigate = useNavigate();
-  const { isAuthenticated, isTasker, isRegularUser, logout } = useAuth();
+  const { isAuthenticated, isTasker, isRegularUser, isAdmin, logout } =
+    useAuth();
 
   // Default to showing regular user menu if not authenticated
-  const showUserMenu = !isAuthenticated || isRegularUser();
+  const showUserMenu = !isAuthenticated || (isRegularUser() && !isAdmin());
   const showTaskerMenu = isAuthenticated && isTasker();
+  const showAdminMenu = isAuthenticated && isAdmin();
 
   return (
     <header className="sticky-header">
@@ -29,10 +31,12 @@ function Header() {
           >
             Home
           </NavLink>
-          
+
           {showUserMenu && (
             <NavLink
-              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+              className={({ isActive }) =>
+                `nav-link${isActive ? " active" : ""}`
+              }
               to="/services"
             >
               Explore Services
@@ -43,7 +47,9 @@ function Header() {
             <>
               {showUserMenu && (
                 <NavLink
-                  className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+                  className={({ isActive }) =>
+                    `nav-link${isActive ? " active" : ""}`
+                  }
                   to="/profile"
                 >
                   Profile
@@ -51,7 +57,9 @@ function Header() {
               )}
               {showTaskerMenu && (
                 <NavLink
-                  className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+                  className={({ isActive }) =>
+                    `nav-link${isActive ? " active" : ""}`
+                  }
                   to="/tasker/profile"
                 >
                   Tasker Hub
@@ -62,7 +70,9 @@ function Header() {
 
           {showUserMenu && (
             <NavLink
-              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+              className={({ isActive }) =>
+                `nav-link${isActive ? " active" : ""}`
+              }
               to="/my-tasks"
             >
               My Tasks
@@ -71,11 +81,42 @@ function Header() {
 
           {showTaskerMenu && (
             <NavLink
-              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+              className={({ isActive }) =>
+                `nav-link${isActive ? " active" : ""}`
+              }
               to="/tasker/my-tasks"
             >
               Tasker Tasks
             </NavLink>
+          )}
+
+          {showAdminMenu && (
+            <>
+              <NavLink
+                className={({ isActive }) =>
+                  `nav-link${isActive ? " active" : ""}`
+                }
+                to="/admin/users"
+              >
+                Users
+              </NavLink>
+              <NavLink
+                className={({ isActive }) =>
+                  `nav-link${isActive ? " active" : ""}`
+                }
+                to="/admin/taskers"
+              >
+                Taskers
+              </NavLink>
+              <NavLink
+                className={({ isActive }) =>
+                  `nav-link${isActive ? " active" : ""}`
+                }
+                to="/admin/services"
+              >
+                Services
+              </NavLink>
+            </>
           )}
 
           <a className="nav-link" href="#how-it-works">
@@ -93,7 +134,11 @@ function Header() {
             </button>
           ) : (
             <>
-              <button type="button" className="btn btn-ghost" onClick={() => navigate("/signin")}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => navigate("/signin")}
+              >
                 Sign in
               </button>
               <button

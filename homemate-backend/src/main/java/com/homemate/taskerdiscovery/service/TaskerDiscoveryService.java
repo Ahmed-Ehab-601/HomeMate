@@ -6,6 +6,7 @@ import com.homemate.taskerdiscovery.dto.TaskerCardDto;
 import com.homemate.taskerdiscovery.mapper.TaskerCardMapper;
 import com.homemate.taskerdiscovery.model.Tasker;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,8 @@ import java.util.List;
 @Service
 public class TaskerDiscoveryService {
 
+    @Qualifier("taskerDiscoveryDao")
+    @Autowired
     private final TaskerDao taskerDao;
     private final TaskerCardMapper taskerCardMapper;
 
