@@ -40,6 +40,7 @@ const TaskerFilters = ({ values, onChange, onClear, onSearch }) => (
         value={values.suspended ?? ''}
         onChange={(event) => onChange('suspended', event.target.value)}
         fullWidth
+        inputProps={{ min: 0, max: 5, step: 0.1 }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">

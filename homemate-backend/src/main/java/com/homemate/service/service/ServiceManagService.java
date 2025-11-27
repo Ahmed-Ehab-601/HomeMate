@@ -50,8 +50,6 @@ public class ServiceManagService {
         if (serviceDAO.findById(id) == null) {
             throw new ServiceNotFoundException("Service with ID " + id + " not found");
         }
-
-        // Check if service is in use (has active tasks or taskers)
         if (serviceDAO.countTasker(id)>0||serviceDAO.isServiceInUse(id)>0) {
             throw new Exception(
                     "Cannot delete this service.Taskers currently using it."
