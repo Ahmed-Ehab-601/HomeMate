@@ -80,6 +80,11 @@ export function AuthProvider({ children }) {
     return getUserRole() === "ROLE_USER" || getUserRole() === "ROLE_ADMIN";
   };
 
+  // Check if user is an admin
+  const isAdmin = () => {
+    return getUserRole() === "ROLE_ADMIN";
+  };
+
   const value = {
     user,
     token,
@@ -92,6 +97,7 @@ export function AuthProvider({ children }) {
     getUserRole,
     isTasker,
     isRegularUser,
+    isAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -104,4 +110,3 @@ export function useAuth() {
   }
   return context;
 }
-
