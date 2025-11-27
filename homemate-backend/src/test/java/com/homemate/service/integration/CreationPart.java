@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.AssertionsKt.assertNotNull;
 
 @SpringBootTest
-@ActiveProfiles("service")  // ← Uses application-test.properties
+@ActiveProfiles("service")  // ← Uses application-admin.properties
 @Transactional  // ← Rolls back after each test
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CreationPart {

@@ -1,15 +1,3 @@
--- Clean up existing data first (delete in reverse order of foreign key dependencies)
-DELETE FROM message_img;
-DELETE FROM Message;
-DELETE FROM Chat;
-DELETE FROM Review_Image;
-DELETE FROM Reviews;
-DELETE FROM Report;
-DELETE FROM Task;
-DELETE FROM Address;
-DELETE FROM Tasker;
-DELETE FROM Service;
-DELETE FROM Users;
 
 -- Insert test users (with all required NOT NULL fields)
 INSERT INTO Users (userID, firstName, lastName, username, password, email, birthDate, gender, phone, admin, suspended)

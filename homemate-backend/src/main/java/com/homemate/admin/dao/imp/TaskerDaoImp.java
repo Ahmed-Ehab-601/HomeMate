@@ -13,7 +13,7 @@ import java.util.List;
 import static com.homemate.admin.dao.imp.Helper.buildParams;
 import static com.homemate.admin.dao.imp.Helper.buildWhere;
 
-@Repository
+@Repository("adminTaskerDao")
 public class TaskerDaoImp implements TaskerDao {
     private final JdbcTemplate jdbcTemplate;
     private static final RowMapper<Tasker> TASKER_ROW_MAPPER = new RowMapperTasker();

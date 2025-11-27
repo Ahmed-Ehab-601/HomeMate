@@ -1,3 +1,9 @@
+#root {
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #0f172a;
+}
+
 .app-shell {
   display: flex;
   flex-direction: column;
@@ -761,6 +767,11 @@
     align-items: flex-start;
   }
 
+.app-content {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
   .service-card__body {
     padding: 16px;
   }

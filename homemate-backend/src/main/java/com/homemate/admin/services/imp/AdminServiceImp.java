@@ -14,12 +14,16 @@ import com.homemate.admin.domain.filters.imp.UsernameFilter;
 import com.homemate.admin.mappers.imp.TaskerMapper;
 import com.homemate.admin.mappers.imp.UserMapper;
 import com.homemate.admin.services.IAdminService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class AdminServiceImp implements IAdminService {
+    @Qualifier("adminTaskerDao")
+    @Autowired
     private TaskerDao taskerDao;
     private UserDao userDao;
     private UserMapper userMapper;

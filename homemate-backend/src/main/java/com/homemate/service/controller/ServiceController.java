@@ -7,6 +7,7 @@ import com.homemate.service.dto.ServiceDetailsDto;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.homemate.service.dto.ServiceDto;
@@ -20,11 +21,12 @@ public class ServiceController {
 
     private final ServiceManagService serviceManagService;
 
-    private ServiceController(ServiceManagService serviceManagService) {
+    public ServiceController(ServiceManagService serviceManagService) {
         this.serviceManagService = serviceManagService;
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> createService(@Valid @RequestBody ServiceDto serviceDto) throws Exception {
         try {
             if (serviceDto.getId() != null && serviceDto.getId() != 0) {
@@ -41,6 +43,7 @@ public class ServiceController {
     }
 
     @PostMapping("/edit/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> editService(@PathVariable long id, @Valid @RequestBody ServiceDto serviceDto) throws Exception {
         try {
             if (id <= 0) {
@@ -57,6 +60,7 @@ public class ServiceController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> deleteService(@PathVariable long id) throws Exception {
         try {
             if (id <= 0) {
@@ -89,6 +93,7 @@ public class ServiceController {
     }
 
     @GetMapping("/getservicedetails/{serviceID}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ServiceDetailsDto> getDetails(@PathVariable long serviceID) throws Exception{
         try {
             if (serviceID <= 0) {

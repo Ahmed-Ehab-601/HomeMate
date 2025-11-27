@@ -10,6 +10,37 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            // Log proxy requests for debugging
+            console.log(`[Proxy] ${req.method} ${req.url} -> ${options.target}${req.url}`);
+
+            // Handle OPTIONS preflight requests
+            if (req.method === 'OPTIONS') {
+              console.log(`[Proxy] Intercepting OPTIONS request for ${req.url}`);
+              res.writeHead(200, {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                'Access-Control-Max-Age': '86400',
+              });
+              res.end();
+              return;
+            }
+
+            // Add Authorization header from incoming request if not present
+            const token = req.headers['authorization'];
+            if (token) {
+              proxyReq.setHeader('Authorization', token);
+            }
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            // Add CORS headers to proxy responses
+            proxyRes.headers['access-control-allow-origin'] = '*';
+            proxyRes.headers['access-control-allow-methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
+            proxyRes.headers['access-control-allow-headers'] = 'Content-Type, Authorization';
+          });
+        },
       },
       // Also proxy direct endpoints if they don't have /api prefix
       '/getallservices': {

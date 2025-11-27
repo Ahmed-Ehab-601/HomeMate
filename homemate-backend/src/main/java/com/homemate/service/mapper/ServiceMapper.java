@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Base64;
 
-@Component
+@Component("serviceMapper")
 
 public class ServiceMapper {
     public  ServiceEntity mapFromDto(ServiceDto serviceDto) {

@@ -1,5 +1,19 @@
+import { baseUrl } from '../utils/apiClient';
+
 // Update this to match your backend URL and base path
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/service';
+const API_BASE_URL = `${baseUrl}/api/service`;
+
+// Get authentication headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('homemate_token');
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
 
 // Helper function to convert byte array to base64
 const convertImageData = (service) => {
@@ -19,10 +33,10 @@ const convertImageData = (service) => {
 // Helper function to handle API errors
 const handleApiError = async (response) => {
   const contentType = response.headers.get('content-type');
-  
+
   if (contentType && contentType.includes('application/json')) {
     const errorData = await response.json();
-    
+
     // Handle Spring Boot validation errors (from GlobalExceptionHandler)
     if (errorData.errors) {
       // Format: { status: "error", errors: { fieldName: "error message" } }
@@ -31,12 +45,12 @@ const handleApiError = async (response) => {
         .join('\n');
       throw new Error(errorMessages);
     }
-    
+
     // Handle other structured errors
     if (errorData.message) {
       throw new Error(errorData.message);
     }
-    
+
     throw new Error(JSON.stringify(errorData));
   } else {
     const errorText = await response.text();
@@ -48,24 +62,33 @@ export const serviceAPI = {
   // Get all services
   getAllServices: async () => {
     try {
-      console.log('Fetching services from:', `${API_BASE_URL}/getallservices`);
-      const response = await fetch(`${API_BASE_URL}/getallservices`, {
+      const token = localStorage.getItem('homemate_token');
+      const user = JSON.parse(localStorage.getItem('homemate_user') || '{}');
+      console.log('🔵 [SERVICE] API Request:', {
+        url: `${API_BASE_URL}/getallservices`,
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
+        auth: {
+          hasToken: !!token,
+          token: token ? `${token.substring(0, 20)}...` : 'NO TOKEN',
+          userRole: user?.role || 'UNKNOWN',
+          userId: user?.id || 'UNKNOWN',
         },
       });
-      
+      const response = await fetch(`${API_BASE_URL}/getallservices`, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+
       if (!response.ok) {
         await handleApiError(response);
       }
-      
+
       const data = await response.json();
-      
+
       if (Array.isArray(data)) {
         return data.map(service => convertImageData(service));
       }
-      
+
       return data;
     } catch (err) {
       console.error('Fetch error:', err);
@@ -76,24 +99,34 @@ export const serviceAPI = {
   // Get service details by ID
   getServiceDetails: async (serviceID) => {
     try {
-      console.log('Fetching service details for ID:', serviceID);
-      const response = await fetch(`${API_BASE_URL}/getservicedetails/${serviceID}`, {
+      const token = localStorage.getItem('homemate_token');
+      const user = JSON.parse(localStorage.getItem('homemate_user') || '{}');
+      console.log('🔵 [SERVICE] API Request:', {
+        url: `${API_BASE_URL}/getservicedetails/${serviceID}`,
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
+        serviceID,
+        auth: {
+          hasToken: !!token,
+          token: token ? `${token.substring(0, 20)}...` : 'NO TOKEN',
+          userRole: user?.role || 'UNKNOWN',
+          userId: user?.id || 'UNKNOWN',
         },
       });
-      
+      const response = await fetch(`${API_BASE_URL}/getservicedetails/${serviceID}`, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+
       if (!response.ok) {
         await handleApiError(response);
       }
-      
+
       const data = await response.json();
-      
+
       if (data?.service) {
         data.service = convertImageData(data.service);
       }
-      
+
       return data;
     } catch (err) {
       console.error('Fetch error:', err);
@@ -104,19 +137,29 @@ export const serviceAPI = {
   // Create a new service
   createService: async (serviceDto) => {
     try {
-      console.log('Creating service:', serviceDto);
+      const token = localStorage.getItem('homemate_token');
+      const user = JSON.parse(localStorage.getItem('homemate_user') || '{}');
+      console.log('🔵 [SERVICE] API Request:', {
+        url: `${API_BASE_URL}/create`,
+        method: 'POST',
+        auth: {
+          hasToken: !!token,
+          token: token ? `${token.substring(0, 20)}...` : 'NO TOKEN',
+          userRole: user?.role || 'UNKNOWN',
+          userId: user?.id || 'UNKNOWN',
+        },
+        body: serviceDto,
+      });
       const response = await fetch(`${API_BASE_URL}/create`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(serviceDto),
       });
-      
+
       if (!response.ok) {
         await handleApiError(response);
       }
-      
+
       return response.text();
     } catch (err) {
       console.error('Create error:', err);
@@ -127,19 +170,30 @@ export const serviceAPI = {
   // Edit/Update a service
   editService: async (id, serviceDto) => {
     try {
-      console.log('Editing service ID:', id, serviceDto);
+      const token = localStorage.getItem('homemate_token');
+      const user = JSON.parse(localStorage.getItem('homemate_user') || '{}');
+      console.log('🔵 [SERVICE] API Request:', {
+        url: `${API_BASE_URL}/edit/${id}`,
+        method: 'POST',
+        serviceId: id,
+        auth: {
+          hasToken: !!token,
+          token: token ? `${token.substring(0, 20)}...` : 'NO TOKEN',
+          userRole: user?.role || 'UNKNOWN',
+          userId: user?.id || 'UNKNOWN',
+        },
+        body: serviceDto,
+      });
       const response = await fetch(`${API_BASE_URL}/edit/${id}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(serviceDto),
       });
-      
+
       if (!response.ok) {
         await handleApiError(response);
       }
-      
+
       return response.text();
     } catch (err) {
       console.error('Edit error:', err);
@@ -150,19 +204,29 @@ export const serviceAPI = {
   // Delete a service
   deleteService: async (id) => {
     try {
-      console.log('Deleting service ID:', id);
-      const response = await fetch(`${API_BASE_URL}/delete/${id}`, {
+      const token = localStorage.getItem('homemate_token');
+      const user = JSON.parse(localStorage.getItem('homemate_user') || '{}');
+      console.log('🔵 [SERVICE] API Request:', {
+        url: `${API_BASE_URL}/delete/${id}`,
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
+        serviceId: id,
+        auth: {
+          hasToken: !!token,
+          token: token ? `${token.substring(0, 20)}...` : 'NO TOKEN',
+          userRole: user?.role || 'UNKNOWN',
+          userId: user?.id || 'UNKNOWN',
         },
       });
-      
+      const response = await fetch(`${API_BASE_URL}/delete/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
       if (!response.ok) {
         await handleApiError(response);
       }
-      
-      return response.text(); 
+
+      return response.text();
     } catch (err) {
       console.error('Delete error:', err);
       throw err;
