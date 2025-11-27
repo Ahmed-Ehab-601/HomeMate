@@ -169,7 +169,7 @@ public class ValidateSignupService {
         return null;
     }
 
-    String validateEmail(String email) {
+    public String validateEmail(String email) {
         if (email == null || email.isEmpty()) {
             return "Email is required";
         }
@@ -192,7 +192,7 @@ public class ValidateSignupService {
         return null;
     }
 
-    String validatePassword(String password) {
+    public String validatePassword(String password) {
         if (password == null || password.isEmpty()) {
             return "Password is required";
         }

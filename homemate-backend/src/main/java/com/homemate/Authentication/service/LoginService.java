@@ -10,16 +10,25 @@ import com.homemate.security.service.JwtService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
+import com.homemate.security.service.ValidateSignupService;
+
 @Service
 public class LoginService {
     TaskerDao taskerDao;
     UserDao userDao;
     JwtService jwtService;
+    ValidateSignupService validateSignup;
 
-    public LoginService(TaskerDao taskerDao, UserDao userDao, JwtService jwtService) {
+    public LoginService(
+        TaskerDao taskerDao,
+         UserDao userDao,
+          JwtService jwtService,
+          ValidateSignupService validateSignup
+        ) {
         this.taskerDao = taskerDao;
         this.userDao = userDao;
         this.jwtService = jwtService;
+        this.validateSignup = validateSignup;
     }
 
     public LoginResponseDto loginWithEmailPassword(LoginRequestDto loginRequestDto) {
@@ -28,7 +37,9 @@ public class LoginService {
                 loginRequestDto.getPassword() == null ||
                 loginRequestDto.getPassword().isEmpty() ||
                 loginRequestDto.getEmail() == null ||
-                loginRequestDto.getEmail().isEmpty()
+                loginRequestDto.getEmail().isEmpty() ||
+                validateSignup.validateEmail(loginRequestDto.getEmail()) != null ||
+                validateSignup.validatePassword(loginRequestDto.getPassword()) != null
         ) return null;
 
         return login(loginRequestDto.getEmail(), loginRequestDto.getPassword());

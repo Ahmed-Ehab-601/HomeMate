@@ -8,6 +8,7 @@ import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
 import com.homemate.Authentication.service.LoginService;
 import com.homemate.security.service.JwtService;
+import com.homemate.security.service.ValidateSignupService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +33,9 @@ class LoginServiceTest {
 
     @Mock
     private JwtService jwtService;
+
+    @Mock
+    private ValidateSignupService validateSignup;
 
     @InjectMocks
     private LoginService loginService;
@@ -69,6 +73,10 @@ class LoginServiceTest {
         tasker.setBirthDate(java.sql.Timestamp.valueOf(LocalDateTime.of(1990, 1, 1, 0, 0)));
         tasker.setGender('M');
         tasker.setPhone("01012345678");
+
+        // default: treat emails as valid (no error) to allow login flow in tests
+        lenient().when(validateSignup.validateEmail(anyString())).thenReturn((String) null);
+        lenient().when(validateSignup.validatePassword(anyString())).thenReturn((String) null);
     }
 
     @Test
