@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { fetchUserAddresses } from "../api/addressesApi";
+import { getUserAddresses } from "../api/userProfileApi";
 import { requestTask } from "../api/tasksApi";
 import { fetchServices } from "../api/servicesApi";
 
@@ -79,12 +79,23 @@ function RequestTaskPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchUserAddresses(MOCK_USER_ID)
+    getUserAddresses()
       .then((data) => {
         if (cancelled) return;
-        setAddresses(data);
-        if (data.length > 0) {
-          const primary = data.find((address) => address.isPrimary) ?? data[0];
+        // Normalize address IDs
+        const normalizedAddresses = (data ?? []).map((address) => ({
+          ...address,
+          id:
+            address.addressId ??
+            address.id ??
+            address.addressID ??
+            address.address_id,
+        }));
+        setAddresses(normalizedAddresses);
+        if (normalizedAddresses.length > 0) {
+          const primary =
+            normalizedAddresses.find((address) => address.isPrimary) ??
+            normalizedAddresses[0];
           defaultAddressRef.current = String(primary.id);
           setSelectedAddressId(String(primary.id));
         }

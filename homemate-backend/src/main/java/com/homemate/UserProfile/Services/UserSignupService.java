@@ -1,9 +1,11 @@
 package com.homemate.UserProfile.Services;
 
+import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.UserProfile.DTO.SignupUserDTO;
 import com.homemate.UserProfile.Models.User;
 import com.homemate.security.service.JwtService;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -11,10 +13,12 @@ public class UserSignupService {
 
     UserDao userDao;
     JwtService jwtService;
+    TaskerDao taskerDao;
 
-    public UserSignupService(UserDao userDao, JwtService jwtService) {
+    public UserSignupService(UserDao userDao, JwtService jwtService, TaskerDao taskerDao) {
         this.userDao = userDao;
         this.jwtService = jwtService;
+        this.taskerDao = taskerDao;
     }
 
      public String signup(SignupUserDTO userData) {
@@ -22,6 +26,12 @@ public class UserSignupService {
              return null;
 
          User user = getUser(userData);
+
+            try {
+                taskerDao.getByEmail(user.getEmail());
+                return null;
+            } catch (EmptyResultDataAccessException e) {}
+
          Long id = userDao.signup(user);
 
          if (id == -1) {

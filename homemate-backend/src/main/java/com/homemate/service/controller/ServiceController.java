@@ -36,7 +36,7 @@ public class ServiceController {
             serviceManagService.createService(serviceDto);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("Service created successfully!");
-        } catch (SQLException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to create service: " + e.getMessage());
         }
@@ -51,12 +51,13 @@ public class ServiceController {
             }
             serviceManagService.editService(id, serviceDto);
             return ResponseEntity.ok("Service edited successfully!");
-        } catch (SQLException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to edit service: " + e.getMessage());
         } catch (ServiceNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(e.getMessage());
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to edit service: " + e.getMessage());
+    }
     }
 
     @DeleteMapping("/delete/{id}")
@@ -72,10 +73,11 @@ public class ServiceController {
         } catch (ServiceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(e.getMessage());
-        } catch (SQLException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to delete service: " + e.getMessage());
         }
+
     }
 
     @GetMapping("/getallservices")

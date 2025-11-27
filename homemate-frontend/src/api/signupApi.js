@@ -7,6 +7,7 @@ import { baseUrl } from "../utils/apiClient";
  * @returns {Promise<string>} JWT token
  */
 export async function signupUser(userData) {
+  console.log(userData)
   const response = await fetch(`${baseUrl}/api/user/signup`, {
     method: "POST",
     headers: {

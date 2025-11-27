@@ -26,6 +26,7 @@ const UserFilters = ({ values, onChange, onClear, onSearch }) => (
         value={values.username ?? ''}
         onChange={(event) => onChange('username', event.target.value)}
         fullWidth
+        inputProps={{ maxLength: 50 }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">

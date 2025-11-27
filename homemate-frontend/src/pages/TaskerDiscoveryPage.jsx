@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import TaskerCard from "../components/TaskerCard";
 import { fetchTaskers } from "../api/taskersApi";
@@ -22,10 +22,9 @@ function TaskerDiscoveryPage() {
   const [error, setError] = useState("");
 
   const [filters, setFilters] = useState({
-    minHourlyRate: 0,
-    maxHourlyRate: 500,
+    rate: "any",
     availability: "any",
-    minRating: 0,
+    rating: "any",
     location: "",
   });
   const [sortOption, setSortOption] = useState("rating-desc");
@@ -117,42 +116,12 @@ function TaskerDiscoveryPage() {
     serviceId,
     page,
     debouncedSearch,
-    filters.minHourlyRate,
-    filters.maxHourlyRate,
+    filters.rate,
     filters.availability,
-    filters.minRating,
+    filters.rating,
     filters.location,
     sortOption,
   ]);
-
-  const observerRef = useRef(null);
-  const sentinelRef = useRef(null);
-
-  useEffect(() => {
-    if (!sentinelRef.current) return () => {};
-
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting && hasMore && !loading) {
-          setPage((prev) => prev + 1);
-        }
-      },
-      { rootMargin: "200px 0px 200px 0px" }
-    );
-
-    observerRef.current.observe(sentinelRef.current);
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [hasMore, loading]);
 
   const resetPagination = () => {
     setTaskers([]);
@@ -161,10 +130,8 @@ function TaskerDiscoveryPage() {
   };
 
   const updateFilters = (partial) => {
+    resetPagination();
     setFilters((previous) => ({ ...previous, ...partial }));
-    setTaskers([]);
-    setPage(0);
-    setHasMore(true);
   };
 
   const showEmptyState = !loading && taskers.length === 0;
@@ -204,51 +171,15 @@ function TaskerDiscoveryPage() {
       />
 
       <section className="filters-bar">
-        <input
-          type="number"
-          min="0"
-          max="500"
-          value={filters.minHourlyRate}
-          onChange={(e) =>
-            updateFilters({
-              minHourlyRate: Math.max(
-                0,
-                Math.min(500, Number(e.target.value) || 0)
-              ),
-            })
-          }
-          placeholder="Min Hourly Rate ($)"
-        />
-
-        <input
-          type="number"
-          min="0"
-          max="500"
-          value={filters.maxHourlyRate}
-          onChange={(e) =>
-            updateFilters({
-              maxHourlyRate: Math.max(
-                0,
-                Math.min(500, Number(e.target.value) || 0)
-              ),
-            })
-          }
-          placeholder="Max Hourly Rate ($)"
-        />
-
-        <input
-          type="number"
-          min="0"
-          max="5"
-          step="0.5"
-          value={filters.minRating}
-          onChange={(e) =>
-            updateFilters({
-              minRating: Math.max(0, Math.min(5, Number(e.target.value) || 0)),
-            })
-          }
-          placeholder="Min Rating (0-5 ★)"
-        />
+        <select
+          value={filters.rate}
+          onChange={(event) => updateFilters({ rate: event.target.value })}
+        >
+          <option value="any">Hourly rate • Any</option>
+          <option value="low">Under $35/hr</option>
+          <option value="medium">$35-$55/hr</option>
+          <option value="premium">$55+/hr</option>
+        </select>
 
         <select
           value={filters.availability}
@@ -259,6 +190,17 @@ function TaskerDiscoveryPage() {
           <option value="any">Availability • Any</option>
           <option value="available">Available</option>
           <option value="unavailable">Unavailable</option>
+        </select>
+
+        <select
+          value={filters.rating}
+          onChange={(event) => updateFilters({ rating: event.target.value })}
+        >
+          <option value="any">Rating • Any</option>
+          <option value="3.5">3.5 ★ & up</option>
+          <option value="4">4.0 ★ & up</option>
+          <option value="4.8">4.8 ★ & up</option>
+          <option value="5">5.0 ★ </option>
         </select>
 
         <input
@@ -294,11 +236,27 @@ function TaskerDiscoveryPage() {
         </div>
       )}
 
-      {(loading || hasMore) && (
-        <div ref={sentinelRef} className="load-indicator">
-          {loading ? "Loading taskers…" : "Scroll for more taskers"}
-        </div>
-      )}
+      <div
+        className="load-more-wrapper"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          paddingTop: "2rem",
+        }}
+      >
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setPage((prev) => prev + 1)}
+          disabled={loading || !hasMore}
+        >
+          {loading
+            ? "Loading…"
+            : hasMore
+            ? "View more taskers"
+            : "No more taskers"}
+        </button>
+      </div>
     </main>
   );
 }
