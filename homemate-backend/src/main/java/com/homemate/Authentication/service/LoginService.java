@@ -38,6 +38,11 @@ public class LoginService {
         try {
 
             User user = userDaoLogin.getUserByEmail(email);
+
+            if (user.isSuspended()) {
+                return new LoginResponseDto("SUSPENDED","", "","", "");
+            }
+
             if (user.getPassword().equals(password)) {
 
                 String role = "ROLE_USER";
@@ -66,6 +71,7 @@ public class LoginService {
         try {
 
             Tasker tasker = taskerDao.getTaskerByEmail(email);
+
             if (tasker.getPassword().equals(password)) {
 
                 String role = "ROLE_TASKER";
@@ -93,6 +99,10 @@ public class LoginService {
     public LoginResponseDto login(String email) {
         try {
             User user = userDaoLogin.getUserByEmail(email);
+
+            if (user.isSuspended()) {
+                return new LoginResponseDto("SUSPENDED","", "","", "");
+            }
 
             String role = "ROLE_USER";
             if (user.isAdmin())

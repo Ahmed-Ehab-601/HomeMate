@@ -24,11 +24,15 @@ function SignInPage() {
       // Store user data in AuthContext
       loginUser(response);
 
+
+
       // Redirect based on role
       if (response.role === "ROLE_ADMIN") {
         navigate("/admin/users");
       } else if (response.role === "ROLE_TASKER") {
         navigate("/tasker/profile");
+      } else if (response.role === "SUSPENDED"){
+        setError("User is suspended");
       } else {
         navigate("/");
       }
@@ -42,8 +46,14 @@ function SignInPage() {
   const handleGoogleLoginSuccess = (response) => {
     // Store user data in AuthContext
     loginUser(response);
-    // On successful login, redirect to home page
-    navigate("/");
+
+    if (response.role === "ROLE_ADMIN") {
+      navigate("/admin/users");
+    } else if (response.role === "ROLE_TASKER") {
+      navigate("/tasker/profile");
+    } else {
+      navigate("/");
+    }
   };
 
   const handleGoogleLoginError = () => {
