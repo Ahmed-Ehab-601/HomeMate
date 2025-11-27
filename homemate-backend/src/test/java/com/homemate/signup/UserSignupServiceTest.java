@@ -1,6 +1,6 @@
 package com.homemate.signup;
 
-import com.homemate.Authentication.dao.TaskerDaoLogin;
+import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.UserProfile.DTO.SignupUserDTO;
 import com.homemate.UserProfile.Services.UserSignupService;
@@ -29,7 +29,7 @@ class UserSignupServiceTest {
     private JwtService jwtService;
 
     @Mock
-    private TaskerDaoLogin taskerDaoLogin;
+    private TaskerDao taskerDao;
 
     @InjectMocks
     private UserSignupService userSignupService;
@@ -51,7 +51,7 @@ class UserSignupServiceTest {
 
     @Test
     void signupShouldReturnJwtTokenWithValidData() {
-        when(taskerDaoLogin.getTaskerByEmail(signupUserDTO.getEmail()))
+        when(taskerDao.getByEmail(signupUserDTO.getEmail()))
             .thenThrow(new EmptyResultDataAccessException(1));
         when(userDao.signup(any())).thenReturn(1L);
         when(jwtService.generateToken(1L, "testuser", "test@example.com", "ROLE_USER"))
@@ -61,7 +61,7 @@ class UserSignupServiceTest {
 
         assertNotNull(result);
         assertEquals("jwt-token-123", result);
-        verify(taskerDaoLogin, times(1)).getTaskerByEmail(signupUserDTO.getEmail());
+        verify(taskerDao, times(1)).getByEmail(signupUserDTO.getEmail());
         verify(userDao, times(1)).signup(any());
         verify(jwtService, times(1)).generateToken(1L, "testuser", "test@example.com", "ROLE_USER");
     }
@@ -71,40 +71,40 @@ class UserSignupServiceTest {
         String result = userSignupService.signup(null);
 
         assertNull(result);
-        verify(taskerDaoLogin, never()).getTaskerByEmail(anyString());
+        verify(taskerDao, never()).getByEmail(anyString());
         verify(userDao, never()).signup(any());
         verify(jwtService, never()).generateToken(anyLong(), anyString(), anyString(), anyString());
     }
 
     @Test
     void signupShouldReturnNullWhenTaskerWithSameEmailExists() {
-        when(taskerDaoLogin.getTaskerByEmail(signupUserDTO.getEmail())).thenReturn(null);
+        when(taskerDao.getByEmail(signupUserDTO.getEmail())).thenReturn(null);
 
         String result = userSignupService.signup(signupUserDTO);
 
         assertNull(result);
-        verify(taskerDaoLogin, times(1)).getTaskerByEmail(signupUserDTO.getEmail());
+        verify(taskerDao, times(1)).getByEmail(signupUserDTO.getEmail());
         verify(userDao, never()).signup(any());
         verify(jwtService, never()).generateToken(anyLong(), anyString(), anyString(), anyString());
     }
 
     @Test
     void signupShouldReturnNullWhenUserDaoReturnsNegativeOne() {
-        when(taskerDaoLogin.getTaskerByEmail(signupUserDTO.getEmail()))
+        when(taskerDao.getByEmail(signupUserDTO.getEmail()))
             .thenThrow(new EmptyResultDataAccessException(1));
         when(userDao.signup(any())).thenReturn(-1L);
 
         String result = userSignupService.signup(signupUserDTO);
 
         assertNull(result);
-        verify(taskerDaoLogin, times(1)).getTaskerByEmail(signupUserDTO.getEmail());
+        verify(taskerDao, times(1)).getByEmail(signupUserDTO.getEmail());
         verify(userDao, times(1)).signup(any());
         verify(jwtService, never()).generateToken(anyLong(), anyString(), anyString(), anyString());
     }
 
     @Test
     void signupShouldCreateUserWithCorrectFields() {
-        when(taskerDaoLogin.getTaskerByEmail(signupUserDTO.getEmail()))
+        when(taskerDao.getByEmail(signupUserDTO.getEmail()))
             .thenThrow(new EmptyResultDataAccessException(1));
         when(userDao.signup(any())).thenReturn(1L);
         when(jwtService.generateToken(anyLong(), anyString(), anyString(), anyString()))
@@ -127,7 +127,7 @@ class UserSignupServiceTest {
 
     // @Test
     // void signupShouldGenerateTokenWithCorrectRole() {
-    //     when(taskerDaoLogin.getTaskerByEmail(signupUserDTO.getEmail()))
+    //     when(taskerDao.getByEmail(signupUserDTO.getEmail()))
     //         .thenThrow(new EmptyResultDataAccessException(1));
     //     when(userDao.signup(any())).thenReturn(1L);
     //     when(jwtService.generateToken(anyLong(), anyString(), anyString(), anyString()))

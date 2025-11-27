@@ -1,9 +1,9 @@
 package com.homemate.Authentication.service;
 
-import com.homemate.Authentication.Entity.Tasker;
-import com.homemate.Authentication.Entity.User;
-import com.homemate.Authentication.dao.TaskerDaoLogin;
-import com.homemate.Authentication.dao.UserDaoLogin;
+import com.homemate.TaskerProfile.models.Tasker;
+import com.homemate.UserProfile.Models.User;
+import com.homemate.TaskerProfile.Dao.TaskerDao;
+import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
 import com.homemate.security.service.JwtService;
@@ -12,13 +12,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class LoginService {
-    TaskerDaoLogin taskerDao;
-    UserDaoLogin userDaoLogin;
+    TaskerDao taskerDao;
+    UserDao userDao;
     JwtService jwtService;
 
-    public LoginService(TaskerDaoLogin taskerDao, UserDaoLogin userDaoLogin, JwtService jwtService) {
+    public LoginService(TaskerDao taskerDao, UserDao userDao, JwtService jwtService) {
         this.taskerDao = taskerDao;
-        this.userDaoLogin = userDaoLogin;
+        this.userDao = userDao;
         this.jwtService = jwtService;
     }
 
@@ -37,20 +37,20 @@ public class LoginService {
     public LoginResponseDto login(String email, String password) {
         try {
 
-            User user = userDaoLogin.getUserByEmail(email);
+            User user = userDao.getByEmail(email);
 
-            if (user.isSuspended()) {
+            if (Boolean.TRUE.equals(user.getIsSuspended())) {
                 return new LoginResponseDto("SUSPENDED","", "","", "");
             }
 
             if (user.getPassword().equals(password)) {
 
                 String role = "ROLE_USER";
-                if (user.isAdmin())
+                if (Boolean.TRUE.equals(user.getIsAdmin()))
                     role = "ROLE_ADMIN";
 
                 String token = jwtService.generateToken(
-                        Long.valueOf(user.getUserID()),
+                        user.getUserID(),
                         user.getUsername(),
                         user.getEmail(),
                         role
@@ -70,26 +70,26 @@ public class LoginService {
 
         try {
 
-            Tasker tasker = taskerDao.getTaskerByEmail(email);
+                Tasker tasker = taskerDao.getByEmail(email);
 
-            if (tasker.getPassword().equals(password)) {
+                if (tasker.getPassword().equals(password)) {
 
                 String role = "ROLE_TASKER";
                 String token = jwtService.generateToken(
-                        Long.valueOf(tasker.getTaskerID()),
-                        tasker.getUsername(),
-                        tasker.getEmail(),
-                        role
+                    tasker.getTaskerID(),
+                    tasker.getUsername(),
+                    tasker.getEmail(),
+                    role
                 );
 
                 return new LoginResponseDto(
-                        role,
-                        tasker.getUsername(),
-                        tasker.getFirstName(),
-                        tasker.getLastName(),
-                        token
+                    role,
+                    tasker.getUsername(),
+                    tasker.getFirstName(),
+                    tasker.getLastName(),
+                    token
                 );
-            }
+                }
             return null;
 
         } catch (EmptyResultDataAccessException e) {}
@@ -98,18 +98,18 @@ public class LoginService {
 
     public LoginResponseDto login(String email) {
         try {
-            User user = userDaoLogin.getUserByEmail(email);
+            User user = userDao.getByEmail(email);
 
-            if (user.isSuspended()) {
+            if (Boolean.TRUE.equals(user.getIsSuspended())) {
                 return new LoginResponseDto("SUSPENDED","", "","", "");
             }
 
             String role = "ROLE_USER";
-            if (user.isAdmin())
+            if (Boolean.TRUE.equals(user.getIsAdmin()))
                 role = "ROLE_ADMIN";
 
             String token = jwtService.generateToken(
-                    Long.valueOf(user.getUserID()),
+                    user.getUserID(),
                     user.getUsername(),
                     user.getEmail(),
                     role
@@ -127,23 +127,23 @@ public class LoginService {
 
         try {
 
-            Tasker tasker = taskerDao.getTaskerByEmail(email);
+                Tasker tasker = taskerDao.getByEmail(email);
 
-            String role = "ROLE_TASKER";
-            String token = jwtService.generateToken(
-                    Long.valueOf(tasker.getTaskerID()),
+                String role = "ROLE_TASKER";
+                String token = jwtService.generateToken(
+                    tasker.getTaskerID(),
                     tasker.getUsername(),
                     tasker.getEmail(),
                     role
-            );
+                );
 
-            return new LoginResponseDto(
+                return new LoginResponseDto(
                     role,
                     tasker.getUsername(),
                     tasker.getFirstName(),
                     tasker.getLastName(),
                     token
-            );
+                );
 
         } catch (EmptyResultDataAccessException e) {}
         return null;

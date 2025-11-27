@@ -1,7 +1,7 @@
 package com.homemate.signup;
 
-import com.homemate.Authentication.dao.UserDaoLogin;
-import com.homemate.Authentication.Entity.User;
+import com.homemate.UserProfile.DAO.UserDao;
+import com.homemate.UserProfile.Models.User;
 import com.homemate.TaskerProfile.DTO.TaskerSignupDTO;
 import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.TaskerProfile.services.TaskerSignupService;
@@ -30,7 +30,7 @@ class TaskerSignupServiceTest {
     private JwtService jwtService;
 
     @Mock
-    private UserDaoLogin userDaoLogin;
+    private UserDao userDao;
 
     @InjectMocks
     private TaskerSignupService taskerSignupService;
@@ -55,7 +55,7 @@ class TaskerSignupServiceTest {
 
     @Test
     void registerTaskerShouldReturnJwtTokenWithValidData() {
-        when(userDaoLogin.getUserByEmail(taskerSignupDTO.getEmail()))
+        when(userDao.getByEmail(taskerSignupDTO.getEmail()))
             .thenThrow(new EmptyResultDataAccessException(1));
         when(taskerDao.saveTasker(taskerSignupDTO)).thenReturn(1L);
         when(jwtService.generateToken(1L, "taskeruser", "tasker@example.com", "ROLE_TASKER"))
@@ -65,7 +65,7 @@ class TaskerSignupServiceTest {
 
         assertNotNull(result);
         assertEquals("jwt-token-123", result);
-        verify(userDaoLogin, times(1)).getUserByEmail(taskerSignupDTO.getEmail());
+        verify(userDao, times(1)).getByEmail(taskerSignupDTO.getEmail());
         verify(taskerDao, times(1)).saveTasker(taskerSignupDTO);
         verify(jwtService, times(1)).generateToken(1L, "taskeruser", "tasker@example.com", "ROLE_TASKER");
     }
@@ -74,33 +74,33 @@ class TaskerSignupServiceTest {
     void registerTaskerShouldReturnNullWhenUserWithSameEmailExists() {
         User existingUser = new User();
         existingUser.setEmail(taskerSignupDTO.getEmail());
-        when(userDaoLogin.getUserByEmail(taskerSignupDTO.getEmail())).thenReturn(existingUser);
+        when(userDao.getByEmail(taskerSignupDTO.getEmail())).thenReturn(existingUser);
 
         String result = taskerSignupService.registerTasker(taskerSignupDTO);
 
         assertNull(result);
-        verify(userDaoLogin, times(1)).getUserByEmail(taskerSignupDTO.getEmail());
+        verify(userDao, times(1)).getByEmail(taskerSignupDTO.getEmail());
         verify(taskerDao, never()).saveTasker(any());
         verify(jwtService, never()).generateToken(anyLong(), anyString(), anyString(), anyString());
     }
 
     @Test
     void registerTaskerShouldReturnNullWhenTaskerDaoReturnsNegativeOne() {
-        when(userDaoLogin.getUserByEmail(taskerSignupDTO.getEmail()))
+        when(userDao.getByEmail(taskerSignupDTO.getEmail()))
             .thenThrow(new EmptyResultDataAccessException(1));
         when(taskerDao.saveTasker(taskerSignupDTO)).thenReturn(-1L);
 
         String result = taskerSignupService.registerTasker(taskerSignupDTO);
 
         assertNull(result);
-        verify(userDaoLogin, times(1)).getUserByEmail(taskerSignupDTO.getEmail());
+        verify(userDao, times(1)).getByEmail(taskerSignupDTO.getEmail());
         verify(taskerDao, times(1)).saveTasker(taskerSignupDTO);
         verify(jwtService, never()).generateToken(anyLong(), anyString(), anyString(), anyString());
     }
 
     @Test
     void registerTaskerShouldGenerateTokenWithCorrectRole() {
-        when(userDaoLogin.getUserByEmail(taskerSignupDTO.getEmail()))
+        when(userDao.getByEmail(taskerSignupDTO.getEmail()))
             .thenThrow(new EmptyResultDataAccessException(1));
         when(taskerDao.saveTasker(taskerSignupDTO)).thenReturn(1L);
         when(jwtService.generateToken(anyLong(), anyString(), anyString(), anyString()))
