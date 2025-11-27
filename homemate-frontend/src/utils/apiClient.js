@@ -2,7 +2,8 @@
  * Centralized API client that automatically adds JWT token to all requests
  */
 
-const DEFAULT_API_BASE_URL = "http://localhost:8080";
+// Use relative path for dev (goes through Vite proxy), or env variable for production
+const DEFAULT_API_BASE_URL = "";
 export const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
 
 /**
@@ -12,11 +13,11 @@ export const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).re
 function getAuthHeaders() {
   const token = localStorage.getItem("homemate_token");
   const headers = {};
-  
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
-  
+
   return headers;
 }
 
@@ -43,7 +44,7 @@ export async function apiFetch(url, options = {}, requireAuth = true) {
 
   try {
     const response = await fetch(url, requestOptions);
-    
+
     // Handle 401 Unauthorized - redirect to signin
     if (response.status === 401 && requireAuth) {
       // Clear auth data
@@ -55,7 +56,7 @@ export async function apiFetch(url, options = {}, requireAuth = true) {
       }
       // Still return response so caller can handle it
     }
-    
+
     return response;
   } catch (error) {
     throw {

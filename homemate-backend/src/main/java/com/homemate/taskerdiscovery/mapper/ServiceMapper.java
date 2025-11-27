@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Base64;
 
-@Component
+@Component("taskerDiscoveryServiceMapper")
 public class ServiceMapper {
 
     public ServiceDto mapToServiceDto(Service service, int totalTasks) {

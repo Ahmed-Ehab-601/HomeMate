@@ -14,12 +14,11 @@ import TaskerDashboardPage from "./pages/TaskerDashboardPage";
 import SignUpPage from "./pages/SignUpPage";
 import UserTasksPage from "./pages/UserTasksPage";
 import TaskerTasksPage from "./pages/TaskerTasksPage";
-
-
+import AdminRoutes from "./admin/routing/AdminRoutes";
 
 // Protected route component - redirects to signin on 401
 function ProtectedRoute({ children, requiredRole }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, getUserRole } = useAuth();
 
   if (isLoading) {
     return <div className="page">Loading...</div>;
@@ -29,21 +28,25 @@ function ProtectedRoute({ children, requiredRole }) {
     return <Navigate to="/signin" replace />;
   }
 
-  // if (requiredRole ) {
-  //   return <Navigate to="/" replace />;
-  // }
+  if (requiredRole && getUserRole() !== requiredRole) {
+    return <Navigate to="/" replace />;
+  }
 
   return children;
 }
 
-// User profile route that redirects taskers to tasker hub
+// User profile route that redirects taskers to tasker hub and admins to admin panel
 function UserProfileRoute() {
   const { user } = useAuth();
-  
+
   if (user?.role === "ROLE_TASKER") {
     return <Navigate to="/tasker/profile" replace />;
   }
-  
+
+  if (user?.role === "ROLE_ADMIN") {
+    return <Navigate to="/admin/users" replace />;
+  }
+
   return <UserProfilePage />;
 }
 
@@ -75,6 +78,14 @@ function AppRoutes() {
       />
       <Route path="/my-tasks" element={<UserTasksPage />} />
       <Route path="/tasker/my-tasks" element={<TaskerTasksPage />} />
+      <Route
+        path="/admin/*"
+        element={
+          <ProtectedRoute requiredRole="ROLE_ADMIN">
+            <AdminRoutes />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }

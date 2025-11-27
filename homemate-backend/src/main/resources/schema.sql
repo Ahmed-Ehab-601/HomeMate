@@ -92,6 +92,7 @@ CREATE TABLE Tasker (
     totalEarning DOUBLE DEFAULT 0.00 NOT NULL,
     WorkedHours DOUBLE DEFAULT 0.00 NOT NULL,
     addressCity VARCHAR(200),
+    suspended BOOLEAN DEFAULT FALSE NOT NULL,
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE,
     INDEX idx_tasker_username (username),
     INDEX idx_tasker_email (email),
