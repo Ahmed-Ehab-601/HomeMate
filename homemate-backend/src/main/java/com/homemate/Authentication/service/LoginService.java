@@ -37,9 +37,9 @@ public class LoginService {
                 loginRequestDto.getPassword() == null ||
                 loginRequestDto.getPassword().isEmpty() ||
                 loginRequestDto.getEmail() == null ||
-                loginRequestDto.getEmail().isEmpty() ||
-                validateSignup.validateEmail(loginRequestDto.getEmail()) != null ||
-                validateSignup.validatePassword(loginRequestDto.getPassword()) != null
+                loginRequestDto.getEmail().isEmpty()
+                // validateSignup.validateEmail(loginRequestDto.getEmail()) != null
+                // validateSignup.validatePassword(loginRequestDto.getPassword()) != null
         ) return null;
 
         return login(loginRequestDto.getEmail(), loginRequestDto.getPassword());

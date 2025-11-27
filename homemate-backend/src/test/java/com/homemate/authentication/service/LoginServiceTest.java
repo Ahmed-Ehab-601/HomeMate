@@ -74,7 +74,6 @@ class LoginServiceTest {
         tasker.setGender('M');
         tasker.setPhone("01012345678");
 
-        // default: treat emails as valid (no error) to allow login flow in tests
         lenient().when(validateSignup.validateEmail(anyString())).thenReturn((String) null);
         lenient().when(validateSignup.validatePassword(anyString())).thenReturn((String) null);
     }
