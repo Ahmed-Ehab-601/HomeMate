@@ -1,8 +1,3 @@
--- ======================================================
--- DATABASE SCHEMA WITH CONSTRAINTS, CASCADE, AND INDEXES
--- ======================================================
-
--- create database HomeMate;
 use HomeMate;
 
 -- Drop tables in correct order (optional)
