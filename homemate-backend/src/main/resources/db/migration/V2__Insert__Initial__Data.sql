@@ -10,16 +10,16 @@
  -- POPULATE USERS
  -- ======================================================
  INSERT INTO Users (firstName, lastName, username, password, email, birthDate, gender, phone, admin, suspended) VALUES
- ('John', 'Smith', 'jsmith', '12341234', 'john.smith@email.com', '1990-05-15', 'M', '+1-555-0101', FALSE, FALSE),
- ('Sarah', 'Johnson', 'sjohnson', '12341234', 'sarah.j@email.com', '1988-08-22', 'F', '+1-555-0102', FALSE, FALSE),
- ('Michael', 'Brown', 'mbrown', '12341234', 'michael.b@email.com', '1992-03-10', 'M', '+1-555-0103', FALSE, FALSE),
- ('Emily', 'Davis', 'edavis', '12341234', 'emily.davis@email.com', '1995-11-30', 'F', '+1-555-0104', FALSE, FALSE),
- ('David', 'Wilson', 'dwilson', '12341234', 'david.w@email.com', '1987-07-18', 'M', '+1-555-0105', FALSE, FALSE),
- ('Jessica', 'Martinez', 'jmartinez', '12341234', 'jessica.m@email.com', '1993-01-25', 'F', '+1-555-0106', FALSE, FALSE),
- ('Robert', 'Garcia', 'rgarcia', '12341234', 'robert.g@email.com', '1991-09-05', 'M', '+1-555-0107', FALSE, FALSE),
- ('Amanda', 'Rodriguez', 'arodriguez', '12341234', 'amanda.r@email.com', '1989-12-12', 'F', '+1-555-0108', FALSE, FALSE),
- ('Admin', 'User', 'admin',  '12341234', 'admin@homemate.com', '1985-06-20', 'M', '+1-555-0001', TRUE, FALSE),
- ('Chris', 'Taylor', 'ctaylor', '12341234', 'chris.t@email.com', '1994-04-08', 'M', '+1-555-0109', FALSE, TRUE);
+ ('John', 'Smith', 'jsmith', '1234', 'john.smith@email.com', '1990-05-15', 'M', '+1-555-0101', FALSE, FALSE),
+ ('Sarah', 'Johnson', 'sjohnson', '1234', 'sarah.j@email.com', '1988-08-22', 'F', '+1-555-0102', FALSE, FALSE),
+ ('Michael', 'Brown', 'mbrown', '1234', 'michael.b@email.com', '1992-03-10', 'M', '+1-555-0103', FALSE, FALSE),
+ ('Emily', 'Davis', 'edavis', '1234', 'emily.davis@email.com', '1995-11-30', 'F', '+1-555-0104', FALSE, FALSE),
+ ('David', 'Wilson', 'dwilson', '1234', 'david.w@email.com', '1987-07-18', 'M', '+1-555-0105', FALSE, FALSE),
+ ('Jessica', 'Martinez', 'jmartinez', '1234', 'jessica.m@email.com', '1993-01-25', 'F', '+1-555-0106', FALSE, FALSE),
+ ('Robert', 'Garcia', 'rgarcia', '1234', 'robert.g@email.com', '1991-09-05', 'M', '+1-555-0107', FALSE, FALSE),
+ ('Amanda', 'Rodriguez', 'arodriguez', '1234', 'amanda.r@email.com', '1989-12-12', 'F', '+1-555-0108', FALSE, FALSE),
+ ('Admin', 'User', 'admin',  '1234', 'admin@homemate.com', '1985-06-20', 'M', '+1-555-0001', TRUE, FALSE),
+ ('Chris', 'Taylor', 'ctaylor', '1234', 'chris.t@email.com', '1994-04-08', 'M', '+1-555-0109', FALSE, TRUE);
 
  -- ======================================================
  -- POPULATE ADDRESSES
