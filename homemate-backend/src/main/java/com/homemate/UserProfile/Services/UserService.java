@@ -68,11 +68,27 @@ public class UserService {
     public Boolean changeName(NameDTO nameDTO) {
         final int  max_len = 50;
         User user = requireUser(nameDTO.getUserId());
-        if (nameDTO.getNewFirstName().length() > max_len) {
-            throw new IllegalArgumentException("New first name is too long.");
+        String letterOnlyRegex = "^[A-Za-z]+$";
+
+        String newFirstName = nameDTO.getNewFirstName();
+        String newLastName = nameDTO.getNewLastName();
+
+        if (newFirstName != null) {
+            if (newFirstName.length() > max_len) {
+                throw new IllegalArgumentException("First name must not exceed 50 characters.");
+            }
+            if (!newFirstName.matches(letterOnlyRegex)) {
+                throw new IllegalArgumentException("First name must contain letters only.");
+            }
         }
-        if (nameDTO.getNewLastName().length() > max_len) {
-            throw new IllegalArgumentException("New last name is too long.");
+
+        if (newLastName != null) {
+            if (newLastName.length() > max_len) {
+                throw new IllegalArgumentException("Last name must not exceed 50 characters.");
+            }
+            if (!newLastName.matches(letterOnlyRegex)) {
+                throw new IllegalArgumentException("Last name must contain letters only.");
+            }
         }
         user.setFirstName(nameDTO.getNewFirstName());
         user.setLastName(nameDTO.getNewLastName());
@@ -96,12 +112,19 @@ public class UserService {
     public Boolean changePhoneNumber(PhoneNumberDTO newPhoneNumberDTO) {
         Objects.requireNonNull(newPhoneNumberDTO, "newPhoneNumberDTO cannot be null");
         final int  max_len = 50;
+        String newPhoneNumber = newPhoneNumberDTO.getPhoneNumber();
 
-        if (newPhoneNumberDTO.getPhoneNumber().length() > max_len) {
-            throw new IllegalArgumentException("New phone number is too long.");
+        if (!newPhoneNumber.matches("^\\+?[0-9\\-]+$")) {
+            throw new IllegalArgumentException(
+                "Phone number can only contain digits, dashes, and an optional leading +."
+            );
         }
-        if (!newPhoneNumberDTO.getPhoneNumber().matches("^\\+?[0-9\\-]+$")) {
-            throw new IllegalArgumentException("Phone number can only contain digits and an optional + or - sign.");
+        String digitsOnly = newPhoneNumber.replaceAll("[^0-9]", "");
+
+        if (digitsOnly.length() < 10 || digitsOnly.length() > 15) {
+            throw new IllegalArgumentException(
+                "Phone number must contain between 10 and 15 digits."
+            );
         }
         User user = requireUser(newPhoneNumberDTO.getUserId());
         user.setPhone(newPhoneNumberDTO.getPhoneNumber());

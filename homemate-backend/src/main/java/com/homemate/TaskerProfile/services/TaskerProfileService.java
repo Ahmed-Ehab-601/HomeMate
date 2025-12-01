@@ -88,13 +88,18 @@ public class TaskerProfileService {
     }
 
     public Boolean changePhoneNumber(PhoneNumberDTO phoneNumberDTO) {
-        final int MAX_LENGTH = 50;
         String newPhoneNumber = phoneNumberDTO.getNewPhoneNumber();
-        if (newPhoneNumber.length() > MAX_LENGTH || newPhoneNumber.length() == 0) {
-            throw new IllegalArgumentException("Phone number must not exceed 50 characters.");
+        if (!newPhoneNumber.matches("^\\+?[0-9\\-]+$")) {
+            throw new IllegalArgumentException(
+                "Phone number can only contain digits, dashes, and an optional leading +."
+            );
         }
-        if (!phoneNumberDTO.getNewPhoneNumber().matches("^\\+?[0-9\\-]+$")) {
-            throw new IllegalArgumentException("Phone number can only contain digits and an optional + or - sign.");
+        String digitsOnly = newPhoneNumber.replaceAll("[^0-9]", "");
+
+        if (digitsOnly.length() < 10 || digitsOnly.length() > 15) {
+            throw new IllegalArgumentException(
+                "Phone number must contain between 10 and 15 digits."
+            );
         }
         Tasker tasker = taskerDao.getByID(phoneNumberDTO.getTaskerID());
         tasker.setPhone(phoneNumberDTO.getNewPhoneNumber());
@@ -157,25 +162,37 @@ public class TaskerProfileService {
     public Boolean changeHourRate(HourRateDTO hourRateDTO) {
             Tasker tasker = taskerDao.getByID(hourRateDTO.getTaskerID());
 
-            if(hourRateDTO.getNewHourRate() <= 0){
+            if(hourRateDTO.getNewHourRate() <= 0 || hourRateDTO.getNewHourRate()>2000){
                 return false;
             }
             tasker.setHourrate(hourRateDTO.getNewHourRate());
-            taskerDao.update(tasker);
+            taskerDao.update(tasker); 
             return true;
     }
 
     public Boolean changeName(NameDTO nameDTO) {
         final int MAX_LENGTH = 50;
+        String letterOnlyRegex = "^[A-Za-z]+$";
 
         String newFirstName = nameDTO.getNewFirstName();
         String newLastName = nameDTO.getNewLastName();
 
-        if (newFirstName != null && newFirstName.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("First name must not exceed 50 characters.");
+        if (newFirstName != null) {
+            if (newFirstName.length() > MAX_LENGTH) {
+                throw new IllegalArgumentException("First name must not exceed 50 characters.");
+            }
+            if (!newFirstName.matches(letterOnlyRegex)) {
+                throw new IllegalArgumentException("First name must contain letters only.");
+            }
         }
-        if (newLastName != null && newLastName.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("Last name must not exceed 50 characters.");
+
+        if (newLastName != null) {
+            if (newLastName.length() > MAX_LENGTH) {
+                throw new IllegalArgumentException("Last name must not exceed 50 characters.");
+            }
+            if (!newLastName.matches(letterOnlyRegex)) {
+                throw new IllegalArgumentException("Last name must contain letters only.");
+            }
         }
 
         Tasker tasker = taskerDao.getByID(nameDTO.getTaskerID());
