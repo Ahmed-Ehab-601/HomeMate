@@ -84,8 +84,8 @@ public class ReviewDao {
     }
 
     private List<ReviewImageDTO> getReviewImages(int reviewId) {
-        String sql = "SELECT imgId, format, ImgFile, ImgName " +
-                     "FROM Review_Image WHERE review_id = ?";
+        String sql = "SELECT imageID, format, imageFile, imageName " +
+                     "FROM ReviewImage WHERE reviewID = ?";
         return jdbcTemplate.query(sql, reviewImageDTORowMapper, reviewId);
     }
 }

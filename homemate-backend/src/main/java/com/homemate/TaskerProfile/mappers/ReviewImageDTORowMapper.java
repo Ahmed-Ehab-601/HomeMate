@@ -15,10 +15,10 @@ public class ReviewImageDTORowMapper implements RowMapper<ReviewImageDTO> {
     @Override
     public ReviewImageDTO mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
         ReviewImageDTO image = new ReviewImageDTO();
-        image.setImgId(rs.getInt("imgId"));
+        image.setImgId(rs.getInt("imageID"));
         image.setFormat(rs.getString("format"));
-        image.setImgFile(rs.getBytes("ImgFile"));
-        image.setImgName(rs.getString("ImgName"));
+        image.setImgFile(rs.getBytes("imageFile"));
+        image.setImgName(rs.getString("imageName"));
         return image;
     }
 }

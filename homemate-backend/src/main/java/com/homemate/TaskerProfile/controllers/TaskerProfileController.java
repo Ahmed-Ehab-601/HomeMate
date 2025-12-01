@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -13,8 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import com.homemate.TaskerProfile.DTO.AddressCityDTO;
 import com.homemate.TaskerProfile.DTO.ChangeAvailabilityDTO;
@@ -22,7 +22,6 @@ import com.homemate.TaskerProfile.DTO.ChangeBioDTO;
 import com.homemate.TaskerProfile.DTO.ChangeImageDTO;
 import com.homemate.TaskerProfile.DTO.EmailDTO;
 import com.homemate.TaskerProfile.DTO.HourRateDTO;
-
 import com.homemate.TaskerProfile.DTO.NameDTO;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewRequest;
 import com.homemate.TaskerProfile.DTO.PaginatedReviewResponse;
@@ -78,9 +77,18 @@ public class TaskerProfileController {
     @PreAuthorize("hasRole('ROLE_TASKER')")
     public ResponseEntity<Map<String, String>> changeHourRate(@AuthenticationPrincipal AppUserDetails taskerDetails,
                                                               @RequestBody HourRateDTO hourRateDTO) {
+        
         hourRateDTO.setTaskerID(taskerDetails.getId());
-        taskerProfileService.changeHourRate(hourRateDTO);
-        return okStatus("Hour rate updated");
+        boolean flag =taskerProfileService.changeHourRate(hourRateDTO);
+        if (flag){
+            return okStatus("Hour rate updated");
+        }else{
+            return new ResponseEntity<>(
+                    Map.of("error", "Hour Rate must be postive."),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+        
     }
 
     @PutMapping("/service")

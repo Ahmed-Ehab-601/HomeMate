@@ -50,6 +50,15 @@ public class UserService {
         if (!user.getPassword().equals(oldPassword)) {
             throw new IllegalArgumentException("Old password is incorrect.");
         }
+        // Simplified special chars set
+        String passwordPattern = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}\\|;:'\",.<>/?]).{8,}$";
+
+        if (!newPassword.matches(passwordPattern)) {
+            throw new IllegalArgumentException(
+                "New password must be at least 8 characters long and include " +
+                "uppercase, lowercase, digit, and special character."
+            );
+        }
         
         user.setPassword(newPassword);
         userDao.update(user);
@@ -59,11 +68,27 @@ public class UserService {
     public Boolean changeName(NameDTO nameDTO) {
         final int  max_len = 50;
         User user = requireUser(nameDTO.getUserId());
-        if (nameDTO.getNewFirstName().length() > max_len) {
-            throw new IllegalArgumentException("New first name is too long.");
+        String letterOnlyRegex = "^[A-Za-z]+$";
+
+        String newFirstName = nameDTO.getNewFirstName();
+        String newLastName = nameDTO.getNewLastName();
+
+        if (newFirstName != null) {
+            if (newFirstName.length() > max_len) {
+                throw new IllegalArgumentException("First name must not exceed 50 characters.");
+            }
+            if (!newFirstName.matches(letterOnlyRegex)) {
+                throw new IllegalArgumentException("First name must contain letters only.");
+            }
         }
-        if (nameDTO.getNewLastName().length() > max_len) {
-            throw new IllegalArgumentException("New last name is too long.");
+
+        if (newLastName != null) {
+            if (newLastName.length() > max_len) {
+                throw new IllegalArgumentException("Last name must not exceed 50 characters.");
+            }
+            if (!newLastName.matches(letterOnlyRegex)) {
+                throw new IllegalArgumentException("Last name must contain letters only.");
+            }
         }
         user.setFirstName(nameDTO.getNewFirstName());
         user.setLastName(nameDTO.getNewLastName());
@@ -87,9 +112,19 @@ public class UserService {
     public Boolean changePhoneNumber(PhoneNumberDTO newPhoneNumberDTO) {
         Objects.requireNonNull(newPhoneNumberDTO, "newPhoneNumberDTO cannot be null");
         final int  max_len = 50;
+        String newPhoneNumber = newPhoneNumberDTO.getPhoneNumber();
 
-        if (newPhoneNumberDTO.getPhoneNumber().length() > max_len) {
-            throw new IllegalArgumentException("New phone number is too long.");
+        if (!newPhoneNumber.matches("^\\+?[0-9\\-]+$")) {
+            throw new IllegalArgumentException(
+                "Phone number can only contain digits, dashes, and an optional leading +."
+            );
+        }
+        String digitsOnly = newPhoneNumber.replaceAll("[^0-9]", "");
+
+        if (digitsOnly.length() < 10 || digitsOnly.length() > 15) {
+            throw new IllegalArgumentException(
+                "Phone number must contain between 10 and 15 digits."
+            );
         }
         User user = requireUser(newPhoneNumberDTO.getUserId());
         user.setPhone(newPhoneNumberDTO.getPhoneNumber());
@@ -133,26 +168,56 @@ public class UserService {
 
     public Boolean addAddress(AddressDTO newAddress) {
         Objects.requireNonNull(newAddress, "newAddress cannot be null");
-          
+        final int MAX_LENGTH =50;
+        
+
+        if (!isValidString(newAddress.getCountry(), MAX_LENGTH)) return false;
+        if (!isValidString(newAddress.getCity(), MAX_LENGTH)) return false;
+        if (!isValidString(newAddress.getStreet(), MAX_LENGTH)) return false;
+        if (newAddress.getApartment() != null && newAddress.getApartment().length() > MAX_LENGTH) {
+            return false;
+        }  
         addressDao.addAddress(newAddress);
         return Boolean.TRUE;
     }
 
     public Boolean removeAddress(RemoveAddressDTO removeAddress) {
-        Objects.requireNonNull(removeAddress, "removeAddress cannot be null");
-        addressDao.deleteAddress(removeAddress.getAddressId());
-        return Boolean.TRUE;
+        try{
+            Objects.requireNonNull(removeAddress, "removeAddress cannot be null");
+            addressDao.deleteAddress(removeAddress.getAddressId());
+        }catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 
     public Boolean updateAddress(AddressDTO AddressDTO) {
         Objects.requireNonNull(AddressDTO, "updateAddress cannot be null");
+        final int MAX_LENGTH =50;
+        
+
+        if (!isValidString(AddressDTO.getCountry(), MAX_LENGTH)) return false;
+        if (!isValidString(AddressDTO.getCity(), MAX_LENGTH)) return false;
+        if (!isValidString(AddressDTO.getStreet(), MAX_LENGTH)) return false;
+        if (AddressDTO.getApartment() != null && AddressDTO.getApartment().length() > MAX_LENGTH) {
+            return false;
+        }
+
         addressDao.updateAddress(AddressDTO);
         return Boolean.TRUE;
     }
+    private boolean isValidString(String value, int maxLength) {
+        return value != null && !value.isEmpty() && value.length() <= maxLength;
+    }
 
     public Boolean deleteAccount(DeleteAccountRequestDTO deleteAccountRequest) {
-        Objects.requireNonNull(deleteAccountRequest, "deleteAccountRequest cannot be null");
-        userDao.delete(deleteAccountRequest.getUserId());
+        try{
+            Objects.requireNonNull(deleteAccountRequest, "deleteAccountRequest cannot be null");
+            userDao.delete(deleteAccountRequest.getUserId());
+        }catch(Exception e){
+            return Boolean.FALSE;
+        }
+        
         return Boolean.TRUE;
     }
 

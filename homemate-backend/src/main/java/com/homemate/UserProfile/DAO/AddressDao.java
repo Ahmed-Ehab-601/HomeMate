@@ -45,6 +45,11 @@ public class AddressDao {
     private static final String DELETE_ADDRESS_SQL = "DELETE FROM Address WHERE addressID = ?";
 
     public void deleteAddress(Long addressId) {
-        jdbcTemplate.update(DELETE_ADDRESS_SQL, addressId);
+        try {
+            jdbcTemplate.update(DELETE_ADDRESS_SQL, addressId);
+        } 
+        catch (Exception e) {
+            throw new IllegalArgumentException("This address is used in a task and cannot be deleted.");
+        }
     }
 }
