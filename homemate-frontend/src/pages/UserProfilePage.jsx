@@ -216,6 +216,7 @@ function UserProfilePage() {
         setAddresses([]);
         setAddressesStatus("success");
         setDeleteModalOpen(false);
+        handleLogout();
       })
       .catch((error) => {
         setFeedback({
@@ -281,7 +282,7 @@ function UserProfilePage() {
       .catch((error) =>
         setFeedback({
           type: "error",
-          message:  "Failed to update password.",
+          message: error?.message?? "Failed to update password.",
         }),
       )
       .finally(() => setSubmitting(null));

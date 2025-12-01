@@ -1,6 +1,7 @@
 package com.homemate.TaskerProfile.Dao;
 
-import com.homemate.TaskerProfile.DTO.TaskerSignupDTO;
+import java.sql.PreparedStatement;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -8,11 +9,10 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import com.homemate.TaskerProfile.DTO.TaskerProfileDTO;
+import com.homemate.TaskerProfile.DTO.TaskerSignupDTO;
 import com.homemate.TaskerProfile.mappers.TaskerProfileDTORowMapper;
 import com.homemate.TaskerProfile.mappers.TaskerRowMapper;
 import com.homemate.TaskerProfile.models.Tasker;
-
-import java.sql.PreparedStatement;
 
 @Repository
 public class TaskerDao {
