@@ -2007,10 +2007,14 @@
 }
 
 .profile-summary__grid {
-  margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px 32px;
+  margin-top: 20px;
+}
+.profile-summary__grid div {
+  background: var(--surface);
+  padding: 12px 0;
 }
 
 .profile-summary__grid dt {
@@ -2018,12 +2022,13 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #94a3b8;
-  margin-bottom: 4px;
+  font-weight: 600;
 }
 
 .profile-summary__grid dd {
-  margin: 0;
+  margin: 4px 0 0;
   font-weight: 600;
+  word-break: break-word; 
 }
 
 .profile-form {
