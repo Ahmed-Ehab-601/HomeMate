@@ -1,35 +1,122 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+import "./App.css";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import Header from "./components/layout/Header";
+import Footer from "./components/layout/Footer";
+import HomePage from "./pages/HomePage";
+import ServicesCatalog from "./pages/ServicesCatalog";
+import TaskerDiscoveryPage from "./pages/TaskerDiscoveryPage";
+import TaskerProfilePage from "./pages/TaskerProfilePage";
+import RequestTaskPage from "./pages/RequestTaskPage";
+import UserProfilePage from "./pages/UserProfilePage";
+import SignInPage from "./pages/SignInPage";
+import TaskerDashboardPage from "./pages/TaskerDashboardPage";
+import SignUpPage from "./pages/SignUpPage";
+import UserTasksPage from "./pages/UserTasksPage";
+import TaskerTasksPage from "./pages/TaskerTasksPage";
+import AdminRoutes from "./admin/routing/AdminRoutes";
 
-function App() {
-  const [count, setCount] = useState(0)
+// Protected route component - redirects to signin on 401
+function ProtectedRoute({ children, requiredRole }) {
+  const { isAuthenticated, isLoading, getUserRole } = useAuth();
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  if (isLoading) {
+    return <div className="page">Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/signin" replace />;
+  }
+
+  if (requiredRole && getUserRole() !== requiredRole) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
 }
 
-export default App
+// User profile route that redirects taskers to tasker hub and admins to admin panel
+function UserProfileRoute() {
+  const { user } = useAuth();
+
+  if (user?.role === "ROLE_TASKER") {
+    return <Navigate to="/tasker/profile" replace />;
+  }
+
+  if (user?.role === "ROLE_ADMIN") {
+    return <Navigate to="/admin/users" replace />;
+  }
+
+  return <UserProfilePage />;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/services" element={<ServicesCatalog />} />
+      <Route path="/services/:slug/taskers" element={<TaskerDiscoveryPage />} />
+      <Route path="/taskers/:taskerId" element={<TaskerProfilePage />} />
+      <Route path="/taskers/:taskerId/request" element={<RequestTaskPage />} />
+      <Route path="/signin" element={<SignInPage />} />
+      <Route path="/signup" element={<SignUpPage />} />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <UserProfileRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tasker/profile"
+        element={
+          <ProtectedRoute requiredRole="ROLE_TASKER">
+            <TaskerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/my-tasks" element={<UserTasksPage />} />
+      <Route path="/tasker/my-tasks" element={<TaskerTasksPage />} />
+      <Route
+        path="/admin/*"
+        element={
+          <ProtectedRoute requiredRole="ROLE_ADMIN">
+            <AdminRoutes />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
+  );
+}
+
+function App() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
+  return (
+    <div className="app-shell">
+      {!isAdminRoute && <Header />}
+      <AppRoutes />
+      <Footer />
+    </div>
+  );
+}
+
+function AppWrapper() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
+
+export default AppWrapper;
