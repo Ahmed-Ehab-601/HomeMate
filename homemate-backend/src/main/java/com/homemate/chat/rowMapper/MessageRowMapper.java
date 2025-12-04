@@ -25,19 +25,21 @@ public class MessageRowMapper implements RowMapper<MessageDto> {
         message.setIsUserSender(rs.getBoolean("isUserSender"));
         message.setMessageStatus(MessageStatus.valueOf(rs.getString("status").toUpperCase()));
 
+        // Map image if present (from LEFT JOIN with MessageImage)
         Long imageId = rs.getLong("imageID");
         if (!rs.wasNull()) {
             ImageDto image = new ImageDto();
             image.setId(imageId);
             image.setMessageId(rs.getLong("messageId"));
             image.setFileFormat(rs.getString("format"));
+
             byte[] imageBytes = rs.getBytes("imageFile");
             image.setFileData(imageBytes != null ?
                     Base64.getEncoder().encodeToString(imageBytes) : null);
 
             image.setFileName(rs.getString("imageName"));
-            image.setFileName(rs.getString("imageName"));
 
+            message.setImageDto(image);
         }
 
         return message;
