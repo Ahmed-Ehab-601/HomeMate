@@ -20,5 +20,6 @@ public class MessageDto {
     private Timestamp timestamp;
     private Long senderId;
     private Long receiverId;
+    private ImageDto imageDto;
 
 }
