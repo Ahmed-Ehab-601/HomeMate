@@ -20,13 +20,50 @@ public class ChatController {
     public ChatController(ChatService chatService){
         this.chatService=chatService;
     }
-    @GetMapping("/getHistory/{chatId}")
+    @GetMapping("/getHistory/user/{chatId}")
     @PreAuthorize("hasRole('USER')")
 
     public ResponseEntity<PaginatedResponse> getHistory(@PathVariable Long chatId, @RequestParam(defaultValue = "0") int page,
     @RequestParam(defaultValue = "20") int size){
         try {
             PaginatedResponse RES=chatService.getChatHistory(chatId,page,size);
+            return ResponseEntity.status(HttpStatus.OK).body(RES);
+        }
+        catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+    }
+    @GetMapping("/getHistory/tasker/{chatId}")
+    @PreAuthorize("hasRole('TASKER')")
+    public ResponseEntity<PaginatedResponse> getHistorytasker(@PathVariable Long chatId, @RequestParam(defaultValue = "0") int page,
+                                                        @RequestParam(defaultValue = "20") int size){
+        try {
+            PaginatedResponse RES=chatService.getChatHistory(chatId,page,size);
+            return ResponseEntity.status(HttpStatus.OK).body(RES);
+        }
+        catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+    }
+    @GetMapping("/callUser/{ChatId}")
+    @PreAuthorize("hasRole('TASKER')")
+    public ResponseEntity<String> getUserPhoneNumber(@PathVariable Long ChatId){
+        try {
+            String RES=chatService.getUserPhoneNumber(ChatId);
+            return ResponseEntity.status(HttpStatus.OK).body(RES);
+        }
+        catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+    }
+    @GetMapping("/callTasker/{ChatId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> getTaskerPhoneNumber(@PathVariable Long ChatId){
+        try {
+            String RES=chatService.getTaskerPhoneNumber(ChatId);
             return ResponseEntity.status(HttpStatus.OK).body(RES);
         }
         catch (Exception e){

@@ -37,5 +37,21 @@ public class ChatService {
                 .hasPrevious(page > 0)
                 .build();
     }
+
+    public String getUserPhoneNumber(Long Id) throws Exception{
+        String str=chatDao.getUserPhone(Id);
+        if(str==null)
+            throw new RuntimeException("No Phone Number Available");
+
+        return str;
     }
+
+    public String getTaskerPhoneNumber(Long Id)throws Exception {
+        String str=chatDao.getTaskerPhone(Id);
+        if(str==null)
+            throw new RuntimeException("No Phone Number Available");
+
+        return str;
+    }
+}
 
