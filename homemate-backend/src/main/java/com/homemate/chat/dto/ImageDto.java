@@ -4,9 +4,6 @@ import lombok.*;
 
 import java.security.Timestamp;
 
-import lombok.*;
-
-import java.security.Timestamp;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,5 +18,4 @@ public class ImageDto {
     private String FileName;
     private String FileFormat;
     private Long messageId;
-    private Timestamp timestamp;
 }

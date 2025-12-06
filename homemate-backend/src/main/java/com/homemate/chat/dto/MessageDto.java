@@ -1,10 +1,9 @@
 package com.homemate.chat.dto;
 
 import com.homemate.chat.Enum.MessageStatus;
-
 import lombok.*;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -17,9 +16,8 @@ public class MessageDto {
     private boolean IsUserSender;
     private MessageStatus messageStatus;
     private String content;
-    private Timestamp timestamp;
+    private LocalDateTime timestamp;
     private Long senderId;
     private Long receiverId;
     private ImageDto imageDto;
-
 }

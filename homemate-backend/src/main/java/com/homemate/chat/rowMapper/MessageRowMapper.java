@@ -7,6 +7,8 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Base64;
 
 public class MessageRowMapper implements RowMapper<MessageDto> {
@@ -20,10 +22,10 @@ public class MessageRowMapper implements RowMapper<MessageDto> {
         message.setChatId(rs.getLong("chatID"));
         message.setSenderId(rs.getLong("senderID"));
         message.setContent(rs.getString("content"));
-        message.setTimestamp(rs.getTimestamp("timestamp"));
+        message.setTimestamp(toLocalDateTime(rs.getTimestamp("timestamp")));
         message.setReceiverId(rs.getLong("receiverID"));
         message.setIsUserSender(rs.getBoolean("isUserSender"));
-        message.setMessageStatus(MessageStatus.valueOf(rs.getString("status").toUpperCase()));
+        message.setMessageStatus(MessageStatus.valueOf(rs.getString("status")));
 
         // Map image if present (from LEFT JOIN with MessageImage)
         Long imageId = rs.getLong("imageID");
@@ -43,5 +45,9 @@ public class MessageRowMapper implements RowMapper<MessageDto> {
         }
 
         return message;
+    }
+
+    private LocalDateTime toLocalDateTime(Timestamp timestamp){
+        return timestamp != null ? timestamp.toLocalDateTime() : null;
     }
 }

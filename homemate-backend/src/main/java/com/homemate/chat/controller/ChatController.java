@@ -1,6 +1,7 @@
 package com.homemate.chat.controller;
 
 import com.homemate.chat.Service.ChatService;
+import com.homemate.chat.dao.MessageDao;
 import com.homemate.chat.dto.MessageDto;
 import com.homemate.chat.dto.PaginatedResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/chat")
+@CrossOrigin(origins = "*")
 public class ChatController {
     @Autowired
     private ChatService chatService;
@@ -24,14 +26,14 @@ public class ChatController {
     @PreAuthorize("hasRole('USER')")
 
     public ResponseEntity<PaginatedResponse> getHistory(@PathVariable Long chatId, @RequestParam(defaultValue = "0") int page,
-    @RequestParam(defaultValue = "20") int size){
-        try {
+    @RequestParam(defaultValue = "20") int size) throws Exception {
+       // try {
             PaginatedResponse RES=chatService.getChatHistory(chatId,page,size);
             return ResponseEntity.status(HttpStatus.OK).body(RES);
-        }
-        catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+//        }
+//        catch (Exception e){
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
 
     }
     @GetMapping("/getHistory/tasker/{chatId}")
@@ -47,11 +49,11 @@ public class ChatController {
         }
 
     }
-    @GetMapping("/callUser/{ChatId}")
+    @GetMapping("/callUser/{chatId}")
     @PreAuthorize("hasRole('TASKER')")
-    public ResponseEntity<String> getUserPhoneNumber(@PathVariable Long ChatId){
+    public ResponseEntity<String> getUserPhoneNumber(@PathVariable("chatId") Long chatId){
         try {
-            String RES=chatService.getUserPhoneNumber(ChatId);
+            String RES=chatService.getUserPhoneNumber(chatId);
             return ResponseEntity.status(HttpStatus.OK).body(RES);
         }
         catch (Exception e){
@@ -59,11 +61,11 @@ public class ChatController {
         }
 
     }
-    @GetMapping("/callTasker/{ChatId}")
+    @GetMapping("/callTasker/{chatId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> getTaskerPhoneNumber(@PathVariable Long ChatId){
-        try {
-            String RES=chatService.getTaskerPhoneNumber(ChatId);
+    public ResponseEntity<String> getTaskerPhoneNumber(@PathVariable("chatId") Long chatId)
+    {        try {
+            String RES=chatService.getTaskerPhoneNumber(chatId);
             return ResponseEntity.status(HttpStatus.OK).body(RES);
         }
         catch (Exception e){
@@ -71,4 +73,6 @@ public class ChatController {
         }
 
     }
+
+
 }
