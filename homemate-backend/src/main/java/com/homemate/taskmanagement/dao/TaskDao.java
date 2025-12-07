@@ -3,6 +3,7 @@ package com.homemate.taskmanagement.dao;
 import com.homemate.taskmanagement.dto.StatusDto;
 import com.homemate.taskmanagement.dto.TaskCardDto;
 import com.homemate.taskmanagement.dto.TaskDto;
+import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 
 import java.util.List;
@@ -36,5 +37,8 @@ public interface TaskDao {
     Optional<Long> countTasksByTaskerID(Long taskerID);
 
     Optional<Long> countTasksByTaskerIDAndStatus(Long taskerID, StatusDto status);
+    Optional<Status> getStatus(Long taskID);
+    boolean updateStatus(Long taskID,Status newStatus);
+    Optional<Long> getTaskerID(Long taskID);
 
 }
