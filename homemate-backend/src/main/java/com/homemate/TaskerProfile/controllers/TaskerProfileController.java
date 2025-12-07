@@ -66,10 +66,14 @@ public class TaskerProfileController {
     }
 
     @PostMapping("/reviews")
-    @PreAuthorize("hasRole('ROLE_TASKER')")
     public ResponseEntity<PaginatedReviewResponse> getReviews(@AuthenticationPrincipal AppUserDetails taskerDetails,
                                                               @RequestBody PaginatedReviewRequest reviewRequest) {
-        reviewRequest.setTaskerID(taskerDetails.getId());
+        Long requestedTaskerId = reviewRequest.getTaskerID();
+        if ((requestedTaskerId == null || requestedTaskerId == 0) && taskerDetails != null) {
+            reviewRequest.setTaskerID(taskerDetails.getId());
+        } else if (requestedTaskerId == null || requestedTaskerId == 0) {
+             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         return ResponseEntity.ok(taskerProfileService.getReviews(reviewRequest));
     }
 

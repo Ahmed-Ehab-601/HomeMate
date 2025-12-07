@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { getTaskerById } from "../api/userProfileApi";
 import { useAuth } from "../contexts/AuthContext";
-// import { fetchTaskerProfile, fetchTaskerReviews } from "../api/taskersApi";
+import { getTaskerReviews } from "../api/taskersApi";
 
 const normalizeImage = (imageValue) => {
   if (!imageValue) return null;
@@ -118,17 +118,41 @@ function TaskerProfilePage() {
 
   const pageSize = 5;
 
+  const [expandedImage, setExpandedImage] = useState(null);
+
   // Fetch tasker profile
   useEffect(() => {
     loadTaskerProfile();
   }, [taskerId]);
 
   // Fetch reviews when page changes
-  // useEffect(() => {
-  //   if (tasker) {
-  //     loadReviews();
-  //   }
-  // }, [currentPage, tasker]);
+  useEffect(() => {
+    if (tasker) {
+      loadReviews();
+    }
+  }, [currentPage, tasker]);
+
+  const loadReviews = () => {
+    setReviewsLoading(true);
+    // Adjust page to 1-based if backend expects it, or keep 0-based.
+    // Dashboard uses 1-based page in variable `page` passed to getTaskerReviews({page, pageSize}). 
+    // And getTaskerReviews in taskersApi.js now sends `page`.
+    // Let's assume 1-based for consistency with Dashboard.
+    const pageToSend = currentPage + 1;
+
+    getTaskerReviews(taskerId, pageToSend, pageSize)
+      .then((data) => {
+        setReviews(data?.reviews ?? []);
+        // Update total pages and counts
+        setReviewsTotal(data?.totalReviews ?? 0);
+        setTotalPages(data?.totalPages ?? 1);
+        setReviewsLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to load reviews", err);
+        setReviewsLoading(false);
+      });
+  };
 
   const loadTaskerProfile = async () => {
     setLoading(true);
@@ -235,9 +259,8 @@ function TaskerProfilePage() {
   };
 
   const getInitials = (firstName, lastName) => {
-    return `${firstName?.charAt(0) || ""}${
-      lastName?.charAt(0) || ""
-    }`.toUpperCase();
+    return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""
+      }`.toUpperCase();
   };
 
   const formatDate = (dateString) => {
@@ -353,13 +376,13 @@ function TaskerProfilePage() {
             <div className="profile-stat-label">Hourly Rate</div>
           </div>
         </div>
-        {/* <div className="profile-stat-card">
+        <div className="profile-stat-card">
           <div className="profile-stat-icon">📝</div>
           <div className="profile-stat-content">
-            <div className="profile-stat-value">{tasker.totalReviews}</div>
+            <div className="profile-stat-value">{reviewsTotal}</div>
             <div className="profile-stat-label">Reviews</div>
           </div>
-        </div> */}
+        </div>
         <div className="profile-stat-card">
           <div className="profile-stat-icon">🕐</div>
           <div className="profile-stat-content">
@@ -379,7 +402,6 @@ function TaskerProfilePage() {
         </div>
       </section>
 
-      {/* Reviews Section 
       <section className="profile-section" id="reviews-section">
         <h2 className="profile-section__title">Reviews ({reviewsTotal})</h2>
         <div className="profile-section__content">
@@ -395,43 +417,44 @@ function TaskerProfilePage() {
 
           {!reviewsLoading && reviews.length > 0 && (
             <>
-              <div className="reviews-list">
+              <ul className="review-list">
                 {reviews.map((review) => (
-                  <article key={review.reviewID} className="review-card">
-                    <div className="review-card__header">
-                      <div className="review-card__avatar">
-                        {review.reviewerName.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="review-card__info">
-                        <h3 className="review-card__name">
-                          {review.reviewerName}
-                        </h3>
-                        <p className="review-card__date">
-                          {formatDate(review.time)}
-                        </p>
-                      </div>
-                      <div className="review-card__rating">
-                        {renderStars(review.rate)}
-                        <span className="review-card__rating-value">
-                          {review.rate.toFixed(1)}
-                        </span>
-                      </div>
+                  <li key={review.reviewId ?? review.taskId} className="review-item" style={{ listStyle: 'none', padding: '16px 0', borderBottom: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column' }}>
+                    <div className="review-item__header" style={{ display: 'flex', alignItems: 'center', marginBottom: '22px', gap: '12px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>{"@" + (review.reviewerUsername || "Client")}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>•</span>
+                      <span className="tasker-card__meta" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                        {review.time ? new Date(review.time).toLocaleDateString() : ""}
+                      </span>
+                      <span style={{ color: 'var(--text-secondary)' }}>•</span>
+                      <span style={{ color: '#fbbf24', fontSize: '0.95rem', fontWeight: 'bold' }}>
+                        {review.rate?.toFixed ? review.rate.toFixed(1) : review.rate}★
+                      </span>
                     </div>
-                    <p className="review-card__text">{review.text}</p>
-                    {review.images && review.images.length > 0 && (
-                      <div className="review-card__images">
-                        {review.images.map((img, idx) => (
-                          <img
-                            key={idx}
-                            src={img.imageData}
-                            alt={img.imageName}
-                          />
-                        ))}
+                    <p style={{ margin: '0', fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+                      {review.text ?? "No review text provided."}
+                    </p>
+                    {review.reviewImages && review.reviewImages.length > 0 && (
+                      <div className="review-images">
+                        {review.reviewImages.map((img, index) => {
+                          const imgSrc = img.imgFile && img.imgFile.startsWith("data:")
+                            ? img.imgFile
+                            : `data:image/${img.format || "jpeg"};base64,${img.imgFile}`;
+                          return (
+                            <img
+                              key={img.imgId ?? index}
+                              src={imgSrc}
+                              alt={img.imgName || "Review attachment"}
+                              className="review-thumbnail"
+                              onClick={() => setExpandedImage(imgSrc)}
+                            />
+                          );
+                        })}
                       </div>
                     )}
-                  </article>
+                  </li>
                 ))}
-              </div>
+              </ul>
 
               {totalPages > 1 && (
                 <div className="pagination-controls">
@@ -461,7 +484,16 @@ function TaskerProfilePage() {
             </>
           )}
         </div>
-      </section>*/}
+      </section>
+      {/* Image Modal */}
+      {expandedImage && (
+        <div className="image-modal-overlay" onClick={() => setExpandedImage(null)}>
+          <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="image-modal-close" onClick={() => setExpandedImage(null)}>×</button>
+            <img src={expandedImage} alt="Full size" className="image-modal-img" />
+          </div>
+        </div>
+      )}
     </main>
   );
 }
