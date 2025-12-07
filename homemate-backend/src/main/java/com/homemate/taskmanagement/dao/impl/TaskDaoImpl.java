@@ -8,6 +8,7 @@ import com.homemate.taskmanagement.dto.TaskCardDto;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
 import com.homemate.taskmanagement.exceptions.DuplicateChatException;
+import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -282,6 +283,32 @@ public class TaskDaoImpl implements TaskDao {
         String sql = "SELECT COUNT(*) FROM Task WHERE taskerID = ? and status = ? ";
         Long count = jdbcTemplate.queryForObject(sql,Long.class,taskerID,status.toString());
         return Optional.ofNullable(count);
+    }
+    @Override
+    public Optional<Status> getStatus(Long taskID){
+        String sql = "SELECT status FROM Task WHERE taskID = ? ";
+        try {
+            Status status = jdbcTemplate.queryForObject(sql, Status.class, taskID);
+            return Optional.ofNullable(status);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+    @Override
+    public boolean updateStatus(Long taskID,Status newStatus){
+        String sql = "UPDATE Task SET status = ? WHERE taskID = ?";
+        int rowsAffected = jdbcTemplate.update(sql,newStatus.toString(),taskID);
+        return rowsAffected > 0;
+    }
+    @Override
+    public Optional<Long> getTaskerID(Long taskID){
+        String sql = "SELECT taskerID FROM Task WHERE taskID = ? ";
+        try {
+            Long taskerID = jdbcTemplate.queryForObject(sql, Long.class, taskID);
+            return Optional.ofNullable(taskerID);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
 

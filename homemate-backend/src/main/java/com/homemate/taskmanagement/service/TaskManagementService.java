@@ -3,17 +3,12 @@ package com.homemate.taskmanagement.service;
 //import com.homemate.TaskManagement.Dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.*;
-import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
-import com.homemate.taskmanagement.exceptions.ConflictException;
-import com.homemate.taskmanagement.exceptions.DuplicateRequestException;
-import com.homemate.taskmanagement.exceptions.RequestLimitExceededException;
+import com.homemate.taskmanagement.exceptions.*;
 import com.homemate.taskmanagement.mappers.TaskMapper;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -132,41 +127,20 @@ public class TaskManagementService {
         }
     }
 
-    public RescheduleResponseDto rescheduleTask(Long taskId, RescheduleRequestDto dto ,long p) {
-
-        TaskDto task = taskDao.getTaskDetails(taskId)
-                .orElseThrow(BadTaskRequestException::new);
-
-        Long taskerId = task.getTaskerID();
-        LocalDateTime newStart = dto.getNewStartDate();
-        if(task.getStatus()!= Status.InReview){
-            throw new IllegalStateException("Task could not be rescheduled");
+    public void acceptOrReject(Long taskID,Long taskerID,Status newStatus){
+        Optional<Status> status = taskDao.getStatus(taskID);
+        if(status.isEmpty()) {
+            throw new TaskNotFoundException("wrong task id");
         }
-
-        // role check
-        String role = SecurityContextHolder.getContext()
-                .getAuthentication().getAuthorities().iterator().next().getAuthority();
-
-        boolean isTasker = role.equals("ROLE_TASKER");
-
-//        if (isTasker) {
-//            boolean conflict = taskDao.taskerHasConflict(taskerId, newStart, taskId);
-//            if (conflict) {
-//                throw new ConflictException("This new start time conflicts with an existing task.");
-//            }
-//        }
-
-
-        boolean updated = taskDao.updateTaskStartDate(taskId, newStart);
-        if (!updated) {
-            throw new IllegalStateException("Task could not be rescheduled");
+        if(!status.get().equals(Status.InReview)){
+            throw new BadAcceptRejectException("bad request the task must be inReview");
         }
+        Optional<Long> id = taskDao.getTaskerID(taskID);
+        if(id.isEmpty() || ! id.get().equals(taskerID) ){
+            throw new BadAcceptRejectException("the task id don't belong to this tasker");
+        }
+        taskDao.updateStatus(taskID,newStatus);
 
-        return RescheduleResponseDto.builder()
-                .taskID(taskId)
-                .newStartDate(newStart)
-                .rescheduleStatus(StatusDto.Accepted)
-                .build();
     }
 
 
