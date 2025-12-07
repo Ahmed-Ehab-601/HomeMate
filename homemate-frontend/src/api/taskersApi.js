@@ -105,43 +105,26 @@ export async function fetchTaskerProfile(taskerId) {
   });
 }
 
-/**
- * Fetch paginated reviews for a tasker
- * @param {number} taskerId - Tasker ID
- * @param {number} page - Page number (0-indexed)
- * @param {number} pageSize - Number of reviews per page
- * @returns {Promise<Object>} Response with reviews array and pagination metadata
- */
-export async function fetchTaskerReviews(taskerId, page = 0, pageSize = 5) {
-  // TODO: Uncomment when backend is ready
-  // const url = `${baseUrl}/api/taskers/${taskerId}/reviews/${page}/${pageSize}`;
-  // const response = await fetch(url, {
-  //   method: "GET",
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //   },
-  // });
-  //
-  // if (!response.ok) {
-  //   throw {
-  //     status: response.status,
-  //     error: "FETCH_ERROR",
-  //     message: "Failed to load reviews",
-  //   };
-  // }
-  //
-  // return response.json();
-
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Mock implementation - will be replaced by actual API call
-      resolve({
-        reviews: [],
-        totalCount: 0,
-        currentPage: page,
-        totalPages: 0,
-        pageSize: pageSize,
-      });
-    }, 200);
+export async function getTaskerReviews(taskerId, page = 1, pageSize = 5) {
+  const response = await fetch(`${baseUrl}/api/tasker-profile/reviews`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // Add Authorization if available, though endpoint is now public-capable
+      ...(localStorage.getItem("homemate_token") ? { Authorization: `Bearer ${localStorage.getItem("homemate_token")}` } : {})
+    },
+    body: JSON.stringify({
+      taskerID: Number(taskerId),
+      page: page,
+      pageSize: pageSize
+    }),
   });
+
+  if (!response.ok) {
+    // Handle error or return empty
+    console.error("Failed to fetch reviews");
+    return { reviews: [], totalReviews: 0, totalPages: 0 };
+  }
+
+  return response.json();
 }
