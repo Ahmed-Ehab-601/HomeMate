@@ -58,6 +58,8 @@ export function AuthProvider({ children }) {
     setToken(null);
     localStorage.removeItem("homemate_user");
     localStorage.removeItem("homemate_token");
+    // Redirect to home page
+    window.location.href = "/";
   };
 
   const getToken = () => {
