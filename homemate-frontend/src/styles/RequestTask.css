@@ -1,0 +1,152 @@
+/* Request Task Form Styles */
+.request-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.input,
+.address-select {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  background: #fff;
+}
+
+.input.error,
+.address-select.error,
+.task-textarea.error {
+  border-color: #ef4444;
+}
+
+.task-textarea {
+  width: 100%;
+  min-height: 150px;
+  resize: none;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  padding: 12px;
+}
+
+.char-counter {
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.char-counter.warn {
+  color: #f97316;
+}
+
+.summary-box {
+  background: var(--surface-muted);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.summary-box h3 {
+  margin-top: 0;
+}
+
+.summary-box dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 24px;
+}
+
+.summary-box dt {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+}
+
+.summary-box dd {
+  margin: 4px 0 0;
+  font-weight: 600;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.alert {
+  border-radius: 14px;
+  padding: 16px;
+  font-weight: 600;
+}
+
+.alert-warning {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+}
+
+.alert-error {
+  background: #fee2e2;
+  border: 1px solid #ef4444;
+  color: #991b1b;
+}
+
+.alert-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-radius: 8px;
+  width: 80%;
+  margin: 0 auto;
+}
+
+.alert-banner.success {
+  background: #dcfce7;
+  border: 2px solid #22c55e;
+  color: #166534;
+}
+
+.alert-banner.error {
+  background: #fee2e2;
+  border: 2px solid #ef4444;
+  color: #991b1b;
+}
+
+.alert-link {
+  background: none;
+  border: none;
+  color: #0ea5e9;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.alert-dismiss {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.alert-dismiss:hover {
+  opacity: 1;
+}

@@ -3,6 +3,7 @@ package com.homemate.taskmanagement.controller;
 
 import com.homemate.security.model.AppUserDetails;
 import com.homemate.taskmanagement.dto.*;
+import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.service.TaskManagementService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -72,5 +73,20 @@ public class TaskManagementController {
         }else{
             return new ResponseEntity <> (response.get(),HttpStatus.OK);
         }
+    }
+
+    @PreAuthorize("hasRole('TASKER')")
+    @PatchMapping("/tasker/task/{taskID}/accept")
+    public ResponseEntity<?> acceptTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
+        taskManagementService.acceptOrReject(taskID,userDetails.getId(), Status.Accepted);
+        return new ResponseEntity<>(HttpStatus.OK);
+
+    }
+    @PreAuthorize("hasRole('TASKER')")
+    @PatchMapping("/tasker/task/{taskID}/reject")
+    public ResponseEntity<?> rejectTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
+        taskManagementService.acceptOrReject(taskID,userDetails.getId(), Status.Rejected);
+        return new ResponseEntity<>(HttpStatus.OK);
+
     }
 }

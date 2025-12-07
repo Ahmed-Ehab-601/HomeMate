@@ -3,10 +3,9 @@ package com.homemate.taskmanagement.service;
 //import com.homemate.TaskManagement.Dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.*;
-import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
-import com.homemate.taskmanagement.exceptions.DuplicateRequestException;
-import com.homemate.taskmanagement.exceptions.RequestLimitExceededException;
+import com.homemate.taskmanagement.exceptions.*;
 import com.homemate.taskmanagement.mappers.TaskMapper;
+import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 import org.springframework.stereotype.Service;
 
@@ -126,6 +125,22 @@ public class TaskManagementService {
             return Optional.ofNullable(response);
 
         }
+    }
+
+    public void acceptOrReject(Long taskID,Long taskerID,Status newStatus){
+        Optional<Status> status = taskDao.getStatus(taskID);
+        if(status.isEmpty()) {
+            throw new TaskNotFoundException("wrong task id");
+        }
+        if(!status.get().equals(Status.InReview)){
+            throw new BadAcceptRejectException("bad request the task must be inReview");
+        }
+        Optional<Long> id = taskDao.getTaskerID(taskID);
+        if(id.isEmpty() || ! id.get().equals(taskerID) ){
+            throw new BadAcceptRejectException("the task id does not belong to this tasker");
+        }
+        taskDao.updateStatus(taskID,newStatus);
+
     }
 
 
