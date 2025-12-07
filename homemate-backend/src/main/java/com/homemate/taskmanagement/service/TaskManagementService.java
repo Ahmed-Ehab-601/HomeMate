@@ -137,7 +137,7 @@ public class TaskManagementService {
         }
         Optional<Long> id = taskDao.getTaskerID(taskID);
         if(id.isEmpty() || ! id.get().equals(taskerID) ){
-            throw new BadAcceptRejectException("the task id don't belong to this tasker");
+            throw new BadAcceptRejectException("the task id does not belong to this tasker");
         }
         taskDao.updateStatus(taskID,newStatus);
 

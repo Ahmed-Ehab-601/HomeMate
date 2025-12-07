@@ -1,10 +1,10 @@
 package com.homemate.taskmanagementtests;
 
-import com.homemate.taskmanagement. dao.impl.TaskDaoImpl;
+import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.model.Status;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation. Autowired;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode. AFTER_EACH_TEST_METHOD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("task")
 public class TaskDaoImplAcceptRejectIntegrationTest {
 
@@ -29,7 +29,7 @@ public class TaskDaoImplAcceptRejectIntegrationTest {
 
     @Test
     void testThatGetStatusReturnsCorrectStatusForExistingTask() {
-        // Given - Task ID 8 with status InReview from taskData. sql
+        // Given - Task ID 8 with status InReview from taskData.sql
         Long taskId = 8L;
 
         // When - Get status
@@ -37,7 +37,7 @@ public class TaskDaoImplAcceptRejectIntegrationTest {
 
         // Then - Verify status is returned
         assertThat(status).isPresent();
-        assertThat(status. get()).isEqualTo(Status.InReview);
+        assertThat(status.get()).isEqualTo(Status.InReview);
     }
 
 
@@ -113,7 +113,7 @@ public class TaskDaoImplAcceptRejectIntegrationTest {
         Optional<Long> taskerId = underTest.getTaskerID(taskId);
 
         // Then - Verify correct tasker ID
-        assertThat(taskerId). isPresent();
+        assertThat(taskerId).isPresent();
         assertThat(taskerId.get()).isEqualTo(2L);
     }
 
@@ -123,7 +123,7 @@ public class TaskDaoImplAcceptRejectIntegrationTest {
         Long taskId = 999L;
 
         // When - Get tasker ID
-        Optional<Long> taskerId = underTest. getTaskerID(taskId);
+        Optional<Long> taskerId = underTest.getTaskerID(taskId);
 
         // Then - Verify empty result
         assertThat(taskerId).isEmpty();

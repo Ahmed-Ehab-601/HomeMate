@@ -1,10 +1,10 @@
 package com.homemate.taskmanagementtests;
 
-import com.homemate.taskmanagement.dao. impl.TaskDaoImpl;
+import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.exceptions.BadAcceptRejectException;
 import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
 import com.homemate.taskmanagement.model.Status;
-import com.homemate. taskmanagement.service.TaskManagementService;
+import com.homemate.taskmanagement.service.TaskManagementService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,7 +15,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito. Mockito.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class TaskManagementServiceAcceptRejectTest {
@@ -34,14 +34,14 @@ class TaskManagementServiceAcceptRejectTest {
         Status newStatus = Status.Accepted;
 
         when(taskDao.getStatus(taskId)).thenReturn(Optional.of(Status.InReview));
-        when(taskDao.getTaskerID(taskId)).thenReturn(Optional. of(taskerId));
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(taskerId));
         when(taskDao.updateStatus(taskId, newStatus)).thenReturn(true);
 
         // Act & Assert
         assertThatCode(() -> taskManagementService.acceptOrReject(taskId, taskerId, newStatus))
                 .doesNotThrowAnyException();
 
-        verify(taskDao). getStatus(taskId);
+        verify(taskDao).getStatus(taskId);
         verify(taskDao).getTaskerID(taskId);
         verify(taskDao).updateStatus(taskId, newStatus);
     }
@@ -53,7 +53,7 @@ class TaskManagementServiceAcceptRejectTest {
         Long taskerId = 5L;
         Status newStatus = Status.Rejected;
 
-        when(taskDao.getStatus(taskId)).thenReturn(Optional. of(Status.InReview));
+        when(taskDao.getStatus(taskId)).thenReturn(Optional.of(Status.InReview));
         when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(taskerId));
         when(taskDao.updateStatus(taskId, newStatus)).thenReturn(true);
 
@@ -63,7 +63,7 @@ class TaskManagementServiceAcceptRejectTest {
 
         verify(taskDao).getStatus(taskId);
         verify(taskDao).getTaskerID(taskId);
-        verify(taskDao). updateStatus(taskId, newStatus);
+        verify(taskDao).updateStatus(taskId, newStatus);
     }
 
     @Test
@@ -80,7 +80,7 @@ class TaskManagementServiceAcceptRejectTest {
                 .isInstanceOf(TaskNotFoundException.class)
                 .hasMessage("wrong task id");
 
-        verify(taskDao). getStatus(taskId);
+        verify(taskDao).getStatus(taskId);
         verify(taskDao, never()).getTaskerID(anyLong());
         verify(taskDao, never()).updateStatus(anyLong(), any(Status.class));
     }
@@ -92,7 +92,7 @@ class TaskManagementServiceAcceptRejectTest {
         Long taskerId = 10L;
         Status newStatus = Status.Accepted;
 
-        when(taskDao. getStatus(taskId)).thenReturn(Optional.of(Status. Accepted));
+        when(taskDao.getStatus(taskId)).thenReturn(Optional.of(Status.Accepted));
 
         // Act & Assert
         assertThatThrownBy(() -> taskManagementService.acceptOrReject(taskId, taskerId, newStatus))
@@ -111,7 +111,7 @@ class TaskManagementServiceAcceptRejectTest {
         Long taskerId = 10L;
         Status newStatus = Status.Accepted;
 
-        when(taskDao.getStatus(taskId)).thenReturn(Optional. of(Status.InReview));
+        when(taskDao.getStatus(taskId)).thenReturn(Optional.of(Status.InReview));
         when(taskDao.getTaskerID(taskId)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -120,7 +120,7 @@ class TaskManagementServiceAcceptRejectTest {
                 .hasMessage("the task id don't belong to this tasker");
 
         verify(taskDao).getStatus(taskId);
-        verify(taskDao). getTaskerID(taskId);
+        verify(taskDao).getTaskerID(taskId);
         verify(taskDao, never()).updateStatus(anyLong(), any(Status.class));
     }
 
@@ -132,11 +132,11 @@ class TaskManagementServiceAcceptRejectTest {
         Long wrongTaskerId = 20L;
         Status newStatus = Status.Accepted;
 
-        when(taskDao.getStatus(taskId)). thenReturn(Optional.of(Status.InReview));
+        when(taskDao.getStatus(taskId)).thenReturn(Optional.of(Status.InReview));
         when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(correctTaskerId));
 
         // Act & Assert
-        assertThatThrownBy(() -> taskManagementService. acceptOrReject(taskId, wrongTaskerId, newStatus))
+        assertThatThrownBy(() -> taskManagementService.acceptOrReject(taskId, wrongTaskerId, newStatus))
                 .isInstanceOf(BadAcceptRejectException.class)
                 .hasMessage("the task id don't belong to this tasker");
 

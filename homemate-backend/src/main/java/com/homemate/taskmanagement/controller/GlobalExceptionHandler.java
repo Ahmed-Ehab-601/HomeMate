@@ -1,6 +1,7 @@
 package com.homemate.taskmanagement.controller;
 
 import com.homemate.taskmanagement.exceptions.*;
+import com.homemate.taskmanagement.model.Error;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,14 +23,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RequestLimitExceededException.class)
     public ResponseEntity<?> handleLimitExceeded(RequestLimitExceededException ex) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
-                "error", "REQUEST_LIMIT_EXCEEDED",
+                "error", Error.RequestLimitExceeded,
                 "message", ex.getMessage()
         ));
     }
     @ExceptionHandler(BadTaskRequestException.class)
     public ResponseEntity<?> handleBadTaskRequest(BadTaskRequestException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                "error", "Task Not Created",
+                "error", Error.BadTaskRequestError,
                 "message", ex.getMessage()
         ));
     }
@@ -37,7 +38,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadAcceptRejectException.class)
     public ResponseEntity<?> handleBadAcceptRejectException(BadAcceptRejectException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                "error", ex.getMessage(),
+                "error", Error.BadAcceptRejectError,
                 "message", ex.getMessage()
         ));
     }
@@ -45,7 +46,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(TaskNotFoundException.class)
     public ResponseEntity<?> handleTaskNotFoundException(TaskNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                "error", ex.getMessage(),
+                "error", Error.TaskNotFoundError,
                 "message", ex.getMessage()
         ));
     }
