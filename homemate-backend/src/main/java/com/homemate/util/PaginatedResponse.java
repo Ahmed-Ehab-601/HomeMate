@@ -1,4 +1,4 @@
-package com.homemate.reports.dto;
+package com.homemate.util;
 
 import java.util.List;
 
@@ -11,10 +11,11 @@ import lombok.Builder;
 @NoArgsConstructor
 @Data
 @Builder
-public class ReportsPaginatedResponse<T> {
-    private List<T> reportes;
+public class PaginatedResponse<T> {
+    private List<T> data;
     private int currentPage;
     private int totalPages;
     private long totalElements;
     private int pageSize;
 }
+

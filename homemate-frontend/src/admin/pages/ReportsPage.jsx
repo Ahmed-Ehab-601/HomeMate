@@ -33,7 +33,7 @@ const ReportsPage = () => {
         pageSize: pagination.size,
       });
       // Map response to match expected format
-      setReports(response?.reportes || []);
+      setReports(response?.data || []);
       setPagination((prev) => ({
         ...prev,
         totalItems: response?.totalElements || 0,
