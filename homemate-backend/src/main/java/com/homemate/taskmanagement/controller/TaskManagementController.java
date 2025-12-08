@@ -82,7 +82,7 @@ public class TaskManagementController {
             @AuthenticationPrincipal AppUserDetails user
     ) {
 
-        RescheduleResponseDto response = taskManagementService.rescheduleTask(taskId,requestDto);
+        RescheduleResponseDto response = taskManagementService.rescheduleTask(taskId,requestDto,user.getId());
 
         return ResponseEntity.ok(response);
     }
