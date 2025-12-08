@@ -2,8 +2,9 @@ package com.homemate.reports.service.imp;
 
 import com.homemate.reports.dao.ReportDao;
 import com.homemate.reports.dto.ShortReport;
-import com.homemate.reports.dto.ReportsPaginatedResponse;
 import com.homemate.reports.service.IReportService;
+import com.homemate.util.PaginatedResponse;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class ReportServiceImp implements IReportService {
     }
 
     @Override
-    public ReportsPaginatedResponse<ShortReport> getAllShortReports(int pageNumber, int pageSize) {
+    public PaginatedResponse<ShortReport> getAllShortReports(int pageNumber, int pageSize) {
         
         // Validate limit
         pageNumber = Math.min(pageNumber, PAGE_SIZE_LIMIT);
@@ -37,8 +38,8 @@ public class ReportServiceImp implements IReportService {
         int totalPages = (int) Math.ceil((double) totalElements / pageSize);
 
         // Build and return the paginated response
-        return ReportsPaginatedResponse.<ShortReport>builder()
-                .reportes(reports)
+        return PaginatedResponse.<ShortReport>builder()
+                .data(reports)
                 .currentPage(pageNumber)
                 .totalPages(totalPages)
                 .totalElements(totalElements)

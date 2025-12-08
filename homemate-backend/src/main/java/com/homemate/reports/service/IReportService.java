@@ -1,8 +1,8 @@
 package com.homemate.reports.service;
 
 import com.homemate.reports.dto.ShortReport;
-import com.homemate.reports.dto.ReportsPaginatedResponse;
+import com.homemate.util.PaginatedResponse;
 
 public interface IReportService {
-    ReportsPaginatedResponse<ShortReport> getAllShortReports(int pageNumber, int pageSize);
+    PaginatedResponse<ShortReport> getAllShortReports(int pageNumber, int pageSize);
 }
