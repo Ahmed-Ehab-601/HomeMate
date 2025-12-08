@@ -1,5 +1,6 @@
 package com.homemate.reports.dto;
 
+import com.homemate.reports.model.AdminStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,5 +15,5 @@ public class ShortReport {
     private String header;
     private int taskID;
     private boolean reporter; // true -> user, false -> tasker
-    private String adminStatus;
+    private AdminStatus adminStatus;
 }
