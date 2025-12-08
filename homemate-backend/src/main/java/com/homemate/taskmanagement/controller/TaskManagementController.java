@@ -16,7 +16,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -99,6 +98,21 @@ public class TaskManagementController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/start")
+    public ResponseEntity<?> startTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
+        TaskDto taskDto = taskManagementService.updateTaskStatus(taskID,userDetails.getId(), Status.InProgress);
+        return new ResponseEntity<>(taskDto,HttpStatus.OK);
+    }
 
+    @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/suspend")
+    public ResponseEntity<?> suspendTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
+        TaskDto taskDto = taskManagementService.updateTaskStatus(taskID,userDetails.getId(), Status.Suspended);
+        return new ResponseEntity<>(taskDto,HttpStatus.OK);
+    }
+    @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/complete")
+    public ResponseEntity<?> completeTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
+        TaskDto taskDto = taskManagementService.updateTaskStatus(taskID,userDetails.getId(), Status.Done);
+        return new ResponseEntity<>(taskDto,HttpStatus.OK);
+    }
 
 }
