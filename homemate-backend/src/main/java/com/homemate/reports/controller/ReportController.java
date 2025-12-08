@@ -39,6 +39,6 @@ public class ReportController {
         boolean ok = reportService.submitReport(submitReport, userDetails);
         if (ok)
             return ResponseEntity.ok("Report Submitted");
-        return ResponseEntity.badRequest().build();
+        return ResponseEntity.badRequest().body("Invalid report data or task not accessible");
     }
 }

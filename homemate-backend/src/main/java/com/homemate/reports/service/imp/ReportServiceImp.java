@@ -54,6 +54,29 @@ public class ReportServiceImp implements IReportService {
         boolean reporterIsUser = userDetails.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equalsIgnoreCase("ROLE_USER"));
 
+        // Basic length validation
+        if (submitReport.getHeader() == null || submitReport.getHeader().length() > 100) {
+            return false;
+        }
+        if (submitReport.getBody() == null || submitReport.getBody().length() > 500) {
+            return false;
+        }
+
+        // Validate task exists
+        if (!reportDao.taskExists(submitReport.getTaskID())) {
+            return false;
+        }
+
+        // Validate association based on role
+        long principalId = userDetails.getId();
+        boolean ownsTask = reporterIsUser
+                ? reportDao.taskOwnedByUser(submitReport.getTaskID(), principalId)
+                : reportDao.taskOwnedByTasker(submitReport.getTaskID(), principalId);
+
+        if (!ownsTask) {
+            return false;
+        }
+
         return reportDao.submitReport(submitReport, reporterIsUser);
     }
 }

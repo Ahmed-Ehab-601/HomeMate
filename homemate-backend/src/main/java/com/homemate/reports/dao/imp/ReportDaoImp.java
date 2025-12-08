@@ -65,4 +65,25 @@ public class ReportDaoImp implements ReportDao {
 
         return rows > 0 && keyHolder.getKey() != null;
     }
+
+    @Override
+    public boolean taskExists(long taskId) {
+        String sql = "SELECT COUNT(*) FROM Task WHERE taskID = ?";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class, taskId);
+        return count != null && count > 0;
+    }
+
+    @Override
+    public boolean taskOwnedByUser(long taskId, long userId) {
+        String sql = "SELECT COUNT(*) FROM Task WHERE taskID = ? AND userID = ?";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class, taskId, userId);
+        return count != null && count > 0;
+    }
+
+    @Override
+    public boolean taskOwnedByTasker(long taskId, long taskerId) {
+        String sql = "SELECT COUNT(*) FROM Task WHERE taskID = ? AND taskerID = ?";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class, taskId, taskerId);
+        return count != null && count > 0;
+    }
 }

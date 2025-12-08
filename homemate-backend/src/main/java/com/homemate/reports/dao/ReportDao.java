@@ -9,4 +9,10 @@ public interface ReportDao {
     Long countAllReports();
 
     boolean submitReport(SubmitReport submitReport, boolean reporterIsUser);
+
+    boolean taskExists(long taskId);
+
+    boolean taskOwnedByUser(long taskId, long userId);
+
+    boolean taskOwnedByTasker(long taskId, long taskerId);
 }
