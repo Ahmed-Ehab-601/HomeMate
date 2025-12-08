@@ -117,7 +117,7 @@ class TaskManagementServiceAcceptRejectTest {
         // Act & Assert
         assertThatThrownBy(() -> taskManagementService.acceptOrReject(taskId, taskerId, newStatus))
                 .isInstanceOf(BadAcceptRejectException.class)
-                .hasMessage("the task id don't belong to this tasker");
+                .hasMessage("the task id does not belong to this tasker");
 
         verify(taskDao).getStatus(taskId);
         verify(taskDao).getTaskerID(taskId);
@@ -138,7 +138,7 @@ class TaskManagementServiceAcceptRejectTest {
         // Act & Assert
         assertThatThrownBy(() -> taskManagementService.acceptOrReject(taskId, wrongTaskerId, newStatus))
                 .isInstanceOf(BadAcceptRejectException.class)
-                .hasMessage("the task id don't belong to this tasker");
+                .hasMessage("the task id does not belong to this tasker");
 
         verify(taskDao).getStatus(taskId);
         verify(taskDao).getTaskerID(taskId);
