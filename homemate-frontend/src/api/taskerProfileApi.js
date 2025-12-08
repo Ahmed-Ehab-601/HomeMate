@@ -68,11 +68,8 @@ export function getTaskerProfile() {
 }
 
 export function getTaskerReviews({ page = 1, pageSize = 5 } = {}) {
-  return request(`${TASKER_PROFILE_ENDPOINT}/reviews`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ page, pageSize }),
-  });
+  const params = new URLSearchParams({ page, pageSize });
+  return request(`${TASKER_PROFILE_ENDPOINT}/reviews?${params.toString()}`);
 }
 
 export function getAvailableServices() {

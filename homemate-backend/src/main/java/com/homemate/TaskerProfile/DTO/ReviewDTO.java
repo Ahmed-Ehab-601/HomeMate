@@ -10,6 +10,7 @@ public class ReviewDTO {
     private Timestamp time;
     private int taskId;
     private List<ReviewImageDTO> reviewImages;
+    private String reviewerUsername;
 
     public int getReviewId() {
         return reviewId;
@@ -57,5 +58,13 @@ public class ReviewDTO {
 
     public void setReviewImages(List<ReviewImageDTO> reviewImages) {
         this.reviewImages = reviewImages;
+    }
+
+    public String getReviewerUsername() {
+        return reviewerUsername;
+    }
+
+    public void setReviewerUsername(String reviewerUsername) {
+        this.reviewerUsername = reviewerUsername;
     }
 }
