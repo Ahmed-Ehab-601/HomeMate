@@ -9,4 +9,5 @@ public interface ReportDao {
     List<ShortReport> getAllShortReports(Long limit, Long offset);
     Long countAllReports();
     Optional<DetailedReport> getDetailedReportById(int reportID);
+    void updateReportStatus(int reportID, String status);
 }

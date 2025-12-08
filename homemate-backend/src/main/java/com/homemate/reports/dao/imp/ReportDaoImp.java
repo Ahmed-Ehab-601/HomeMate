@@ -88,4 +88,10 @@ public class ReportDaoImp implements ReportDao {
             return Optional.empty();
         }
     }
+
+    @Override
+    public void updateReportStatus(int reportID, String status) {
+        String sql = "UPDATE Report SET adminStatus = ? WHERE reportID = ?";
+        jdbcTemplate.update(sql, status, reportID);
+    }
 }

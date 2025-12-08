@@ -29,6 +29,7 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EmailIcon from '@mui/icons-material/Email';
 import BadgeIcon from '@mui/icons-material/Badge';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
 import { suspendUser, suspendTasker } from '../api/adminApi';
 
 const ReportDetailsPage = () => {
@@ -41,6 +42,7 @@ const ReportDetailsPage = () => {
   const [suspendDialog, setSuspendDialog] = useState({ open: false, type: null });
   const [suspendReason, setSuspendReason] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [completeLoading, setCompleteLoading] = useState(false);
 
   useEffect(() => {
     const fetchReportDetails = async () => {
@@ -115,6 +117,31 @@ const ReportDetailsPage = () => {
   const handleSuspendCancel = () => {
     setSuspendDialog({ open: false, type: null });
     setSuspendReason('');
+  };
+
+  const handleCompleteReport = async () => {
+    setCompleteLoading(true);
+    try {
+      const token = localStorage.getItem('homemate_token');
+      const response = await fetch(`/api/reports/${id}/complete`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to complete report');
+      }
+      const data = await response.json();
+      setReport(data);
+      setSuccessMessage('Report marked as completed successfully');
+    } catch (err) {
+      console.error('Error completing report:', err);
+      setError('Failed to complete report');
+    } finally {
+      setCompleteLoading(false);
+    }
   };
 
   if (loading) {
@@ -207,23 +234,51 @@ const ReportDetailsPage = () => {
                 />
               </Box>
             </Box>
-            <Chip
-              icon={
-                report?.adminStatus?.toLowerCase() === 'done' ? <CheckCircleIcon /> : 
-                report?.adminStatus?.toLowerCase() === 'rejected' ? <BlockIcon /> : 
-                <HourglassEmptyIcon />
-              }
-              label={report?.adminStatus?.toUpperCase() || 'PENDING'}
-              color={getStatusColor(report?.adminStatus)}
-              sx={{ 
-                fontSize: '1rem', 
-                fontWeight: 700,
-                py: 2.5,
-                px: 2,
-                height: 'auto',
-                borderRadius: 1
-              }}
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {report?.adminStatus?.toLowerCase() === 'pending' && (
+                <Button
+                  variant="contained"
+                  startIcon={<DoneAllIcon />}
+                  onClick={handleCompleteReport}
+                  disabled={completeLoading}
+                  sx={{
+                    backgroundColor: '#4caf50',
+                    color: 'white',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    py: 1,
+                    px: 2,
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: '#45a049',
+                    },
+                    '&:disabled': {
+                      backgroundColor: 'rgba(76, 175, 80, 0.5)',
+                      color: 'rgba(255,255,255,0.7)',
+                    }
+                  }}
+                >
+                  {completeLoading ? 'Completing...' : 'Complete'}
+                </Button>
+              )}
+              <Chip
+                icon={
+                  report?.adminStatus?.toLowerCase() === 'done' ? <CheckCircleIcon /> : 
+                  report?.adminStatus?.toLowerCase() === 'rejected' ? <BlockIcon /> : 
+                  <HourglassEmptyIcon />
+                }
+                label={report?.adminStatus?.toUpperCase() || 'PENDING'}
+                color={getStatusColor(report?.adminStatus)}
+                sx={{ 
+                  fontSize: '1rem', 
+                  fontWeight: 700,
+                  py: 2.5,
+                  px: 2,
+                  height: 'auto',
+                  borderRadius: 1
+                }}
+              />
+            </Box>
           </Box>
         </Paper>
 

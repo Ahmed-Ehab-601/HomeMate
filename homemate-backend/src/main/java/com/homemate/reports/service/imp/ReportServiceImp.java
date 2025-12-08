@@ -53,4 +53,10 @@ public class ReportServiceImp implements IReportService {
     public Optional<DetailedReport> getDetailedReportById(int reportID) {
         return reportDao.getDetailedReportById(reportID);
     }
+
+    @Override
+    public Optional<DetailedReport> completeReport(int reportID) {
+        reportDao.updateReportStatus(reportID, "done");
+        return reportDao.getDetailedReportById(reportID);
+    }
 }

@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface IReportService {
     PaginatedResponse<ShortReport> getAllShortReports(int pageNumber, int pageSize);
     Optional<DetailedReport> getDetailedReportById(int reportID);
+    Optional<DetailedReport> completeReport(int reportID);
 }

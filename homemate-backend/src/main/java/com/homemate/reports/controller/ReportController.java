@@ -37,4 +37,13 @@ public class ReportController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
+
+    @PatchMapping("/{reportID}/complete")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<DetailedReport> completeReport(@PathVariable int reportID) {
+        var completedReport = reportService.completeReport(reportID);
+        return completedReport
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
 }
