@@ -8,6 +8,7 @@ import com.homemate.taskmanagement.model.TaskEntity;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,8 +41,13 @@ public interface TaskDao {
 
     Optional<Long> countTasksByTaskerIDAndStatus(Long taskerID, StatusDto status);
     Optional<Status> getStatus(Long taskID);
+    Optional<LocalDateTime> getStartDate(Long taskID);
     boolean updateStatus(Long taskID,Status newStatus);
     Optional<Long> getTaskerID(Long taskID);
+    Optional<Long> getUserID(Long taskID);
+    boolean updateTaskStartDate(Long taskId, LocalDateTime newStartDate);
+
+
     boolean updateTaskWorkedHours(Long taskID,double workedHours);
     boolean updateTaskStartInProgress(Long taskID, Timestamp time);
     boolean updateTaskEndData(Long taskID, Timestamp time);
@@ -49,7 +55,7 @@ public interface TaskDao {
     boolean updateTaskerWorkedHours(Long taskerID,double workedHours);
     Timestamp getStartInProgress(Long taskID);
     Double getTaskWorkedHours(Long taskID);
-    public Double getTaskerHourRate(Long taskerID);
+    Double getTaskerHourRate(Long taskerID);
     boolean updateTaskerTotalEarning(Long taskerID,double bill);
 
 }

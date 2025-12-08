@@ -9,9 +9,11 @@ import com.homemate.taskmanagement.mappers.TaskMapper;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -163,6 +165,42 @@ public class TaskManagementService {
         taskContext.updateStatus();
         taskContext.sendEmail();
         return getTaskDetails(taskID).get();
+    }
+
+    public RescheduleResponseDto rescheduleTask(Long taskID, RescheduleRequestDto rescheduleRequestDto ,long requestID) {
+
+        Optional<Long> taskerID = taskDao.getTaskerID(taskID);
+        Optional<Long> userID = taskDao.getUserID(taskID);
+
+        if (taskerID.isEmpty() || userID.isEmpty()) {
+            throw new TaskNotFoundException("Task with ID " + taskID + " not found");
+        }
+
+        if (requestID != taskerID.get() && requestID!= userID.get()) {
+            throw new BadRescheduleException("You are neither the user nor the tasker for this task");
+        }
+
+        Optional<Status> status = taskDao.getStatus(taskID);
+        if (status.isEmpty() ||
+                (status.get() != Status.InReview && status.get() != Status.Accepted)) {
+            throw new BadRescheduleException("Task must be InReview or Accepted");
+        }
+        LocalDateTime newStart =rescheduleRequestDto.getNewStartDate();
+
+        if (newStart.isBefore(LocalDateTime.now())) {
+            throw new BadRescheduleException("New date cannot be in the past");
+        }
+
+        boolean updated = taskDao.updateTaskStartDate(taskID, newStart);
+        if (!updated) {
+            throw new IllegalStateException("Task could not be rescheduled");
+        }
+
+        return RescheduleResponseDto.builder()
+                .taskID(taskID)
+                .newStartDate(newStart)
+                .rescheduleStatus(StatusDto.Accepted)
+                .build();
     }
 
 

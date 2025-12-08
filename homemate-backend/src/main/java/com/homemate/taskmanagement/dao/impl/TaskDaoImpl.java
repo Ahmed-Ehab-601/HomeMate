@@ -381,4 +381,40 @@ public class TaskDaoImpl implements TaskDao {
     }
 
 
+    @Override
+    public Optional<Long> getUserID(Long taskID){
+        String sql = "SELECT userID FROM Task WHERE taskID = ? ";
+        try {
+            Long taskerID = jdbcTemplate.queryForObject(sql, Long.class, taskID);
+            return Optional.ofNullable(taskerID);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+
+    @Override
+    public boolean updateTaskStartDate(Long taskId, LocalDateTime newStartDate) {
+        String sql = "UPDATE Task SET startDate = ? WHERE taskID = ?";
+        int rows = jdbcTemplate.update(sql,
+                Timestamp.valueOf(newStartDate),
+                taskId);
+        return rows > 0;
+    }
+
+    @Override
+    public Optional<LocalDateTime> getStartDate(Long taskID) {
+        String sql = "SELECT startDate FROM Task WHERE taskID = ?";
+        try {
+            Timestamp timestamp = jdbcTemplate.queryForObject(sql, Timestamp.class, taskID);
+            return Optional.ofNullable(timestamp != null ? timestamp.toLocalDateTime() : null);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+
+
+
+
 }

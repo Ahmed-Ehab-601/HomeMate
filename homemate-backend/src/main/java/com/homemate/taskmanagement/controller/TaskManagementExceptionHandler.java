@@ -57,5 +57,13 @@ public class TaskManagementExceptionHandler {
                 "message", ex.getMessage()
         ));
     }
+    @ExceptionHandler(BadRescheduleException.class)
+    public ResponseEntity<?> handleBadReschedule(BadRescheduleException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error", Error.BadReschedule,
+                "message", ex.getMessage()
+        ));
+    }
+
 
 }
