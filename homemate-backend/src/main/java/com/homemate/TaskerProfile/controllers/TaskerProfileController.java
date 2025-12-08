@@ -65,15 +65,23 @@ public class TaskerProfileController {
         return ResponseEntity.ok(taskerProfileService.getData(taskerDetails.getId()));
     }
 
-    @PostMapping("/reviews")
+    @GetMapping("/reviews")
     public ResponseEntity<PaginatedReviewResponse> getReviews(@AuthenticationPrincipal AppUserDetails taskerDetails,
-                                                              @RequestBody PaginatedReviewRequest reviewRequest) {
-        Long requestedTaskerId = reviewRequest.getTaskerID();
+                                                              @RequestParam(required = false) Long taskerID,
+                                                              @RequestParam(defaultValue = "1") int page,
+                                                              @RequestParam(defaultValue = "5") int pageSize) {
+        Long requestedTaskerId = taskerID;
         if ((requestedTaskerId == null || requestedTaskerId == 0) && taskerDetails != null) {
-            reviewRequest.setTaskerID(taskerDetails.getId());
+            requestedTaskerId = taskerDetails.getId();
         } else if (requestedTaskerId == null || requestedTaskerId == 0) {
              return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+
+        PaginatedReviewRequest reviewRequest = new PaginatedReviewRequest();
+        reviewRequest.setTaskerID(requestedTaskerId);
+        reviewRequest.setPage(page);
+        reviewRequest.setPageSize(pageSize);
+
         return ResponseEntity.ok(taskerProfileService.getReviews(reviewRequest));
     }
 
