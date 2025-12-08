@@ -54,10 +54,11 @@ public class MessageController {
         int unreadMessages = messageService.getUnreadMessagesForTasker(chatID);
         return ResponseEntity.ok(unreadMessages);
     }
-    @PutMapping("/{chatID}/mark-read")
-    public ResponseEntity<Void> markMessagesAsRead(@PathVariable Long chatID) throws Exception{
+    @PutMapping("/{chatID}/mark-read-user")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> markMessageAsRead(@PathVariable Long chatID) throws Exception{
        try {
-           messageService.markAllAsRead(chatID);
+           messageService.markAllAsReadUser(chatID);
         //websocket
         return ResponseEntity.ok().build();
     }catch (Exception e){
@@ -65,23 +66,13 @@ public class MessageController {
 
        }
     }
-    @PutMapping("/{UserID}/mark-receivedU")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> markMessagesAsReceivedU(@PathVariable Long UserID) throws Exception{
-       // try {
-            messageService.markAllAsReceivedForUser(UserID);
-            //websocket
-            return ResponseEntity.ok().build();
-//        }catch (Exception e){
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-//
-//        }
-    }
-    @PutMapping("/{TaskerID}/mark-receivedT")
+
+    @PutMapping("/{chatID}/mark-read-tasker")
     @PreAuthorize("hasRole('TASKER')")
-    public ResponseEntity<Void> markMessagesAsReceivedT(@PathVariable Long TaskerID) throws Exception{
+
+    public ResponseEntity<Void> markMessagesAsRead(@PathVariable Long chatID) throws Exception{
         try {
-            messageService.markAllAsReceivedForTasker(TaskerID);
+            messageService.markAllAsReadTasker(chatID);
             //websocket
             return ResponseEntity.ok().build();
         }catch (Exception e){
@@ -89,4 +80,28 @@ public class MessageController {
 
         }
     }
+//    @PutMapping("/{UserID}/mark-receivedU")
+//    @PreAuthorize("hasRole('USER')")
+//    public ResponseEntity<Void> markMessagesAsReceivedU(@PathVariable Long UserID) throws Exception{
+//       // try {
+//            messageService.markAllAsReceivedForUser(UserID);
+//            //websocket
+//            return ResponseEntity.ok().build();
+////        }catch (Exception e){
+////            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+////
+////        }
+//    }
+//    @PutMapping("/{TaskerID}/mark-receivedT")
+//    @PreAuthorize("hasRole('TASKER')")
+//    public ResponseEntity<Void> markMessagesAsReceivedT(@PathVariable Long TaskerID) throws Exception{
+//        try {
+//            messageService.markAllAsReceivedForTasker(TaskerID);
+//            //websocket
+//            return ResponseEntity.ok().build();
+//        }catch (Exception e){
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//
+//        }
+//    }
 }

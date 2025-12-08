@@ -39,15 +39,15 @@ public class MessageDao implements IMessageDao<MessageDto> {
                 new MessageRowMapper());
 
     }
-
+    @Override
     public Long getTotalCount(Long chatId) {
         String sql = "SELECT COUNT(*) FROM Message WHERE chatID = ?";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, chatId);
         return count != null ? count.longValue() : 0L;
 
     }
-
-    public void save(Long chatID, MessageDto messageDto) {
+@Override
+public void save(Long chatID, MessageDto messageDto) {
         // Set timestamp if not provided
         Timestamp timestamp = messageDto.getTimestamp() != null
                 ? Timestamp.valueOf(messageDto.getTimestamp())
@@ -94,61 +94,50 @@ public class MessageDao implements IMessageDao<MessageDto> {
             );
         }
     }
-
-    public int getUnreadOnesForUser(Long chatID) throws SQLException {
+@Override
+public int getUnreadOnesForUser(Long chatID) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Message WHERE chatID = ? AND status != 'seen' AND isUserSender = FALSE";
         return jdbcTemplate.queryForObject(sql,Integer.class,chatID);
     }
-
-    public int getUnreadOnesForTasker(Long chatID) throws SQLException {
+@Override
+public int getUnreadOnesForTasker(Long chatID) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Message WHERE chatID = ? AND status != 'seen' AND isUserSender = TRUE";
         return jdbcTemplate.queryForObject(sql,Integer.class,chatID);
     }
-
-    public void markasRead(Long chatID) throws SQLException {
-        String sql = "UPDATE Message SET status = 'seen' WHERE chatID = ?";
+@Override
+public void markasReadUser(Long chatID) throws SQLException {
+        String sql = "UPDATE Message SET status = 'seen' WHERE chatID = ? AND isUserSender= FALSE";
         jdbcTemplate.update(sql,chatID);
     }
-    // When USER logs in - mark all tasker messages (across all their chats) as received
-    public void markasReceivedUser(Long userID) {
+    @Override
+    public void markasReadTasker(Long chatID) throws SQLException {
+        String sql = "UPDATE Message SET status = 'seen' WHERE chatID = ? AND isUserSender = TRUE";
+        jdbcTemplate.update(sql,chatID);
+    }
+@Override
+public void markasReceivedUser(Long userID) {
         String sql = "UPDATE Message m " +
                 "JOIN Chat c ON m.chatID = c.chatID " +
                 "SET m.status = 'received' " +
                 "WHERE c.userID = ? AND m.isUserSender = FALSE AND m.status = 'sent'";
         jdbcTemplate.update(sql, userID);
     }
-
-    // When TASKER logs in - mark all user messages (across all their chats) as received
-    public void markasReceivedTasker(Long taskerID) {
+@Override
+public void markasReceivedTasker(Long taskerID) {
         String sql = "UPDATE Message m " +
                 "JOIN Chat c ON m.chatID = c.chatID " +
                 "SET m.status = 'received' " +
                 "WHERE c.taskerID = ? AND m.isUserSender = TRUE AND m.status = 'sent'";
         jdbcTemplate.update(sql, taskerID);
     }
+    @Override
+    public Boolean getUserStatus(Long chatID){
+        String sql="SELECT userIsActive FROM Chat WHERE chatID = ?";
+        return jdbcTemplate.queryForObject(sql,Boolean.class,chatID);
+    }
+    @Override
+    public Boolean getTaskerStatus(Long chatID){
+        String sql="SELECT taskerIsActive FROM Chat WHERE chatID = ?";
+        return jdbcTemplate.queryForObject(sql,Boolean.class,chatID);
+    }
 }
-//CREATE TABLE Message (
-//    messageId INT AUTO_INCREMENT PRIMARY KEY,
-//    chatID INT NOT NULL,
-//    content VARCHAR(200),
-//    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-//    senderID INT NOT NULL,
-//    receiverID INT NOT NULL,
-//    isUserSender BOOLEAN NOT NULL, -- true=user, false=tasker
-//    status ENUM('sent','received','seen') DEFAULT 'sent' NOT NULL,
-//    FOREIGN KEY (chatID) REFERENCES Chat(chatID) ON DELETE CASCADE ON UPDATE CASCADE,
-//    INDEX idx_message_chat (chatID),
-//    INDEX idx_message_timestamp (timestamp),
-//    INDEX idx_message_sender (senderID),
-//    INDEX idx_message_receiver (receiverID),
-//    INDEX idx_message_status (status)
-//);
-//CREATE TABLE MessageImage (
-//    imageID INT AUTO_INCREMENT PRIMARY KEY,
-//    messageID INT NOT NULL,
-//    format VARCHAR(50) NOT NULL,
-//    imageFile LONGBLOB NOT NULL,
-//    imageName VARCHAR(100) NOT NULL,
-//    FOREIGN KEY (messageID) REFERENCES Message(messageID) ON DELETE CASCADE ON UPDATE CASCADE,
-//    INDEX idx_msg_img_message (messageID)
-//);

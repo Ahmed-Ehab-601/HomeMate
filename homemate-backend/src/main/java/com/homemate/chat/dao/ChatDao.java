@@ -1,5 +1,6 @@
 package com.homemate.chat.dao;
 
+import com.homemate.chat.Interface.IChatDao;
 import com.homemate.chat.dto.ChatDto;
 import com.homemate.chat.rowMapper.ChatMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,7 +8,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.sql.SQLException;
-import java.time.chrono.JapaneseDate;
 
 //CREATE TABLE Chat (
 //    chatID INT AUTO_INCREMENT PRIMARY KEY,
@@ -38,30 +38,58 @@ import java.time.chrono.JapaneseDate;
 //    INDEX idx_suspended (suspended)
 //);
 @Component
-public class ChatDao {
+public class ChatDao implements IChatDao<ChatDto> {
     @Autowired
     private JdbcTemplate jdbcTemplate;
-    public String getUserPhone(Long id)throws SQLException {
-        String sql="SELECT phone FROM Users u INNER JOIN Chat c on c.userID = u.userID WHERE c.chatID = ? ";
-        return jdbcTemplate.queryForObject(sql,String.class,id);
-    }
-    public String getTaskerPhone(Long id) throws SQLException{
-        String sql="SELECT phone FROM Tasker t INNER JOIN Chat c on c.taskerID = t.taskerID WHERE c.chatID = ? ";
-        return jdbcTemplate.queryForObject(sql,String.class,id);
+
+    @Override
+    public String getUserPhone(Long id) throws SQLException {
+        String sql = "SELECT phone FROM Users u INNER JOIN Chat c on c.userID = u.userID WHERE c.chatID = ? ";
+        return jdbcTemplate.queryForObject(sql, String.class, id);
     }
 
-    public ChatDto getChat(Long chatId) throws SQLException{
-        String sql="SELECT * FROM Chat WHERE chatID = ?";
-        return jdbcTemplate.queryForObject(sql,new ChatMapper(),chatId);
+    @Override
+    public String getTaskerPhone(Long id) throws SQLException {
+        String sql = "SELECT phone FROM Tasker t INNER JOIN Chat c on c.taskerID = t.taskerID WHERE c.chatID = ? ";
+        return jdbcTemplate.queryForObject(sql, String.class, id);
     }
 
+    @Override
+    public ChatDto getChat(Long chatId) throws SQLException {
+        String sql = "SELECT * FROM Chat WHERE chatID = ?";
+        return jdbcTemplate.queryForObject(sql, new ChatMapper(), chatId);
+    }
+
+    @Override
     public String getNameTasker(Long taskerId) {
-        String sql="SELECT username FROM Tasker WHERE taskerID = ?";
-        return jdbcTemplate.queryForObject(sql,String.class,taskerId);
+        String sql = "SELECT username FROM Tasker WHERE taskerID = ?";
+        return jdbcTemplate.queryForObject(sql, String.class, taskerId);
     }
 
+    @Override
     public String getNameUser(Long userId) {
-        String sql="SELECT username FROM Users WHERE userID = ?";
-        return jdbcTemplate.queryForObject(sql,String.class,userId);
+        String sql = "SELECT username FROM Users WHERE userID = ?";
+        return jdbcTemplate.queryForObject(sql, String.class, userId);
+    }
+
+    public void changeTaskerStatus(Long taskerId) {
+        String sql = "UPDATE Chat SET taskerIsActive = FALSE where taskerID = ?";
+        jdbcTemplate.update(sql, taskerId);
+
+    }
+
+    public void changeUserStatus(Long userId) {
+        String sql = "UPDATE Chat SET userIsActive = FALSE where userID = ?";
+        jdbcTemplate.update(sql, userId);
+
+    }
+    public void setTaskerOnline(Long taskerId) {
+        String sql = "UPDATE Chat SET taskerIsActive = TRUE WHERE taskerID = ?";
+        jdbcTemplate.update(sql, taskerId);
+    }
+
+    public void setUserOnline(Long userId) {
+        String sql = "UPDATE Chat SET userIsActive = TRUE WHERE userID = ?";
+        jdbcTemplate.update(sql, userId);
     }
 }

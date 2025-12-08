@@ -300,11 +300,11 @@ const location = useLocation();
       reader.readAsDataURL(file);
     }
   };
-
   const markAsRead = async () => {
     try {
-      const endpoint = `${API_BASE}/message/${chatId}/mark-read`;
-        
+      const endpoint=isUserRole?`${API_BASE}/message/${chatId}/mark-read-user`:
+      `${API_BASE}/message/${chatId}/mark-read-tasker`;
+        console.log(endpoint);
       const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
@@ -330,7 +330,7 @@ const location = useLocation();
       case 'read':
       case 'seen':
         return (
-          <svg style={{ width: '16px', height: '16px', color: '#a7df2d' }} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <svg style={{ width: '16px', height: '16px', color: '#3d8ca0ff' }} viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13l4 4L23 7" />
           </svg>
@@ -338,7 +338,7 @@ const location = useLocation();
       case 'received':
       case 'delivered':
         return (
-          <svg style={{ width: '16px', height: '16px', color: '#bdc3c7' }} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <svg style={{ width: '16px', height: '16px', color: '#a7df2d' }} viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13l4 4L23 7" />
           </svg>

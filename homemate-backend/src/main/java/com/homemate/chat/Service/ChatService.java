@@ -66,5 +66,31 @@ public class ChatService {
         return  chatDao.getNameTasker(taskerId);
     }
 
+
+    public void changeStatusTasker(Long taskerId) {
+        chatDao.changeTaskerStatus(taskerId);
+    }
+
+    public void changeStatusUser(Long taskerId) {
+        chatDao.changeUserStatus(taskerId);
+    }
+    public void setTaskerOnline(Long taskerId) throws Exception {
+        try {
+            messageDao.markasReceivedTasker(taskerId);
+            chatDao.setTaskerOnline(taskerId);
+        } catch (Exception e) {
+            throw new Exception("Failed to set tasker online: " + e.getMessage());
+        }
+    }
+
+    public void setUserOnline(Long userId) throws Exception {
+        try {
+
+            messageDao.markasReceivedUser(userId);
+            chatDao.setUserOnline(userId);
+        } catch (Exception e) {
+            throw new Exception("Failed to set user online: " + e.getMessage());
+        }
+    }
 }
 

@@ -1,6 +1,7 @@
 package com.homemate.chat.controller;
 
 import com.homemate.chat.Service.ChatService;
+import com.homemate.chat.Service.MessageService;
 import com.homemate.chat.dao.MessageDao;
 import com.homemate.chat.dto.ChatDto;
 import com.homemate.chat.dto.MessageDto;
@@ -20,8 +21,10 @@ import java.util.List;
 public class ChatController {
     @Autowired
     private ChatService chatService;
-    public ChatController(ChatService chatService){
+    private MessageService messageService;
+    public ChatController(ChatService chatService,MessageService messageService){
         this.chatService=chatService;
+        this.messageService=messageService;
     }
     @GetMapping("/getHistory/user/{chatId}")
     @PreAuthorize("hasRole('USER')")
@@ -96,7 +99,56 @@ public class ChatController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+    @PostMapping("/tasker/{taskerId}/online")
+    public ResponseEntity<String> setTaskerOnline(@PathVariable Long taskerId) {
+        try {
+            chatService.setTaskerOnline(taskerId);
+            // Also mark pending messages as received
+            messageService.markAllAsReceivedForTasker(taskerId);
+            return ResponseEntity.ok("Tasker status set to online");
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body("Failed to set tasker online: " + e.getMessage());
+        }
+    }
 
+    @PostMapping("/user/{userId}/online")
+    public ResponseEntity<String> setUserOnline(@PathVariable Long userId) {
+        try {
+            chatService.setUserOnline(userId);
+            // Also mark pending messages as received
+            messageService.markAllAsReceivedForUser(userId);
+            return ResponseEntity.ok("User status set to online");
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body("Failed to set user online: " + e.getMessage());
+        }
+    }
+    @PostMapping("/tasker/{taskerId}/offline")
+    @PreAuthorize("hasRole('TASKER')")
+    public ResponseEntity<String> changeStatus(@PathVariable Long taskerId){
+        try {
+            chatService.changeStatusTasker(taskerId);
+            return ResponseEntity.ok("changed");
+
+        }
+        catch (Exception e){
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/user/{userId}/offline")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> changeStatus2(@PathVariable Long userId){
+        try {
+            chatService.changeStatusUser(userId);
+            return ResponseEntity.ok("changed");
+
+        }
+        catch (Exception e){
+            return ResponseEntity.badRequest().build();
+        }
+    }
     @GetMapping("/user/getRecipientName/{chatId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getRecipientTasker(@PathVariable Long chatId){
