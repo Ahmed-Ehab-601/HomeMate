@@ -75,18 +75,33 @@ public class TaskManagementController {
         }
     }
 
-    @PreAuthorize("hasRole('TASKER')")
-    @PatchMapping("/tasker/task/{taskID}/accept")
+    @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/accept")
     public ResponseEntity<?> acceptTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
-        taskManagementService.acceptOrReject(taskID,userDetails.getId(), Status.Accepted);
-        return new ResponseEntity<>(HttpStatus.OK);
+        TaskRequestResponseDto responseDto = taskManagementService.acceptOrReject(taskID,userDetails.getId(), Status.Accepted);
+        return new ResponseEntity<>(responseDto,HttpStatus.OK);
 
     }
-    @PreAuthorize("hasRole('TASKER')")
-    @PatchMapping("/tasker/task/{taskID}/reject")
+    @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/reject")
     public ResponseEntity<?> rejectTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
-        taskManagementService.acceptOrReject(taskID,userDetails.getId(), Status.Rejected);
-        return new ResponseEntity<>(HttpStatus.OK);
+        TaskRequestResponseDto responseDto = taskManagementService.acceptOrReject(taskID,userDetails.getId(), Status.Rejected);
+        return new ResponseEntity<>(responseDto,HttpStatus.OK);
 
     }
+    @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/start")
+    public ResponseEntity<?> startTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
+        TaskDto taskDto = taskManagementService.updateTaskStatus(taskID,userDetails.getId(), Status.InProgress);
+        return new ResponseEntity<>(taskDto,HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/suspend")
+    public ResponseEntity<?> suspendTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
+        TaskDto taskDto = taskManagementService.updateTaskStatus(taskID,userDetails.getId(), Status.Suspended);
+        return new ResponseEntity<>(taskDto,HttpStatus.OK);
+    }
+    @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/complete")
+    public ResponseEntity<?> completeTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
+        TaskDto taskDto = taskManagementService.updateTaskStatus(taskID,userDetails.getId(), Status.Done);
+        return new ResponseEntity<>(taskDto,HttpStatus.OK);
+    }
+
 }
