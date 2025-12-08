@@ -15,11 +15,11 @@ public class MessageService {
     }
 
     public void sendMessage(Long chatID, MessageDto messageDto)throws Exception {
-        try {
+        //try {
             messageDao.save(chatID, messageDto);
-        } catch (Exception e) {
-            throw new Exception(e);
-        }
+//        } catch (Exception e) {
+//            throw new Exception(e);
+//        }
     }
 
     public int getUnreadMessagesForUser(Long chatID) throws Exception {

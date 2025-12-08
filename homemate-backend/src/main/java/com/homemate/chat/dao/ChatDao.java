@@ -1,5 +1,7 @@
 package com.homemate.chat.dao;
 
+import com.homemate.chat.dto.ChatDto;
+import com.homemate.chat.rowMapper.ChatMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -46,5 +48,20 @@ public class ChatDao {
     public String getTaskerPhone(Long id) throws SQLException{
         String sql="SELECT phone FROM Tasker t INNER JOIN Chat c on c.taskerID = t.taskerID WHERE c.chatID = ? ";
         return jdbcTemplate.queryForObject(sql,String.class,id);
+    }
+
+    public ChatDto getChat(Long chatId) throws SQLException{
+        String sql="SELECT * FROM Chat WHERE chatID = ?";
+        return jdbcTemplate.queryForObject(sql,new ChatMapper(),chatId);
+    }
+
+    public String getNameTasker(Long taskerId) {
+        String sql="SELECT username FROM Tasker WHERE taskerID = ?";
+        return jdbcTemplate.queryForObject(sql,String.class,taskerId);
+    }
+
+    public String getNameUser(Long userId) {
+        String sql="SELECT username FROM Users WHERE userID = ?";
+        return jdbcTemplate.queryForObject(sql,String.class,userId);
     }
 }

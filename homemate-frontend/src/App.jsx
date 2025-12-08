@@ -22,7 +22,7 @@ import UserTasksPage from "./pages/UserTasksPage";
 import TaskerTasksPage from "./pages/TaskerTasksPage";
 import AdminRoutes from "./admin/routing/AdminRoutes";
 import SubmitReportPage from "./pages/SubmitReportPage";
-
+import ChatPage from "./pages/ChatPage";
 // Protected route component - redirects to signin on 401
 function ProtectedRoute({ children, requiredRole }) {
   const { isAuthenticated, isLoading, getUserRole } = useAuth();
@@ -75,6 +75,8 @@ function AppRoutes() {
       />
       <Route path="/signin" element={<SignInPage />} />
       <Route path="/signup" element={<SignUpPage />} />
+      <Route path="/chat/:chatId" element={<ChatPage />} />
+
       <Route
         path="/profile"
         element={

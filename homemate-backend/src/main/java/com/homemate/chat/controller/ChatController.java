@@ -2,6 +2,7 @@ package com.homemate.chat.controller;
 
 import com.homemate.chat.Service.ChatService;
 import com.homemate.chat.dao.MessageDao;
+import com.homemate.chat.dto.ChatDto;
 import com.homemate.chat.dto.MessageDto;
 import com.homemate.chat.dto.PaginatedResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,17 @@ public class ChatController {
 //        catch (Exception e){
 //            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 //        }
+
+    }
+    @GetMapping("/getChat/{chatId}")
+    public ResponseEntity<ChatDto> getChat(@PathVariable Long chatId)throws Exception{
+        try {
+           ChatDto RES=chatService.getChat(chatId);
+            return ResponseEntity.status(HttpStatus.OK).body(RES);
+        }
+        catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
 
     }
     @GetMapping("/getHistory/tasker/{chatId}")
@@ -73,6 +85,28 @@ public class ChatController {
         }
 
     }
+    @GetMapping("/tasker/getRecipientName/{chatId}")
+    @PreAuthorize("hasRole('TASKER')")
+    public ResponseEntity<String> getRecipientUser(@PathVariable Long chatId){
+        try {
+            ChatDto RES = chatService.getChat(chatId);
+            String res = chatService.getRecipentNameUser(RES.getUserId());
+            return ResponseEntity.status(HttpStatus.OK).body(res);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
+    @GetMapping("/user/getRecipientName/{chatId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> getRecipientTasker(@PathVariable Long chatId){
+        try {
+            ChatDto RES = chatService.getChat(chatId);
+            String res = chatService.getRecipentNameTasker(RES.getTaskerId());
+            return ResponseEntity.status(HttpStatus.OK).body(res);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
 }

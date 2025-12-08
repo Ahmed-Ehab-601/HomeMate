@@ -2,6 +2,7 @@ package com.homemate.chat.Service;
 
 import com.homemate.chat.dao.ChatDao;
 import com.homemate.chat.dao.MessageDao;
+import com.homemate.chat.dto.ChatDto;
 import com.homemate.chat.dto.MessageDto;
 import com.homemate.chat.dto.PaginatedResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,10 @@ public class ChatService {
         this.messageDao = messageDao;
         this.chatDao = chatDao;
     }
+    public ChatDto getChat(Long chatId) throws Exception{
+           return chatDao.getChat(chatId);
 
+    }
     public PaginatedResponse getChatHistory(Long chatId, int page, int size) throws Exception{
         List<MessageDto> messages = messageDao.getAllMessages(chatId, page, size);
 
@@ -55,6 +59,12 @@ public class ChatService {
     }
 
 
+    public String getRecipentNameUser(Long userId) {
+        return  chatDao.getNameUser(userId);
+    }
+    public String getRecipentNameTasker(Long taskerId) {
+        return  chatDao.getNameTasker(taskerId);
+    }
 
 }
 
