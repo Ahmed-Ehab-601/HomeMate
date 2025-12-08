@@ -4,6 +4,8 @@ import AdminLayout from '../components/layout/AdminLayout';
 import UsersPage from '../pages/UsersPage';
 import TaskersPage from '../pages/TaskersPage';
 import ServicesPage from '../pages/ServicesPage';
+import ReportsPage from '../pages/ReportsPage';
+import ReportDetailsPage from '../pages/ReportDetailsPage';
 import ThemeProviderSwitcher from '../theme/ThemeProviderSwitcher';
 
 const AdminRoutes = () => (
@@ -15,6 +17,8 @@ const AdminRoutes = () => (
         <Route path="users" element={<UsersPage />} />
         <Route path="taskers" element={<TaskersPage />} />
         <Route path="services" element={<ServicesPage />} />
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="reports/:id" element={<ReportDetailsPage />} />
       </Route>
     </Routes>
   </ThemeProviderSwitcher>
