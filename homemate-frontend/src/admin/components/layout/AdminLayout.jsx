@@ -20,6 +20,7 @@ import {
 import PeopleIcon from "@mui/icons-material/People";
 import HandymanIcon from "@mui/icons-material/Handyman";
 import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
+import ReportIcon from "@mui/icons-material/Report";
 import LogoutIcon from "@mui/icons-material/Logout";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
@@ -42,6 +43,11 @@ const navItems = [
     path: "/admin/services",
     icon: <MiscellaneousServicesIcon fontSize="small" />,
   },
+  {
+    label: "Reports",
+    path: "/admin/reports",
+    icon: <ReportIcon fontSize="small" />,
+  },
 ];
 
 const AdminLayout = () => {
@@ -59,6 +65,7 @@ const AdminLayout = () => {
     if (location.pathname.startsWith("/admin/taskers")) return "/admin/taskers";
     if (location.pathname.startsWith("/admin/services"))
       return "/admin/services";
+    if (location.pathname.startsWith("/admin/reports")) return "/admin/reports";
     if (location.pathname.startsWith("/admin/users")) return "/admin/users";
 
     return "/admin/users";

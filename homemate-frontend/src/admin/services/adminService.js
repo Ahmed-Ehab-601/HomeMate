@@ -18,6 +18,7 @@ export {
   promoteUsers,
   suspendUsers,
   reactiveUsers,
+  getReports,
   default,
 } from '../api/adminApi';
 
