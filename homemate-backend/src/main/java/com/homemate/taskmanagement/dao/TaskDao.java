@@ -6,6 +6,7 @@ import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +39,12 @@ public interface TaskDao {
 
     Optional<Long> countTasksByTaskerIDAndStatus(Long taskerID, StatusDto status);
     Optional<Status> getStatus(Long taskID);
+    Optional<LocalDateTime> getStartDate(Long taskID);
     boolean updateStatus(Long taskID,Status newStatus);
     Optional<Long> getTaskerID(Long taskID);
+    Optional<Long> getUserID(Long taskID);
+    boolean updateTaskStartDate(Long taskId, LocalDateTime newStartDate);
+
+
 
 }
