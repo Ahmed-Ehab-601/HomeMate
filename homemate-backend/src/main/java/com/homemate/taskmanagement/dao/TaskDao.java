@@ -6,6 +6,8 @@ import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 
+import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -46,5 +48,14 @@ public interface TaskDao {
     boolean updateTaskStartDate(Long taskId, LocalDateTime newStartDate);
 
 
+    boolean updateTaskWorkedHours(Long taskID,double workedHours);
+    boolean updateTaskStartInProgress(Long taskID, Timestamp time);
+    boolean updateTaskEndData(Long taskID, Timestamp time);
+    boolean updateTaskBill(Long taskID, double bill);
+    boolean updateTaskerWorkedHours(Long taskerID,double workedHours);
+    Timestamp getStartInProgress(Long taskID);
+    Double getTaskWorkedHours(Long taskID);
+    Double getTaskerHourRate(Long taskerID);
+    boolean updateTaskerTotalEarning(Long taskerID,double bill);
 
 }

@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.Map;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class TaskManagementExceptionHandler {
 
     @ExceptionHandler(DuplicateRequestException.class)
     public ResponseEntity<?> handleDuplicateRequest(DuplicateRequestException ex) {
         return ResponseEntity.status(400).body(Map.of(
-                "error", "DUPLICATE_REQUEST",
+                "error", Error.DuplicateRequest,
                 "message", ex.getMessage()
         ));
     }
@@ -47,6 +47,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleTaskNotFoundException(TaskNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                 "error", Error.TaskNotFoundError,
+                "message", ex.getMessage()
+        ));
+    }
+    @ExceptionHandler(BadStateUpdateException.class)
+    public ResponseEntity<?> handleBadStateUpdateException(BadStateUpdateException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error", Error.BadStateUpdateException,
                 "message", ex.getMessage()
         ));
     }
