@@ -15,7 +15,7 @@ public class Suspended implements TaskState{
     TaskDao taskDao;
     @Override
     public void sendEmail() {
-        System.out.println("send suspended email");
+       //TO DO
     }
 
     @Override

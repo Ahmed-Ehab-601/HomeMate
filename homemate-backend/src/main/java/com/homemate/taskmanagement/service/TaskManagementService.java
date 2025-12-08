@@ -1,6 +1,7 @@
 package com.homemate.taskmanagement.service;
 
 //import com.homemate.TaskManagement.Dao.impl.TaskDaoImpl;
+import com.homemate.taskmanagement.dao.TaskDao;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.*;
 import com.homemate.taskmanagement.exceptions.*;
@@ -19,7 +20,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public class TaskManagementService {
     private final TaskMapper taskMapper;
-    private final TaskDaoImpl taskDao;
+    private final TaskDao taskDao;
     private final StatusFactory statusFactory;
 
 
@@ -128,16 +129,16 @@ public class TaskManagementService {
     }
 
     public TaskRequestResponseDto acceptOrReject(Long taskID,Long taskerID,Status newStatus){
-        Optional<Long> id = taskDao.getTaskerID(taskID);
-        if(id.isEmpty() || ! id.get().equals(taskerID) ){
-            throw new BadAcceptRejectException("the task id does not belong to this tasker");
-        }
         Optional<Status> status = taskDao.getStatus(taskID);
         if(status.isEmpty()) {
             throw new TaskNotFoundException("wrong task id");
         }
         if(!status.get().equals(Status.InReview)){
             throw new BadAcceptRejectException("bad request the task must be inReview");
+        }
+        Optional<Long> id = taskDao.getTaskerID(taskID);
+        if(id.isEmpty() || ! id.get().equals(taskerID) ){
+            throw new BadAcceptRejectException("the task id does not belong to this tasker");
         }
         taskDao.updateStatus(taskID,newStatus);
         return new TaskRequestResponseDto(taskID,newStatus);
@@ -162,8 +163,6 @@ public class TaskManagementService {
         taskContext.updateStatus();
         taskContext.sendEmail();
         return getTaskDetails(taskID).get();
-
-
     }
 
 

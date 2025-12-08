@@ -16,7 +16,7 @@ public class InProgress implements TaskState{
 
     @Override
     public void sendEmail() {
-        System.out.println("send in progress mail");
+        //TO DO
     }
 
     @Override
