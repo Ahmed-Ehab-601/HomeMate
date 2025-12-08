@@ -73,4 +73,18 @@ public class TaskManagementController {
             return new ResponseEntity <> (response.get(),HttpStatus.OK);
         }
     }
+
+    @PatchMapping("/task/{taskId}/reschedule")
+    @PreAuthorize("hasAnyRole('USER','TASKER')")
+    public ResponseEntity<?> rescheduleTask(
+            @PathVariable Long taskId,
+            @Valid @RequestBody RescheduleRequestDto requestDto,
+            @AuthenticationPrincipal AppUserDetails user
+    ) {
+
+        RescheduleResponseDto response = taskManagementService.rescheduleTask(taskId,requestDto);
+
+        return ResponseEntity.ok(response);
+    }
+
 }

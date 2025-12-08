@@ -4,12 +4,15 @@ package com.homemate.taskmanagement.service;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.*;
 import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
+import com.homemate.taskmanagement.exceptions.ConflictException;
 import com.homemate.taskmanagement.exceptions.DuplicateRequestException;
 import com.homemate.taskmanagement.exceptions.RequestLimitExceededException;
 import com.homemate.taskmanagement.mappers.TaskMapper;
 import com.homemate.taskmanagement.model.TaskEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -126,6 +129,41 @@ public class TaskManagementService {
             return Optional.ofNullable(response);
 
         }
+    }
+
+    public RescheduleResponseDto rescheduleTask(Long taskId, RescheduleRequestDto dto) {
+
+        TaskDto task = taskDao.getTaskDetails(taskId)
+                .orElseThrow(BadTaskRequestException::new);
+
+        Long taskerId = task.getTaskerID();
+
+        LocalDateTime newStart = dto.getNewStartDate();
+
+        // role check
+        String role = SecurityContextHolder.getContext()
+                .getAuthentication().getAuthorities().iterator().next().getAuthority();
+
+        boolean isTasker = role.equals("ROLE_TASKER");
+
+        if (isTasker) {
+            boolean conflict = taskDao.taskerHasConflict(taskerId, newStart, taskId);
+            if (conflict) {
+                throw new ConflictException("This new start time conflicts with an existing task.");
+            }
+        }
+
+
+        boolean updated = taskDao.updateTaskStartDate(taskId, newStart);
+        if (!updated) {
+            throw new IllegalStateException("Task could not be rescheduled");
+        }
+
+        return RescheduleResponseDto.builder()
+                .taskID(taskId)
+                .newStartDate(newStart)
+                .rescheduleStatus(StatusDto.Accepted)
+                .build();
     }
 
 

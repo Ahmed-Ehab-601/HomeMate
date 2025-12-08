@@ -5,6 +5,7 @@ import com.homemate.taskmanagement.dto.TaskCardDto;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.model.TaskEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,5 +37,11 @@ public interface TaskDao {
     Optional<Long> countTasksByTaskerID(Long taskerID);
 
     Optional<Long> countTasksByTaskerIDAndStatus(Long taskerID, StatusDto status);
+
+    boolean taskerHasConflict(Long taskerId, LocalDateTime newStartDate, Long excludeTaskId);
+
+    boolean updateTaskStartDate(Long taskId, LocalDateTime newStartDate);
+
+
 
 }

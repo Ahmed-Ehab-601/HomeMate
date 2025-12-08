@@ -28,7 +28,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/taskers/search",
             "/api/auth/google",
             "/api/taskers/search",
-            "/api/users/taskers/"
+            "/api/users/taskers/" ,
+                   " /api/task/8/reschedule"
     );
 
     private final JwtService jwtService;

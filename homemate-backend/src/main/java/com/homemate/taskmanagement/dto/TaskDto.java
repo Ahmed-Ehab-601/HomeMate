@@ -33,4 +33,7 @@ public class TaskDto {
     @Email
     private String taskerMail;
 
+    private Long userID;     // ADD THIS
+    private Long taskerID;   // ADD THIS
+
 }

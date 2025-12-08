@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -110,6 +111,8 @@ public class TaskDaoImpl implements TaskDao {
         String sql = """
             SELECT
                 t.taskID,
+                t.taskerID,
+                t.userID,
                 t.startDate,
                 t.endDate,
                 t.status,
@@ -280,5 +283,42 @@ public class TaskDaoImpl implements TaskDao {
         Long count = jdbcTemplate.queryForObject(sql,Long.class,taskerID,status.toString());
         return Optional.ofNullable(count);
     }
+
+
+    @Override
+    public boolean taskerHasConflict(Long taskerId, LocalDateTime newStartDate, Long excludeTaskId) {
+        String sql = """
+        SELECT COUNT(*) 
+        FROM tasks 
+        WHERE taskerID = ?
+          AND taskID <> ?
+          AND startDate <= ?
+          AND endDate >= ?
+    """;
+
+        Integer count = jdbcTemplate.queryForObject(
+                sql,
+                Integer.class,
+                taskerId,
+                excludeTaskId,
+                Timestamp.valueOf(newStartDate),
+                Timestamp.valueOf(newStartDate)
+        );
+
+        return count != null && count > 0;
+    }
+
+    @Override
+    public boolean updateTaskStartDate(Long taskId, LocalDateTime newStartDate) {
+        String sql = "UPDATE tasks SET startDate = ? WHERE taskID = ?";
+
+        int rows = jdbcTemplate.update(sql,
+                Timestamp.valueOf(newStartDate),
+                taskId);
+
+        return rows > 0;
+    }
+
+
 
 }
