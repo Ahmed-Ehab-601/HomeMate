@@ -1,8 +1,12 @@
 package com.homemate.reports.service;
 
 import com.homemate.reports.dto.ShortReport;
+import com.homemate.reports.dto.SubmitReport;
+import com.homemate.security.model.AppUserDetails;
 import com.homemate.util.PaginatedResponse;
 
 public interface IReportService {
     PaginatedResponse<ShortReport> getAllShortReports(int pageNumber, int pageSize);
+
+    boolean submitReport(SubmitReport submitReport, AppUserDetails userDetails);
 }

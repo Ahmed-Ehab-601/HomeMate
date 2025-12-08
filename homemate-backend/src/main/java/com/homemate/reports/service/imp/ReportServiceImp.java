@@ -2,7 +2,9 @@ package com.homemate.reports.service.imp;
 
 import com.homemate.reports.dao.ReportDao;
 import com.homemate.reports.dto.ShortReport;
+import com.homemate.reports.dto.SubmitReport;
 import com.homemate.reports.service.IReportService;
+import com.homemate.security.model.AppUserDetails;
 import com.homemate.util.PaginatedResponse;
 
 import org.springframework.stereotype.Service;
@@ -45,5 +47,13 @@ public class ReportServiceImp implements IReportService {
                 .totalElements(totalElements)
                 .pageSize(pageSize)
                 .build();
+    }
+
+    @Override
+    public boolean submitReport(SubmitReport submitReport, AppUserDetails userDetails) {
+        boolean reporterIsUser = userDetails.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equalsIgnoreCase("ROLE_USER"));
+
+        return reportDao.submitReport(submitReport, reporterIsUser);
     }
 }
