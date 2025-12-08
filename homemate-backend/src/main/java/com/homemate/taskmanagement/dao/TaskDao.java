@@ -39,11 +39,10 @@ public interface TaskDao {
 
     Optional<Long> countTasksByTaskerIDAndStatus(Long taskerID, StatusDto status);
     Optional<Status> getStatus(Long taskID);
+    Optional<LocalDateTime> getStartDate(Long taskID);
     boolean updateStatus(Long taskID,Status newStatus);
     Optional<Long> getTaskerID(Long taskID);
-
-    boolean taskerHasConflict(Long taskerId, LocalDateTime newStartDate, Long excludeTaskId);
-
+    Optional<Long> getUserID(Long taskID);
     boolean updateTaskStartDate(Long taskId, LocalDateTime newStartDate);
 
 

@@ -3,6 +3,7 @@ package com.homemate.taskmanagement.controller;
 
 import com.homemate.security.model.AppUserDetails;
 import com.homemate.taskmanagement.dto.*;
+import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.service.TaskManagementService;
 import jakarta.validation.Valid;
@@ -14,8 +15,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -89,4 +92,17 @@ public class TaskManagementController {
         return new ResponseEntity<>(HttpStatus.OK);
 
     }
+    @PatchMapping("/task/{taskId}/reschedule")
+    @PreAuthorize("hasAnyRole('USER','TASKER')")
+    public ResponseEntity<?> rescheduleTask(
+            @PathVariable @Valid Long taskId,
+            @Valid @RequestBody RescheduleRequestDto requestDto,
+            @AuthenticationPrincipal AppUserDetails user
+    ) {
+        RescheduleResponseDto response = taskManagementService.rescheduleTask(taskId, requestDto, user.getId());
+        return ResponseEntity.ok(response);
+    }
+
+
+
 }
