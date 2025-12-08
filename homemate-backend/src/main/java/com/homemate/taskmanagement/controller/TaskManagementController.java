@@ -3,7 +3,6 @@ package com.homemate.taskmanagement.controller;
 
 import com.homemate.security.model.AppUserDetails;
 import com.homemate.taskmanagement.dto.*;
-import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.service.TaskManagementService;
 import jakarta.validation.Valid;
@@ -15,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
