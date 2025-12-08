@@ -30,9 +30,7 @@ public class TaskRowMapper implements RowMapper<TaskDto> {
                 chatID(rs.getLong("chatID")).
                 addressDetails(buildAddress(rs)).
                 userMail(rs.getString("userMail")).
-                taskerMail(rs.getString("taskerMail")).
-                userID(rs.getLong("userID")).
-                taskerID(rs.getLong("taskerID"))
+                taskerMail(rs.getString("taskerMail"))
                 .build();
     }
 
