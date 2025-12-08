@@ -7,21 +7,21 @@ import com.homemate.taskmanagement.exceptions.*;
 import com.homemate.taskmanagement.mappers.TaskMapper;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@AllArgsConstructor
 public class TaskManagementService {
     private final TaskMapper taskMapper;
     private final TaskDaoImpl taskDao;
+    private final StatusFactory statusFactory;
 
-    public TaskManagementService(TaskMapper taskMapper,TaskDaoImpl taskDao) {
-        this.taskMapper = taskMapper;
-        this.taskDao = taskDao;
-    }
 
 
     public Optional<TaskDto> requestTask(TaskRequestDto requestDto){
@@ -127,7 +127,11 @@ public class TaskManagementService {
         }
     }
 
-    public void acceptOrReject(Long taskID,Long taskerID,Status newStatus){
+    public TaskRequestResponseDto acceptOrReject(Long taskID,Long taskerID,Status newStatus){
+        Optional<Long> id = taskDao.getTaskerID(taskID);
+        if(id.isEmpty() || ! id.get().equals(taskerID) ){
+            throw new BadAcceptRejectException("the task id does not belong to this tasker");
+        }
         Optional<Status> status = taskDao.getStatus(taskID);
         if(status.isEmpty()) {
             throw new TaskNotFoundException("wrong task id");
@@ -135,11 +139,30 @@ public class TaskManagementService {
         if(!status.get().equals(Status.InReview)){
             throw new BadAcceptRejectException("bad request the task must be inReview");
         }
+        taskDao.updateStatus(taskID,newStatus);
+        return new TaskRequestResponseDto(taskID,newStatus);
+
+
+    }
+    @Transactional
+    public TaskDto updateTaskStatus(Long taskID,Long taskerID,Status newStatus){
+        Optional<Status> status = taskDao.getStatus(taskID);
+        if(status.isEmpty()) {
+            throw new TaskNotFoundException("wrong task id");
+        }
         Optional<Long> id = taskDao.getTaskerID(taskID);
         if(id.isEmpty() || ! id.get().equals(taskerID) ){
-            throw new BadAcceptRejectException("the task id does not belong to this tasker");
+            throw new BadStateUpdateException("the task id does not belong to this tasker");
         }
-        taskDao.updateStatus(taskID,newStatus);
+        TaskState taskState = statusFactory.createTaskState(status.get(),taskID,taskerID);
+        TaskContext taskContext = new TaskContext(taskState);
+        TaskState newTaskState = statusFactory.createTaskState(newStatus,taskID,taskerID);
+        taskContext.contextChange(newTaskState);
+        taskContext.updateWorkedHours();
+        taskContext.updateStatus();
+        taskContext.sendEmail();
+        return getTaskDetails(taskID).get();
+
 
     }
 

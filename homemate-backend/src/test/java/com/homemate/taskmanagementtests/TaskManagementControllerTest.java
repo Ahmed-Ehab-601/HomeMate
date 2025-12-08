@@ -2,7 +2,7 @@
 //import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 //import com.fasterxml.jackson.databind.ObjectMapper;
 //import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-//import com.homemate.taskmanagement.controller.GlobalExceptionHandler;
+//import com.homemate.taskmanagement.controller.TaskManagementExceptionHandler;
 //import com.homemate.taskmanagement.controller.TaskManagementController;
 //import com.homemate.taskmanagement.dto.*;
 //import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
@@ -52,7 +52,7 @@
 //    void setUp() {
 //        // Setup MockMvc with the controller and exception handler
 //        mockMvc = MockMvcBuilders.standaloneSetup(taskManagementController)
-//                .setControllerAdvice(new GlobalExceptionHandler())
+//                .setControllerAdvice(new TaskManagementExceptionHandler())
 //                .build();
 //
 //        objectMapper = new ObjectMapper();
