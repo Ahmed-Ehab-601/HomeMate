@@ -8,6 +8,7 @@ import com.homemate.taskmanagement.exceptions.ConflictException;
 import com.homemate.taskmanagement.exceptions.DuplicateRequestException;
 import com.homemate.taskmanagement.exceptions.RequestLimitExceededException;
 import com.homemate.taskmanagement.mappers.TaskMapper;
+import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -131,14 +132,16 @@ public class TaskManagementService {
         }
     }
 
-    public RescheduleResponseDto rescheduleTask(Long taskId, RescheduleRequestDto dto) {
+    public RescheduleResponseDto rescheduleTask(Long taskId, RescheduleRequestDto dto ,long p) {
 
         TaskDto task = taskDao.getTaskDetails(taskId)
                 .orElseThrow(BadTaskRequestException::new);
 
         Long taskerId = task.getTaskerID();
-
         LocalDateTime newStart = dto.getNewStartDate();
+        if(task.getStatus()!= Status.InReview){
+            throw new IllegalStateException("Task could not be rescheduled");
+        }
 
         // role check
         String role = SecurityContextHolder.getContext()
@@ -146,12 +149,12 @@ public class TaskManagementService {
 
         boolean isTasker = role.equals("ROLE_TASKER");
 
-        if (isTasker) {
-            boolean conflict = taskDao.taskerHasConflict(taskerId, newStart, taskId);
-            if (conflict) {
-                throw new ConflictException("This new start time conflicts with an existing task.");
-            }
-        }
+//        if (isTasker) {
+//            boolean conflict = taskDao.taskerHasConflict(taskerId, newStart, taskId);
+//            if (conflict) {
+//                throw new ConflictException("This new start time conflicts with an existing task.");
+//            }
+//        }
 
 
         boolean updated = taskDao.updateTaskStartDate(taskId, newStart);

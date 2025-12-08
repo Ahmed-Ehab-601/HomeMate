@@ -337,7 +337,7 @@ public class TaskDaoImpl implements TaskDao {
 
     @Override
     public boolean updateTaskStartDate(Long taskId, LocalDateTime newStartDate) {
-        String sql = "UPDATE tasks SET startDate = ? WHERE taskID = ?";
+        String sql = "UPDATE Task SET startDate = ? WHERE taskID = ?";
 
         int rows = jdbcTemplate.update(sql,
                 Timestamp.valueOf(newStartDate),
