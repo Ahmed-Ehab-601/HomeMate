@@ -106,18 +106,19 @@ export async function fetchTaskerProfile(taskerId) {
 }
 
 export async function getTaskerReviews(taskerId, page = 1, pageSize = 5) {
-  const response = await fetch(`${baseUrl}/api/tasker-profile/reviews`, {
-    method: "POST",
+  const params = new URLSearchParams({
+    taskerID: Number(taskerId),
+    page: page,
+    pageSize: pageSize
+  });
+
+  const response = await fetch(`${baseUrl}/api/tasker-profile/reviews?${params.toString()}`, {
+    method: "GET",
     headers: {
       "Content-Type": "application/json",
       // Add Authorization if available, though endpoint is now public-capable
       ...(localStorage.getItem("homemate_token") ? { Authorization: `Bearer ${localStorage.getItem("homemate_token")}` } : {})
     },
-    body: JSON.stringify({
-      taskerID: Number(taskerId),
-      page: page,
-      pageSize: pageSize
-    }),
   });
 
   if (!response.ok) {
