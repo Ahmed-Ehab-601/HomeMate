@@ -2,6 +2,7 @@ package com.homemate.reports.dao.imp;
 
 import com.homemate.reports.dao.ReportDao;
 import com.homemate.reports.dto.ShortReport;
+import com.homemate.reports.model.AdminStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -29,7 +30,7 @@ public class ReportDaoImp implements ReportDao {
                         .header(rs.getString("header"))
                         .taskID(rs.getInt("taskID"))
                         .reporter(rs.getBoolean("reporter"))
-                        .adminStatus(rs.getString("adminStatus"))
+                        .adminStatus(AdminStatus.fromValue(rs.getString("adminStatus")))
                         .build();
             },
             limit,

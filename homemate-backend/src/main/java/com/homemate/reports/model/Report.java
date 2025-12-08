@@ -15,5 +15,5 @@ public class Report {
     private String body;
     private int taskID;
     private boolean reporter; // true -> user, false -> tasker
-    private String adminStatus;
+    private AdminStatus adminStatus;
 }

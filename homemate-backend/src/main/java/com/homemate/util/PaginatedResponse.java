@@ -13,9 +13,9 @@ import lombok.Builder;
 @Builder
 public class PaginatedResponse<T> {
     private List<T> data;
-    private int currentPage;
-    private int totalPages;
+    private long currentPage;
+    private long totalPages;
     private long totalElements;
-    private int pageSize;
+    private long pageSize;
 }
 
