@@ -1,0 +1,133 @@
+/* ReportFilters.css */
+.report-filters-card {
+  width: 100%;
+  margin-bottom: 1.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(215, 240, 74, 0.1);
+  box-shadow: 0 20px 35px rgba(15, 15, 15, 0.05);
+  background: white;
+}
+
+.report-filters-card.dark-mode {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.6);
+  background: #1a1a1a;
+}
+
+.report-filters-card .report-filters-content {
+  padding: 1rem;
+  width: 100%;
+}
+
+.report-filters-card .filters-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1rem;
+  width: 100%;
+}
+
+.report-filters-card .filter-item:nth-child(1),
+.report-filters-card .filter-item:nth-child(2) {
+  grid-column: span 3;
+}
+
+.report-filters-card .filter-item:nth-child(3),
+.report-filters-card .filter-item:nth-child(4),
+.report-filters-card .filter-item:nth-child(5) {
+  grid-column: span 2;
+}
+
+@media (max-width: 768px) {
+  .report-filters-card .filter-item {
+    grid-column: span 12 !important;
+  }
+}
+
+.report-filters-card .input-wrapper,
+.report-filters-card .select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.report-filters-card .input-label,
+.report-filters-card .select-label {
+  position: absolute;
+  top: -0.5rem;
+  left: 0.75rem;
+  background: white;
+  padding: 0 0.25rem;
+  font-size: 0.75rem;
+  color: #666;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.report-filters-card.dark-mode .input-label,
+.report-filters-card.dark-mode .select-label {
+  background: #1a1a1a;
+  color: #999;
+}
+
+.report-filters-card .filter-input,
+.report-filters-card .filter-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s;
+  background: white;
+  color: #000;
+  height: 2.75rem;
+}
+
+.report-filters-card .filter-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px;
+}
+
+.report-filters-card.dark-mode .filter-input,
+.report-filters-card.dark-mode .filter-select {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #fff;
+}
+
+/* .report-filters-card.dark-mode .filter-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+} */
+
+.report-filters-card .filter-input:focus,
+.report-filters-card .filter-select:focus {
+  border-color: #3b82f6;
+}
+
+.report-filters-card .filter-input::placeholder {
+  color: #9ca3af;
+}
+
+.report-filters-card .filters-note {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.report-filters-card.dark-mode .filters-note {
+  color: #9ca3af;
+}
+
+/* Remove number input spinners */
+.report-filters-card input[type="number"]::-webkit-inner-spin-button,
+.report-filters-card input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.report-filters-card input[type="number"] {
+  -moz-appearance: textfield;
+}

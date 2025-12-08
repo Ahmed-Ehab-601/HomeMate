@@ -192,6 +192,22 @@ export const reactiveTaskers = async (taskerIds = []) => {
     return Promise.all(promises);
 };
 
+export const getReports = async ({ pageNumber = 0, pageSize = 20 } = {}) => {
+    const queryString = buildQueryString({ pageNumber, pageSize });
+    const response = await apiFetch(`/api/reports/short-reports?${queryString}`);
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch reports',
+            data,
+        };
+    }
+
+    return data;
+};
+
 export default {
     getUsers,
     getTaskers,
@@ -211,4 +227,5 @@ export default {
     promoteUsers,
     suspendUsers,
     reactiveUsers,
+    getReports,
 };
