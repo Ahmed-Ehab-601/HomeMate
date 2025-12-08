@@ -20,12 +20,9 @@ public class ReportDaoImp implements ReportDao {
     public List<ShortReport> getAllShortReports(Long limit, Long offset) {
         String sql = "SELECT reportID, header, taskID, reporter, adminStatus FROM Report " +
                      "ORDER BY reportID DESC LIMIT ? OFFSET ?";
-
-        Object[] params = {limit, offset};
         
         return jdbcTemplate.query(
             sql, 
-            params,
             (rs, rowNum) -> {
                 return ShortReport.builder()
                         .reportID(rs.getInt("reportID"))
@@ -34,7 +31,9 @@ public class ReportDaoImp implements ReportDao {
                         .reporter(rs.getBoolean("reporter"))
                         .adminStatus(rs.getString("adminStatus"))
                         .build();
-            }
+            },
+            limit,
+            offset
         );
     }
 
