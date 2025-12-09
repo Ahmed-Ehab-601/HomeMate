@@ -467,10 +467,20 @@ function TaskerDashboardPage() {
     );
   };
 
-  const handleTaskerLogout = () => {
-    logout();
+// Updated handleTaskerLogout function for TaskerDashboardPage.jsx
+// Replace the existing handleTaskerLogout function with this:
+
+const handleTaskerLogout = async () => {
+  try {
+    // The logout function in AuthContext now handles setting offline status
+    await logout();
     navigate("/");
-  };
+  } catch (error) {
+    console.error("Logout error:", error);
+    // Still navigate even if there's an error
+    navigate("/");
+  }
+};
 
   return (
     <main className="page page--wide">
