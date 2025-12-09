@@ -6,6 +6,8 @@ import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
+import com.homemate.chat.Service.ChatService;
+import com.homemate.chat.Service.MessageService;
 import com.homemate.security.service.JwtService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
@@ -18,17 +20,19 @@ public class LoginService {
     UserDao userDao;
     JwtService jwtService;
     ValidateSignupService validateSignup;
-
+    ChatService chatService;
     public LoginService(
         TaskerDao taskerDao,
          UserDao userDao,
           JwtService jwtService,
-          ValidateSignupService validateSignup
-        ) {
+          ValidateSignupService validateSignup,
+        ChatService chatService
+    ) {
         this.taskerDao = taskerDao;
         this.userDao = userDao;
         this.jwtService = jwtService;
         this.validateSignup = validateSignup;
+        this.chatService=chatService;
     }
 
     public LoginResponseDto loginWithEmailPassword(LoginRequestDto loginRequestDto) {
@@ -127,7 +131,7 @@ public class LoginService {
                         user.getEmail(),
                         role
             );
-
+            chatService.setUserOnline(user.getUserID()) ;
             return new LoginResponseDto(
                     role,
                     user.getUsername(),
@@ -136,7 +140,7 @@ public class LoginService {
                     token
             );
 
-        } catch (EmptyResultDataAccessException e) {}
+        } catch (Exception e) {}
 
         try {
 
@@ -153,7 +157,7 @@ public class LoginService {
                     tasker.getEmail(),
                     role
                 );
-
+            chatService.setTaskerOnline(tasker.getTaskerID());
                 return new LoginResponseDto(
                     role,
                     tasker.getUsername(),
@@ -162,7 +166,7 @@ public class LoginService {
                     token
                 );
 
-        } catch (EmptyResultDataAccessException e) {}
+        } catch (Exception e) {}
         return null;
     }
 }

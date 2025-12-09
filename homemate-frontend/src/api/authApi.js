@@ -37,3 +37,34 @@ export async function loginWithGoogle(idToken) {
   return response.json();
 }
 
+export const setUserOffline = async (userId) => {
+  const token = localStorage.getItem("homemate_token");
+  const response = await fetch(`${baseUrl}/api/chat/user/${userId}/offline`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to set user offline");
+  }
+  // Backend returns plain text "changed", not JSON
+  return response.text();
+};
+
+export const setTaskerOffline = async (taskerId) => {
+  const token = localStorage.getItem("homemate_token");
+  const response = await fetch(`${baseUrl}/api/chat/tasker/${taskerId}/offline`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to set tasker offline");
+  }
+  // Backend returns plain text "changed", not JSON
+  return response.text();
+};
