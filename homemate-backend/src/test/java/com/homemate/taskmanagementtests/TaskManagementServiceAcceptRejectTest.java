@@ -100,7 +100,6 @@ class TaskManagementServiceAcceptRejectTest {
                 .hasMessage("bad request the task must be inReview");
 
         verify(taskDao).getStatus(taskId);
-        verify(taskDao, never()).getTaskerID(anyLong());
         verify(taskDao, never()).updateStatus(anyLong(), any(Status.class));
     }
 

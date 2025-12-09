@@ -192,8 +192,25 @@ export const reactiveTaskers = async (taskerIds = []) => {
     return Promise.all(promises);
 };
 
-export const getReports = async ({ pageNumber = 0, pageSize = 20 } = {}) => {
-    const queryString = buildQueryString({ pageNumber, pageSize });
+export const getReports = async ({
+    pageNumber = 0,
+    pageSize = 20,
+    header,
+    body,
+    taskID,
+    reporter,
+    adminStatus
+} = {}) => {
+    const params = { pageNumber, pageSize };
+
+    // Only include filter params if they have values
+    if (header) params.header = header;
+    if (body) params.body = body;
+    if (taskID) params.taskID = taskID;
+    if (reporter !== undefined && reporter !== null) params.reporter = reporter;
+    if (adminStatus) params.adminStatus = adminStatus;
+
+    const queryString = buildQueryString(params);
     const response = await apiFetch(`/api/reports/short-reports?${queryString}`);
     const data = await parseJson(response);
 

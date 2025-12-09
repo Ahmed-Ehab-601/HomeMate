@@ -3,7 +3,7 @@ import React from 'react';
 import { useAdminThemeMode } from '../../theme/ThemeProviderSwitcher';
 import '../../styles/ReportFilters.css';
 
-const ReportFilters = ({ filters, onFilterChange }) => {
+const ReportFilters = ({ filters, onFilterChange, onApplyFilters }) => {
   const { mode } = useAdminThemeMode();
   const isDark = mode === 'dark';
 
@@ -81,8 +81,13 @@ const ReportFilters = ({ filters, onFilterChange }) => {
           </div>
         </div>
 
-        <div className="filters-note">
-          Note: Search and filter functionality is currently not connected to backend
+        <div className="filters-actions">
+          <button
+            onClick={onApplyFilters}
+            className="search-button"
+          >
+            Search
+          </button>
         </div>
       </div>
     </div>

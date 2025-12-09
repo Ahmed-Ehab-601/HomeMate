@@ -2,9 +2,6 @@ package com.homemate.taskmanagement.dao;
 
 import com.homemate.taskmanagement.dto.StatusDto;
 import com.homemate.taskmanagement.dto.TaskCardDto;
-
-import com.homemate.taskmanagement.dto.TaskDto;
-import com.homemate.taskmanagement.model.Status;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
