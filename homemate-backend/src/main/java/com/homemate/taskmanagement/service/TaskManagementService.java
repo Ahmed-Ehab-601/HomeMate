@@ -1,6 +1,7 @@
 package com.homemate.taskmanagement.service;
 
 //import com.homemate.TaskManagement.Dao.impl.TaskDaoImpl;
+import com.homemate.TaskerProfile.DTO.ReviewDTO;
 import com.homemate.taskmanagement.dao.TaskDao;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.*;
@@ -9,6 +10,7 @@ import com.homemate.taskmanagement.mappers.TaskMapper;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 import lombok.AllArgsConstructor;
+import org.springframework.scheduling.config.Task;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +26,6 @@ public class TaskManagementService {
     private final TaskMapper taskMapper;
     private final TaskDao taskDao;
     private final StatusFactory statusFactory;
-
-
 
     public Optional<TaskDto> requestTask(TaskRequestDto requestDto){
         checkRequest(requestDto);
@@ -55,9 +55,6 @@ public class TaskManagementService {
         } else if (taskDao.checkIfTaskLimit(requestDto.getUserID(),10)) {
             throw new RequestLimitExceededException();
         }
-    }
-    public Optional<TaskDto> getTaskDetails(Long taskID){
-        return taskDao.getTaskDetails(taskID);
     }
 
     public Optional<PaginatedResponse> getUserTasks(Long userID, StatusDto statusDto, int page, int pageSize){
@@ -202,6 +199,31 @@ public class TaskManagementService {
                 .rescheduleStatus(StatusDto.Accepted)
                 .build();
     }
+
+
+
+    public Optional<TaskDto> getTaskDetails(Long taskID){
+        //check if task not found return throw exeption??
+
+        return taskDao.getTaskDetails(taskID);
+    }
+
+
+    public Optional<ReviewDTO> getReviewByTaskId(long taskId) {
+        Optional<Long> task = taskDao.getUserID(taskId);
+        if (task.isEmpty()) {
+            throw new TaskNotFoundException("Task with ID " + taskId + " not found");
+        }
+
+        Optional<ReviewDTO> review = taskDao.getReviewByTaskId(taskId);
+
+        if (review.isEmpty()) {
+            throw new ReviewNotFoundException("No review found for task " + taskId);
+        }
+        return taskDao.getReviewByTaskId(taskId);
+    }
+
+
 
 
 }

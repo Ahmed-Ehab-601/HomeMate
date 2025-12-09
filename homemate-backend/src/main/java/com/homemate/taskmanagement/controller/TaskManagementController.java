@@ -1,6 +1,7 @@
 package com.homemate.taskmanagement.controller;
 
 
+import com.homemate.TaskerProfile.DTO.ReviewDTO;
 import com.homemate.security.model.AppUserDetails;
 import com.homemate.taskmanagement.dto.*;
 import com.homemate.taskmanagement.model.Status;
@@ -16,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -98,21 +100,57 @@ public class TaskManagementController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/start")
-    public ResponseEntity<?> startTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
-        TaskDto taskDto = taskManagementService.updateTaskStatus(taskID,userDetails.getId(), Status.InProgress);
-        return new ResponseEntity<>(taskDto,HttpStatus.OK);
+    @GetMapping("/task/{taskId}/taskDetails")
+    @PreAuthorize("hasAnyRole('USER','TASKER')")
+    public ResponseEntity<?> viewTask(
+            @PathVariable @Valid Long taskId,
+            @AuthenticationPrincipal AppUserDetails user
+    ){
+        Optional<TaskDto> response = taskManagementService.getTaskDetails(taskId);
+        return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/suspend")
-    public ResponseEntity<?> suspendTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
-        TaskDto taskDto = taskManagementService.updateTaskStatus(taskID,userDetails.getId(), Status.Suspended);
-        return new ResponseEntity<>(taskDto,HttpStatus.OK);
+
+    @GetMapping("/task/{taskId}/taskReview")
+    @PreAuthorize("hasAnyRole('USER','TASKER')")
+    public ResponseEntity<?> getTaskReview(
+            @PathVariable Long taskId,
+            @AuthenticationPrincipal AppUserDetails user
+    ){
+        Optional<ReviewDTO> reviewDTO = taskManagementService.getReviewByTaskId(taskId);
+        return ResponseEntity.ok(reviewDTO);
     }
-    @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/complete")
-    public ResponseEntity<?> completeTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
-        TaskDto taskDto = taskManagementService.updateTaskStatus(taskID,userDetails.getId(), Status.Done);
-        return new ResponseEntity<>(taskDto,HttpStatus.OK);
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+//    @GetMapping("/{taskId}")
+//    public ResponseEntity<TaskViewDto> getTask(
+//            @PathVariable Long taskId
+//    ) {
+//        // 1. Fetch the TaskDto from the service
+//        Optional<TaskDto> taskDto = taskManagementService.getTaskDetails(taskId);
+//
+//        if (taskDto == null) {
+//            // 2. Handle Task Not Found
+//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//        }
+//
+//        // 3. Convert the TaskDto to a TaskViewDto using the factory
+//        TaskViewDto taskViewDto = taskViewFactory.createView(taskDto);
+//
+//        // 4. Return the result
+//        return ResponseEntity.ok(taskViewDto);
+//    }
+
+
 
 }

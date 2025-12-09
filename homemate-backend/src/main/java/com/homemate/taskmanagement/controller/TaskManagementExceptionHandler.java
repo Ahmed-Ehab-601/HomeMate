@@ -64,6 +64,14 @@ public class TaskManagementExceptionHandler {
                 "message", ex.getMessage()
         ));
     }
+    @ExceptionHandler(ReviewNotFoundException.class)
+    public ResponseEntity<?> handleReviewNotFound(ReviewNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "error", Error.ReviewNotFound,
+                "message", ex.getMessage()
+        ));
+    }
+
 
 
 }

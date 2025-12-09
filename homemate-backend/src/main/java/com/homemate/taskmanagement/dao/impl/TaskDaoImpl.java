@@ -1,5 +1,7 @@
 package com.homemate.taskmanagement.dao.impl;
 
+import com.homemate.TaskerProfile.DTO.ReviewDTO;
+import com.homemate.TaskerProfile.mappers.ReviewDTORowMapper;
 import com.homemate.taskmanagement.dao.TaskCardRowMapper;
 import com.homemate.taskmanagement.dao.TaskDao;
 import com.homemate.taskmanagement.dao.TaskRowMapper;
@@ -19,7 +21,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
@@ -33,12 +34,14 @@ public class TaskDaoImpl implements TaskDao {
     private final JdbcTemplate jdbcTemplate;
     private final TaskCardRowMapper taskCardRowMapper;
     private final TaskRowMapper taskRowMapper;
+    private final ReviewDTORowMapper reviewDTORowMapper;
 
 
-    public TaskDaoImpl(final JdbcTemplate jdbcTemplate, TaskCardRowMapper taskCardRowMapper, TaskRowMapper taskRowMapper) {
+    public TaskDaoImpl(final JdbcTemplate jdbcTemplate, TaskCardRowMapper taskCardRowMapper, TaskRowMapper taskRowMapper, ReviewDTORowMapper reviewDTORowMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.taskCardRowMapper = taskCardRowMapper;
         this.taskRowMapper = taskRowMapper;
+        this.reviewDTORowMapper = reviewDTORowMapper;
     }
 
 
@@ -109,7 +112,6 @@ public class TaskDaoImpl implements TaskDao {
         }
 
     }
-
     @Override
     public Optional<TaskDto> getTaskDetails(Long taskID) {
         String sql = """
@@ -412,6 +414,24 @@ public class TaskDaoImpl implements TaskDao {
             return Optional.empty();
         }
     }
+
+    public Optional<ReviewDTO> getReviewByTaskId(long taskId) {
+        String sql = """
+                SELECT r.reviewID, r.text, r.rate, r.time, r.taskID,
+                       u.username AS reviewerUsername
+                FROM Reviews r
+                JOIN Task t ON r.taskID = t.taskID
+                JOIN Users u ON t.userID = u.userID
+                WHERE r.taskID = ?
+                """;
+        try {
+            ReviewDTO review = jdbcTemplate.queryForObject(sql, reviewDTORowMapper, taskId);
+            return Optional.of(review);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
 
 
 

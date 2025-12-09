@@ -26,8 +26,6 @@ public class TaskDto {
     private Long chatID;
     private String addressDetails;
     private Double rate;
-    private String review;
-    private List<ReviewImageDto> reviewImageDtoList;
     @Email
     private String userMail;
     @Email
