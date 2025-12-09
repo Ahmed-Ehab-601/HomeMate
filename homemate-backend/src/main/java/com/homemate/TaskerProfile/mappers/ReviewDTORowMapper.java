@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import com.homemate.TaskerProfile.DTO.ReviewDTO;
 
-@Component
+@Component("taskerProfileReviewDTORowMapper")
 public class ReviewDTORowMapper implements RowMapper<ReviewDTO> {
 
     @Override

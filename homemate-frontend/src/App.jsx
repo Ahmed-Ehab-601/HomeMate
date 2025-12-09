@@ -20,6 +20,7 @@ import TaskerDashboardPage from "./pages/TaskerDashboardPage";
 import SignUpPage from "./pages/SignUpPage";
 import UserTasksPage from "./pages/UserTasksPage";
 import TaskerTasksPage from "./pages/TaskerTasksPage";
+import SubmitReviewPage from "./pages/SubmitReviewPage";
 import AdminRoutes from "./admin/routing/AdminRoutes";
 
 // Protected route component - redirects to signin on 401
@@ -64,6 +65,14 @@ function AppRoutes() {
       <Route path="/services/:slug/taskers" element={<TaskerDiscoveryPage />} />
       <Route path="/taskers/:taskerId" element={<TaskerProfilePage />} />
       <Route path="/taskers/:taskerId/request" element={<RequestTaskPage />} />
+      <Route
+        path="/submit-review/:taskId"
+        element={
+          <ProtectedRoute requiredRole="ROLE_USER">
+            <SubmitReviewPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/signin" element={<SignInPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route

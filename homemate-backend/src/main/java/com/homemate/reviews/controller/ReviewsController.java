@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.homemate.reviews.DTO.ReviewDTO;
+import com.homemate.reviews.DTO.ReviewsDTO;
 import com.homemate.reviews.service.ReviewsService;
 
 @RestController
@@ -28,10 +28,10 @@ public class ReviewsController {
 		this.reviewsService = reviewsService;
 	}
 
-	// Add a new review. Returns the created ReviewDTO or 400 on validation errors.
+	// Add a new review. Returns the created ReviewsDTO or 400 on validation errors.
 	@PostMapping
 	@PreAuthorize("hasRole('ROLE_USER')")
-	public ReviewDTO addReview(@RequestBody ReviewDTO dto) {
+	public ReviewsDTO addReview(@RequestBody ReviewsDTO dto) {
 		try {
 			return reviewsService.addReview(dto);
 		} catch (IllegalArgumentException e) {
@@ -42,8 +42,8 @@ public class ReviewsController {
 	// Get review by task id. Returns 404 if not found.
 	@GetMapping("/task/{taskId}")
 	@PreAuthorize("hasRole('ROLE_USER')")
-	public ReviewDTO getReviewByTask(@PathVariable("taskId") int taskId) {
-		ReviewDTO review = reviewsService.getReviewByTask(taskId);
+	public ReviewsDTO getReviewByTask(@PathVariable("taskId") int taskId) {
+		ReviewsDTO review = reviewsService.getReviewByTask(taskId);
 		if (review == null) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Review not found for task: " + taskId);
 		}
@@ -63,12 +63,12 @@ public class ReviewsController {
 		}
 	}
 
-	// Update a review. Returns the updated ReviewDTO or 400 on validation errors.
+	// Update a review. Returns the updated ReviewsDTO or 400 on validation errors.
 	@PutMapping
 	@PreAuthorize("hasRole('ROLE_USER')")
-	public ResponseEntity<ReviewDTO> updateReview(@RequestBody ReviewDTO reviewDTO) {
+	public ResponseEntity<ReviewsDTO> updateReview(@RequestBody ReviewsDTO reviewsDTO) {
 		try {
-			ReviewDTO updated = reviewsService.updateReview(reviewDTO);
+			ReviewsDTO updated = reviewsService.updateReview(reviewsDTO);
 			return ResponseEntity.ok(updated);
 		} catch (IllegalArgumentException e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);

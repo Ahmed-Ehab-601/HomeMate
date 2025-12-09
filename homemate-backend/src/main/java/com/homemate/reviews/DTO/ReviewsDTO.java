@@ -3,7 +3,7 @@ package com.homemate.reviews.DTO;
 import java.sql.Timestamp;
 import java.util.List;
 
-public class ReviewDTO {
+public class ReviewsDTO {
     private int reviewId;
     private String text;
     private double rate;
