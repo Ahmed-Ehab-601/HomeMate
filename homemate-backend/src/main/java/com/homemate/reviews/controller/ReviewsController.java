@@ -38,6 +38,8 @@ public class ReviewsController {
 	public ReviewsDTO addReview(@Valid @RequestBody ReviewsDTO dto) {
 		try {
 			return reviewsService.addReview(dto);
+		} catch (org.springframework.security.access.AccessDeniedException e) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage(), e);
 		} catch (IllegalArgumentException e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
 		}
@@ -60,6 +62,8 @@ public class ReviewsController {
 	public boolean deteleReview(@PathVariable("reviewId") int reviewId) {
 		try {
 			return reviewsService.deleteReview(reviewId);
+		} catch (org.springframework.security.access.AccessDeniedException e) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage(), e);
 		} catch (IllegalArgumentException e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
 		} catch (Exception e) {
@@ -74,6 +78,8 @@ public class ReviewsController {
 		try {
 			ReviewsDTO updated = reviewsService.updateReview(reviewsDTO);
 			return ResponseEntity.ok(updated);
+		} catch (org.springframework.security.access.AccessDeniedException e) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage(), e);
 		} catch (IllegalArgumentException e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
 		} catch (Exception e) {

@@ -129,6 +129,15 @@ public class ReviewsDao {
         }
     }
 
+    public Long getUserIdByTaskId(int taskId) {
+        String sql = "SELECT userID FROM Task WHERE taskID = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, Long.class, taskId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public Double getAverageRatingForTasker(int taskerId) {
         String sql = """
             SELECT AVG(r.rate) 
@@ -138,6 +147,15 @@ public class ReviewsDao {
         """;
         Double avg = jdbcTemplate.queryForObject(sql, Double.class, taskerId);
         return avg != null ? avg : 0.0;
+    }
+
+    public String getTaskStatus(int taskId) {
+        String sql = "SELECT status FROM Task WHERE taskID = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, String.class, taskId);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public void updateTaskerRating(int taskerId, double rating) {

@@ -24,7 +24,6 @@ public class ReviewsDTO {
     private Timestamp time;
     
     @NotNull(message = "Task ID is required")
-    @Positive(message = "Task ID must be positive")
     private int taskId;
     
     @Valid // Validates nested ReviewImagesDTO objects

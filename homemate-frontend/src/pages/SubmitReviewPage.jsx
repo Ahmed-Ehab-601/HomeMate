@@ -16,6 +16,7 @@ function SubmitReviewPage() {
     const [images, setImages] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [isForbidden, setIsForbidden] = useState(false);
 
     const handleTextChange = (e) => setText(e.target.value);
 
@@ -100,21 +101,38 @@ function SubmitReviewPage() {
             // Extract error message from backend response
             let errorMessage = "Failed to submit review. Please try again.";
 
-            if (err.response?.data) {
-                // If backend returns a string error message
-                if (typeof err.response.data === 'string') {
-                    errorMessage = err.response.data;
-                }
-                // If backend returns an object with a message property
-                else if (err.response.data.message) {
-                    errorMessage = err.response.data.message;
-                }
-                // If backend returns an error property
-                else if (err.response.data.error) {
-                    errorMessage = err.response.data.error;
+            // Get status code (handle both custom apiClient and axios structures)
+            const status = err.status || err.response?.status;
+
+            // Get error data/message
+            const errorData = err.response?.data || err;
+
+            // Check for 403 Forbidden (Authorization error)
+            if (status === 403) {
+                errorMessage = "⛔ Access Denied: You are not authorized to review this task. Only the task owner can submit a review.";
+                setIsForbidden(true);
+            }
+            // Check for 400 Bad Request (Validation errors)
+            else if (status === 400) {
+                if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (errorData.error) {
+                    errorMessage = errorData.error;
                 }
             }
-            // If there's a general error message
+            // General error message extraction
+            else if (errorData) {
+                if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (errorData.error) {
+                    errorMessage = errorData.error;
+                }
+            }
+            // Fallback to error object message
             else if (err.message) {
                 errorMessage = err.message;
             }
@@ -132,103 +150,105 @@ function SubmitReviewPage() {
 
                 {error && <div className="alert alert-error">{error}</div>}
 
-                <div className="review-form">
-                    {/* Star Rating */}
-                    <div className="form-field">
-                        <label>Rating</label>
-                        <div className="star-rating-input">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <span
-                                    key={star}
-                                    className={star <= rate ? "filled" : "empty"}
-                                    onClick={() => handleRateChange(star)}
-                                >
-                                    ★
-                                </span>
-                            ))}
-                        </div>
-                        <input
-                            type="hidden"
-                            name="rate"
-                            value={rate}
-                            required
-                        />
-                    </div>
-
-                    {/* Review Text */}
-                    <div className="form-field">
-                        <label htmlFor="review-text">Review (Required)</label>
-                        <textarea
-                            id="review-text"
-                            className="task-textarea"
-                            placeholder="Share your experience (max 50 chars)..."
-                            value={text}
-                            onChange={(e) => {
-                                // Limit to 50 characters as requested
-                                if (e.target.value.length <= 50) {
-                                    handleTextChange(e);
-                                }
-                            }}
-                            maxLength={50}
-                            required
-                        />
-                        <div style={{ textAlign: "right", fontSize: "0.85rem", color: text.length >= 50 ? "red" : "#6b7280" }}>
-                            {text.length}/50 characters
-                        </div>
-                    </div>
-
-                    {/* Image Upload */}
-                    <div className="form-field">
-                        <label>Photos (Optional, max 5)</label>
-                        <input
-                            type="file"
-                            id="file-upload"
-                            accept="image/*"
-                            multiple
-                            onChange={handleImageChange}
-                            style={{ display: "none" }}
-                            disabled={images.length >= MAX_IMAGES}
-                        />
-                        <label htmlFor="file-upload" className="image-upload-area">
-                            <p>Click to add photos</p>
-                            <p className="tasker-card__meta">Max size {MAX_SIZE_MB}MB per image</p>
-                        </label>
-
-                        <div className="image-preview-list">
-                            {images.map((img, index) => (
-                                <div key={index} className="image-preview-item">
-                                    <img src={img.preview} alt={`Preview ${index}`} />
-                                    <button
-                                        type="button"
-                                        className="image-remove-btn"
-                                        onClick={() => removeImage(index)}
+                {!isForbidden && (
+                    <div className="review-form">
+                        {/* Star Rating */}
+                        <div className="form-field">
+                            <label>Rating</label>
+                            <div className="star-rating-input">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <span
+                                        key={star}
+                                        className={star <= rate ? "filled" : "empty"}
+                                        onClick={() => handleRateChange(star)}
                                     >
-                                        ×
-                                    </button>
-                                </div>
-                            ))}
+                                        ★
+                                    </span>
+                                ))}
+                            </div>
+                            <input
+                                type="hidden"
+                                name="rate"
+                                value={rate}
+                                required
+                            />
+                        </div>
+
+                        {/* Review Text */}
+                        <div className="form-field">
+                            <label htmlFor="review-text">Review (Required)</label>
+                            <textarea
+                                id="review-text"
+                                className="task-textarea"
+                                placeholder="Share your experience (max 50 chars)..."
+                                value={text}
+                                onChange={(e) => {
+                                    // Limit to 50 characters as requested
+                                    if (e.target.value.length <= 50) {
+                                        handleTextChange(e);
+                                    }
+                                }}
+                                maxLength={50}
+                                required
+                            />
+                            <div style={{ textAlign: "right", fontSize: "0.85rem", color: text.length >= 50 ? "red" : "#6b7280" }}>
+                                {text.length}/50 characters
+                            </div>
+                        </div>
+
+                        {/* Image Upload */}
+                        <div className="form-field">
+                            <label>Photos (Optional, max 5)</label>
+                            <input
+                                type="file"
+                                id="file-upload"
+                                accept="image/*"
+                                multiple
+                                onChange={handleImageChange}
+                                style={{ display: "none" }}
+                                disabled={images.length >= MAX_IMAGES}
+                            />
+                            <label htmlFor="file-upload" className="image-upload-area">
+                                <p>Click to add photos</p>
+                                <p className="tasker-card__meta">Max size {MAX_SIZE_MB}MB per image</p>
+                            </label>
+
+                            <div className="image-preview-list">
+                                {images.map((img, index) => (
+                                    <div key={index} className="image-preview-item">
+                                        <img src={img.preview} alt={`Preview ${index}`} />
+                                        <button
+                                            type="button"
+                                            className="image-remove-btn"
+                                            onClick={() => removeImage(index)}
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="form-actions">
+                            <button
+                                type="button"
+                                className="btn btn-ghost"
+                                onClick={() => navigate(-1)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-primary"
+                                onClick={handleSubmit}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? "Submitting..." : "Submit"}
+                            </button>
                         </div>
                     </div>
-
-                    {/* Buttons */}
-                    <div className="form-actions">
-                        <button
-                            type="button"
-                            className="btn btn-ghost"
-                            onClick={() => navigate(-1)}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-primary"
-                            onClick={handleSubmit}
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? "Submitting..." : "Submit"}
-                        </button>
-                    </div>
-                </div>
+                )}
             </div>
         </main>
     );

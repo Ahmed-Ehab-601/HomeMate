@@ -13,6 +13,11 @@ import org.mockito.quality.Strictness;
 
 import com.homemate.reviews.DTO.ReviewsDTO;
 import com.homemate.reviews.Dao.ReviewsDao;
+import com.homemate.security.model.AppUserDetails;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.junit.jupiter.api.AfterEach;
 
 /**
  * Unit tests for ReviewsService toxic content detection
@@ -24,11 +29,31 @@ class ReviewsServiceToxicityTest {
     @Mock
     private ReviewsDao reviewsDao;
 
+    @Mock
+    private SecurityContext securityContext;
+
+    @Mock
+    private Authentication authentication;
+
+    private final Long USER_ID = 1L;
+
     private ReviewsService reviewsService;
 
     @BeforeEach
     void setUp() {
         reviewsService = new ReviewsService(reviewsDao);
+        
+        // Mock Security Context
+        AppUserDetails userDetails = mock(AppUserDetails.class);
+        when(userDetails.getId()).thenReturn(USER_ID);
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+    }
+    
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -40,10 +65,15 @@ class ReviewsServiceToxicityTest {
         reviewDTO.setRate(5.0);
         reviewDTO.setText("Great service, very professional!");
         
+        
         when(reviewsDao.getReviewByTask(100)).thenReturn(null);
         when(reviewsDao.addReview(any())).thenReturn(reviewDTO);
+        when(reviewsDao.getTaskStatus(reviewDTO.getTaskId())).thenReturn("Done");
         when(reviewsDao.getTaskerIdByTaskId(100)).thenReturn(1);
         when(reviewsDao.getAverageRatingForTasker(1)).thenReturn(4.5);
+
+        // Authorization mock
+        when(reviewsDao.getUserIdByTaskId(100)).thenReturn(USER_ID);
 
         assertDoesNotThrow(() -> reviewsService.addReview(reviewDTO));
     }
@@ -59,8 +89,12 @@ class ReviewsServiceToxicityTest {
         
         when(reviewsDao.getReviewByTask(100)).thenReturn(null);
         when(reviewsDao.addReview(any())).thenReturn(reviewDTO);
+        when(reviewsDao.getTaskStatus(reviewDTO.getTaskId())).thenReturn("Done");
         when(reviewsDao.getTaskerIdByTaskId(100)).thenReturn(1);
         when(reviewsDao.getAverageRatingForTasker(1)).thenReturn(4.5);
+
+        // Authorization mock
+        when(reviewsDao.getUserIdByTaskId(100)).thenReturn(USER_ID);
 
         assertDoesNotThrow(() -> reviewsService.addReview(reviewDTO));
     }
@@ -76,8 +110,12 @@ class ReviewsServiceToxicityTest {
         
         when(reviewsDao.getReviewByTask(100)).thenReturn(null);
         when(reviewsDao.addReview(any())).thenReturn(reviewDTO);
+        when(reviewsDao.getTaskStatus(reviewDTO.getTaskId())).thenReturn("Done");
         when(reviewsDao.getTaskerIdByTaskId(100)).thenReturn(1);
         when(reviewsDao.getAverageRatingForTasker(1)).thenReturn(4.5);
+
+        // Authorization mock
+        when(reviewsDao.getUserIdByTaskId(100)).thenReturn(USER_ID);
 
         // Act & Assert - Null text should skip toxicity check
         assertDoesNotThrow(() -> reviewsService.addReview(reviewDTO));

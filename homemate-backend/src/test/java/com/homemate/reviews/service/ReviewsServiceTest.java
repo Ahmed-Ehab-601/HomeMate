@@ -10,6 +10,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.homemate.security.model.AppUserDetails;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.junit.jupiter.api.AfterEach;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ReviewsServiceTest {
 
     @Mock
@@ -25,7 +34,14 @@ class ReviewsServiceTest {
     @InjectMocks
     private ReviewsService reviewsService;
 
+    @Mock
+    private SecurityContext securityContext;
+
+    @Mock
+    private Authentication authentication;
+
     private ReviewsDTO reviewsDTO;
+    private final Long USER_ID = 1L;
 
     @BeforeEach
     void setUp() {
@@ -35,6 +51,18 @@ class ReviewsServiceTest {
         reviewsDTO.setText("Great service!");
         reviewsDTO.setRate(5.0);
         reviewsDTO.setReviewImages(new ArrayList<>());
+        
+        // Mock Security Context
+        AppUserDetails userDetails = mock(AppUserDetails.class);
+        when(userDetails.getId()).thenReturn(USER_ID);
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+    }
+    
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -43,6 +71,11 @@ class ReviewsServiceTest {
         when(reviewsDao.addReview(reviewsDTO)).thenReturn(reviewsDTO);
         when(reviewsDao.getTaskerIdByTaskId(reviewsDTO.getTaskId())).thenReturn(10);
         when(reviewsDao.getAverageRatingForTasker(10)).thenReturn(4.5);
+        
+        // Authorization mock
+        when(reviewsDao.getUserIdByTaskId(reviewsDTO.getTaskId())).thenReturn(USER_ID);
+        // Task Status mock
+        when(reviewsDao.getTaskStatus(reviewsDTO.getTaskId())).thenReturn("Done");
 
         ReviewsDTO result = reviewsService.addReview(reviewsDTO);
 
@@ -54,6 +87,8 @@ class ReviewsServiceTest {
 
     @Test
     void addReview_ShouldThrow_WhenReviewExists() {
+        when(reviewsDao.getUserIdByTaskId(reviewsDTO.getTaskId())).thenReturn(USER_ID);
+        when(reviewsDao.getTaskStatus(reviewsDTO.getTaskId())).thenReturn("Done");
         when(reviewsDao.getReviewByTask(reviewsDTO.getTaskId())).thenReturn(new ReviewsDTO());
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -72,6 +107,10 @@ class ReviewsServiceTest {
         }
         reviewsDTO.setReviewImages(images);
 
+        reviewsDTO.setReviewImages(images);
+
+        when(reviewsDao.getUserIdByTaskId(reviewsDTO.getTaskId())).thenReturn(USER_ID);
+        when(reviewsDao.getTaskStatus(reviewsDTO.getTaskId())).thenReturn("Done");
         when(reviewsDao.getReviewByTask(reviewsDTO.getTaskId())).thenReturn(null);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -129,6 +168,10 @@ class ReviewsServiceTest {
         when(reviewsDao.deleteReview(1)).thenReturn(true);
         when(reviewsDao.getTaskerIdByTaskId(reviewsDTO.getTaskId())).thenReturn(10);
         when(reviewsDao.getAverageRatingForTasker(10)).thenReturn(4.2);
+        
+        // Authorization mock
+        when(reviewsDao.getUserIdByTaskId(reviewsDTO.getTaskId())).thenReturn(USER_ID);
+        when(reviewsDao.getTaskStatus(reviewsDTO.getTaskId())).thenReturn("Done");
 
         boolean result = reviewsService.deleteReview(1);
 
@@ -150,6 +193,10 @@ class ReviewsServiceTest {
     void deleteReview_ShouldReturnFalse_WhenDeletionFails() {
         when(reviewsDao.getReviewById(1)).thenReturn(reviewsDTO);
         when(reviewsDao.deleteReview(1)).thenReturn(false);
+        
+        // Authorization mock
+        when(reviewsDao.getUserIdByTaskId(reviewsDTO.getTaskId())).thenReturn(USER_ID);
+        when(reviewsDao.getTaskStatus(reviewsDTO.getTaskId())).thenReturn("Done");
 
         boolean result = reviewsService.deleteReview(1);
 
@@ -168,6 +215,10 @@ class ReviewsServiceTest {
         newImg.setImgId(0);
         newImages.add(newImg);
         reviewsDTO.setReviewImages(newImages); // 2 existing + 1 new = 3 < 5. OK.
+
+        // Authorization mock
+        when(reviewsDao.getUserIdByTaskId(reviewsDTO.getTaskId())).thenReturn(USER_ID);
+        when(reviewsDao.getTaskStatus(reviewsDTO.getTaskId())).thenReturn("Done");
 
         when(reviewsDao.getTaskerIdByTaskId(reviewsDTO.getTaskId())).thenReturn(10);
         when(reviewsDao.getAverageRatingForTasker(10)).thenReturn(4.8);
@@ -194,6 +245,8 @@ class ReviewsServiceTest {
     @Test
     void updateReview_ShouldThrow_WhenImageLimitExceeded() {
         when(reviewsDao.getReviewById(reviewsDTO.getReviewId())).thenReturn(reviewsDTO);
+        when(reviewsDao.getUserIdByTaskId(reviewsDTO.getTaskId())).thenReturn(USER_ID);
+        when(reviewsDao.getTaskStatus(reviewsDTO.getTaskId())).thenReturn("Done");
         when(reviewsDao.getReviewImageCount(reviewsDTO.getReviewId())).thenReturn(4); // 4 existing
 
         // Try to add 2 new images (Total 6 > 5)
