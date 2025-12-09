@@ -113,7 +113,7 @@ public class TaskerDaoImp implements TaskerDao {
     }
 
     public Tasker findTaskerByID(long taskerID){
-        String sql = "SELECT * FROM Tasker WHERE =?";
+        String sql = "SELECT * FROM Tasker WHERE taskerID = ?";
         return jdbcTemplate.queryForObject(sql, rowMapper,taskerID);
     }
 }

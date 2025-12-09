@@ -26,7 +26,6 @@ public class TaskDto {
     private String serviceName;
     private Long chatID;
     private String addressDetails;
-    private Double rate;
     @Email
     private String userMail;
     @Email

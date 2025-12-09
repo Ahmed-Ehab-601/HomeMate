@@ -31,7 +31,7 @@ public class TaskerDiscoveryController {
         return ResponseEntity.ok(results);
     }
 
-    @GetMapping("{id}")
+    @GetMapping("{taskerID}")
     public ResponseEntity<TaskerCardDto> getTaskerByID(@PathVariable long taskerID){
         return ResponseEntity.ok(taskerDiscoveryService.getTaskerByID(taskerID));
     }

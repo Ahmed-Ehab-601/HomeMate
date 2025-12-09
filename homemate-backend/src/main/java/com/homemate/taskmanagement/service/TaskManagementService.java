@@ -2,6 +2,8 @@ package com.homemate.taskmanagement.service;
 
 //import com.homemate.TaskManagement.Dao.impl.TaskDaoImpl;
 import com.homemate.TaskerProfile.DTO.ReviewDTO;
+import com.homemate.TaskerProfile.DTO.ReviewImageDTO;
+import com.homemate.TaskerProfile.Dao.ReviewDao;
 import com.homemate.taskmanagement.dao.TaskDao;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.*;
@@ -26,6 +28,7 @@ public class TaskManagementService {
     private final TaskMapper taskMapper;
     private final TaskDao taskDao;
     private final StatusFactory statusFactory;
+    private final ReviewDao reviewDao;
 
     public Optional<TaskDto> requestTask(TaskRequestDto requestDto){
         checkRequest(requestDto);
@@ -204,7 +207,7 @@ public class TaskManagementService {
 
     public Optional<TaskDto> getTaskDetails(Long taskID){
         //check if task not found return throw exeption??
-
+        // check for user or tasker are owners
         return taskDao.getTaskDetails(taskID);
     }
 
@@ -218,9 +221,12 @@ public class TaskManagementService {
         Optional<ReviewDTO> review = taskDao.getReviewByTaskId(taskId);
 
         if (review.isEmpty()) {
-            throw new ReviewNotFoundException("No review found for task " + taskId);
+            return review;
         }
-        return taskDao.getReviewByTaskId(taskId);
+        ReviewDTO reviewDTO = review.get();
+        List<ReviewImageDTO> images = reviewDao.getReviewImages(reviewDTO.getReviewId());
+        reviewDTO.setReviewImages(images);
+        return Optional.of(reviewDTO);
     }
 
 
