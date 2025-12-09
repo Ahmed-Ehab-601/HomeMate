@@ -1,8 +1,9 @@
-/* Chat Interface Component - Fixed Header Version */
+/* Chat Interface Component - Complete Version with Error Handling and Character Limit */
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Phone, Image, X, ArrowLeft } from 'lucide-react';
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+
 const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -16,14 +17,17 @@ const ChatInterface = () => {
   const [recipientName, setRecipientName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState(null);
   const [showCallModal, setShowCallModal] = useState(false);
+  const [error, setError] = useState(null);
+  const [showError, setShowError] = useState(false);
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const { getToken, getUserRole, isTasker, user } = useAuth();
-const navigate = useNavigate();
-const { chatId } = useParams();
-const location = useLocation();
+  const navigate = useNavigate();
+  const { chatId } = useParams();
+  const location = useLocation();
+
   // Safe JWT payload decoder. Returns null on failure.
   function decodeJwtPayload(token) {
     if (!token) return null;
@@ -62,6 +66,17 @@ const location = useLocation();
   const isUserRole = userRole === 'ROLE_USER';
   const isTaskerRole = userRole === 'ROLE_TASKER' || isTasker();
   const API_BASE = 'http://localhost:8080/api';
+  const MESSAGE_CHAR_LIMIT = 200;
+
+  // Display error message
+  const showErrorMessage = (message) => {
+    setError(message);
+    setShowError(true);
+    setTimeout(() => {
+      setShowError(false);
+      setTimeout(() => setError(null), 300);
+    }, 4000);
+  };
 
   useEffect(() => {
     if (!chatId) {
@@ -87,9 +102,12 @@ const location = useLocation();
         const chatDetails = await response.json();
         setChatDetails(chatDetails);
         console.log('Chat details loaded:', chatDetails);
+      } else {
+        showErrorMessage('Unable to load chat details');
       }
     } catch (error) {
       console.error('Error fetching chat:', error);
+      showErrorMessage('Network error. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -115,9 +133,11 @@ const location = useLocation();
         console.log('Recipient name loaded:', name);
       } else {
         console.error('Failed to fetch recipient name:', response.status);
+        showErrorMessage('Unable to load recipient name');
       }
     } catch (error) {
       console.error('Error fetching recipient name:', error);
+      showErrorMessage('Network error loading recipient');
     }
   };
 
@@ -165,9 +185,11 @@ const location = useLocation();
         setPage(pageNum);
       } else {
         console.error('Failed to load messages:', response.status);
+        showErrorMessage('Unable to load messages');
       }
     } catch (error) {
       console.error('Error loading messages:', error);
+      showErrorMessage('Network error loading messages');
     } finally {
       setLoading(false);
     }
@@ -187,6 +209,12 @@ const location = useLocation();
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() && !selectedImage) return;
+
+    // Check character limit
+    if (inputMessage.trim().length > MESSAGE_CHAR_LIMIT) {
+      showErrorMessage(`Message exceeds ${MESSAGE_CHAR_LIMIT} character limit`);
+      return;
+    }
 
     const messageDto = {
       chatId: chatId,
@@ -228,15 +256,14 @@ const location = useLocation();
         setImagePreview(null);
         scrollToBottom();
       } else {
-        alert('Failed to send message');
+        showErrorMessage('Failed to send message');
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      alert('Error sending message');
+      showErrorMessage('Network error. Message not sent.');
     }
   };
 
-  // Updated: fetch the phone number then show modal rather than directly calling
   const handleCall = async () => {
     try {
       const endpoint = isUserRole
@@ -254,11 +281,11 @@ const location = useLocation();
         setPhoneNumber(phone);
         setShowCallModal(true);
       } else {
-        alert('Unable to get phone number');
+        showErrorMessage('Unable to retrieve phone number');
       }
     } catch (error) {
       console.error('Error getting phone number:', error);
-      alert('Unable to place call at this time');
+      showErrorMessage('Network error. Unable to place call.');
     }
   };
 
@@ -272,10 +299,10 @@ const location = useLocation();
     if (!phoneNumber) return;
     try {
       await navigator.clipboard.writeText(phoneNumber);
-      // small visual feedback could be added (toast/snack)
-      console.log('Phone number copied to clipboard');
+      showErrorMessage('Phone number copied to clipboard!');
     } catch (err) {
       console.warn('Copy failed', err);
+      showErrorMessage('Failed to copy phone number');
     }
   };
 
@@ -283,7 +310,7 @@ const location = useLocation();
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('Image size should be less than 5MB');
+        showErrorMessage('Image size must be less than 5MB');
         return;
       }
 
@@ -297,14 +324,20 @@ const location = useLocation();
         });
         setImagePreview(reader.result);
       };
+      reader.onerror = () => {
+        showErrorMessage('Failed to read image file');
+      };
       reader.readAsDataURL(file);
     }
   };
+
   const markAsRead = async () => {
     try {
-      const endpoint=isUserRole?`${API_BASE}/message/${chatId}/mark-read-user`:
-      `${API_BASE}/message/${chatId}/mark-read-tasker`;
-        console.log(endpoint);
+      const endpoint = isUserRole
+        ? `${API_BASE}/message/${chatId}/mark-read-user`
+        : `${API_BASE}/message/${chatId}/mark-read-tasker`;
+      
+      console.log(endpoint);
       const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
@@ -367,7 +400,7 @@ const location = useLocation();
     }
   };
 
-  // Styles - UPDATED
+  // Styles
   const styles = {
     container: {
       position: 'fixed',
@@ -484,21 +517,24 @@ const location = useLocation();
       display: 'flex',
       flexDirection: 'column'
     },
-   messageImage: {
-  borderRadius: '16px',
-  marginBottom: '0.5rem',
-  maxWidth: '100%',
-  cursor: 'default', 
-  transition: 'all 0.3s ease',
-  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-},
-    messageBubble: {
+    messageImage: {
+      borderRadius: '16px',
+      marginBottom: '0.5rem',
+      maxWidth: '70%',
+      cursor: 'default', 
+      transition: 'all 0.3s ease',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+    },
+   messageBubble: {
       borderRadius: '18px',
       padding: '0.875rem 1.125rem',
       wordWrap: 'break-word',
+      wordBreak: 'break-word',
+      overflowWrap: 'break-word',
       whiteSpace: 'pre-wrap',
       position: 'relative',
-      transition: 'all 0.2s ease'
+      transition: 'all 0.2s ease',
+      maxWidth: '100%'
     },
     messageBubbleSender: {
       background: 'linear-gradient(135deg, #a7df2d 0%, #95c927 100%)',
@@ -615,8 +651,6 @@ const location = useLocation();
       alignItems: 'center',
       justifyContent: 'center'
     },
-
-    /* Modal styles */
     modalOverlay: {
       position: 'fixed',
       inset: 0,
@@ -655,6 +689,42 @@ const location = useLocation();
       border: 'none',
       borderRadius: '8px',
       cursor: 'pointer'
+    },
+    errorToast: {
+      position: 'fixed',
+      top: '5rem',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
+      color: '#ffffff',
+      padding: '1rem 1.5rem',
+      borderRadius: '12px',
+      boxShadow: '0 8px 24px rgba(231, 76, 60, 0.4)',
+      zIndex: 1200,
+      maxWidth: '90%',
+      textAlign: 'center',
+      fontSize: '0.9375rem',
+      fontWeight: '500',
+      transition: 'all 0.3s ease',
+      opacity: 1,
+      animation: 'slideDown 0.3s ease'
+    },
+    errorToastHiding: {
+      opacity: 0,
+      transform: 'translateX(-50%) translateY(-20px)'
+    },
+    charCounter: {
+      fontSize: '0.75rem',
+      color: '#95a5a6',
+      padding: '0 0.5rem',
+      fontWeight: '500'
+    },
+    charCounterWarning: {
+      color: '#e67e22'
+    },
+    charCounterError: {
+      color: '#e74c3c',
+      fontWeight: '600'
     }
   };
 
@@ -666,8 +736,18 @@ const location = useLocation();
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
           }
+
+          @keyframes slideDown {
+            from {
+              opacity: 0;
+              transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(-50%) translateY(0);
+            }
+          }
           
-          /* Prevent body scroll when chat is open */
           body {
             overflow: hidden !important;
             position: fixed !important;
@@ -681,7 +761,7 @@ const location = useLocation();
       <div style={styles.header}>
         <div style={styles.headerLeft}>
           <button
-            onClick={() => {      isUserRole ? navigate('/my-tasks') : navigate('/tasker/my-tasks');}}
+            onClick={() => { isUserRole ? navigate('/my-tasks') : navigate('/tasker/my-tasks'); }}
             style={styles.backButton}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'linear-gradient(135deg, #a7df2d 0%, #95c927 100%)';
@@ -717,6 +797,18 @@ const location = useLocation();
           <Phone style={{ width: '20px', height: '20px' }} />
         </button>
       </div>
+
+      {/* Error Toast */}
+      {showError && error && (
+        <div 
+          style={{
+            ...styles.errorToast,
+            ...(showError ? {} : styles.errorToastHiding)
+          }}
+        >
+          {error}
+        </div>
+      )}
 
       {/* Content Wrapper */}
       <div style={styles.contentWrapper}>
@@ -838,23 +930,37 @@ const location = useLocation();
             >
               <Image style={{ width: '20px', height: '20px' }} />
             </button>
-            <textarea
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              placeholder="Type a message..."
-              style={styles.messageInput}
-              rows="1"
-              onInput={(e) => {
-                e.target.style.height = 'auto';
-                e.target.style.height = e.target.scrollHeight + 'px';
-              }}
-            />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <textarea
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="Type a message..."
+                style={styles.messageInput}
+                rows="1"
+                onInput={(e) => {
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+                }}
+              />
+              {inputMessage.trim().length > 0 && (
+                <div style={{
+                  ...styles.charCounter,
+                  ...(inputMessage.trim().length > MESSAGE_CHAR_LIMIT * 0.9 
+                    ? (inputMessage.trim().length > MESSAGE_CHAR_LIMIT 
+                      ? styles.charCounterError 
+                      : styles.charCounterWarning)
+                    : {})
+                }}>
+                  {inputMessage.trim().length}/{MESSAGE_CHAR_LIMIT}
+                </div>
+              )}
+            </div>
             <button
               onClick={handleSendMessage}
               disabled={!inputMessage.trim() && !selectedImage}

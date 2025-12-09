@@ -63,6 +63,7 @@ public class LoginService {
                 String role = "ROLE_USER";
                 if (Boolean.TRUE.equals(user.getIsAdmin()))
                     role = "ROLE_ADMIN";
+                chatService.setUserOnline(user.getUserID()) ;
 
                 String token = jwtService.generateToken(
                         user.getUserID(),
@@ -81,7 +82,9 @@ public class LoginService {
             }
             return null;
 
-        } catch (EmptyResultDataAccessException e) {}
+        } catch (EmptyResultDataAccessException e) {} catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         try {
 
@@ -99,7 +102,7 @@ public class LoginService {
                         tasker.getEmail(),
                         role
                     );
-
+                    chatService.setTaskerOnline(tasker.getTaskerID());
                     return new LoginResponseDto(
                         role,
                         tasker.getUsername(),
@@ -110,7 +113,9 @@ public class LoginService {
                 }
             return null;
 
-        } catch (EmptyResultDataAccessException e) {}
+        } catch (EmptyResultDataAccessException e) {} catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return null;
     }
 
