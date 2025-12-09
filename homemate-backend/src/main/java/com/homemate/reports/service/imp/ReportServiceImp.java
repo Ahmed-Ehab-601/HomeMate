@@ -2,6 +2,7 @@ package com.homemate.reports.service.imp;
 
 import com.homemate.reports.dao.ReportDao;
 import com.homemate.reports.dto.ShortReport;
+import com.homemate.reports.dto.DetailedReport;
 import com.homemate.reports.dto.ReportFilterDto;
 import com.homemate.reports.service.IReportService;
 import com.homemate.util.PaginatedResponse;
@@ -9,6 +10,7 @@ import com.homemate.util.PaginatedResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ReportServiceImp implements IReportService {
@@ -46,5 +48,16 @@ public class ReportServiceImp implements IReportService {
                 .totalElements(totalElements)
                 .pageSize(pageSize)
                 .build();
+    }
+
+    @Override
+    public Optional<DetailedReport> getDetailedReportById(int reportID) {
+        return reportDao.getDetailedReportById(reportID);
+    }
+
+    @Override
+    public Optional<DetailedReport> completeReport(int reportID) {
+        reportDao.updateReportStatus(reportID, "done");
+        return reportDao.getDetailedReportById(reportID);
     }
 }
