@@ -1,10 +1,9 @@
 package com.homemate.notification.controller;
-
 import com.homemate.notification.domains.dto.OtpSendRequest;
 import com.homemate.notification.domains.dto.OtpVerificationResult;
 import com.homemate.notification.domains.dto.OtpVerifyRequest;
-import com.homemate.notification.observer.imp.OTPServiceImp;
-import com.homemate.notification.service.imp.NotificationServiceImp;
+import com.homemate.notification.service.imp.OTPServiceImp;
+
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +17,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth/otp")
 public class OtpController {
-
-    private final NotificationServiceImp notificationService;
     private final OTPServiceImp otpService;
 
-    public OtpController(NotificationServiceImp notificationService, OTPServiceImp otpService) {
-        this.notificationService = notificationService;
+    public OtpController(OTPServiceImp otpService) {
+
         this.otpService = otpService;
     }
 
@@ -31,7 +28,7 @@ public class OtpController {
     public ResponseEntity<Map<String, String>> sendOtp(
             @Valid @RequestBody
             OtpSendRequest otpSendRequest) {
-        notificationService.createNewAccount(otpSendRequest);
+        otpService.sendOtp(otpSendRequest);
         return ResponseEntity.accepted().body(Map.of("message", "OTP sent"));
     }
 
