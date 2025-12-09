@@ -15,6 +15,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -44,7 +46,7 @@ class OTPServiceTest {
     @Test
     void testGenerateAndStoreOTPShouldReturnSixDigitCode() {
         String email ="homemate@gmail.com";
-        String otp = underTest.generateAndStoreOTP(email);
+        String otp = underTest.generateAndStoreOTP(email, EmailRequest.EmailType.EMAIL_VERIFICATION);
         assertNotNull(otp);
         assertEquals(6, otp.length());
         assertTrue(otp.matches("\\d{6}"));
@@ -53,7 +55,7 @@ class OTPServiceTest {
     @Test
     void testGenerateAndStoreOTPShouldStoreInRedis() {
         String email= "homemate@gmail.com";
-        underTest.generateAndStoreOTP(email);
+        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.EMAIL_VERIFICATION);
         verify(valueOperations, atLeastOnce()).set(
                 eq("otp:"+email),
                 anyString(),
@@ -65,7 +67,7 @@ class OTPServiceTest {
     @Test
     void testGenerateAndStoreOTPShouldInitializeAttemptsCounter() {
         String email="homemate@gmail.com";
-        underTest.generateAndStoreOTP(email);
+        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.EMAIL_VERIFICATION);
         verify(valueOperations,atLeastOnce()).set(
                 eq("otp_attempts:" +email),
                 eq("0"),
@@ -81,7 +83,7 @@ class OTPServiceTest {
         EmailRequest emailRequest =new EmailRequest();
         emailRequest.setRecipientEmail(email);
         emailRequest.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
-        String emailBody ="Your OTP is: 123456 ";
+        String emailBody ="Your HomeMate verification code is 123456";
         when(emailTemplate.buildVerificationCode(anyString())).thenReturn(emailBody);
         when(emailTemplate.buildEmailSubject(any())).thenReturn("Email Verification");
         MimeMessage mimeMessage = new MimeMessage((Session) null);
@@ -111,8 +113,9 @@ class OTPServiceTest {
         String email ="homemate@gmail.com";
         String correctOtp ="123456";
         OtpVerifyRequest otpVerifyRequest =new OtpVerifyRequest();
-        otpVerifyRequest.setEmail(email);
+        otpVerifyRequest.setRecipientEmail(email);
         otpVerifyRequest.setCode(correctOtp);
+        otpVerifyRequest.setEmailType( EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:" + email)).thenReturn(correctOtp);
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("0");
         when(redisTemplate.delete(anyString())).thenReturn(true);
@@ -126,12 +129,13 @@ class OTPServiceTest {
         String email ="homemate@gmail.com";
         String correctOtp ="123456";
         OtpVerifyRequest request =new OtpVerifyRequest();
-        request.setEmail(email);
+        request.setRecipientEmail(email);
         request.setCode(correctOtp);
+        request.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:"+email)).thenReturn(correctOtp);
         when(valueOperations.get("otp_attempts:" +email)).thenReturn("0");
         when(redisTemplate.delete(anyString())).thenReturn(true);
-        underTest.validateCode(request);
+        underTest.validateCode(request );
         verify(redisTemplate, times(2)).delete(anyString());
     }
 
@@ -140,9 +144,9 @@ class OTPServiceTest {
         String email = "homemate@gmail.com";
         
         OtpVerifyRequest request = new OtpVerifyRequest();
-        request.setEmail(email);
+        request.setRecipientEmail(email);
         request.setCode("123456");
-        
+        request.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:" + email)).thenReturn(null);
         
         OtpVerificationResult result = underTest.validateCode(request);
@@ -157,8 +161,9 @@ class OTPServiceTest {
         String storedOtp ="123456";
         String providedOtp ="654321";
         OtpVerifyRequest request =new OtpVerifyRequest();
-        request.setEmail(email);
+        request.setRecipientEmail(email);
         request.setCode(providedOtp);
+        request.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:" + email)).thenReturn(storedOtp);
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("0");
         OtpVerificationResult otpVerificationResult = underTest.validateCode(request);
@@ -172,8 +177,9 @@ class OTPServiceTest {
         String storedOtp ="123456";
         String providedOtp ="654321";
         OtpVerifyRequest otpVerifyRequest =new OtpVerifyRequest();
-        otpVerifyRequest.setEmail(email);
+        otpVerifyRequest.setRecipientEmail(email);
         otpVerifyRequest.setCode(providedOtp);
+        otpVerifyRequest.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:" + email)).thenReturn(storedOtp);
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("0");
         underTest.validateCode(otpVerifyRequest);
@@ -189,9 +195,9 @@ class OTPServiceTest {
     void testValidateCodeWithMaxAttemptsExceededShouldReturnFailure() {
         String email = "homemate@gmail.com";
         OtpVerifyRequest otpVerifyRequest = new OtpVerifyRequest();
-        otpVerifyRequest.setEmail(email);
+        otpVerifyRequest.setRecipientEmail(email);
         otpVerifyRequest.setCode("123456");
-        
+        otpVerifyRequest.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:" + email)).thenReturn("654321");
         when(valueOperations.get("otp_attempts:" + email)).thenReturn(String.valueOf(3));
         when(redisTemplate.delete(anyString())).thenReturn(true);
@@ -206,8 +212,9 @@ class OTPServiceTest {
     void testValidateCodeWithMaxAttemptsExceededShouldDeleteOTPAndAttempts() {
         String email ="homemate@gmail.com";
         OtpVerifyRequest otpVerifyRequest =new OtpVerifyRequest();
-        otpVerifyRequest.setEmail(email);
+        otpVerifyRequest.setRecipientEmail(email);
         otpVerifyRequest.setCode("123456");
+        otpVerifyRequest.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:" + email)).thenReturn("654321");
         when(valueOperations.get("otp_attempts:" + email)).thenReturn(String.valueOf(3));
         when(redisTemplate.delete(anyString())).thenReturn(true);
@@ -221,8 +228,9 @@ class OTPServiceTest {
         String email ="homemate@gmail.com";
         String storedOtp ="123456";
         OtpVerifyRequest otpVerifyRequest =new OtpVerifyRequest();
-        otpVerifyRequest.setEmail(email);
+        otpVerifyRequest.setRecipientEmail(email);
         otpVerifyRequest.setCode("654321");
+        otpVerifyRequest.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:" + email)).thenReturn(storedOtp);
         when(valueOperations.get("otp_attempts:"+email)).thenReturn(null).thenReturn("0");
         underTest.validateCode(otpVerifyRequest);
@@ -232,5 +240,110 @@ class OTPServiceTest {
                 anyLong(),
                 any()
         );
+    }
+
+    @Test
+    void testGenerateAndStoreOTPForResetPasswordShouldReturnSixDigitCode() {
+        String email ="resetpassword@example.com";
+        String otp = underTest.generateAndStoreOTP(email, EmailRequest.EmailType.FORGOT_PASSWORD);
+        assertNotNull(otp);
+        assertEquals(6, otp.length());
+        assertTrue(otp.matches("\\d{6}"));
+    }
+
+    @Test
+    void testGenerateAndStoreOTPForResetPasswordShouldStoreWithSeconds() {
+        String email= "resetpassword@example.com";
+        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.FORGOT_PASSWORD);
+        verify(valueOperations, atLeastOnce()).set(
+                eq("otp:"+email),
+                anyString(),
+                eq(30L),
+                eq(TimeUnit.SECONDS)
+        );
+    }
+
+    @Test
+    void testGenerateAndStoreOTPForResetPasswordShouldInitializeAttemptsWithHour() {
+        String email="resetpassword@example.com";
+        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.FORGOT_PASSWORD);
+        verify(valueOperations, atLeastOnce()).set(
+                eq("otp_attempts:" +email),
+                eq("0"),
+                eq(1L),
+                eq(TimeUnit.HOURS)
+        );
+    }
+
+    @Test
+    void testSendOtpForResetPasswordShouldGenerateOTPAndSendEmail() {
+        String email ="resetpassword@example.com";
+        EmailRequest emailRequest =new EmailRequest();
+        emailRequest.setRecipientEmail(email);
+        emailRequest.setEmailType(EmailRequest.EmailType.FORGOT_PASSWORD);
+            String emailBody ="Use this code to reset your HomeMate password: 123456";
+            when(emailTemplate.buildResetPasswordCode(anyString())).thenReturn(emailBody);
+        when(emailTemplate.buildEmailSubject(any())).thenReturn("Reset Password");
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
+        underTest.sendOtp(emailRequest);
+            verify(emailTemplate).buildResetPasswordCode(anyString());
+        verify(javaMailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    void testValidateCodeForResetPasswordWithValidOTPShouldReturnSuccess() {
+        String email ="resetpassword@example.com";
+        String correctOtp ="654321";
+        OtpVerifyRequest otpVerifyRequest =new OtpVerifyRequest();
+        otpVerifyRequest.setRecipientEmail(email);
+        otpVerifyRequest.setCode(correctOtp);
+        otpVerifyRequest.setEmailType(EmailRequest.EmailType.FORGOT_PASSWORD);
+
+        when(valueOperations.get("otp:" + email)).thenReturn(correctOtp);
+        when(valueOperations.get("otp_attempts:" + email)).thenReturn("0");
+        when(redisTemplate.delete(anyString())).thenReturn(true);
+        OtpVerificationResult otpVerificationResult = underTest.validateCode(otpVerifyRequest);
+        assertTrue(otpVerificationResult.isSuccess());
+        assertEquals("OTP verified successfully", otpVerificationResult.getMessage());
+    }
+
+    @Test
+    void testValidateCodeForResetPasswordWithHourBasedAttempts() {
+        String email ="resetpassword@example.com";
+        String storedOtp ="654321";
+        String providedOtp ="123456";
+        OtpVerifyRequest otpVerifyRequest =new OtpVerifyRequest();
+        otpVerifyRequest.setRecipientEmail(email);
+        otpVerifyRequest.setCode(providedOtp);
+        otpVerifyRequest.setEmailType(EmailRequest.EmailType.FORGOT_PASSWORD);
+        when(valueOperations.get("otp:" + email)).thenReturn(storedOtp);
+        when(valueOperations.get("otp_attempts:" + email)).thenReturn("0");
+        underTest.validateCode(otpVerifyRequest);
+        verify(valueOperations).set(
+                eq("otp_attempts:" + email),
+                eq("1"),
+                eq(1L),
+                eq(TimeUnit.HOURS)
+        );
+    }
+
+    @Test
+    void testValidateCodeForResetPasswordWithMaxAttemptsExceededShouldDeleteOTP() {
+        String email = "resetpassword@example.com";
+        OtpVerifyRequest otpVerifyRequest = new OtpVerifyRequest();
+        otpVerifyRequest.setRecipientEmail(email);
+        otpVerifyRequest.setCode("123456");
+        otpVerifyRequest.setEmailType(EmailRequest.EmailType.FORGOT_PASSWORD);
+
+        when(valueOperations.get("otp:" + email)).thenReturn("654321");
+        when(valueOperations.get("otp_attempts:" + email)).thenReturn(String.valueOf(3));
+        when(redisTemplate.delete(anyString())).thenReturn(true);
+        
+        OtpVerificationResult result = underTest.validateCode(otpVerifyRequest);
+        
+        assertFalse(result.isSuccess());
+        assertEquals("Maximum attempts exceeded", result.getMessage());
+        verify(redisTemplate, times(2)).delete(anyString());
     }
 }
