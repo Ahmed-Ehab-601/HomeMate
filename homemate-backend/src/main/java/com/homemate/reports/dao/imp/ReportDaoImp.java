@@ -104,6 +104,8 @@ public class ReportDaoImp implements ReportDao {
     public void updateReportStatus(int reportID, String status) {
         String sql = "UPDATE Report SET adminStatus = ? WHERE reportID = ?";
         jdbcTemplate.update(sql, status, reportID);
+    }
+    
     private String buildWhereClause(ReportFilterDto filterDto, List<Object> params) {
         StringBuilder whereClause = new StringBuilder();
         
