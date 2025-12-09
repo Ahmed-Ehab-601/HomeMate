@@ -117,6 +117,7 @@ public class TaskDaoImpl implements TaskDao {
         String sql = """
             SELECT
                 t.taskID,
+                t.taskerID,
                 t.startDate,
                 t.endDate,
                 t.status,

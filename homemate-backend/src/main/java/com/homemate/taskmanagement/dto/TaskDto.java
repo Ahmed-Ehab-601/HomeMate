@@ -13,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class TaskDto {
     private Long taskID;
+    private long taskerID;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private Status status;
