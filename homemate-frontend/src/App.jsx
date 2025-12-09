@@ -71,6 +71,10 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="ROLE_USER">
             <SubmitReviewPage />
+            </ProtectedRoute>
+            }
+            />
+      <Route      
         path="/report/submit/:taskId"
         element={
           <ProtectedRoute>
