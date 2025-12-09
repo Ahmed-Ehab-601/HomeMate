@@ -3,6 +3,8 @@ package com.homemate.reports.service.imp;
 import com.homemate.reports.dao.ReportDao;
 import com.homemate.reports.dto.ShortReport;
 import com.homemate.reports.dto.SubmitReport;
+import com.homemate.reports.dto.DetailedReport;
+import com.homemate.reports.dto.ReportFilterDto;
 import com.homemate.reports.service.IReportService;
 import com.homemate.security.model.AppUserDetails;
 import com.homemate.util.PaginatedResponse;
@@ -10,6 +12,7 @@ import com.homemate.util.PaginatedResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ReportServiceImp implements IReportService {
@@ -22,7 +25,7 @@ public class ReportServiceImp implements IReportService {
     }
 
     @Override
-    public PaginatedResponse<ShortReport> getAllShortReports(int pageNumber, int pageSize) {
+    public PaginatedResponse<ShortReport> getAllShortReports(int pageNumber, int pageSize, ReportFilterDto filterDto) {
         
         // Validate limit
         pageNumber = Math.min(pageNumber, PAGE_SIZE_LIMIT);
@@ -30,11 +33,11 @@ public class ReportServiceImp implements IReportService {
         // Calculate offset
         long offset = (long) pageNumber * pageSize;
 
-        // Fetch reports for the current page
-        List<ShortReport> reports = reportDao.getAllShortReports((long) pageSize, offset);
+        // Fetch reports for the current page with filters
+        List<ShortReport> reports = reportDao.getAllShortReports((long) pageSize, offset, filterDto);
 
-        // Get total count of all reports
-        Long totalElements = reportDao.countAllReports();
+        // Get total count of all reports with filters
+        Long totalElements = reportDao.countAllReports(filterDto);
 
         // Calculate total pages
         int totalPages = (int) Math.ceil((double) totalElements / pageSize);
@@ -78,5 +81,13 @@ public class ReportServiceImp implements IReportService {
         }
 
         return reportDao.submitReport(submitReport, reporterIsUser);
+    public Optional<DetailedReport> getDetailedReportById(int reportID) {
+        return reportDao.getDetailedReportById(reportID);
+    }
+
+    @Override
+    public Optional<DetailedReport> completeReport(int reportID) {
+        reportDao.updateReportStatus(reportID, "done");
+        return reportDao.getDetailedReportById(reportID);
     }
 }

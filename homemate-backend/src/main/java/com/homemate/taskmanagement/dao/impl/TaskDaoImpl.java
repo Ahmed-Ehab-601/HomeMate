@@ -6,8 +6,10 @@ import com.homemate.taskmanagement.dao.TaskRowMapper;
 import com.homemate.taskmanagement.dto.StatusDto;
 import com.homemate.taskmanagement.dto.TaskCardDto;
 import com.homemate.taskmanagement.dto.TaskDto;
+import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
 import com.homemate.taskmanagement.exceptions.DuplicateChatException;
+import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 import org.springframework.dao.DataAccessException;
@@ -17,9 +19,11 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -307,5 +311,110 @@ public class TaskDaoImpl implements TaskDao {
             return Optional.empty();
         }
     }
+    @Override
+    public boolean updateTaskWorkedHours(Long taskID,double workedHours){
+        String sql = "UPDATE Task SET workedHours = workedHours + ? WHERE taskID = ?";
+        int rowsAffected = jdbcTemplate.update(sql,workedHours,taskID);
+        return rowsAffected > 0;
+    }
+    @Override
+    public boolean updateTaskStartInProgress(Long taskID, Timestamp time){
+        String sql = "UPDATE Task SET startInProgress =  ? WHERE taskID = ?";
+        int rowsAffected = jdbcTemplate.update(sql,time,taskID);
+        return rowsAffected > 0;
+    }
+    @Override
+    public boolean updateTaskEndData(Long taskID, Timestamp time){
+        String sql = "UPDATE Task SET endDate =  ? WHERE taskID = ?";
+        int rowsAffected = jdbcTemplate.update(sql,time,taskID);
+        return rowsAffected > 0;
+    }
+    @Override
+    public boolean updateTaskBill(Long taskID, double bill){
+        String sql = "UPDATE Task SET bill =  ? WHERE taskID = ?";
+        int rowsAffected = jdbcTemplate.update(sql,bill,taskID);
+        return rowsAffected > 0;
+    }
+
+    @Override
+    public Timestamp getStartInProgress(Long taskID){
+        String sql = "SELECT startInProgress FROM Task WHERE taskID = ? ";
+        try {
+            return jdbcTemplate.queryForObject(sql, Timestamp.class, taskID);
+
+        } catch (EmptyResultDataAccessException e) {
+           throw new TaskNotFoundException("id not correct");
+        }
+    }
+
+    @Override
+    public Double getTaskWorkedHours(Long taskID){
+        String sql = "SELECT workedHours FROM Task WHERE taskID = ? ";
+        try {
+            return jdbcTemplate.queryForObject(sql, Double.class, taskID);
+        } catch (EmptyResultDataAccessException e) {
+            throw new TaskNotFoundException("id not correct");
+        }
+    }
+
+    @Override
+    public boolean updateTaskerWorkedHours(Long taskerID,double workedHours){
+        String sql = "UPDATE Tasker SET WorkedHours = WorkedHours + ? WHERE taskerID = ?";
+        int rowsAffected = jdbcTemplate.update(sql,workedHours,taskerID);
+        return rowsAffected > 0;
+    }
+    @Override
+    public Double getTaskerHourRate(Long taskerID){
+        String sql = "SELECT hourRate FROM Tasker WHERE taskerID = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql,Double.class , taskerID);
+        } catch (EmptyResultDataAccessException e) {
+            throw new BadStateUpdateException("tasker Id  not correct");
+        }
+    }
+
+    @Override
+    public boolean updateTaskerTotalEarning(Long taskerID,double bill){
+        String sql = "UPDATE Tasker SET totalEarning = totalEarning + ? WHERE taskerID = ?";
+        int rowsAffected = jdbcTemplate.update(sql,bill,taskerID);
+        return rowsAffected > 0;
+    }
+
+
+    @Override
+    public Optional<Long> getUserID(Long taskID){
+        String sql = "SELECT userID FROM Task WHERE taskID = ? ";
+        try {
+            Long taskerID = jdbcTemplate.queryForObject(sql, Long.class, taskID);
+            return Optional.ofNullable(taskerID);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+
+    @Override
+    public boolean updateTaskStartDate(Long taskId, LocalDateTime newStartDate) {
+        String sql = "UPDATE Task SET startDate = ? WHERE taskID = ?";
+        int rows = jdbcTemplate.update(sql,
+                Timestamp.valueOf(newStartDate),
+                taskId);
+        return rows > 0;
+    }
+
+    @Override
+    public Optional<LocalDateTime> getStartDate(Long taskID) {
+        String sql = "SELECT startDate FROM Task WHERE taskID = ?";
+        try {
+            Timestamp timestamp = jdbcTemplate.queryForObject(sql, Timestamp.class, taskID);
+            return Optional.ofNullable(timestamp != null ? timestamp.toLocalDateTime() : null);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+
+
+
 
 }

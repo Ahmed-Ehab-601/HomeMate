@@ -16,6 +16,7 @@ const ReportsPage = () => {
     reporterType: 'all',
     status: 'all',
   });
+  const [appliedFilters, setAppliedFilters] = useState({});
   const [pagination, setPagination] = useState({
     page: 0,
     size: 20,
@@ -28,11 +29,36 @@ const ReportsPage = () => {
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
+      // Build filter params, excluding empty/default values
+      const filterParams = {};
+      
+      if (appliedFilters.header && appliedFilters.header.trim()) {
+        filterParams.header = appliedFilters.header.trim();
+      }
+      
+      if (appliedFilters.body && appliedFilters.body.trim()) {
+        filterParams.body = appliedFilters.body.trim();
+      }
+      
+      if (appliedFilters.taskID && appliedFilters.taskID.trim()) {
+        filterParams.taskID = parseInt(appliedFilters.taskID, 10);
+      }
+      
+      if (appliedFilters.reporterType && appliedFilters.reporterType !== 'all') {
+        // Convert 'user' to true, 'tasker' to false
+        filterParams.reporter = appliedFilters.reporterType === 'user';
+      }
+      
+      if (appliedFilters.status && appliedFilters.status !== 'all') {
+        filterParams.adminStatus = appliedFilters.status;
+      }
+
       const response = await getReports({
         pageNumber: pagination.page,
         pageSize: pagination.size,
+        ...filterParams,
       });
-      // Map response to match expected format
+      
       setReports(response?.data || []);
       setPagination((prev) => ({
         ...prev,
@@ -46,7 +72,7 @@ const ReportsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.size]);
+  }, [pagination.page, pagination.size, appliedFilters]);
 
   useEffect(() => {
     fetchReports();
@@ -54,7 +80,11 @@ const ReportsPage = () => {
 
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
-    // Note: Filters are not applied to backend yet
+  };
+
+  const handleApplyFilters = () => {
+    setAppliedFilters(filters);
+    setPagination((prev) => ({ ...prev, page: 0 })); // Reset to first page
   };
 
   const handlePageChange = (newPage) => {
@@ -73,7 +103,11 @@ const ReportsPage = () => {
     <div style={{ padding: '24px', maxWidth: '100%' }}>
       <PageHeader title="Reports Management" subtitle="View and manage all reports" />
       
-      <ReportFilters filters={filters} onFilterChange={handleFilterChange} />
+      <ReportFilters 
+        filters={filters} 
+        onFilterChange={handleFilterChange}
+        onApplyFilters={handleApplyFilters}
+      />
       
       <ReportTable
         rows={reports}

@@ -131,3 +131,38 @@
 .report-filters-card input[type="number"] {
   -moz-appearance: textfield;
 }
+
+.report-filters-card .filters-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.report-filters-card .search-button {
+  padding: 0.625rem 1.5rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.report-filters-card .search-button:hover {
+  background: #2563eb;
+}
+
+.report-filters-card .search-button:active {
+  background: #1d4ed8;
+}
+
+.report-filters-card.dark-mode .search-button {
+  background: #3b82f6;
+}
+
+.report-filters-card.dark-mode .search-button:hover {
+  background: #2563eb;
+}
