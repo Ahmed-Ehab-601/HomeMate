@@ -1,7 +1,5 @@
 package com.homemate.notification.service;
-
-import com.homemate.notification.config.RedisConfig;
-import com.homemate.notification.domains.dto.OtpSendRequest;
+import com.homemate.notification.domains.dto.EmailRequest;
 import com.homemate.notification.domains.dto.OtpVerificationResult;
 import com.homemate.notification.domains.dto.OtpVerifyRequest;
 import com.homemate.notification.service.imp.OTPServiceImp;
@@ -80,14 +78,15 @@ class OTPServiceTest {
     @Test
     void testSendOtpShouldGenerateOTPAndSendEmail() {
         String email ="homemate@gmail.com";
-        OtpSendRequest otpSendRequest =new OtpSendRequest();
-        otpSendRequest.setEmail(email);
+        EmailRequest emailRequest =new EmailRequest();
+        emailRequest.setRecipientEmail(email);
+        emailRequest.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         String emailBody ="Your OTP is: 123456 ";
         when(emailTemplate.buildVerificationCode(anyString())).thenReturn(emailBody);
         when(emailTemplate.buildEmailSubject(any())).thenReturn("Email Verification");
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
-        underTest.sendOtp(otpSendRequest);
+        underTest.sendOtp(emailRequest);
         verify(emailTemplate).buildVerificationCode(anyString());
         verify(javaMailSender).send(any(MimeMessage.class));
     }
@@ -95,13 +94,14 @@ class OTPServiceTest {
     @Test
     void testSendOtpShouldCallEmailTemplate() {
         String email ="homemate@gmail.com";
-        OtpSendRequest otpSendRequest =new OtpSendRequest();
-        otpSendRequest.setEmail(email);
+        EmailRequest emailRequest =new EmailRequest();
+        emailRequest.setRecipientEmail(email);
+        emailRequest.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(emailTemplate.buildVerificationCode(anyString())).thenReturn("OTP Code");
         when(emailTemplate.buildEmailSubject(any())).thenReturn("Subject");
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
-        underTest.sendOtp(otpSendRequest);
+        underTest.sendOtp(emailRequest);
         verify(emailTemplate).buildVerificationCode(anyString());
     }
 
@@ -193,7 +193,7 @@ class OTPServiceTest {
         otpVerifyRequest.setCode("123456");
         
         when(valueOperations.get("otp:" + email)).thenReturn("654321");
-        when(valueOperations.get("otp_attempts:" + email)).thenReturn(String.valueOf(RedisConfig.OTP_MAX_ATTEMPTS));
+        when(valueOperations.get("otp_attempts:" + email)).thenReturn(String.valueOf(3));
         when(redisTemplate.delete(anyString())).thenReturn(true);
         
         OtpVerificationResult result = underTest.validateCode(otpVerifyRequest);
@@ -209,7 +209,7 @@ class OTPServiceTest {
         otpVerifyRequest.setEmail(email);
         otpVerifyRequest.setCode("123456");
         when(valueOperations.get("otp:" + email)).thenReturn("654321");
-        when(valueOperations.get("otp_attempts:" + email)).thenReturn(String.valueOf(RedisConfig.OTP_MAX_ATTEMPTS));
+        when(valueOperations.get("otp_attempts:" + email)).thenReturn(String.valueOf(3));
         when(redisTemplate.delete(anyString())).thenReturn(true);
         underTest.validateCode(otpVerifyRequest);
         

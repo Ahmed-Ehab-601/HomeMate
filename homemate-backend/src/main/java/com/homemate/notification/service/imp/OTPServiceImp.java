@@ -21,6 +21,7 @@ import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
 
 import static com.homemate.notification.domains.dto.EmailRequest.EmailType.EMAIL_VERIFICATION;
+import static com.homemate.notification.domains.dto.EmailRequest.EmailType.FORGOT_PASSWORD;
 
 @Validated
 @RequiredArgsConstructor
@@ -122,12 +123,8 @@ public class OTPServiceImp implements OTPService {
     }
 
    @Override
-    public void sendOtp(OtpSendRequest otpSendRequest) {
-       EmailRequest emailRequest =EmailRequest.builder()
-               .emailType(EMAIL_VERIFICATION)
-               .recipientEmail(otpSendRequest.getEmail())
-               .build();
-         if (emailRequest.getEmailType()==EMAIL_VERIFICATION){
+    public void sendOtp(EmailRequest emailRequest) {
+         if (emailRequest.getEmailType()==EMAIL_VERIFICATION || emailRequest.getEmailType()==FORGOT_PASSWORD){
              String otpCode =generateAndStoreOTP(emailRequest.getRecipientEmail());
              String body =emailTemplate.buildVerificationCode(otpCode);
              try {
