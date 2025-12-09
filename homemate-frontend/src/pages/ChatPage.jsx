@@ -484,14 +484,14 @@ const location = useLocation();
       display: 'flex',
       flexDirection: 'column'
     },
-    messageImage: {
-      borderRadius: '16px',
-      marginBottom: '0.5rem',
-      maxWidth: '100%',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-    },
+   messageImage: {
+  borderRadius: '16px',
+  marginBottom: '0.5rem',
+  maxWidth: '100%',
+  cursor: 'default', 
+  transition: 'all 0.3s ease',
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+},
     messageBubble: {
       borderRadius: '18px',
       padding: '0.875rem 1.125rem',
@@ -758,15 +758,6 @@ const location = useLocation();
                       src={`data:image/${msg.imageDto.fileFormat};base64,${msg.imageDto.fileData}`}
                       alt={msg.imageDto.fileName}
                       style={styles.messageImage}
-                      onClick={() => window.open(`data:image/${msg.imageDto.fileFormat};base64,${msg.imageDto.fileData}`, '_blank')}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.02)';
-                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.15)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-                      }}
                     />
                   )}
                   {msg.content && (
