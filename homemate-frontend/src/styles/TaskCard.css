@@ -1,0 +1,249 @@
+/* Task Card Styles */
+.task-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  cursor: pointer;
+}
+
+.task-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.task-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-card__title-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.task-card__service {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.task-card__status-badge {
+  padding: 6px 14px;
+  border-radius: 999px !important;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.3s ease-in-out;
+}
+
+.task-card__details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.task-card__detail-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.task-card__label {
+  color: var(--text-secondary);
+  font-weight: 500;
+  min-width: 90px;
+}
+
+.task-card__value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.task-card__actions {
+  display: flex;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Accept/Reject Button Styles */
+.btn-accept {
+  background: #22c55e;
+  color: white;
+  padding: 6px 16px;
+  font-size: 13px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.btn-accept:hover:not(:disabled) {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+.btn-accept:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-reject {
+  background: #ef4444;
+  color: white;
+  padding: 6px 16px;
+  font-size: 13px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.btn-reject:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.btn-reject:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Success/Error Banners */
+.banner {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 800px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.banner-success {
+  background: #dcfce7;
+  color: #166534;
+  border: 2px solid #22c55e;
+}
+
+.banner-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 2px solid #ef4444;
+}
+
+.banner-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+  padding: 0;
+  margin-left: 12px;
+}
+
+.banner-close:hover {
+  opacity: 1;
+}
+
+/* Modal Task Details List */
+.modal-task-details {
+  list-style: none;
+  padding: 16px 0;
+  margin: 8px 0;
+  background: #f9fafb;
+  border-radius: 6px;
+  border-left: 4px solid var(--brand-lime);
+}
+
+.modal-task-details li {
+  padding: 6px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.modal-task-details strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.modal-warning {
+  font-weight: 600;
+  color: #dc2626;
+  margin-top: 12px;
+}
+
+/* Modal Actions Layout for Accept/Reject */
+.modal-actions .btn-accept,
+.modal-actions .btn-reject {
+  padding: 10px 24px;
+  font-size: 15px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -22,6 +22,15 @@ public class Tasker {
     private Double workedHours;
     private String addressCity;
     private String serviceName;
+    private Boolean isSuspended;
+
+    public boolean getIsSuspended(){
+        return isSuspended;
+    }
+
+    public void setIsSuspended(boolean isSuspended) {
+        this.isSuspended = isSuspended;
+    }
 
     // Getters and Setters
     public Long getTaskerID() {

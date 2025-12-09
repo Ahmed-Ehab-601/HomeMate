@@ -28,7 +28,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/taskers/search",
             "/api/auth/google",
             "/api/taskers/search",
-            "/api/users/taskers/"
+            "/api/users/taskers/",
+            "/api/tasker-profile/reviews"
     );
 
     private final JwtService jwtService;
@@ -45,63 +46,47 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        for (String p : PUBLIC_URLS) {
-            if (path.equals(p)) {
-                try {
-                    filterChain.doFilter(request, response);
-                } catch (ServletException | IOException e) {
-                    System.err.println("Exception thrown during filterChain.doFilter for public path: " + e.getMessage());
-                    throw e;
-                }
-                return;
-            }
-        }
-        for (String prefix : PUBLIC_URLS) {
-            if (path.startsWith(prefix)) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-        }
-
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        // 1. Attempt Authentication if header is present
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
             try {
-                response.getWriter().write("Missing or invalid Authorization header");
-            } catch (IOException e) {
-                System.err.println("IOException trying to write response for missing header: " + e.getMessage());
-                throw e;
+                String jwt = authHeader.substring(7);
+                UserDetails userDetails = jwtService.extractUserDetails(jwt);
+
+                if (userDetails != null) {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (Exception e) {
+                // Token extraction failed (expired, invalid, etc.)
+                // We proceed without authentication. If the URL is protected, Spring Security will handle the 403.
+                System.err.println("JWT Authentication warning: " + e.getMessage());
             }
+        }
+
+        // 2. Check if we are authenticated or if the URL is public
+        boolean isAuthenticated = SecurityContextHolder.getContext().getAuthentication() != null;
+        boolean isPublic = false;
+
+        for (String p : PUBLIC_URLS) {
+            if (path.equals(p) || path.startsWith(p)) {
+                isPublic = true;
+                break;
+            }
+        }
+
+        if (isAuthenticated || isPublic) {
+            filterChain.doFilter(request, response);
             return;
         }
 
-        String jwt = authHeader.substring(7);
-
-        UserDetails userDetails = jwtService.extractUserDetails(jwt);
-
-        if (userDetails == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            try {
-                response.getWriter().write("Invalid or expired token");
-            } catch (IOException e) {
-                System.err.println("IOException trying to write response for invalid token: " + e.getMessage());
-            }
-        }
-
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                userDetails,
-                null,
-                userDetails.getAuthorities()
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        try {
-            filterChain.doFilter(request, response);
-        } catch (ServletException | IOException e) {
-            System.err.println("Exception thrown during filterChain.doFilter after successful authentication: " + e.getMessage());
-            throw e;
-        }
+        // 3. Neither authenticated nor public -> 401
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.getWriter().write("Missing or invalid Authorization header");
     }
 }

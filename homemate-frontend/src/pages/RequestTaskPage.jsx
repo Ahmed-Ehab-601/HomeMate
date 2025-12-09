@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getUserAddresses } from "../api/userProfileApi";
 import { requestTask } from "../api/tasksApi";
 import { fetchServices } from "../api/servicesApi";
+import "../styles/RequestTask.css";
 
 import Modal from "../components/Modal";
 

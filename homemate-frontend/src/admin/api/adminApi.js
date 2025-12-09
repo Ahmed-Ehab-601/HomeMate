@@ -192,6 +192,39 @@ export const reactiveTaskers = async (taskerIds = []) => {
     return Promise.all(promises);
 };
 
+export const getReports = async ({
+    pageNumber = 0,
+    pageSize = 20,
+    header,
+    body,
+    taskID,
+    reporter,
+    adminStatus
+} = {}) => {
+    const params = { pageNumber, pageSize };
+
+    // Only include filter params if they have values
+    if (header) params.header = header;
+    if (body) params.body = body;
+    if (taskID) params.taskID = taskID;
+    if (reporter !== undefined && reporter !== null) params.reporter = reporter;
+    if (adminStatus) params.adminStatus = adminStatus;
+
+    const queryString = buildQueryString(params);
+    const response = await apiFetch(`/api/reports/short-reports?${queryString}`);
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch reports',
+            data,
+        };
+    }
+
+    return data;
+};
+
 export default {
     getUsers,
     getTaskers,
@@ -211,4 +244,5 @@ export default {
     promoteUsers,
     suspendUsers,
     reactiveUsers,
+    getReports,
 };

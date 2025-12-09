@@ -413,6 +413,8 @@ function TaskerDashboardPage() {
     }
   };
 
+  const [expandedImage, setExpandedImage] = useState(null);
+
   const renderReviews = () => {
     if (reviewsStatus === "loading") {
       return <p className="tasker-card__meta">Loading reviews…</p>;
@@ -426,24 +428,59 @@ function TaskerDashboardPage() {
     return (
       <ul className="review-list">
         {reviews.map((review) => (
-          <li key={review.reviewId ?? review.taskId} className="review-item">
-            <div className="review-item__header">
-              <strong>{review.rate?.toFixed ? review.rate.toFixed(1) : review.rate} ★</strong>
-              <span className="tasker-card__meta">
-                {review.time ? new Date(review.time).toLocaleDateString() : "No date"}
+          <li key={review.reviewId ?? review.taskId} className="review-item" style={{ listStyle: 'none', padding: '16px 0', borderBottom: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column' }}>
+            <div className="review-item__header" style={{ display: 'flex', alignItems: 'center', marginBottom: '22px', gap: '12px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>{"@" + review.reviewerUsername || "Client"}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>•</span>
+              <span className="tasker-card__meta" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                {review.time ? new Date(review.time).toLocaleDateString() : ""}
+              </span>
+              <span style={{ color: 'var(--text-secondary)' }}>•</span>
+              <span style={{ color: '#fbbf24', fontSize: '0.95rem', fontWeight: 'bold' }}>
+                {review.rate?.toFixed ? review.rate.toFixed(1) : review.rate}★
               </span>
             </div>
-            <p>{review.text ?? "No review text provided."}</p>
+            <p style={{ margin: '0', fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+              {review.text ?? "No review text provided."}
+            </p>
+            {review.reviewImages && review.reviewImages.length > 0 && (
+              <div className="review-images">
+                {review.reviewImages.map((img, index) => {
+                  const imgSrc = img.imgFile.startsWith("data:")
+                    ? img.imgFile
+                    : `data:image/${img.format || "jpeg"};base64,${img.imgFile}`;
+                  return (
+                    <img
+                      key={img.imgId ?? index}
+                      src={imgSrc}
+                      alt={img.imgName || "Review attachment"}
+                      className="review-thumbnail"
+                      onClick={() => setExpandedImage(imgSrc)}
+                    />
+                  );
+                })}
+              </div>
+            )}
           </li>
         ))}
       </ul>
     );
   };
 
-  const handleTaskerLogout = () => {
-    logout();
+// Updated handleTaskerLogout function for TaskerDashboardPage.jsx
+// Replace the existing handleTaskerLogout function with this:
+
+const handleTaskerLogout = async () => {
+  try {
+    // The logout function in AuthContext now handles setting offline status
+    await logout();
     navigate("/");
-  };
+  } catch (error) {
+    console.error("Logout error:", error);
+    // Still navigate even if there's an error
+    navigate("/");
+  }
+};
 
   return (
     <main className="page page--wide">
@@ -552,7 +589,7 @@ function TaskerDashboardPage() {
           <article className="card profile-panel">
             <p className="section-kicker">Identity</p>
             <h2 className="section-heading">Name & username</h2>
-            
+
             <form className="profile-form" onSubmit={handleFirstNameSubmit}>
               <div className="form-field">
                 <label htmlFor="first-name-input">First name</label>
@@ -677,7 +714,7 @@ function TaskerDashboardPage() {
           <article className="card profile-panel">
             <p className="section-kicker">Services</p>
             <h2 className="section-heading">Service & hourly rate</h2>
-            
+
             <form className="profile-form" onSubmit={handleServiceSubmit}>
               <div className="form-field">
                 <label htmlFor="service-select">Service</label>
@@ -886,6 +923,20 @@ function TaskerDashboardPage() {
           </p>
         </section>
       </div>
+      {expandedImage && (
+        <div className="image-modal-overlay" onClick={() => setExpandedImage(null)}>
+          <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="image-modal-close"
+              onClick={() => setExpandedImage(null)}
+            >
+              ×
+            </button>
+            <img src={expandedImage} alt="Expanded view" className="image-modal-img" />
+          </div>
+        </div>
+      )}
     </main>
   );
 }
