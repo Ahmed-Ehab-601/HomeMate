@@ -1,18 +1,15 @@
 package com.homemate.reports.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+@Getter
 public enum AdminStatus {
     PENDING("pending"),
     DONE("done");
 
     private final String value;
-
-    AdminStatus(String value) {
-        this.value = value;
-    }
-
-    public String getValue() {
-        return value;
-    }
 
     public static AdminStatus fromValue(String value) {
         if (value == null) {
