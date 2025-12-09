@@ -57,13 +57,21 @@ public class ReportServiceImp implements IReportService {
         boolean reporterIsUser = userDetails.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equalsIgnoreCase("ROLE_USER"));
 
-        // Basic length validation
-        if (submitReport.getHeader() == null || submitReport.getHeader().length() > 100) {
+        // Report validation
+        if (submitReport.getTaskID() <= 0)
             return false;
-        }
-        if (submitReport.getBody() == null || submitReport.getBody().length() > 500) {
+
+        if (
+            submitReport.getHeader() == null || 
+            submitReport.getHeader().length() > 100
+        )
             return false;
-        }
+
+        if (
+            submitReport.getBody() == null || 
+            submitReport.getBody().length() > 500
+        )
+            return false;
 
         // Validate task exists
         if (!reportDao.taskExists(submitReport.getTaskID())) {
@@ -82,7 +90,7 @@ public class ReportServiceImp implements IReportService {
 
         return reportDao.submitReport(submitReport, reporterIsUser);
     }
-    
+
     public Optional<DetailedReport> getDetailedReportById(int reportID) {
         return reportDao.getDetailedReportById(reportID);
     }
