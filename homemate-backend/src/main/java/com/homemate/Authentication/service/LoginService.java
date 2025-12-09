@@ -83,23 +83,26 @@ public class LoginService {
 
                 Tasker tasker = taskerDao.getByEmail(email);
 
+                if (Boolean.TRUE.equals(tasker.getIsSuspended())) {
+                    return new LoginResponseDto("SUSPENDED","", "","", "");
+                }
+
                 if (tasker.getPassword().equals(password)) {
+                    String role = "ROLE_TASKER";
+                    String token = jwtService.generateToken(
+                        tasker.getTaskerID(),
+                        tasker.getUsername(),
+                        tasker.getEmail(),
+                        role
+                    );
 
-                String role = "ROLE_TASKER";
-                String token = jwtService.generateToken(
-                    tasker.getTaskerID(),
-                    tasker.getUsername(),
-                    tasker.getEmail(),
-                    role
-                );
-
-                return new LoginResponseDto(
-                    role,
-                    tasker.getUsername(),
-                    tasker.getFirstName(),
-                    tasker.getLastName(),
-                    token
-                );
+                    return new LoginResponseDto(
+                        role,
+                        tasker.getUsername(),
+                        tasker.getFirstName(),
+                        tasker.getLastName(),
+                        token
+                    );
                 }
             return null;
 
@@ -118,12 +121,11 @@ public class LoginService {
             String role = "ROLE_USER";
             if (Boolean.TRUE.equals(user.getIsAdmin()))
                 role = "ROLE_ADMIN";
-
-            String token = jwtService.generateToken(
-                    user.getUserID(),
-                    user.getUsername(),
-                    user.getEmail(),
-                    role
+                String token = jwtService.generateToken(
+                        user.getUserID(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        role
             );
 
             return new LoginResponseDto(
@@ -139,6 +141,10 @@ public class LoginService {
         try {
 
                 Tasker tasker = taskerDao.getByEmail(email);
+
+                if (Boolean.TRUE.equals(tasker.getIsSuspended())) {
+                    return new LoginResponseDto("SUSPENDED","", "","", "");
+                }
 
                 String role = "ROLE_TASKER";
                 String token = jwtService.generateToken(

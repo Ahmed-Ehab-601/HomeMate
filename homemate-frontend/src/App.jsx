@@ -21,6 +21,7 @@ import SignUpPage from "./pages/SignUpPage";
 import UserTasksPage from "./pages/UserTasksPage";
 import TaskerTasksPage from "./pages/TaskerTasksPage";
 import AdminRoutes from "./admin/routing/AdminRoutes";
+import SubmitReportPage from "./pages/SubmitReportPage";
 
 // Protected route component - redirects to signin on 401
 function ProtectedRoute({ children, requiredRole }) {
@@ -64,6 +65,14 @@ function AppRoutes() {
       <Route path="/services/:slug/taskers" element={<TaskerDiscoveryPage />} />
       <Route path="/taskers/:taskerId" element={<TaskerProfilePage />} />
       <Route path="/taskers/:taskerId/request" element={<RequestTaskPage />} />
+      <Route
+        path="/report/submit/:taskId"
+        element={
+          <ProtectedRoute>
+            <SubmitReportPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/signin" element={<SignInPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route
