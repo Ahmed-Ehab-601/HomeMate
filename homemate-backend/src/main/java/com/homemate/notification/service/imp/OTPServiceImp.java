@@ -2,7 +2,6 @@ package com.homemate.notification.service.imp;
 
 import com.homemate.notification.config.RedisConfig;
 import com.homemate.notification.domains.dto.EmailRequest;
-import com.homemate.notification.domains.dto.OtpSendRequest;
 import com.homemate.notification.domains.dto.OtpVerificationResult;
 import com.homemate.notification.domains.dto.OtpVerifyRequest;
 import com.homemate.notification.service.OTPService;
@@ -13,7 +12,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -33,31 +31,40 @@ public class OTPServiceImp implements OTPService {
     private static final String OTP_PREFIX ="otp:";
     private static final String ATTEMPTS_PREFIX ="otp_attempts:";
     private static final String HOMEMATE_EMAIL ="homematesevice8@gmail.com";
-    public String generateAndStoreOTP(String email) {
+    public String generateAndStoreOTP(String email, EmailRequest.EmailType emailType) {
         String otp =generateCode();
         String otpCodeKey=OTP_PREFIX+email;
         redisTemplate.opsForValue().set(
                 otpCodeKey,
             otp,
-            RedisConfig.OTP_TTL_MINUTES,
-            TimeUnit.MINUTES
+            RedisConfig.OTP_TTL_SEC,
+            TimeUnit.SECONDS
         );
 
         String attemptsKey=ATTEMPTS_PREFIX+email;
+        int attemptTtl = emailType == FORGOT_PASSWORD 
+            ? RedisConfig.OTP_ATTEMPT_TTL_HOURS_RESET_PASSWORD
+            : RedisConfig.OTP_ATTEMPT_TTL_MINUTES;
+        TimeUnit attemptTtlUnit = emailType == FORGOT_PASSWORD ? TimeUnit.HOURS : TimeUnit.MINUTES;
+        
         redisTemplate.opsForValue().set(
             attemptsKey,
             "0",
-            RedisConfig.OTP_ATTEMPT_TTL_MINUTES,
-            TimeUnit.MINUTES
+            attemptTtl,
+            attemptTtlUnit
         );
 
         return otp;
     }
     @Override
-    public OtpVerificationResult validateCode( OtpVerifyRequest otpVerifyRequest) {
-        String otpCodeKey =OTP_PREFIX+otpVerifyRequest.getEmail();
-        String attemptsKey =ATTEMPTS_PREFIX+otpVerifyRequest.getEmail();
-
+    public OtpVerificationResult validateCode(OtpVerifyRequest otpVerifyRequest) {
+        String otpCodeKey =OTP_PREFIX+otpVerifyRequest.getRecipientEmail();
+        String attemptsKey =ATTEMPTS_PREFIX+otpVerifyRequest.getRecipientEmail();
+        
+        int attemptTtl = otpVerifyRequest.getEmailType() == FORGOT_PASSWORD
+            ? RedisConfig.OTP_ATTEMPT_TTL_HOURS_RESET_PASSWORD
+            : RedisConfig.OTP_ATTEMPT_TTL_MINUTES;
+        TimeUnit attemptTtlUnit = otpVerifyRequest.getEmailType() == FORGOT_PASSWORD ? TimeUnit.HOURS : TimeUnit.MINUTES;
         String cachedOtp=(String)redisTemplate.opsForValue().get(otpCodeKey);
         if (cachedOtp==null) {
             return OtpVerificationResult.builder()
@@ -72,8 +79,8 @@ public class OTPServiceImp implements OTPService {
             redisTemplate.opsForValue().set(
                     attemptsKey,
                     "0",
-                    RedisConfig.OTP_ATTEMPT_TTL_MINUTES,
-                    TimeUnit.MINUTES
+                    attemptTtl,
+                    attemptTtlUnit
             );
             attempts =0;
         }
@@ -104,8 +111,8 @@ public class OTPServiceImp implements OTPService {
         redisTemplate.opsForValue().set(
                 attemptsKey,
                 String.valueOf(updatedAttempts),
-                RedisConfig.OTP_ATTEMPT_TTL_MINUTES,
-                TimeUnit.MINUTES
+                attemptTtl,
+                attemptTtlUnit
         );
 
         return OtpVerificationResult.builder()
@@ -122,17 +129,30 @@ public class OTPServiceImp implements OTPService {
         return String.format("%06d", otp);
     }
 
-   @Override
+    @Override
     public void sendOtp(EmailRequest emailRequest) {
          if (emailRequest.getEmailType()==EMAIL_VERIFICATION || emailRequest.getEmailType()==FORGOT_PASSWORD){
-             String otpCode =generateAndStoreOTP(emailRequest.getRecipientEmail());
-             String body =emailTemplate.buildVerificationCode(otpCode);
+             String otpCode =generateAndStoreOTP(emailRequest.getRecipientEmail(), emailRequest.getEmailType());
+             String body;
+             String title;
+             EmailRequest.EmailType emailType=emailRequest.getEmailType();
+
+             switch (emailType){
+                 case EMAIL_VERIFICATION -> {
+                     body = emailTemplate.buildVerificationCode(otpCode);
+                     title = "Verify Your Email";
+                 }
+                 case FORGOT_PASSWORD -> {
+                     body = emailTemplate.buildResetPasswordCode(otpCode);
+                     title = "Reset Your Password";
+                 }
+                 default ->throw new IllegalArgumentException("Unsupported email type: " + emailType);
+             }
              try {
                  MimeMessage mimeMessage=javaMailSender.createMimeMessage();
                  MimeMessageHelper mimeMessageHelper= new MimeMessageHelper(mimeMessage, true, "UTF-8");
                  mimeMessageHelper.setFrom(HOMEMATE_EMAIL);
                  mimeMessageHelper.setTo(emailRequest.getRecipientEmail());
-                 EmailRequest.EmailType emailType=emailRequest.getEmailType();
 
                  switch (emailType){
                      case EMAIL_VERIFICATION, FORGOT_PASSWORD ->mimeMessageHelper.setSubject(emailTemplate.buildEmailSubject(emailRequest));
@@ -140,10 +160,10 @@ public class OTPServiceImp implements OTPService {
                  }
 
                  String htmlContent = "<html><body>" +
-                         "<img src='cid:logo' style='width:200px; height:auto;' />" +
-                         "<h2>Your Verification Code</h2>" +
-                         "<p>" + body + "</p>" +
-                         "</body></html>";
+                     "<img src='cid:logo' style='width:200px; height:auto;' />" +
+                     "<h2>" + title + "</h2>" +
+                     "<p>" + body + "</p>" +
+                     "</body></html>";
 
                  mimeMessageHelper.setText(htmlContent, true);
                  mimeMessageHelper.addInline("logo", new ClassPathResource("logo.png"));

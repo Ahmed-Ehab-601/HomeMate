@@ -1,4 +1,5 @@
 package com.homemate.notification.controller;
+import com.homemate.notification.domains.dto.EmailRequest;
 import com.homemate.notification.domains.dto.OtpSendRequest;
 import com.homemate.notification.domains.dto.OtpVerificationResult;
 import com.homemate.notification.domains.dto.OtpVerifyRequest;
@@ -26,9 +27,8 @@ public class OtpController {
 
     @PostMapping("/send")
     public ResponseEntity<Map<String, String>> sendOtp(
-            @Valid @RequestBody
-            OtpSendRequest otpSendRequest) {
-        otpService.sendOtp(otpSendRequest);
+            @RequestBody    EmailRequest emailRequest) {
+        otpService.sendOtp(emailRequest);
         return ResponseEntity.accepted().body(Map.of("message", "OTP sent"));
     }
 

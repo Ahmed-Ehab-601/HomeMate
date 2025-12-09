@@ -1,4 +1,5 @@
 package com.homemate.notification.service.utils;
+import com.homemate.notification.config.RedisConfig;
 import com.homemate.notification.domains.dto.EmailRequest;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.model.Status;
@@ -265,8 +266,14 @@ public class EmailTemplate {
 
     public String buildVerificationCode(String code){
          return "Your HomeMate verification code is " + code + "\n" +
-                "This code expires in " + com.homemate.notification.config.RedisConfig.OTP_TTL_MINUTES + " minutes.";
+                "This code expires in " + RedisConfig.OTP_TTL_SEC + " seconds.";
     }
+
+    public String buildResetPasswordCode(String code){
+        return "Use this code to reset your HomeMate password: " + code + "\n" +
+               "This code expires in " + RedisConfig.OTP_TTL_SEC + " seconds.";
+    }
+
     private String formatWorkedHours(Double workedHours) {
         if (workedHours ==null|| workedHours== 0) {
             return "0 hours 0 minutes";

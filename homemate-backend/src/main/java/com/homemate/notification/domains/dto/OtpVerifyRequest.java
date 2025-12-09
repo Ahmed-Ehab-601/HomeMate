@@ -8,8 +8,8 @@ import lombok.Data;
 public class OtpVerifyRequest {
     @Email
     @NotBlank
-    private String email;
-
+    private String recipientEmail;
     @NotBlank
     private String code;
+    EmailRequest.EmailType emailType;
 }
