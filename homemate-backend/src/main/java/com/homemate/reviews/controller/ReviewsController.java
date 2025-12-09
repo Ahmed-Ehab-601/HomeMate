@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,8 +18,11 @@ import org.springframework.web.server.ResponseStatusException;
 import com.homemate.reviews.DTO.ReviewsDTO;
 import com.homemate.reviews.service.ReviewsService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/reviews")
+@Validated
 public class ReviewsController {
 
 	private final ReviewsService reviewsService;
@@ -31,7 +35,7 @@ public class ReviewsController {
 	// Add a new review. Returns the created ReviewsDTO or 400 on validation errors.
 	@PostMapping
 	@PreAuthorize("hasRole('ROLE_USER')")
-	public ReviewsDTO addReview(@RequestBody ReviewsDTO dto) {
+	public ReviewsDTO addReview(@Valid @RequestBody ReviewsDTO dto) {
 		try {
 			return reviewsService.addReview(dto);
 		} catch (IllegalArgumentException e) {
@@ -66,7 +70,7 @@ public class ReviewsController {
 	// Update a review. Returns the updated ReviewsDTO or 400 on validation errors.
 	@PutMapping
 	@PreAuthorize("hasRole('ROLE_USER')")
-	public ResponseEntity<ReviewsDTO> updateReview(@RequestBody ReviewsDTO reviewsDTO) {
+	public ResponseEntity<ReviewsDTO> updateReview(@Valid @RequestBody ReviewsDTO reviewsDTO) {
 		try {
 			ReviewsDTO updated = reviewsService.updateReview(reviewsDTO);
 			return ResponseEntity.ok(updated);

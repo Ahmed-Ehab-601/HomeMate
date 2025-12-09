@@ -73,6 +73,7 @@ class LoginServiceTest {
         tasker.setBirthDate(java.sql.Timestamp.valueOf(LocalDateTime.of(1990, 1, 1, 0, 0)));
         tasker.setGender('M');
         tasker.setPhone("01012345678");
+        tasker.setIsSuspended(false);
 
         lenient().when(validateSignup.validateEmail(anyString())).thenReturn((String) null);
         lenient().when(validateSignup.validatePassword(anyString())).thenReturn((String) null);

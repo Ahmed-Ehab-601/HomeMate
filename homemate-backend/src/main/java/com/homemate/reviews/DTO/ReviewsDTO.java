@@ -3,12 +3,32 @@ package com.homemate.reviews.DTO;
 import java.sql.Timestamp;
 import java.util.List;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+
 public class ReviewsDTO {
     private int reviewId;
+    
+    @Size(max = 50, message = "Review text cannot exceed 50 characters")
     private String text;
+    
+    @NotNull(message = "Rating is required")
+    @DecimalMin(value = "0.0", message = "Rating must be at least 0.0")
+    @DecimalMax(value = "5.0", message = "Rating cannot exceed 5.0")
     private double rate;
+    
     private Timestamp time;
+    
+    @NotNull(message = "Task ID is required")
+    @Positive(message = "Task ID must be positive")
     private int taskId;
+    
+    @Valid // Validates nested ReviewImagesDTO objects
+    @Size(max = 5, message = "Cannot add more than 5 images to a review")
     private List<ReviewImagesDTO> reviewImages;
 
     public int getReviewId() {
