@@ -1,7 +1,9 @@
+/* Chat Interface Component - Complete Version with Error Handling and Character Limit */
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Phone, Image, X, ArrowLeft } from 'lucide-react';
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+
 const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -262,7 +264,7 @@ const ChatInterface = () => {
     }
   };
 
- const handleCall = async () => {
+  const handleCall = async () => {
     try {
       const endpoint = isUserRole
         ? `${API_BASE}/chat/callTasker/${chatId}`
@@ -284,7 +286,7 @@ const ChatInterface = () => {
     } catch (error) {
       console.error('Error getting phone number:', error);
       showErrorMessage('Network error. Unable to place call.');
-
+    }
   };
 
   const confirmCall = () => {
@@ -301,7 +303,6 @@ const ChatInterface = () => {
     } catch (err) {
       console.warn('Copy failed', err);
       showErrorMessage('Failed to copy phone number');
-
     }
   };
 
@@ -310,7 +311,6 @@ const ChatInterface = () => {
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         showErrorMessage('Image size must be less than 5MB');
-
         return;
       }
 
@@ -364,7 +364,6 @@ const ChatInterface = () => {
       case 'seen':
         return (
           <svg style={{ width: '16px', height: '16px', color: '#3d8ca0ff' }} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13l4 4L23 7" />
           </svg>
@@ -526,7 +525,7 @@ const ChatInterface = () => {
       transition: 'all 0.3s ease',
       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
     },
-   messageBubble: {
+    messageBubble: {
       borderRadius: '18px',
       padding: '0.875rem 1.125rem',
       wordWrap: 'break-word',
@@ -536,7 +535,7 @@ const ChatInterface = () => {
       position: 'relative',
       transition: 'all 0.2s ease',
       maxWidth: '100%'
-   },
+    },
     messageBubbleSender: {
       background: 'linear-gradient(135deg, #a7df2d 0%, #95c927 100%)',
       color: '#ffffff',
@@ -737,6 +736,7 @@ const ChatInterface = () => {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
           }
+
           @keyframes slideDown {
             from {
               opacity: 0;
@@ -761,7 +761,6 @@ const ChatInterface = () => {
       <div style={styles.header}>
         <div style={styles.headerLeft}>
           <button
-
             onClick={() => { isUserRole ? navigate('/my-tasks') : navigate('/tasker/my-tasks'); }}
             style={styles.backButton}
             onMouseEnter={(e) => {
@@ -851,7 +850,7 @@ const ChatInterface = () => {
                       src={`data:image/${msg.imageDto.fileFormat};base64,${msg.imageDto.fileData}`}
                       alt={msg.imageDto.fileName}
                       style={styles.messageImage}
-                  />
+                    />
                   )}
                   {msg.content && (
                     <div
@@ -1013,5 +1012,5 @@ const ChatInterface = () => {
     </div>
   );
 };
-}
+
 export default ChatInterface;

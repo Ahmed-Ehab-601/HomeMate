@@ -68,9 +68,9 @@ public class ChatController {
     }
     @GetMapping("/callUser/{chatId}")
     @PreAuthorize("hasRole('TASKER')")
-    public ResponseEntity<String> getUserPhoneNumber(@PathVariable("chatId") Long chatId){
+    public ResponseEntity<String> getUserPhoneNumber(@PathVariable("chatId") Long chatId,@AuthenticationPrincipal AppUserDetails userDetails){
         try {
-            String RES=chatService.getUserPhoneNumber(chatId);
+            String RES=chatService.getUserPhoneNumber(chatId,userDetails);
             return ResponseEntity.status(HttpStatus.OK).body(RES);
         }
         catch (Exception e){

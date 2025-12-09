@@ -47,7 +47,7 @@ public class MessageDao implements IMessageDao<MessageDto> {
 
     }
 @Override
-public void save(Long chatID, MessageDto messageDto) {
+public MessageDto save(Long chatID, MessageDto messageDto) {
         // Set timestamp if not provided
         Timestamp timestamp = messageDto.getTimestamp() != null
                 ? Timestamp.valueOf(messageDto.getTimestamp())
@@ -93,6 +93,10 @@ public void save(Long chatID, MessageDto messageDto) {
                     imageDto.getFileName()
             );
         }
+        return jdbcTemplate.queryForObject("SELECT * " +
+                "FROM Message m " +
+                "LEFT JOIN MessageImage mi ON m.messageId = mi.messageID " +
+                "WHERE m.messageID = ? ",new MessageRowMapper(),messageId);
     }
 @Override
 public int getUnreadOnesForUser(Long chatID) throws SQLException {

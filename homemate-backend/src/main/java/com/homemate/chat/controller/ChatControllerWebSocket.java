@@ -1,0 +1,218 @@
+//package com.homemate.chat.controller;
+//
+//import com.homemate.chat.Service.ChatService;
+//import com.homemate.chat.Service.MessageService;
+//import com.homemate.chat.dao.MessageDao;
+//import com.homemate.chat.dto.ChatDto;
+//import com.homemate.chat.dto.MessageDto;
+//import com.homemate.chat.dto.PaginatedResponse;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.data.domain.Page;
+//import org.springframework.http.HttpStatus;
+//import org.springframework.http.ResponseEntity;
+//import org.springframework.messaging.simp.SimpMessagingTemplate;
+//import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.web.bind.annotation.*;
+//
+//import java.util.HashMap;
+//import java.util.List;
+//import java.util.Map;
+//
+//@RestController
+//@RequestMapping("/api/chat")
+//@CrossOrigin(origins = "*")
+//public class ChatControllerWebSocket {
+//    @Autowired
+//    private ChatService chatService;
+//    private MessageService messageService;
+//    @Autowired
+//    private SimpMessagingTemplate messagingTemplate;
+//    public ChatControllerWebSocket(ChatService chatService,MessageService messageService){
+//        this.chatService=chatService;
+//        this.messageService=messageService;
+//    }
+//    @GetMapping("/getHistory/user/{chatId}")
+//    @PreAuthorize("hasRole('USER')")
+//
+//    public ResponseEntity<PaginatedResponse> getHistory(@PathVariable Long chatId, @RequestParam(defaultValue = "0") int page,
+//                                                        @RequestParam(defaultValue = "20") int size) throws Exception {
+//        // try {
+//        PaginatedResponse RES=chatService.getChatHistory(chatId,page,size);
+//        return ResponseEntity.status(HttpStatus.OK).body(RES);
+////        }
+////        catch (Exception e){
+////            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+////        }
+//
+//    }
+//    @GetMapping("/getChat/{chatId}")
+//    public ResponseEntity<ChatDto> getChat(@PathVariable Long chatId)throws Exception{
+//        try {
+//            ChatDto RES=chatService.getChat(chatId);
+//            return ResponseEntity.status(HttpStatus.OK).body(RES);
+//        }
+//        catch (Exception e){
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//
+//    }
+//    @GetMapping("/getHistory/tasker/{chatId}")
+//    @PreAuthorize("hasRole('TASKER')")
+//    public ResponseEntity<PaginatedResponse> getHistorytasker(@PathVariable Long chatId, @RequestParam(defaultValue = "0") int page,
+//                                                              @RequestParam(defaultValue = "20") int size){
+//        try {
+//            PaginatedResponse RES=chatService.getChatHistory(chatId,page,size);
+//            return ResponseEntity.status(HttpStatus.OK).body(RES);
+//        }
+//        catch (Exception e){
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//
+//    }
+//    @GetMapping("/callUser/{chatId}")
+//    @PreAuthorize("hasRole('TASKER')")
+//    public ResponseEntity<String> getUserPhoneNumber(@PathVariable("chatId") Long chatId){
+//        try {
+//            String RES=chatService.getUserPhoneNumber(chatId);
+//            return ResponseEntity.status(HttpStatus.OK).body(RES);
+//        }
+//        catch (Exception e){
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//
+//    }
+//    @GetMapping("/callTasker/{chatId}")
+//    @PreAuthorize("hasRole('USER')")
+//    public ResponseEntity<String> getTaskerPhoneNumber(@PathVariable("chatId") Long chatId)
+//    {        try {
+//        String RES=chatService.getTaskerPhoneNumber(chatId);
+//        return ResponseEntity.status(HttpStatus.OK).body(RES);
+//    }
+//    catch (Exception e){
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//    }
+//
+//    }
+//    @GetMapping("/tasker/getRecipientName/{chatId}")
+//    @PreAuthorize("hasRole('TASKER')")
+//    public ResponseEntity<String> getRecipientUser(@PathVariable Long chatId){
+//        try {
+//            ChatDto RES = chatService.getChat(chatId);
+//            String res = chatService.getRecipentNameUser(RES.getUserId());
+//            return ResponseEntity.status(HttpStatus.OK).body(res);
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//    }
+//    @PostMapping("/tasker/{taskerId}/online")
+//    public ResponseEntity<String> setTaskerOnline(@PathVariable Long taskerId) {
+//        try {
+//            chatService.setTaskerOnline(taskerId);
+//            // Also mark pending messages as received
+//            messageService.markAllAsReceivedForTasker(taskerId);
+//            Map<String, Object> statusUpdate = new HashMap<>();
+//            statusUpdate.put("taskerId", taskerId);
+//            statusUpdate.put("status", "online");
+//            statusUpdate.put("timestamp", System.currentTimeMillis());
+//
+//            messagingTemplate.convertAndSend(
+//                    "/topic/status/" + taskerId,
+//                    statusUpdate
+//            );
+//
+//            return ResponseEntity.ok("Tasker status set to online");
+//        } catch (Exception e) {
+//            return ResponseEntity.status(500)
+//                    .body("Failed to set tasker online: " + e.getMessage());
+//        }
+//    }
+//
+//    @PostMapping("/user/{userId}/online")
+//    public ResponseEntity<String> setUserOnline(@PathVariable Long userId) {
+//        try {
+//            chatService.setUserOnline(userId);
+//            // Also mark pending messages as received
+//            messageService.markAllAsReceivedForUser(userId);
+//            Map<String, Object> statusUpdate = new HashMap<>();
+//            statusUpdate.put("userId", userId);
+//            statusUpdate.put("status", "online");
+//            statusUpdate.put("timestamp", System.currentTimeMillis());
+//
+//            messagingTemplate.convertAndSend(
+//                    "/topic/status/" + userId,
+//                    statusUpdate
+//            );
+//
+//
+//            return ResponseEntity.ok("User status set to online");
+//        } catch (Exception e) {
+//            return ResponseEntity.status(500)
+//                    .body("Failed to set user online: " + e.getMessage());
+//        }
+//    }
+//    @PostMapping("/tasker/{taskerId}/offline")
+//    @PreAuthorize("hasRole('TASKER')")
+//    public ResponseEntity<String> changeStatus(@PathVariable Long taskerId){
+//        try {
+//            try {
+//                chatService.changeStatusTasker(taskerId);
+//
+//                Map<String, Object> statusUpdate = new HashMap<>();
+//                statusUpdate.put("taskerId", taskerId);
+//                statusUpdate.put("status", "offline");
+//                statusUpdate.put("timestamp", System.currentTimeMillis());
+//
+//                messagingTemplate.convertAndSend(
+//                        "/topic/status/" + taskerId,
+//                        statusUpdate
+//                );
+//
+//                return ResponseEntity.ok("changed");
+//            } catch (Exception e) {
+//                return ResponseEntity.badRequest().build();
+//            }
+//        }
+//        catch (Exception e){
+//            return ResponseEntity.badRequest().build();
+//        }
+//    }
+//
+//    @PostMapping("/user/{userId}/offline")
+//    @PreAuthorize("hasRole('USER')")
+//    public ResponseEntity<String> changeStatus2(@PathVariable Long userId){
+//        try {
+//            try {
+//                chatService.changeStatusUser(userId);
+//
+//                Map<String, Object> statusUpdate = new HashMap<>();
+//                statusUpdate.put("userId", userId);
+//                statusUpdate.put("status", "offline");
+//                statusUpdate.put("timestamp", System.currentTimeMillis());
+//
+//                messagingTemplate.convertAndSend(
+//                        "/topic/status/" + userId,
+//                        statusUpdate
+//                );
+//
+//                return ResponseEntity.ok("changed");
+//            } catch (Exception e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
+//        catch (Exception e){
+//            return ResponseEntity.badRequest().build();
+//        }
+//    }
+//    @GetMapping("/user/getRecipientName/{chatId}")
+//    @PreAuthorize("hasRole('USER')")
+//    public ResponseEntity<String> getRecipientTasker(@PathVariable Long chatId){
+//        try {
+//            ChatDto RES = chatService.getChat(chatId);
+//            String res = chatService.getRecipentNameTasker(RES.getTaskerId());
+//            return ResponseEntity.status(HttpStatus.OK).body(res);
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//    }
+//
+//}
