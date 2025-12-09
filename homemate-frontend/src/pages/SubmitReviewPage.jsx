@@ -96,7 +96,30 @@ function SubmitReviewPage() {
             navigate(-1); // Or to previous page
         } catch (err) {
             console.error("Failed to submit review:", err);
-            setError("Failed to submit review. Please try again.");
+
+            // Extract error message from backend response
+            let errorMessage = "Failed to submit review. Please try again.";
+
+            if (err.response?.data) {
+                // If backend returns a string error message
+                if (typeof err.response.data === 'string') {
+                    errorMessage = err.response.data;
+                }
+                // If backend returns an object with a message property
+                else if (err.response.data.message) {
+                    errorMessage = err.response.data.message;
+                }
+                // If backend returns an error property
+                else if (err.response.data.error) {
+                    errorMessage = err.response.data.error;
+                }
+            }
+            // If there's a general error message
+            else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            setError(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
