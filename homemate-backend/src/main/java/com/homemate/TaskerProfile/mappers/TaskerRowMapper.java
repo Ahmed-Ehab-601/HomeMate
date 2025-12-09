@@ -35,6 +35,7 @@ public class TaskerRowMapper implements RowMapper<Tasker> {
         tasker.setTotalEarning(rs.getObject("totalEarning") != null ? rs.getDouble("totalEarning") : null);
         tasker.setWorkedHours(rs.getObject("WorkedHours") != null ? rs.getDouble("WorkedHours") : null);
         tasker.setAddressCity(rs.getString("addressCity"));
+        tasker.setIsSuspended(rs.getBoolean("suspended"));
         return tasker;
     }
 }
