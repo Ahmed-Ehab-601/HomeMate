@@ -81,6 +81,8 @@ public class ReportServiceImp implements IReportService {
         }
 
         return reportDao.submitReport(submitReport, reporterIsUser);
+    }
+    
     public Optional<DetailedReport> getDetailedReportById(int reportID) {
         return reportDao.getDetailedReportById(reportID);
     }

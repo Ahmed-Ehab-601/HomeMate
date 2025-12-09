@@ -98,6 +98,8 @@ public class ReportDaoImp implements ReportDao {
         String sql = "SELECT COUNT(*) FROM Task WHERE taskID = ? AND taskerID = ?";
         Long count = jdbcTemplate.queryForObject(sql, Long.class, taskId, taskerId);
         return count != null && count > 0;
+    }
+    
     public Optional<DetailedReport> getDetailedReportById(int reportID) {
         String sql = "SELECT " +
                      "r.reportID, r.header, r.body, r.taskID, r.reporter, r.adminStatus, " +
