@@ -19,6 +19,10 @@ function SignUpPage() {
   const [userEmailLocked, setUserEmailLocked] = useState(false);
   const [taskerEmailLocked, setTaskerEmailLocked] = useState(false);
   const [verifyToken, setVerifyToken] = useState(null); // Store verification token
+  const [showUserPassword, setShowUserPassword] = useState(false);
+  const [showUserConfirmPassword, setShowUserConfirmPassword] = useState(false);
+  const [showTaskerPassword, setShowTaskerPassword] = useState(false);
+  const [showTaskerConfirmPassword, setShowTaskerConfirmPassword] = useState(false);
 
   // Load persisted verify token on mount (e.g., after refresh)
   useEffect(() => {
@@ -530,32 +534,110 @@ function SignUpPage() {
                 <label htmlFor="password" className="form-label">
                   Password *
                 </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  className="input"
-                  value={userForm.password}
-                  onChange={handleUserFormChange}
-                  required
-                  disabled={isLoading}
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showUserPassword ? "text" : "password"}
+                    className="input"
+                    value={userForm.password}
+                    onChange={handleUserFormChange}
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowUserPassword(!showUserPassword)}
+                    aria-label={showUserPassword ? "Hide password" : "Show password"}
+                    disabled={isLoading}
+                  >
+                    {showUserPassword ? (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="form-field">
                 <label htmlFor="confirmPassword" className="form-label">
                   Confirm Password *
                 </label>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  className="input"
-                  value={userForm.confirmPassword}
-                  onChange={handleUserFormChange}
-                  required
-                  disabled={isLoading}
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showUserConfirmPassword ? "text" : "password"}
+                    className="input"
+                    value={userForm.confirmPassword}
+                    onChange={handleUserFormChange}
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowUserConfirmPassword(!showUserConfirmPassword)}
+                    aria-label={showUserConfirmPassword ? "Hide password" : "Show password"}
+                    disabled={isLoading}
+                  >
+                    {showUserConfirmPassword ? (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -770,32 +852,110 @@ function SignUpPage() {
                 <label htmlFor="tasker-password" className="form-label">
                   Password *
                 </label>
-                <input
-                  id="tasker-password"
-                  name="password"
-                  type="password"
-                  className="input"
-                  value={taskerForm.password}
-                  onChange={handleTaskerFormChange}
-                  required
-                  disabled={isLoading}
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    id="tasker-password"
+                    name="password"
+                    type={showTaskerPassword ? "text" : "password"}
+                    className="input"
+                    value={taskerForm.password}
+                    onChange={handleTaskerFormChange}
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowTaskerPassword(!showTaskerPassword)}
+                    aria-label={showTaskerPassword ? "Hide password" : "Show password"}
+                    disabled={isLoading}
+                  >
+                    {showTaskerPassword ? (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="form-field">
                 <label htmlFor="tasker-confirmPassword" className="form-label">
                   Confirm Password *
                 </label>
-                <input
-                  id="tasker-confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  className="input"
-                  value={taskerForm.confirmPassword}
-                  onChange={handleTaskerFormChange}
-                  required
-                  disabled={isLoading}
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    id="tasker-confirmPassword"
+                    name="confirmPassword"
+                    type={showTaskerConfirmPassword ? "text" : "password"}
+                    className="input"
+                    value={taskerForm.confirmPassword}
+                    onChange={handleTaskerFormChange}
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowTaskerConfirmPassword(!showTaskerConfirmPassword)}
+                    aria-label={showTaskerConfirmPassword ? "Hide password" : "Show password"}
+                    disabled={isLoading}
+                  >
+                    {showTaskerConfirmPassword ? (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <button
