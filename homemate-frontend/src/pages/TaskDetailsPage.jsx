@@ -9,7 +9,7 @@ import {
   completeTask,
 } from "../api/taskManagementApi";
 import { acceptTask, rejectTask } from "../api/taskActionsApi";
-import { getReviewByTask } from "../api/reviewsApi";
+import { getTaskReview } from "../api/taskManagementApi";
 import { getTaskerById } from "../api/taskerProfileApi";
 import TaskerCard from "../components/TaskerCard";
 import Modal from "../components/Modal";
@@ -208,7 +208,7 @@ function TaskDetailsPage() {
       // Load review if task is done
       if (taskData.status === "Done") {
         try {
-          const reviewData = await getReviewByTask(taskId);
+          const reviewData = await getTaskReview(taskId);
           setReview(reviewData);
         } catch (err) {
           console.log("No review found:", err);
