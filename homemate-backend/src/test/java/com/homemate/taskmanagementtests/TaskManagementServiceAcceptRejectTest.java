@@ -1,6 +1,7 @@
 package com.homemate.taskmanagementtests;
 
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
+import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.exceptions.BadAcceptRejectException;
 import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
 import com.homemate.taskmanagement.model.Status;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.Optional;
 
@@ -22,6 +24,8 @@ class TaskManagementServiceAcceptRejectTest {
 
     @Mock
     private TaskDaoImpl taskDao;
+    @Mock
+    private SimpMessagingTemplate simpMessagingTemplate;
 
     @InjectMocks
     private TaskManagementService taskManagementService;
@@ -36,6 +40,7 @@ class TaskManagementServiceAcceptRejectTest {
         when(taskDao.getStatus(taskId)).thenReturn(Optional.of(Status.InReview));
         when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(taskerId));
         when(taskDao.updateStatus(taskId, newStatus)).thenReturn(true);
+        when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.of(new TaskDto()));
 
         // Act & Assert
         assertThatCode(() -> taskManagementService.acceptOrReject(taskId, taskerId, newStatus))
@@ -56,6 +61,7 @@ class TaskManagementServiceAcceptRejectTest {
         when(taskDao.getStatus(taskId)).thenReturn(Optional.of(Status.InReview));
         when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(taskerId));
         when(taskDao.updateStatus(taskId, newStatus)).thenReturn(true);
+        when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.of(new TaskDto()));
 
         // Act & Assert
         assertThatCode(() -> taskManagementService.acceptOrReject(taskId, taskerId, newStatus))

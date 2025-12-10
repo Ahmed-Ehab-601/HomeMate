@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -30,6 +31,8 @@ class TaskManagementServiceUpdateStatusTest {
 
     @Mock
     private TaskDao taskDao;
+    @Mock
+    private SimpMessagingTemplate simpMessagingTemplate;
     @InjectMocks
     private TaskManagementService taskManagementService;
     @InjectMocks
@@ -54,7 +57,7 @@ class TaskManagementServiceUpdateStatusTest {
                 .build();
 
 
-        taskManagementService = new TaskManagementService(null, taskDao,new StatusFactory(taskDao),reviewDao);
+        taskManagementService = new TaskManagementService(null, taskDao,new StatusFactory(taskDao),reviewDao,simpMessagingTemplate);
     }
 
     // ========== Valid State Transitions ==========
