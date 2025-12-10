@@ -1,6 +1,7 @@
-package com.homemate.reviews.Dao;
+package com.homemate.reviews.dao;
 
 import com.homemate.reviews.DTO.ReviewsDTO;
+import com.homemate.reviews.Dao.ReviewsDao;
 import com.homemate.reviews.mappers.ReviewImagesDTORowMapper;
 import com.homemate.reviews.mappers.ReviewsDTORowMapper;
 import org.junit.jupiter.api.BeforeEach;

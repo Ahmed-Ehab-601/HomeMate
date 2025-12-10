@@ -1,4 +1,4 @@
-package com.homemate.reviews.Dao.imp;
+package com.homemate.reviews.dao.imp;
 
 import com.homemate.reviews.DTO.ReviewImagesDTO;
 import com.homemate.reviews.DTO.ReviewsDTO;
