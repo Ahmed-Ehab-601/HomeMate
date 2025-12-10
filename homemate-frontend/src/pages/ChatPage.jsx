@@ -19,6 +19,7 @@ const ChatInterface = () => {
   const [error, setError] = useState(null);
   const [showError, setShowError] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [expandedImage, setExpandedImage] = useState(null); // ADD THIS LINE
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -85,6 +86,18 @@ const ChatInterface = () => {
       // If we are currently watching this chat, mark incoming messages as read instantly?
       // Typically we rely on the component mount or visibility.
       // But for now, just add it.
+
+      // CHECK: If message has image but no data (lightweight notification), fetch full message
+      if (newMessage.imageDto && !newMessage.imageDto.fileData) {
+        console.log('🖼️ Received lightweight image message, fetching details...');
+        // We can either fetch the single message or just reload the latest page
+        // Since we don't have a clean getMessage(id) endpoint ready, let's reload the first page quietly
+        // OR: just let the user see "Loading image..." if we had that UI.
+        // For now, let's trigger a reload of messages to get the data.
+        loadMessages(0, true);
+        return prev; // Don't add the incomplete message yet, wait for reload
+      }
+
       return [...prev, newMessage];
     });
 
@@ -151,7 +164,13 @@ const ChatInterface = () => {
     markMessageAsRead,
     markAllMessagesAsRead
   } = useWebSocket(chatId, currentUserId, recipientId, userRole.replace('ROLE_', ''), _token, handleMessageReceived, handleStatusUpdate);
-
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
   const [allMessages, setAllMessages] = useState([]);
 
   // Auto-mark incoming messages as read when viewed
@@ -410,7 +429,15 @@ const ChatInterface = () => {
         });
 
         // Broadcast via WebSocket
-        sendMessage(savedMessage);
+        // CRITICAL: Strip the base64 data to prevent WebSocket crash on large payloads
+        const wsMessage = {
+          ...savedMessage,
+          imageDto: savedMessage.imageDto ? {
+            ...savedMessage.imageDto,
+            fileData: null // Send null data, receiver will fetch
+          } : null
+        };
+        sendMessage(wsMessage);
 
         setSelectedImage(null);
         setImagePreview(null);
@@ -674,6 +701,15 @@ const ChatInterface = () => {
       margin: 0,
       lineHeight: '1.5'
     },
+    messageImage: {
+      maxWidth: '100%',
+      maxHeight: '300px',
+      borderRadius: '12px',
+      marginTop: '0.5rem',
+      cursor: 'pointer',
+      objectFit: 'cover',
+      display: 'block'
+    },
     messageFooter: {
       display: 'flex',
       alignItems: 'center',
@@ -713,6 +749,32 @@ const ChatInterface = () => {
       padding: '1.25rem 1.5rem',
       boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.05)',
       flexShrink: 0
+    },
+    imagePreviewContainer: {
+      position: 'relative',
+      marginBottom: '0.75rem',
+      display: 'inline-block'
+    }, imagePreview: {
+      maxWidth: '150px',
+      maxHeight: '150px',
+      borderRadius: '12px',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+    },
+    removeImageButton: {
+      position: 'absolute',
+      top: '-8px',
+      right: '-8px',
+      background: '#e74c3c',
+      color: '#ffffff',
+      border: 'none',
+      borderRadius: '50%',
+      width: '24px',
+      height: '24px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
     },
     inputWrapper: {
       display: 'flex',
@@ -806,6 +868,35 @@ const ChatInterface = () => {
       borderRadius: '12px',
       cursor: 'pointer',
       fontWeight: '500'
+    }, imageModal: {
+      background: 'transparent',
+      padding: '2rem',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    expandedImage: {
+      maxWidth: '100%',
+      maxHeight: '80vh',
+      borderRadius: '8px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+    },
+    errorToast: {
+      position: 'fixed',
+      top: '5rem',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      backgroundColor: '#e74c3c',
+      color: 'white',
+      padding: '0.75rem 1.5rem',
+      borderRadius: '24px',
+      zIndex: 2000,
+      boxShadow: '0 4px 12px rgba(231, 76, 60, 0.3)',
+      fontWeight: '500',
+      fontSize: '0.9375rem',
+      animation: 'slideDown 0.3s ease'
     }
   };
 
@@ -822,6 +913,10 @@ const ChatInterface = () => {
             position: fixed !important;
             width: 100% !important;
             height: 100% !important;
+          }
+          @keyframes slideDown {
+            from { transform: translate(-50%, -100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
           }
         `}
       </style>
@@ -847,6 +942,13 @@ const ChatInterface = () => {
           <Phone style={{ width: '20px', height: '20px' }} />
         </button>
       </div>
+
+      {/* Error Toast */}
+      {showError && error && (
+        <div style={styles.errorToast}>
+          {error}
+        </div>
+      )}
 
       {/* Connection Status */}
       <div style={{
@@ -892,6 +994,14 @@ const ChatInterface = () => {
                       <p style={styles.messageText}>{msg.content}</p>
                     </div>
                   )}
+                  {msg.imageDto && msg.imageDto.fileData && (
+                    <img
+                      src={`data:image/${msg.imageDto.fileFormat || 'jpeg'};base64,${msg.imageDto.fileData}`}
+                      alt={msg.imageDto.fileName || 'Image'}
+                      style={styles.messageImage}
+                      onClick={() => setExpandedImage(`data:image/${msg.imageDto.fileFormat || 'jpeg'};base64,${msg.imageDto.fileData}`)}
+                    />
+                  )}
                   <div style={{
                     ...styles.messageFooter,
                     justifyContent: isSender ? 'flex-end' : 'flex-start'
@@ -917,6 +1027,16 @@ const ChatInterface = () => {
 
         {/* Input */}
         <div style={styles.inputContainer}>
+          {/* ADD THIS IMAGE PREVIEW */}
+          {imagePreview && (
+            <div style={styles.imagePreviewContainer}>
+              <img src={imagePreview} alt="Preview" style={styles.imagePreview} />
+              <button onClick={removeSelectedImage} style={styles.removeImageButton}>
+                <X style={{ width: '16px', height: '16px' }} />
+              </button>
+            </div>
+          )}
+
           <div style={styles.inputWrapper}>
             <input
               type="file"
@@ -991,8 +1111,17 @@ const ChatInterface = () => {
           </div>
         </div>
       )}
+      {/* ADD THIS IMAGE MODAL */}
+      {expandedImage && (
+        <div style={styles.modalOverlay} onClick={() => setExpandedImage(null)}>
+          <div style={styles.imageModal} onClick={(e) => e.stopPropagation()}>
+            <img src={expandedImage} alt="Full size" style={styles.expandedImage} />
+          </div>
+        </div>
+      )}
     </div>
   );
-};
+}
+  ;
 
 export default ChatInterface;
