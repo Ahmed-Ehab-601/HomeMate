@@ -819,17 +819,6 @@ function TaskDetailsPage() {
                   <p className="no-review-message">
                     No review has been submitted yet.
                   </p>
-                  {!isTasker && (
-                    <div style={{ marginTop: "16px" }}>
-                      <Link
-                        to={`/submit-review/${task.taskID}`}
-                        className="btn btn-primary"
-                        style={{ textDecoration: "none" }}
-                      >
-                        Write a Review
-                      </Link>
-                    </div>
-                  )}
                 </>
               )}
             </div>
@@ -942,6 +931,14 @@ function TaskDetailsPage() {
               >
                 <span className="btn-icon">🛡️</span> Report Issue
               </Link>
+                            {normalizedStatus === "DONE" && !isTasker && !review && (
+                <Link
+                  to={`/submit-review/${task.taskID}`}
+                  className="btn btn-review"
+                >
+                  <span className="btn-icon">⭐</span> Leave Review
+                </Link>
+              )}
             </div>
           </div>
         </div>

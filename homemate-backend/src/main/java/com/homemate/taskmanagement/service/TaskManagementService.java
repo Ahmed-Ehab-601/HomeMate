@@ -4,8 +4,9 @@ package com.homemate.taskmanagement.service;
 import com.homemate.TaskerProfile.DTO.ReviewDTO;
 import com.homemate.TaskerProfile.DTO.ReviewImageDTO;
 import com.homemate.TaskerProfile.Dao.ReviewDao;
+import com.homemate.notification.domains.dto.EmailRequest;
+import com.homemate.notification.service.EmailService;
 import com.homemate.taskmanagement.dao.TaskDao;
-import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.*;
 import com.homemate.taskmanagement.exceptions.*;
 import com.homemate.taskmanagement.mappers.TaskMapper;
@@ -13,8 +14,6 @@ import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 import lombok.AllArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.config.Task;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +30,8 @@ public class TaskManagementService {
     private final StatusFactory statusFactory;
     private final ReviewDao reviewDao;
     private final SimpMessagingTemplate simpMessagingTemplate;
+    private final EmailService emailService;
+
 
     public Optional<TaskDto> requestTask(TaskRequestDto requestDto){
         checkRequest(requestDto);
@@ -38,6 +39,23 @@ public class TaskManagementService {
         newTask.setChatID(handleChat(requestDto));
         Optional<Long> taskID = taskDao.insertTask(newTask);
         if(taskID.isEmpty()) throw new IllegalArgumentException("the task not created correctly");
+//        //send email
+        try {
+            TaskDto taskDto = taskDao.getTaskDetails(taskID.get())
+                    .orElseThrow(() -> new IllegalArgumentException("Task details missing"));
+
+            EmailRequest emailRequest = EmailRequest.builder()
+                    .task(taskDto)
+                    .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                    .recipientEmail(taskDto.getTaskerMail())
+                    .build();
+
+            emailService.sendTaskerEmail(emailRequest);
+
+        } catch (Exception e) {
+            System.out.println("Failed to send email: " + e.getMessage());
+        }
+
         return getTaskDetails(taskID.get(),requestDto.getUserID());
 
     }
@@ -146,12 +164,22 @@ public class TaskManagementService {
         }
         taskDao.updateStatus(taskID,newStatus);
         TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
-        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
+
         // TO DO SEND EMAIL
+        EmailRequest emailRequest = EmailRequest.builder()
+                .recipientEmail(taskDto.getUserMail())
+                .task(taskDto)
+                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .build();
+
+        emailService.sendUserEmail(emailRequest);
+        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
+
         return new TaskRequestResponseDto(taskID,newStatus);
 
 
     }
+
     @Transactional
     public TaskDto updateTaskStatus(Long taskID,Long taskerID,Status newStatus){
         Optional<Status> status = taskDao.getStatus(taskID);
@@ -168,9 +196,17 @@ public class TaskManagementService {
         taskContext.contextChange(newTaskState);
         taskContext.updateWorkedHours();
         taskContext.updateStatus();
-        taskContext.sendEmail();
         TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
+        // TO DO SEND EMAIL
+        EmailRequest emailRequest = EmailRequest.builder()
+                .recipientEmail(taskDto.getUserMail())
+                .task(taskDto)
+                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .build();
+
+        emailService.sendUserEmail(emailRequest);
         simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
+
         return taskDto;
     }
 
@@ -179,9 +215,10 @@ public class TaskManagementService {
         Optional<Long> taskerID = taskDao.getTaskerID(taskID);
         Optional<Long> userID = taskDao.getUserID(taskID);
 
-        if (taskerID.isEmpty() || userID.isEmpty()) {
-            throw new TaskNotFoundException("Task with ID " + taskID + " not found");
-        }
+
+        TaskDto taskDto = taskDao.getTaskDetails(taskID)
+                .orElseThrow(() -> new TaskNotFoundException("Task with ID " + taskID + " not found"));
+
 
         if (requestID != taskerID.get() && requestID!= userID.get()) {
             throw new BadRescheduleException("You are neither the user nor the tasker for this task");
@@ -202,14 +239,29 @@ public class TaskManagementService {
         if (!updated) {
             throw new IllegalStateException("Task could not be rescheduled");
         }
-        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDao.getTaskDetails(taskID));
         // TO DO SEND EMAIL
+        EmailRequest userMail = EmailRequest.builder()
+                .recipientEmail((taskDto.getUserMail()))
+                .task(taskDto)
+                .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
+                .build();
+        emailService.sendUserEmail(userMail);
+
+        EmailRequest taskerMail = EmailRequest.builder()
+                .recipientEmail(taskDto.getTaskerMail())
+                .task(taskDto)
+                .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
+                .build();
+        emailService.sendTaskerEmail(taskerMail);
+        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDao.getTaskDetails(taskID));
 
         return RescheduleResponseDto.builder()
                 .taskID(taskID)
                 .newStartDate(newStart)
                 .rescheduleStatus(StatusDto.Accepted)
                 .build();
+
+
     }
 
 

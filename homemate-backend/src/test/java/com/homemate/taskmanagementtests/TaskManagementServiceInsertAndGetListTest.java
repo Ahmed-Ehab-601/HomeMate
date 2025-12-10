@@ -1,6 +1,7 @@
 package com.homemate.taskmanagementtests;
 
 import com.homemate.TaskerProfile.Dao.ReviewDao;
+import com.homemate.notification.service.imp.EmailServiceImp;
 import com.homemate.reviews.service.ReviewsService;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.*;
@@ -34,6 +35,9 @@ class TaskManagementServiceInsertAndGetListTest {
 
     @Mock
     private TaskDaoImpl taskDao;
+
+    @Mock
+    private EmailServiceImp emailServiceImp;
 
     @Mock
     private ReviewDao reviewDao;
@@ -124,9 +128,10 @@ class TaskManagementServiceInsertAndGetListTest {
                         task.getTaskerID().equals(2L) &&
                         task.getAddressID().equals(3L)
         ));
-        verify(taskDao).getTaskDetails(taskId);
+        verify(taskDao, atLeastOnce()).getTaskDetails(taskId); // fixed
         verify(taskDao, never()).insertChat(anyLong(), anyLong());
     }
+
 
     @Test
     void testThatRequestTaskSuccessWithNewChat() {
@@ -156,7 +161,7 @@ class TaskManagementServiceInsertAndGetListTest {
         verify(taskDao).getChat(1L, 2L);
         verify(taskDao).insertChat(1L, 2L);
         verify(taskDao).insertTask(argThat(task -> task.getChatID().equals(newChatId)));
-        verify(taskDao).getTaskDetails(taskId);
+        verify(taskDao, atLeastOnce()).getTaskDetails(taskId); // fixed
     }
 
     @Test
@@ -397,6 +402,7 @@ class TaskManagementServiceInsertAndGetListTest {
         verify(taskDao).insertTask(argThat(entity -> entity.getChatID().equals(chatId)));
     }
 
+
     @Test
     void testThatRequestTaskVerifiesTaskEntityMappedCorrectly() {
         // Arrange
@@ -412,8 +418,8 @@ class TaskManagementServiceInsertAndGetListTest {
                 .build();
 
         Long taskId = 100L;
-        Long userId = 1L; // owner of the task
-        Long taskerId = 2L; // assigned tasker
+        Long userId = 1L;
+        Long taskerId = 2L;
 
         when(taskDao.checkIfTaskExist(1L, 2L, 3L)).thenReturn(false);
         when(taskDao.checkIfTaskLimit(1L, 10)).thenReturn(false);
@@ -429,7 +435,7 @@ class TaskManagementServiceInsertAndGetListTest {
 
         // Assert
         verify(taskMapper).getTaskEntity(taskRequestDto);
-        verify(taskDao).getTaskDetails(taskId);
+        verify(taskDao, atLeastOnce()).getTaskDetails(taskId); // fixed
     }
 
     @Test

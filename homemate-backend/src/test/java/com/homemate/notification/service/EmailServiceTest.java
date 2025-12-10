@@ -16,6 +16,8 @@ import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
+import java.util.concurrent.ExecutionException;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -38,7 +40,7 @@ class EmailServiceTest {
 
 
     @Test
-    void testSendUserEmailWithTaskAcceptedType() {
+    void testSendUserEmailWithTaskAcceptedType() throws ExecutionException, InterruptedException {
         TaskDto task =TaskDto.builder().taskID(1L).build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
@@ -48,7 +50,7 @@ class EmailServiceTest {
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Accepted");
         when(emailTemplate.buildTaskStatusChangedBody(task)).thenReturn("Your task has been accepted");
-        TaskResponse response = underTest.sendUserEmail(emailRequest);
+        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         assertEquals("Email sent successfully", response.getMessage());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
@@ -57,7 +59,7 @@ class EmailServiceTest {
     }
 
     @Test
-    void testSendUserEmailWithTaskRejectedType() {
+    void testSendUserEmailWithTaskRejectedType() throws ExecutionException, InterruptedException {
         TaskDto task =TaskDto.builder().taskID(2L).build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
@@ -67,7 +69,7 @@ class EmailServiceTest {
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Rejected");
         when(emailTemplate.buildTaskStatusChangedBody(task)).thenReturn("Your task has been rejected");
-        TaskResponse response = underTest.sendUserEmail(emailRequest);
+        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).buildTaskStatusChangedBody(task);
@@ -75,7 +77,7 @@ class EmailServiceTest {
     }
 
     @Test
-    void testSendUserEmailWithTaskStatusType() {
+    void testSendUserEmailWithTaskStatusType() throws ExecutionException, InterruptedException {
         TaskDto task =TaskDto.builder().taskID(3L).build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
@@ -85,14 +87,14 @@ class EmailServiceTest {
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Status Updated");
         when(emailTemplate.buildTaskStatusChangedBody(task)).thenReturn("Task status has changed");
-        TaskResponse response = underTest.sendUserEmail(emailRequest);
+        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).buildTaskStatusChangedBody(task);
     }
 
     @Test
-    void testSendUserEmailWithTaskRescheduleType() {
+    void testSendUserEmailWithTaskRescheduleType() throws ExecutionException, InterruptedException {
         TaskDto task =TaskDto.builder().taskID(4L).build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
@@ -101,14 +103,14 @@ class EmailServiceTest {
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Rescheduled");
         when(emailTemplate.buildUserTaskRescheduleBody(task)).thenReturn("Your task has been rescheduled");
-        TaskResponse response = underTest.sendUserEmail(emailRequest);
+        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).buildUserTaskRescheduleBody(task);
     }
 
     @Test
-    void testSendUserEmailWithTaskResumedType() {
+    void testSendUserEmailWithTaskResumedType() throws ExecutionException, InterruptedException {
         TaskDto task =TaskDto.builder().taskID(5L).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
@@ -117,21 +119,21 @@ class EmailServiceTest {
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Resumed");
         when(emailTemplate.BuildTaskResumedBody(task)).thenReturn("Your task has been resumed");
-        TaskResponse response = underTest.sendUserEmail(emailRequest);
+        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).BuildTaskResumedBody(task);
     }
 
     @Test
-    void testSendUserEmailWithUnsupportedType() {
+    void testSendUserEmailWithUnsupportedType() throws ExecutionException, InterruptedException {
         TaskDto task =TaskDto.builder().taskID(6L).build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
                 .emailType(EmailRequest.EmailType.EMAIL_VERIFICATION)
                 .recipientEmail(RECIPIENT_EMAIL)
                 .build();
-        TaskResponse response = underTest.sendUserEmail(emailRequest);
+        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
         assertFalse(response.isSuccess());
         verify(javaMailSender, never()).send(any(SimpleMailMessage.class));
     }
@@ -173,7 +175,7 @@ class EmailServiceTest {
 
 
     @Test
-    void testSendTaskerEmailWithTaskRequestType() {
+    void testSendTaskerEmailWithTaskRequestType() throws ExecutionException, InterruptedException {
 
         TaskDto task = TaskDto.builder().taskID(10L).build();
         EmailRequest emailRequest = EmailRequest.builder()
@@ -184,14 +186,14 @@ class EmailServiceTest {
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("New Task Request");
         when(emailTemplate.buildTaskRequestBody(task)).thenReturn("You have a new task request");
 
-        TaskResponse response = underTest.sendTaskerEmail(emailRequest);
+        TaskResponse response = underTest.sendTaskerEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).buildTaskRequestBody(task);
     }
 
     @Test
-    void testSendTaskerEmailWithTaskRescheduleType() {
+    void testSendTaskerEmailWithTaskRescheduleType() throws ExecutionException, InterruptedException {
 
         TaskDto task = TaskDto.builder().taskID(11L).build();
         EmailRequest emailRequest = EmailRequest.builder()
@@ -202,14 +204,14 @@ class EmailServiceTest {
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Rescheduled");
         when(emailTemplate.buildTaskerTaskRescheduleBody(task)).thenReturn("A task has been rescheduled");
-        TaskResponse response = underTest.sendTaskerEmail(emailRequest);
+        TaskResponse response = underTest.sendTaskerEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).buildTaskerTaskRescheduleBody(task);
     }
 
     @Test
-    void testSendTaskerEmailWithUnsupportedType() {
+    void testSendTaskerEmailWithUnsupportedType() throws ExecutionException, InterruptedException {
 
         TaskDto task = TaskDto.builder().taskID(12L).build();
         EmailRequest emailRequest = EmailRequest.builder()
@@ -218,7 +220,7 @@ class EmailServiceTest {
                 .recipientEmail(RECIPIENT_EMAIL)
                 .build();
 
-        TaskResponse response = underTest.sendTaskerEmail(emailRequest);
+        TaskResponse response = underTest.sendTaskerEmail(emailRequest).get();
         assertFalse(response.isSuccess());
         verify(javaMailSender, never()).send(any(SimpleMailMessage.class));
     }
@@ -291,7 +293,7 @@ class EmailServiceTest {
     }
 
     @Test
-    void testEmailServiceHandlesNullTask() {
+    void testEmailServiceHandlesNullTask() throws ExecutionException, InterruptedException {
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(null)
                 .emailType(EmailRequest.EmailType.TASK_REQUEST)
@@ -300,13 +302,13 @@ class EmailServiceTest {
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Request");
         when(emailTemplate.buildTaskRequestBody(null)).thenReturn("Task details");
-        TaskResponse response = underTest.sendTaskerEmail(emailRequest);
+        TaskResponse response = underTest.sendTaskerEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
     }
 
     @Test
-    void testSendUserEmailHandlesMailException() {
+    void testSendUserEmailHandlesMailException() throws ExecutionException, InterruptedException {
         TaskDto task = TaskDto.builder().taskID(25L).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
@@ -319,13 +321,13 @@ class EmailServiceTest {
         doThrow(new MailSendException("SMTP connection failed"))
                 .when(javaMailSender)
                 .send(any(SimpleMailMessage.class));
-        TaskResponse response = underTest.sendUserEmail(emailRequest);
+        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
         assertFalse(response.isSuccess());
         assertTrue(response.getMessage().contains("Failed to send email: " + "SMTP connection failed"));
     }
 
     @Test
-    void testSendTaskerEmailHandlesTemplateException() {
+    void testSendTaskerEmailHandlesTemplateException() throws ExecutionException, InterruptedException {
         TaskDto task =TaskDto.builder()
                 .taskID(26L) // mising feids
                 .build();
@@ -346,7 +348,7 @@ class EmailServiceTest {
                         "taskerName"
                 ));
 
-        TaskResponse response =underTest.sendTaskerEmail(emailRequest);
+        TaskResponse response =underTest.sendTaskerEmail(emailRequest).get();
         assertFalse(response.isSuccess());
         String expectedMsg=String.format("Template: %s, Missing: %s, Reason: %s",
                 "TASK_REQUEST",
@@ -358,20 +360,20 @@ class EmailServiceTest {
     }
 
     @Test
-    void testSendUserEmailLogsErrorForUnsupportedType() {
+    void testSendUserEmailLogsErrorForUnsupportedType() throws ExecutionException, InterruptedException {
         TaskDto task =TaskDto.builder().taskID(20L).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
                 .emailType(EmailRequest.EmailType.FORGOT_PASSWORD)
                 .recipientEmail(RECIPIENT_EMAIL)
                 .build();
-        TaskResponse response = underTest.sendUserEmail(emailRequest);
+        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
         assertFalse(response.isSuccess());
         verify(javaMailSender, never()).send(any(SimpleMailMessage.class));
     }
 
     @Test
-    void testSendTaskerEmailLogsErrorForUnsupportedType() {
+    void testSendTaskerEmailLogsErrorForUnsupportedType() throws ExecutionException, InterruptedException {
         TaskDto task = TaskDto.builder().taskID(21L).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
@@ -379,7 +381,7 @@ class EmailServiceTest {
                 .recipientEmail(RECIPIENT_EMAIL)
                 .build();
 
-        TaskResponse response = underTest.sendTaskerEmail(emailRequest);
+        TaskResponse response = underTest.sendTaskerEmail(emailRequest).get();
         assertFalse(response.isSuccess());
         verify(javaMailSender, never()).send(any(SimpleMailMessage.class));
     }

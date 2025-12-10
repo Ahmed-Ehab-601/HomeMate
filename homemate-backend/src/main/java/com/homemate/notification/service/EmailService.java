@@ -4,9 +4,11 @@ import com.homemate.notification.domains.dto.EmailRequest;
 import com.homemate.notification.domains.dto.TaskResponse;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.CompletableFuture;
+
 @Service
 public interface EmailService {
-    TaskResponse sendUserEmail(EmailRequest emailRequest);
-    TaskResponse sendTaskerEmail(EmailRequest emailRequest);
+    CompletableFuture<TaskResponse> sendUserEmail(EmailRequest emailRequest);
+    CompletableFuture<TaskResponse> sendTaskerEmail(EmailRequest emailRequest);
 
 }

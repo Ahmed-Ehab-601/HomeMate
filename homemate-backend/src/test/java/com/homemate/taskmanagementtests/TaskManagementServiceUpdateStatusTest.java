@@ -1,6 +1,8 @@
 package com.homemate.taskmanagementtests;
 
 import com.homemate.TaskerProfile.Dao.ReviewDao;
+import com.homemate.notification.domains.dto.EmailRequest;
+import com.homemate.notification.service.imp.EmailServiceImp;
 import com.homemate.taskmanagement.dao.TaskDao;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
@@ -12,6 +14,7 @@ import com.homemate.taskmanagement.service.TaskManagementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -33,6 +36,10 @@ class TaskManagementServiceUpdateStatusTest {
     private TaskDao taskDao;
     @Mock
     private SimpMessagingTemplate simpMessagingTemplate;
+
+    @Mock
+    private EmailServiceImp emailServiceImp;
+
     @InjectMocks
     private TaskManagementService taskManagementService;
     @InjectMocks
@@ -57,7 +64,7 @@ class TaskManagementServiceUpdateStatusTest {
                 .build();
 
 
-        taskManagementService = new TaskManagementService(null, taskDao,new StatusFactory(taskDao),reviewDao,simpMessagingTemplate);
+        taskManagementService = new TaskManagementService(null, taskDao,new StatusFactory(taskDao),reviewDao,simpMessagingTemplate,emailServiceImp);
     }
 
     // ========== Valid State Transitions ==========
@@ -461,6 +468,81 @@ class TaskManagementServiceUpdateStatusTest {
         assertThatCode(() -> accepted.updateStatus())
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    void testUpdateTaskStatusSendsEmailSuccessfully() {
+        // Given
+        Status currentStatus = Status.Accepted;
+        Status newStatus = Status.InProgress;
+
+        taskDto.setStatus(newStatus);
+        taskDto.setUserMail("user@example.com");
+        taskDto.setTaskerMail("tasker@example.com");
+
+        when(taskDao.getStatus(taskId)).thenReturn(Optional.of(currentStatus));
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(taskerId));
+        when(taskDao.updateStatus(taskId, newStatus)).thenReturn(true);
+        when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
+
+        // When
+        taskManagementService.updateTaskStatus(taskId, taskerId, newStatus);
+
+        // Then
+        verify(emailServiceImp).sendUserEmail(any());
+    }
+
+    @Test
+    void testUpdateTaskStatusEmailFails() {
+        // Given
+        Status currentStatus = Status.Accepted;
+        Status newStatus = Status.InProgress;
+
+        taskDto.setStatus(newStatus);
+        taskDto.setUserMail("user@example.com");
+        taskDto.setTaskerMail("tasker@example.com");
+
+        when(taskDao.getStatus(taskId)).thenReturn(Optional.of(currentStatus));
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(taskerId));
+        when(taskDao.updateStatus(taskId, newStatus)).thenReturn(true);
+        when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
+
+        // Simulate email failure
+        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendUserEmail(any());
+
+        // Act & Assert
+        assertThatThrownBy(() -> taskManagementService.updateTaskStatus(taskId, taskerId, newStatus))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Email failed");
+    }
+
+    @Test
+    void testEmailTypeIsCorrectOnTaskStatusUpdate() {
+        // Given
+        Status currentStatus = Status.Accepted;
+        Status newStatus = Status.InProgress;
+
+        taskDto.setStatus(newStatus);
+        taskDto.setUserMail("user@example.com");
+        taskDto.setTaskerMail("tasker@example.com");
+
+        when(taskDao.getStatus(taskId)).thenReturn(Optional.of(currentStatus));
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(taskerId));
+        when(taskDao.updateStatus(taskId, newStatus)).thenReturn(true);
+        when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
+
+        // When
+        taskManagementService.updateTaskStatus(taskId, taskerId, newStatus);
+
+        // Then
+        ArgumentCaptor<EmailRequest> emailCaptor = ArgumentCaptor.forClass(EmailRequest.class);
+        verify(emailServiceImp).sendUserEmail(emailCaptor.capture());
+
+        EmailRequest capturedEmail = emailCaptor.getValue();
+        assertThat(capturedEmail.getEmailType()).isEqualTo(EmailRequest.EmailType.TASK_STATUS);
+        assertThat(capturedEmail.getRecipientEmail()).isEqualTo("user@example.com");
+    }
+
+
 
 
 }
