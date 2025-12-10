@@ -12,6 +12,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -58,4 +59,30 @@ public class TaskDaoImpIntegrationRescheduleTest {
 
         assertThat(updated).isFalse();
     }
+    @Test
+    void testGetStartDateReturnsValueForExistingTask() {
+        Long taskId = 8L;
+        LocalDateTime expectedStartDate = LocalDateTime.now().plusDays(1);
+
+        // Make sure the task exists and has a start date
+        underTest.updateTaskStartDate(taskId, expectedStartDate);
+
+        Optional<LocalDateTime> result = underTest.getStartDate(taskId);
+
+        assertThat(result).isPresent();
+        LocalDateTime actual = result.get().truncatedTo(ChronoUnit.SECONDS);
+        LocalDateTime expected = expectedStartDate.truncatedTo(ChronoUnit.SECONDS);
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void testGetStartDateReturnsEmptyForNonExistentTask() {
+        Long taskId = 999L;
+
+        Optional<LocalDateTime> result = underTest.getStartDate(taskId);
+
+        assertThat(result).isEmpty();
+    }
+
+
 }

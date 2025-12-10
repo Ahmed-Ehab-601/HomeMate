@@ -12,6 +12,7 @@ import com.homemate.taskmanagement.mappers.TaskMapper;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 import lombok.AllArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.config.Task;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class TaskManagementService {
     private final TaskDao taskDao;
     private final StatusFactory statusFactory;
     private final ReviewDao reviewDao;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     public Optional<TaskDto> requestTask(TaskRequestDto requestDto){
         checkRequest(requestDto);
@@ -36,7 +38,9 @@ public class TaskManagementService {
         newTask.setChatID(handleChat(requestDto));
         Optional<Long> taskID = taskDao.insertTask(newTask);
         if(taskID.isEmpty()) throw new IllegalArgumentException("the task not created correctly");
-        return getTaskDetails(taskID.get());
+        Long userId = taskDao.getUserID(taskID.get())
+                .orElseThrow(() -> new IllegalArgumentException("User ID not found for task"));
+        return getTaskDetails(taskID.get(),userId);
 
     }
     public Long handleChat(TaskRequestDto requestDto) {
@@ -143,6 +147,8 @@ public class TaskManagementService {
             throw new BadAcceptRejectException("the task id does not belong to this tasker");
         }
         taskDao.updateStatus(taskID,newStatus);
+        TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
+        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
         // TO DO SEND EMAIL
         return new TaskRequestResponseDto(taskID,newStatus);
 
@@ -165,7 +171,9 @@ public class TaskManagementService {
         taskContext.updateWorkedHours();
         taskContext.updateStatus();
         taskContext.sendEmail();
-        return getTaskDetails(taskID).get();
+        TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
+        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
+        return taskDto;
     }
 
     public RescheduleResponseDto rescheduleTask(Long taskID, RescheduleRequestDto rescheduleRequestDto ,long requestID) {
@@ -196,6 +204,7 @@ public class TaskManagementService {
         if (!updated) {
             throw new IllegalStateException("Task could not be rescheduled");
         }
+        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDao.getTaskDetails(taskID));
         // TO DO SEND EMAIL
 
         return RescheduleResponseDto.builder()
@@ -207,28 +216,47 @@ public class TaskManagementService {
 
 
 
-    public Optional<TaskDto> getTaskDetails(Long taskID){
-        //check if task not found return throw exeption??
-        // check for user or tasker are owners
+    public Optional<TaskDto> getTaskDetails(Long taskID ,Long viewerID){
+        Optional<Long> taskerID = taskDao.getTaskerID(taskID);
+        Optional<Long> userID = taskDao.getUserID(taskID);
+
+        if (taskerID.isEmpty() || userID.isEmpty()) {
+            throw new TaskNotFoundException("Task with ID " + taskID + " not found");
+        }
+
+        if (!viewerID.equals(taskerID.get()) && !viewerID.equals(userID.get())) {
+            throw new BadViewExecption("You are neither the user nor the tasker for this task");
+        }
+
         return taskDao.getTaskDetails(taskID);
     }
 
 
-    public Optional<ReviewDTO> getReviewByTaskId(long taskId) {
-        Optional<Long> task = taskDao.getUserID(taskId);
-        if (task.isEmpty()) {
-            throw new TaskNotFoundException("Task with ID " + taskId + " not found");
+    public Optional<ReviewDTO> getReviewByTaskId(long taskID, long viewerID) {
+        Optional<Long> userID = taskDao.getUserID(taskID);
+        Optional<Long> taskerID = taskDao.getTaskerID(taskID);
+
+        if (userID.isEmpty()) {
+            throw new TaskNotFoundException("Task with ID " + taskID + " not found");
         }
 
-        Optional<ReviewDTO> review = taskDao.getReviewByTaskId(taskId);
-
-        if (review.isEmpty()) {
-            return review;
+        if (!viewerIDEquals(userID.get(), viewerID) &&
+                (!taskerID.isPresent() || !viewerIDEquals(taskerID.get(), viewerID))) {
+            throw new BadViewExecption("You are neither the user nor the tasker for this task");
         }
+
+        Optional<ReviewDTO> review = taskDao.getReviewByTaskId(taskID);
+        if (review.isEmpty()) return review;
+
         ReviewDTO reviewDTO = review.get();
         List<ReviewImageDTO> images = reviewDao.getReviewImages(reviewDTO.getReviewId());
         reviewDTO.setReviewImages(images);
+
         return Optional.of(reviewDTO);
+    }
+
+    private boolean viewerIDEquals(Long id, long viewerID) {
+        return id != null && id.equals(viewerID);
     }
 
 

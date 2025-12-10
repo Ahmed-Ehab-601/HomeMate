@@ -1,10 +1,12 @@
 package com.homemate.taskmanagementtests;
 
+import com.homemate.TaskerProfile.DTO.ReviewDTO;
+import com.homemate.TaskerProfile.DTO.ReviewImageDTO;
+import com.homemate.TaskerProfile.Dao.ReviewDao;
+import com.homemate.reviews.service.ReviewsService;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.*;
-import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
-import com.homemate.taskmanagement.exceptions.DuplicateRequestException;
-import com.homemate.taskmanagement.exceptions.RequestLimitExceededException;
+import com.homemate.taskmanagement.exceptions.*;
 import com.homemate.taskmanagement.mappers.TaskMapper;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
@@ -35,8 +38,13 @@ class TaskManagementServiceTest {
     @Mock
     private TaskDaoImpl taskDao;
 
+    @Mock
+    private ReviewDao reviewDao;
+
     @InjectMocks
     private TaskManagementService taskManagementService;
+    @InjectMocks
+    private ReviewsService reviewService;
 
     private TaskRequestDto taskRequestDto;
     private TaskEntity taskEntity;
@@ -96,6 +104,8 @@ class TaskManagementServiceTest {
         when(taskMapper.getTaskEntity(taskRequestDto)).thenReturn(taskEntity);
         when(taskDao.getChat(1L, 2L)).thenReturn(Optional.of(existingChatId));
         when(taskDao.insertTask(any(TaskEntity.class))).thenReturn(Optional.of(taskId));
+        when(taskDao.getUserID(taskId)).thenReturn(Optional.of(1L));
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(2L));
         when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
 
         // Act
@@ -133,6 +143,8 @@ class TaskManagementServiceTest {
         when(taskDao.getChat(1L, 2L)).thenReturn(Optional.empty());
         when(taskDao.insertChat(1L, 2L)).thenReturn(Optional.of(newChatId));
         when(taskDao.insertTask(any(TaskEntity.class))).thenReturn(Optional.of(taskId));
+        when(taskDao.getUserID(taskId)).thenReturn(Optional.of(1L));
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(2L));
         when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
 
         // Act
@@ -312,19 +324,29 @@ class TaskManagementServiceTest {
     void testGetTaskDetails_Success() {
         // Arrange
         Long taskId = 100L;
+        Long viewerId = 200L; // the user requesting the task details
+        Long userId = 200L;   // owner user
+        Long taskerId = 300L; // assigned tasker
+
+        // mocks for authorization check
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(taskerId));
+        when(taskDao.getUserID(taskId)).thenReturn(Optional.of(userId));
+
+        // mock actual task details
         when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
 
         // Act
-        Optional<TaskDto> result = taskManagementService.getTaskDetails(taskId);
+        Optional<TaskDto> result = taskManagementService.getTaskDetails(taskId, viewerId);
 
         // Assert
-        assertThat(result)
-                .isPresent()
-                .hasValue(taskDto)
-                .get()
+        assertThat(result).isPresent();
+        assertThat(result.get())
                 .extracting(TaskDto::getTaskID, TaskDto::getUserName, TaskDto::getTaskerMail)
                 .containsExactly(100L, "John Doe", "jane@example.com");
 
+        // Verify all DAO calls
+        verify(taskDao).getTaskerID(taskId);
+        verify(taskDao).getUserID(taskId);
         verify(taskDao).getTaskDetails(taskId);
     }
 
@@ -332,16 +354,29 @@ class TaskManagementServiceTest {
     void testGetTaskDetails_ReturnsEmpty() {
         // Arrange
         Long taskId = 999L;
+        Long viewerId = 200L;   // user requesting details
+        Long userId = 200L;     // owner user
+        Long taskerId = 300L;   // assigned tasker
+
+        // Required authorization mocks
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(taskerId));
+        when(taskDao.getUserID(taskId)).thenReturn(Optional.of(userId));
+
+        // Task not found
         when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.empty());
 
         // Act
-        Optional<TaskDto> result = taskManagementService.getTaskDetails(taskId);
+        Optional<TaskDto> result = taskManagementService.getTaskDetails(taskId, viewerId);
 
         // Assert
         assertThat(result).isEmpty();
 
+        // Verify all interactions
+        verify(taskDao).getTaskerID(taskId);
+        verify(taskDao).getUserID(taskId);
         verify(taskDao).getTaskDetails(taskId);
     }
+
 
     @Test
     void testThatRequestTaskVerifiesChatIDSetCorrectly() {
@@ -354,6 +389,8 @@ class TaskManagementServiceTest {
         when(taskMapper.getTaskEntity(taskRequestDto)).thenReturn(taskEntity);
         when(taskDao.getChat(1L, 2L)).thenReturn(Optional.of(chatId));
         when(taskDao.insertTask(any(TaskEntity.class))).thenReturn(Optional.of(taskId));
+        when(taskDao.getUserID(taskId)).thenReturn(Optional.of(1L));
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(2L));
         when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
 
         // Act
@@ -377,19 +414,27 @@ class TaskManagementServiceTest {
                 .addressID(3L)
                 .build();
 
+        Long taskId = 100L;
+        Long userId = 1L; // owner of the task
+        Long taskerId = 2L; // assigned tasker
+
         when(taskDao.checkIfTaskExist(1L, 2L, 3L)).thenReturn(false);
         when(taskDao.checkIfTaskLimit(1L, 10)).thenReturn(false);
         when(taskMapper.getTaskEntity(taskRequestDto)).thenReturn(customEntity);
         when(taskDao.getChat(1L, 2L)).thenReturn(Optional.of(50L));
-        when(taskDao.insertTask(any(TaskEntity.class))).thenReturn(Optional.of(100L));
-        when(taskDao.getTaskDetails(100L)).thenReturn(Optional.of(taskDto));
+        when(taskDao.insertTask(any(TaskEntity.class))).thenReturn(Optional.of(taskId));
+        when(taskDao.getUserID(taskId)).thenReturn(Optional.of(userId));
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(taskerId));
+        when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
 
         // Act
         taskManagementService.requestTask(taskRequestDto);
 
         // Assert
         verify(taskMapper).getTaskEntity(taskRequestDto);
+        verify(taskDao).getTaskDetails(taskId);
     }
+
     @Test
     void testThatGetUserTasksReturnsCorrectPaginatedResponseForAllStatus() {
         // Arrange
@@ -653,4 +698,9 @@ class TaskManagementServiceTest {
         }
         return tasks;
     }
+
+
+
+
+
 }
