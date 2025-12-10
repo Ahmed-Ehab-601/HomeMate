@@ -10,6 +10,7 @@ import {
 } from "../api/taskManagementApi";
 import { acceptTask, rejectTask } from "../api/taskActionsApi";
 import { getTaskReview } from "../api/taskManagementApi";
+import { deleteReview } from "../api/reviewsApi";
 import { getTaskerById } from "../api/taskerProfileApi";
 import TaskerCard from "../components/TaskerCard";
 import Modal from "../components/Modal";
@@ -92,6 +93,7 @@ function TaskDetailsPage() {
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showDeleteReviewModal, setShowDeleteReviewModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [newStartDate, setNewStartDate] = useState("");
@@ -445,6 +447,25 @@ function TaskDetailsPage() {
     }
   };
 
+  const handleDeleteReview = async () => {
+    if (!review) return;
+
+    setIsSubmitting(true);
+    setErrorBanner(null);
+
+    try {
+      await deleteReview(review.reviewId);
+      showSuccessBanner("✓ Review deleted successfully.");
+      setShowDeleteReviewModal(false);
+      setReview(null);
+    } catch (error) {
+      setShowDeleteReviewModal(false);
+      showErrorBanner(`✗ Failed to delete review. ${error.message || "Please try again."}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -783,7 +804,13 @@ function TaskDetailsPage() {
                       >
                         Edit Review
                       </Link>
-                      <button className="btn btn-danger">Delete Review</button>
+                      <button
+                        className="btn btn-danger"
+                        onClick={() => setShowDeleteReviewModal(true)}
+                        disabled={isSubmitting}
+                      >
+                        Delete Review
+                      </button>
                     </div>
                   )}
                 </>
@@ -1237,6 +1264,38 @@ function TaskDetailsPage() {
             <li>You cannot restart this task</li>
           </ul>
           <p>Are you ready to complete?</p>
+        </Modal>
+      )}
+
+      {/* Delete Review Modal */}
+      {showDeleteReviewModal && (
+        <Modal
+          title="Delete Review"
+          onClose={() => !isSubmitting && setShowDeleteReviewModal(false)}
+          width={500}
+          actions={
+            <>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowDeleteReviewModal(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleDeleteReview}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Deleting..." : "Yes, Delete Review"}
+              </button>
+            </>
+          }
+        >
+          <p>Are you sure you want to delete your review?</p>
+          <p className="modal-warning" style={{ color: "#dc2626" }}>
+            This action cannot be undone.
+          </p>
         </Modal>
       )}
     </div>
