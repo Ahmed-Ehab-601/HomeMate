@@ -35,13 +35,13 @@ public class EmailTemplate {
                         "• Hourly Rate: $%.2f/hour\n\n" +
                         "The tasker is currently working on-site.started You can track progress and communicate through the task chat.\n\n" +
                         "Best regards,\n" +
-                        "The Homiso Team",
+                        "The Homemate Team",
                 taskDto.getUserName(),
                 taskDto.getTaskerName(),
                 taskDto.getServiceName(),
                 startTime,
-                taskDto.getAddressDetails()
-
+                taskDto.getAddressDetails(),
+                taskDto.getHourRate()
         );
     }
     private String buildTaskAcceptedBody(TaskDto taskDto) {
@@ -57,7 +57,7 @@ public class EmailTemplate {
                         "• Location: %s\n\n" +
                         "Your task is now confirmed. The Tasker will contact you soon.\n\n" +
                         "Best regards,\n" +
-                        "The Homiso Team",
+                        "The Homemate Team",
                 taskDto.getUserName(),
                 taskDto.getTaskerName(),
                 taskDto.getServiceName(),
@@ -79,7 +79,7 @@ public class EmailTemplate {
                         "Don't worry! You can request another Tasker:\n" +
                         "Note: You can still chat with the Tasker for more information.\n" +
                         "Best regards,\n" +
-                        "The Homiso Team",
+                        "The Homemate Team",
                 taskDto.getUserName(),
                 taskDto.getTaskerName(),
                 taskDto.getServiceName(),
@@ -100,7 +100,7 @@ public class EmailTemplate {
                         "• Description: %s\n\n" +
                         "Please review and respond to this request in the app.\n\n" +
                         "Best regards,\n" +
-                        "The Homiso Team",
+                        "The Homemate Team",
                 taskDto.getTaskerName(),
                 taskDto.getUserName(),
                 taskDto.getServiceName(),
@@ -122,7 +122,7 @@ public class EmailTemplate {
             return "Reset Your Password";
         }
         if (taskDto == null) {
-            return "Notification from Homiso";
+            return "Notification from Homemate";
         }
         
         String serviceName = taskDto.getServiceName();
@@ -131,7 +131,7 @@ public class EmailTemplate {
             case TASK_STATUS -> buildTaskStatusSubject(taskDto);
             case TASK_REQUEST -> "New Task Request - " +serviceName;
             case TASK_RESUMED -> "Task Resumed - "+taskDto.getTaskerName() +" is Back on the Job";
-            default -> "Notification from Homiso";
+            default -> "Notification from Homemate";
         };
     }
     public String BuildTaskResumedBody(TaskDto taskDto){
@@ -145,7 +145,7 @@ public class EmailTemplate {
                         "• Previous Worked Time: %s\n\n" +
                         "Work is continuing.  You'll be notified when the task is completed.\n\n" +
                         "Best regards,\n" +
-                        "The Homiso Team",
+                        "The Homemate Team",
                 taskDto.getUserName(),
                 taskDto.getTaskerName(),
                 taskDto.getServiceName(),
@@ -180,7 +180,7 @@ public class EmailTemplate {
                         "• Location: %s\n\n" +
                         "If you have any questions or concerns about this change, please contact the tasker through the app.\n\n" +
                         "Best regards,\n" +
-                        "The Homiso Team",
+                        "The Homemate Team",
                 taskDto.getUserName(),
                 taskDto.getTaskerName(),
                 taskDto.getServiceName(),
@@ -204,7 +204,7 @@ public class EmailTemplate {
                         "• Location: %s\n\n" +
                         "Please confirm your availability for the new schedule. If you have any conflicts, contact the customer immediately through the app.\n\n" +
                         "Best regards,\n" +
-                        "The Homiso Team",
+                        "The Homemate Team",
                 taskDto.getTaskerName(),
                 taskDto.getUserName(),
                 taskDto.getUserName(),
@@ -231,14 +231,15 @@ public class EmailTemplate {
                         "• Total Bill: $%.2f\n\n" +
                         "Payment Instructions:\n" +
                         "Please review the work and proceed with payment through your preferred method.\n\n" +
-                        "Thank you for using Homiso!\n\n" +
+                        "Thank you for using Homemate!\n\n" +
                         "Best regards,\n" +
-                        "The Homiso Team",
+                        "The Homemate Team",
                 taskDto.getUserName(),
                 taskDto.getTaskerName(),
                 taskDto.getServiceName(),
                 completedTime,
                 workedTime,
+                taskDto.getHourRate(),
                 taskDto.getBill()!=null?taskDto.getBill():0.0
         );
     }
@@ -254,7 +255,7 @@ public class EmailTemplate {
                         "• Worked Time: %s\n\n" +
                         "Don't worry - your worked time has been saved. The tasker will resume when ready.\n\n" +
                         "Best regards,\n" +
-                        "The Homiso Team",
+                        "The Homemate Team",
                 taskDto.getUserName(),
                 taskDto.getTaskerName(),
                 taskDto.getServiceName(),

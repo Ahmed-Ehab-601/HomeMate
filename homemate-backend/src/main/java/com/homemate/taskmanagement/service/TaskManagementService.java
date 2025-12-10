@@ -143,6 +143,7 @@ public class TaskManagementService {
             throw new BadAcceptRejectException("the task id does not belong to this tasker");
         }
         taskDao.updateStatus(taskID,newStatus);
+        // TO DO SEND EMAIL
         return new TaskRequestResponseDto(taskID,newStatus);
 
 
@@ -195,6 +196,7 @@ public class TaskManagementService {
         if (!updated) {
             throw new IllegalStateException("Task could not be rescheduled");
         }
+        // TO DO SEND EMAIL
 
         return RescheduleResponseDto.builder()
                 .taskID(taskID)
