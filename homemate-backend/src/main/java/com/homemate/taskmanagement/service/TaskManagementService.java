@@ -38,9 +38,7 @@ public class TaskManagementService {
         newTask.setChatID(handleChat(requestDto));
         Optional<Long> taskID = taskDao.insertTask(newTask);
         if(taskID.isEmpty()) throw new IllegalArgumentException("the task not created correctly");
-        Long userId = taskDao.getUserID(taskID.get())
-                .orElseThrow(() -> new IllegalArgumentException("User ID not found for task"));
-        return getTaskDetails(taskID.get(),userId);
+        return getTaskDetails(taskID.get(),requestDto.getUserID());
 
     }
     public Long handleChat(TaskRequestDto requestDto) {
