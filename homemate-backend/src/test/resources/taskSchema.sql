@@ -162,6 +162,21 @@ CREATE TABLE Report (
     FOREIGN KEY (taskID) REFERENCES Task(taskID) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+
 CREATE INDEX idx_report_task ON Report(taskID);
 CREATE INDEX idx_report_admin_status ON Report(adminStatus);
+
+
+CREATE TABLE Reviews (
+    reviewID INT AUTO_INCREMENT PRIMARY KEY,
+    text VARCHAR(50),
+    rate DECIMAL(3,1) NOT NULL CHECK (rate >= 0 AND rate <= 5),
+    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    taskID INT NOT NULL UNIQUE, -- One review per task
+    FOREIGN KEY (taskID) REFERENCES Task(taskID) ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX idx_review_task (taskID),
+    INDEX idx_review_rate (rate),
+    INDEX idx_review_time (time)
+);
+
 

@@ -416,7 +416,7 @@ public class TaskDaoImpl implements TaskDao {
         }
     }
 
-    public Optional<ReviewDTO> getReviewByTaskId(long taskId) {
+    public Optional<ReviewDTO> getReviewByTaskId(Long taskId) {
         String sql = """
                 SELECT r.reviewID, r.text, r.rate, r.time, r.taskID,
                        u.username AS reviewerUsername
@@ -427,7 +427,7 @@ public class TaskDaoImpl implements TaskDao {
                 """;
         try {
             ReviewDTO review = jdbcTemplate.queryForObject(sql, reviewDTORowMapper, taskId);
-            return Optional.of(review);
+            return Optional.ofNullable(review);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
