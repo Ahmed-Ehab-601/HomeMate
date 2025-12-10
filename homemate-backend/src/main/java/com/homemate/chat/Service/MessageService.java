@@ -73,7 +73,6 @@ public class MessageService {
             throw new Exception("Couldn't change Message Status to read ");
         }
     }
-    // User logs in
     public void markAllAsReceivedForUser(Long userID) throws Exception {
         try {
             messageDao.markasReceivedUser(userID);
