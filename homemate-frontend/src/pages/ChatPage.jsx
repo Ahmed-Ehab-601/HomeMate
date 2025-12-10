@@ -601,17 +601,6 @@ const ChatInterface = () => {
       alignItems: 'center',
       gap: '1rem'
     },
-    backButton: {
-      padding: '0.625rem',
-      background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-      border: '2px solid #e0e0e0',
-      borderRadius: '12px',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    },
     chatInfo: {
       display: 'flex',
       flexDirection: 'column',
@@ -933,17 +922,14 @@ const ChatInterface = () => {
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
-          <button
-            onClick={() => isUserRole ? navigate('/my-tasks') : navigate('/tasker/my-tasks')}
-            style={styles.backButton}
-          >
-            <ArrowLeft style={{ width: '20px', height: '20px' }} />
-          </button>
           <div style={styles.chatInfo}>
             <h1 style={styles.chatTitle}>{recipientName || 'Loading...'}</h1>
             <div style={styles.statusIndicator}>
-              <div style={recipientOnline ? styles.onlineDot : styles.offlineDot}></div>
-              <span>{recipientOnline ? 'Online' : 'Offline'}</span>
+              {/* <div style={recipientOnline ? styles.onlineDot : styles.offlineDot}></div> */}
+              {/* <span>{recipientOnline ? 'Online' : 'Offline'}</span> */}
+              {<span style={styles.offlineDot}></span>}
+              {<span> {'offline'}</span>}
+
             </div>
           </div>
         </div>

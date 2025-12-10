@@ -34,25 +34,25 @@ public class MessageService {
         }
     }
 
-    public int getUnreadMessagesForUser(Long chatID,AppUserDetails userDetails) throws Exception {
-       try {
-           if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
-               throw new Exception("unauthorized user");
-           return messageDao.getUnreadOnesForUser(chatID);
-    }catch (Exception e){
-           throw new Exception("Couldn't get unread Messages");
-       }
-       }
-
-    public int getUnreadMessagesForTasker(Long chatID,AppUserDetails userDetails) throws Exception {
-        try {
-            if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
-                throw new Exception("unauthorized user");
-            return messageDao.getUnreadOnesForTasker(chatID);
-        }catch (Exception e){
-            throw new Exception("Couldn't get unread Messages");
-        }
-    }
+//    public int getUnreadMessagesForUser(Long chatID,AppUserDetails userDetails) throws Exception {
+//       try {
+//           if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
+//               throw new Exception("unauthorized user");
+//           return messageDao.getUnreadOnesForUser(chatID);
+//    }catch (Exception e){
+//           throw new Exception("Couldn't get unread Messages");
+//       }
+//       }
+//
+//    public int getUnreadMessagesForTasker(Long chatID,AppUserDetails userDetails) throws Exception {
+//        try {
+//            if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
+//                throw new Exception("unauthorized user");
+//            return messageDao.getUnreadOnesForTasker(chatID);
+//        }catch (Exception e){
+//            throw new Exception("Couldn't get unread Messages");
+//        }
+//    }
     public void markAllAsReadUser(Long chatID,AppUserDetails userDetails)throws Exception {
         try {
             if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())

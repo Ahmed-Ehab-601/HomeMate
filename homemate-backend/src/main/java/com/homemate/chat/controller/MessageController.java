@@ -43,19 +43,19 @@ public class MessageController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    @GetMapping("/{chatID}/user-unread-count")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Integer> getUnreadCountU(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception {
-        int unreadMessages = messageService.getUnreadMessagesForUser(chatID,userDetails);
-        return ResponseEntity.ok(unreadMessages);
-    }
-
-    @GetMapping("/{chatID}/tasker-unread-count")
-    @PreAuthorize("hasRole('TASKER')")
-    public ResponseEntity<Integer> getUnreadCountT(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception {
-        int unreadMessages = messageService.getUnreadMessagesForTasker(chatID,userDetails);
-        return ResponseEntity.ok(unreadMessages);
-    }
+//    @GetMapping("/{chatID}/user-unread-count")
+//    @PreAuthorize("hasRole('USER')")
+//    public ResponseEntity<Integer> getUnreadCountU(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception {
+//        int unreadMessages = messageService.getUnreadMessagesForUser(chatID,userDetails);
+//        return ResponseEntity.ok(unreadMessages);
+//    }
+//
+//    @GetMapping("/{chatID}/tasker-unread-count")
+//    @PreAuthorize("hasRole('TASKER')")
+//    public ResponseEntity<Integer> getUnreadCountT(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception {
+//        int unreadMessages = messageService.getUnreadMessagesForTasker(chatID,userDetails);
+//        return ResponseEntity.ok(unreadMessages);
+//    }
     @PutMapping("/{chatID}/mark-read-user")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> markMessageAsRead(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
