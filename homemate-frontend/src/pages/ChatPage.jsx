@@ -466,6 +466,15 @@ const ChatInterface = () => {
         const phone = await response.text();
         setPhoneNumber(phone);
         setShowCallModal(true);
+      } else {
+        // Try to get error message from text or json
+        const errorText = await response.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          showErrorMessage(errorJson.message || errorText || 'Unable to place call');
+        } catch (e) {
+          showErrorMessage(errorText || 'Unable to place call');
+        }
       }
     } catch (error) {
       console.error('Error getting phone:', error);

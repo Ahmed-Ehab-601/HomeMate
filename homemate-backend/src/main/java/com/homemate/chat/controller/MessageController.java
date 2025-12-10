@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class MessageController {
     }
     @PostMapping("/userSendMessage/{chatID}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<MessageDto> userMessage(@PathVariable Long chatID, @RequestBody MessageDto messageDto,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception{
+    public ResponseEntity<MessageDto> userMessage(@PathVariable Long chatID, @Validated @RequestBody MessageDto messageDto, @AuthenticationPrincipal AppUserDetails userDetails)throws Exception{
         try {
          MessageDto messageDto1=  messageService.sendMessage(chatID,messageDto,userDetails);
            return   ResponseEntity.status(HttpStatus.OK).body(messageDto1);
