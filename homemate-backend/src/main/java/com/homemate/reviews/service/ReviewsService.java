@@ -25,7 +25,7 @@ public class ReviewsService {
 
     private static final Logger logger = LoggerFactory.getLogger(ReviewsService.class);
     private final ReviewsDao reviewsDao;
-    private boolean model = true;
+    private boolean model = false;
 
     public ReviewsService(ReviewsDao reviewsDao) {
         this.reviewsDao = reviewsDao;
