@@ -216,11 +216,10 @@ public class TaskManagementService {
 
         Optional<Long> taskerID = taskDao.getTaskerID(taskID);
         Optional<Long> userID = taskDao.getUserID(taskID);
-        TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
 
-        if (taskerID.isEmpty() || userID.isEmpty()) {
-            throw new TaskNotFoundException("Task with ID " + taskID + " not found");
-        }
+        TaskDto taskDto = taskDao.getTaskDetails(taskID)
+                .orElseThrow(() -> new TaskNotFoundException("Task with ID " + taskID + " not found"));
+
 
         if (requestID != taskerID.get() && requestID!= userID.get()) {
             throw new BadRescheduleException("You are neither the user nor the tasker for this task");
