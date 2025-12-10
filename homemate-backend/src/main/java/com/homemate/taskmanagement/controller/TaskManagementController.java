@@ -122,7 +122,7 @@ public class TaskManagementController {
             @PathVariable @Valid Long taskId,
             @AuthenticationPrincipal AppUserDetails user
     ){
-        Optional<TaskDto> response = taskManagementService.getTaskDetails(taskId);
+        Optional<TaskDto> response = taskManagementService.getTaskDetails(taskId,user.getId());
         return ResponseEntity.ok(response);
     }
 
@@ -133,39 +133,10 @@ public class TaskManagementController {
             @PathVariable Long taskId,
             @AuthenticationPrincipal AppUserDetails user
     ){
-        Optional<ReviewDTO> reviewDTO = taskManagementService.getReviewByTaskId(taskId);
+        Optional<ReviewDTO> reviewDTO = taskManagementService.getReviewByTaskId(taskId, user.getId());
         return ResponseEntity.ok(reviewDTO);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-//    @GetMapping("/{taskId}")
-//    public ResponseEntity<TaskViewDto> getTask(
-//            @PathVariable Long taskId
-//    ) {
-//        // 1. Fetch the TaskDto from the service
-//        Optional<TaskDto> taskDto = taskManagementService.getTaskDetails(taskId);
-//
-//        if (taskDto == null) {
-//            // 2. Handle Task Not Found
-//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-//        }
-//
-//        // 3. Convert the TaskDto to a TaskViewDto using the factory
-//        TaskViewDto taskViewDto = taskViewFactory.createView(taskDto);
-//
-//        // 4. Return the result
-//        return ResponseEntity.ok(taskViewDto);
-//    }
 
 
 
