@@ -1,8 +1,10 @@
 package com.homemate.chat.Service;
 
 import com.homemate.chat.Enum.MessageStatus;
+import com.homemate.chat.dao.ChatDao;
 import com.homemate.chat.dao.MessageDao;
 import com.homemate.chat.dto.MessageDto;
+import com.homemate.security.model.AppUserDetails;
 import com.homemate.taskmanagement.model.Status;
 import org.springframework.stereotype.Service;
 
@@ -11,13 +13,17 @@ import java.util.List;
 @Service
 public class MessageService {
     private MessageDao messageDao;
-
-    public MessageService(MessageDao messageDao) {
+    private ChatDao chatDao;
+    public MessageService(MessageDao messageDao,ChatDao chatDao) {
         this.messageDao = messageDao;
+        this.chatDao=chatDao;
     }
 
-    public void sendMessage(Long chatID, MessageDto messageDto)throws Exception {
-        try {boolean isUserSender = messageDto.isIsUserSender();
+    public void sendMessage(Long chatID, MessageDto messageDto, AppUserDetails userDetails)throws Exception {
+        try {
+            if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
+                throw new Exception("unauthorized user");
+            boolean isUserSender = messageDto.isIsUserSender();
 
             if (isUserSender&& messageDao.getTaskerStatus(chatID)) {
                 messageDto.setMessageStatus(MessageStatus.received);
@@ -29,31 +35,40 @@ public class MessageService {
         }
     }
 
-    public int getUnreadMessagesForUser(Long chatID) throws Exception {
+    public int getUnreadMessagesForUser(Long chatID,AppUserDetails userDetails) throws Exception {
        try {
+           if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
+               throw new Exception("unauthorized user");
            return messageDao.getUnreadOnesForUser(chatID);
     }catch (Exception e){
            throw new Exception("Couldn't get unread Messages");
        }
        }
 
-    public int getUnreadMessagesForTasker(Long chatID) throws Exception {
+    public int getUnreadMessagesForTasker(Long chatID,AppUserDetails userDetails) throws Exception {
         try {
+            if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
+                throw new Exception("unauthorized user");
             return messageDao.getUnreadOnesForTasker(chatID);
         }catch (Exception e){
             throw new Exception("Couldn't get unread Messages");
         }
     }
-    public void markAllAsReadUser(Long chatID)throws Exception {
+    public void markAllAsReadUser(Long chatID,AppUserDetails userDetails)throws Exception {
         try {
-             messageDao.markasReadUser(chatID);
+            if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
+                throw new Exception("unauthorized user");
+
+            messageDao.markasReadUser(chatID);
         }catch (Exception e){
             throw new Exception("Couldn't change Message Status to read ");
         }
     }
 
-    public void markAllAsReadTasker(Long chatID)throws Exception {
+    public void markAllAsReadTasker(Long chatID,AppUserDetails userDetails)throws Exception {
         try {
+            if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
+                throw new Exception("unauthorized user");
             messageDao.markasReadTasker(chatID);
         }catch (Exception e){
             throw new Exception("Couldn't change Message Status to read ");
