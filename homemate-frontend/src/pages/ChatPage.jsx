@@ -30,7 +30,7 @@ const ChatInterface = () => {
   const navigate = useNavigate();
   const { chatId } = useParams();
 
-  const MESSAGE_CHAR_LIMIT = 200;
+  const MESSAGE_CHAR_LIMIT = 1000;
   const API_BASE = 'http://localhost:8080/api';
 
   // Decode JWT
@@ -496,8 +496,8 @@ const ChatInterface = () => {
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showErrorMessage('Image size must be less than 5MB');
+      if (file.size > 16 * 1024 * 1024) {
+        showErrorMessage('Image size must be less than 16MB');
         return;
       }
 

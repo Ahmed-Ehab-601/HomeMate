@@ -18,7 +18,7 @@ import java.security.Timestamp;
 public class ImageDto {
 
     private Long Id;
-    @Size(max = 5242880, message = "Image data must not exceed 5MB")
+    @Size(max = 22369621, message = "Image data must not exceed 16MB")
     private String fileData;
     @Size(min = 1, max = 100, message = "content must be between 1 and 100 characters")
     private String FileName;

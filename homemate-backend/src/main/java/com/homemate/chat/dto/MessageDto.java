@@ -19,7 +19,7 @@ public class MessageDto {
     private Long chatId;
     private boolean IsUserSender;
     private MessageStatus messageStatus;
-    @Size(max = 200, message = "content must be between 1 and 200 characters")
+    @Size(max = 1000, message = "content must be between 0 and 1000 characters")
     private String content;
     private LocalDateTime timestamp;
     @NotNull(message = "senderId must not be null")
