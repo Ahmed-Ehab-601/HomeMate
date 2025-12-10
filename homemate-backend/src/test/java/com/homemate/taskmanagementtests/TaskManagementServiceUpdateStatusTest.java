@@ -1,6 +1,7 @@
 package com.homemate.taskmanagementtests;
 
 import com.homemate.TaskerProfile.Dao.ReviewDao;
+import com.homemate.notification.service.imp.EmailServiceImp;
 import com.homemate.taskmanagement.dao.TaskDao;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
@@ -33,6 +34,10 @@ class TaskManagementServiceUpdateStatusTest {
     private TaskDao taskDao;
     @Mock
     private SimpMessagingTemplate simpMessagingTemplate;
+
+    @Mock
+    private EmailServiceImp emailServiceImp;
+
     @InjectMocks
     private TaskManagementService taskManagementService;
     @InjectMocks
@@ -57,7 +62,7 @@ class TaskManagementServiceUpdateStatusTest {
                 .build();
 
 
-        taskManagementService = new TaskManagementService(null, taskDao,new StatusFactory(taskDao),reviewDao,simpMessagingTemplate);
+        taskManagementService = new TaskManagementService(null, taskDao,new StatusFactory(taskDao),reviewDao,simpMessagingTemplate,emailServiceImp);
     }
 
     // ========== Valid State Transitions ==========

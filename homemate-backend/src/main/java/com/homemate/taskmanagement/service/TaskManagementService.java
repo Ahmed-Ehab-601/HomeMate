@@ -4,6 +4,8 @@ package com.homemate.taskmanagement.service;
 import com.homemate.TaskerProfile.DTO.ReviewDTO;
 import com.homemate.TaskerProfile.DTO.ReviewImageDTO;
 import com.homemate.TaskerProfile.Dao.ReviewDao;
+import com.homemate.notification.domains.dto.EmailRequest;
+import com.homemate.notification.service.EmailService;
 import com.homemate.taskmanagement.dao.TaskDao;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.*;
@@ -31,6 +33,8 @@ public class TaskManagementService {
     private final StatusFactory statusFactory;
     private final ReviewDao reviewDao;
     private final SimpMessagingTemplate simpMessagingTemplate;
+    private final EmailService emailService;
+
 
     public Optional<TaskDto> requestTask(TaskRequestDto requestDto){
         checkRequest(requestDto);
@@ -38,6 +42,23 @@ public class TaskManagementService {
         newTask.setChatID(handleChat(requestDto));
         Optional<Long> taskID = taskDao.insertTask(newTask);
         if(taskID.isEmpty()) throw new IllegalArgumentException("the task not created correctly");
+//        //send email
+        try {
+            TaskDto taskDto = taskDao.getTaskDetails(taskID.get())
+                    .orElseThrow(() -> new IllegalArgumentException("Task details missing"));
+
+            EmailRequest emailRequest = EmailRequest.builder()
+                    .task(taskDto)
+                    .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                    .recipientEmail(taskDto.getTaskerMail())
+                    .build();
+
+            emailService.sendTaskerEmail(emailRequest);
+
+        } catch (Exception e) {
+            System.out.println("Failed to send email: " + e.getMessage());
+        }
+
         return getTaskDetails(taskID.get(),requestDto.getUserID());
 
     }
@@ -147,7 +168,16 @@ public class TaskManagementService {
         taskDao.updateStatus(taskID,newStatus);
         TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
         simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
+
         // TO DO SEND EMAIL
+        EmailRequest emailRequest = EmailRequest.builder()
+                .recipientEmail(taskDto.getUserMail())
+                .task(taskDto)
+                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .build();
+
+        emailService.sendUserEmail(emailRequest);
+
         return new TaskRequestResponseDto(taskID,newStatus);
 
 
@@ -168,9 +198,17 @@ public class TaskManagementService {
         taskContext.contextChange(newTaskState);
         taskContext.updateWorkedHours();
         taskContext.updateStatus();
-        taskContext.sendEmail();
         TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
         simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
+        // TO DO SEND EMAIL
+        EmailRequest emailRequest = EmailRequest.builder()
+                .recipientEmail(taskDto.getUserMail())
+                .task(taskDto)
+                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .build();
+
+        emailService.sendUserEmail(emailRequest);
+
         return taskDto;
     }
 
@@ -178,6 +216,7 @@ public class TaskManagementService {
 
         Optional<Long> taskerID = taskDao.getTaskerID(taskID);
         Optional<Long> userID = taskDao.getUserID(taskID);
+        TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
 
         if (taskerID.isEmpty() || userID.isEmpty()) {
             throw new TaskNotFoundException("Task with ID " + taskID + " not found");
@@ -204,6 +243,20 @@ public class TaskManagementService {
         }
         simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDao.getTaskDetails(taskID));
         // TO DO SEND EMAIL
+
+        EmailRequest userMail = EmailRequest.builder()
+                .recipientEmail((taskDto.getUserMail()))
+                .task(taskDto)
+                .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
+                .build();
+        emailService.sendUserEmail(userMail);
+
+        EmailRequest taskerMail = EmailRequest.builder()
+                .recipientEmail(taskDto.getTaskerMail())
+                .task(taskDto)
+                .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
+                .build();
+        emailService.sendTaskerEmail(taskerMail);
 
         return RescheduleResponseDto.builder()
                 .taskID(taskID)

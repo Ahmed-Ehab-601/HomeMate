@@ -23,7 +23,6 @@ public class EmailRequest {
         EMAIL_VERIFICATION,
         FORGOT_PASSWORD,
         TASK_RESUMED
-
     }
     
     
