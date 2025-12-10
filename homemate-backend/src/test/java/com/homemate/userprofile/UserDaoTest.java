@@ -1,4 +1,4 @@
-package com.homemate.UserProfile.DAO;
+package com.homemate.userprofile;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,8 +12,8 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.TestPropertySource;
 
+import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.UserProfile.DTO.UserProfileDTO;
 import com.homemate.UserProfile.Mappers.UserProfileDTORowMapper;
 import com.homemate.UserProfile.Mappers.UserRequestTaskerDTORowMapper;

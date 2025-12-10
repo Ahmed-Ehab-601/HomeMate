@@ -1,9 +1,6 @@
-package com.homemate.TaskerProfile.Dao;
+package com.homemate.taskerprofile;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,9 +9,9 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.TestPropertySource;
 
 import com.homemate.TaskerProfile.DTO.TaskerProfileDTO;
+import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.TaskerProfile.mappers.TaskerProfileDTORowMapper;
 import com.homemate.TaskerProfile.mappers.TaskerRowMapper;
 import com.homemate.TaskerProfile.models.Tasker;

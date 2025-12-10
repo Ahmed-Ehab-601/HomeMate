@@ -1,4 +1,4 @@
-package com.homemate.TaskerProfile.services;
+package com.homemate.taskerprofile;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,6 +27,7 @@ import com.homemate.TaskerProfile.DTO.PasswordDTO;
 import com.homemate.TaskerProfile.DTO.PhoneNumberDTO;
 import com.homemate.TaskerProfile.DTO.TaskerProfileDTO;
 import com.homemate.TaskerProfile.DTO.UsernameDTO;
+import com.homemate.TaskerProfile.services.TaskerProfileService;
 
 import org.springframework.test.context.ActiveProfiles;
 
