@@ -7,7 +7,6 @@ import com.homemate.TaskerProfile.Dao.ReviewDao;
 import com.homemate.notification.domains.dto.EmailRequest;
 import com.homemate.notification.service.EmailService;
 import com.homemate.taskmanagement.dao.TaskDao;
-import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.*;
 import com.homemate.taskmanagement.exceptions.*;
 import com.homemate.taskmanagement.mappers.TaskMapper;
@@ -15,8 +14,6 @@ import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 import lombok.AllArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.config.Task;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -167,7 +164,6 @@ public class TaskManagementService {
         }
         taskDao.updateStatus(taskID,newStatus);
         TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
-        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
 
         // TO DO SEND EMAIL
         EmailRequest emailRequest = EmailRequest.builder()
@@ -177,6 +173,7 @@ public class TaskManagementService {
                 .build();
 
         emailService.sendUserEmail(emailRequest);
+        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
 
         return new TaskRequestResponseDto(taskID,newStatus);
 
@@ -200,7 +197,6 @@ public class TaskManagementService {
         taskContext.updateWorkedHours();
         taskContext.updateStatus();
         TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
-        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
         // TO DO SEND EMAIL
         EmailRequest emailRequest = EmailRequest.builder()
                 .recipientEmail(taskDto.getUserMail())
@@ -209,6 +205,7 @@ public class TaskManagementService {
                 .build();
 
         emailService.sendUserEmail(emailRequest);
+        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
 
         return taskDto;
     }
@@ -242,9 +239,7 @@ public class TaskManagementService {
         if (!updated) {
             throw new IllegalStateException("Task could not be rescheduled");
         }
-        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDao.getTaskDetails(taskID));
         // TO DO SEND EMAIL
-
         EmailRequest userMail = EmailRequest.builder()
                 .recipientEmail((taskDto.getUserMail()))
                 .task(taskDto)
@@ -258,12 +253,15 @@ public class TaskManagementService {
                 .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
                 .build();
         emailService.sendTaskerEmail(taskerMail);
+        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDao.getTaskDetails(taskID));
 
         return RescheduleResponseDto.builder()
                 .taskID(taskID)
                 .newStartDate(newStart)
                 .rescheduleStatus(StatusDto.Accepted)
                 .build();
+
+
     }
 
 

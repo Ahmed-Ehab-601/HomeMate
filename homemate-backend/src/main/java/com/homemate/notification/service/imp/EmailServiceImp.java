@@ -9,18 +9,25 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.CompletableFuture;
+
 @Slf4j
 @Component
 public class EmailServiceImp implements EmailService {
     private EmailTemplate emailTemplate;
     private JavaMailSender javaMailSender;
-    private static final String HOMEMATE_EMAIL ="homematesevice8@gmail.com";
-    public EmailServiceImp(EmailTemplate emailTemplate,JavaMailSender javaMailSender) {
+    private static final String HOMEMATE_EMAIL = "homematesevice8@gmail.com";
+
+    public EmailServiceImp(EmailTemplate emailTemplate, JavaMailSender javaMailSender) {
         this.emailTemplate = emailTemplate;
-        this.javaMailSender=javaMailSender;
+        this.javaMailSender = javaMailSender;
     }
-    private TaskResponse sendNotification(String subject, String body, EmailRequest emailRequest) {
+
+    @Async("taskExecutor")
+    private CompletableFuture<TaskResponse> sendNotification(String subject, String body, EmailRequest emailRequest) {
         try {
             SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
             simpleMailMessage.setSubject(subject);
@@ -30,28 +37,36 @@ public class EmailServiceImp implements EmailService {
             javaMailSender.send(simpleMailMessage);
 
             log.info("Email sent successfully to: {}", emailRequest.getRecipientEmail());
-            return TaskResponse.builder()
-                    .success(true)
-                    .message("Email sent successfully")
-                    .build();
+            return CompletableFuture.completedFuture(
+                    TaskResponse.builder()
+                            .success(true)
+                            .message("Email sent successfully")
+                            .build()
+            );
 
         } catch (MailException e) {
             log.error("Failed to send email to: {}. Error: {}",
                     emailRequest.getRecipientEmail(), e.getMessage(), e);
-            return TaskResponse.builder()
-                    .success(false)
-                    .message("Failed to send email: " + e.getMessage())
-                    .build();
+            return CompletableFuture.completedFuture(
+                    TaskResponse.builder()
+                            .success(false)
+                            .message("Failed to send email: " + e.getMessage())
+                            .build()
+            );
         } catch (Exception e) {
             log.error("Unexpected error while sending email: {}", e.getMessage(), e);
-            return TaskResponse.builder()
-                    .success(false)
-                    .message("An unexpected error occurred")
-                    .build();
+            return CompletableFuture.completedFuture(
+                    TaskResponse.builder()
+                            .success(false)
+                            .message("An unexpected error occurred")
+                            .build()
+            );
         }
     }
+
+    @Async("taskExecutor")
     @Override
-    public TaskResponse sendUserEmail(EmailRequest emailRequest) {
+    public CompletableFuture<TaskResponse> sendUserEmail(EmailRequest emailRequest) {
         try {
             EmailRequest.EmailType emailType = emailRequest.getEmailType();
 
@@ -76,10 +91,12 @@ public class EmailServiceImp implements EmailService {
                         );
                 default -> {
                     log.error("Unsupported email type: {}", emailType);
-                    yield TaskResponse.builder()
-                            .success(false)
-                            .message("Unsupported email type: " + emailType)
-                            .build();
+                    yield CompletableFuture.completedFuture(
+                            TaskResponse.builder()
+                                    .success(false)
+                                    .message("Unsupported email type: " + emailType)
+                                    .build()
+                    );
                 }
             };
         } catch (EmailTemplateException e) {
@@ -87,22 +104,23 @@ public class EmailServiceImp implements EmailService {
                     e.getTemplateType(),
                     e.getMissingField(),
                     e.getMessage());
-            return TaskResponse.builder()
-                    .success(false)
-                    .message(String.format("Template: %s, Missing: %s, Reason: %s",
-                            e.getTemplateType(),
-                            e.getMissingField(),
-                            e.getMessage()))
-
-                    .build();
-
+            return CompletableFuture.completedFuture(
+                    TaskResponse.builder()
+                            .success(false)
+                            .message(String.format("Template: %s, Missing: %s, Reason: %s",
+                                    e.getTemplateType(),
+                                    e.getMissingField(),
+                                    e.getMessage()))
+                            .build()
+            );
         }
     }
 
+    @Async("taskExecutor")
     @Override
-    public TaskResponse sendTaskerEmail(EmailRequest emailRequest) {
+    public CompletableFuture<TaskResponse> sendTaskerEmail(EmailRequest emailRequest) {
         try {
-            EmailRequest.EmailType emailType=emailRequest.getEmailType();
+            EmailRequest.EmailType emailType = emailRequest.getEmailType();
             return switch (emailType) {
                 case TASK_REQUEST ->
                         sendNotification(
@@ -118,10 +136,12 @@ public class EmailServiceImp implements EmailService {
                         );
                 default -> {
                     log.error("Unsupported email type: {}", emailType);
-                    yield TaskResponse.builder()
-                            .success(false)
-                            .message("Unsupported email type: " + emailType)
-                            .build();
+                    yield CompletableFuture.completedFuture(
+                            TaskResponse.builder()
+                                    .success(false)
+                                    .message("Unsupported email type: " + emailType)
+                                    .build()
+                    );
                 }
             };
         } catch (EmailTemplateException e) {
@@ -130,16 +150,15 @@ public class EmailServiceImp implements EmailService {
                     e.getMissingField(),
                     e.getMessage());
 
-            return TaskResponse.builder()
-                    .success(false)
-                    .message(String.format("Template: %s, Missing: %s, Reason: %s",
-                            e.getTemplateType(),
-                            e.getMissingField(),
-                            e.getMessage()))
-
-                    .build();
+            return CompletableFuture.completedFuture(
+                    TaskResponse.builder()
+                            .success(false)
+                            .message(String.format("Template: %s, Missing: %s, Reason: %s",
+                                    e.getTemplateType(),
+                                    e.getMissingField(),
+                                    e.getMessage()))
+                            .build()
+            );
         }
     }
-
-
 }
