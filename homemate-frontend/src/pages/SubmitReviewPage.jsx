@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { submitReview, updateReview, getReviewByTask } from "../api/reviewsApi";
+import { submitReview, updateReview, getReviewByTask, deleteReviewImage } from "../api/reviewsApi";
 import "../styles/SubmitReview.css";
 
 const MAX_IMAGES = 5;
@@ -19,6 +19,7 @@ function SubmitReviewPage() {
     const [error, setError] = useState(null);
     const [isForbidden, setIsForbidden] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [deletedImageIds, setDeletedImageIds] = useState([]);
 
     useEffect(() => {
         loadReview();
@@ -111,6 +112,11 @@ function SubmitReviewPage() {
     };
 
     const removeImage = (indexToRemove) => {
+        const imageToRemove = images[indexToRemove];
+        // If it's an existing image (has an id), track it for deletion
+        if (imageToRemove.id) {
+            setDeletedImageIds((prev) => [...prev, imageToRemove.id]);
+        }
         setImages((prev) => prev.filter((_, index) => index !== indexToRemove));
     };
 
@@ -146,6 +152,16 @@ function SubmitReviewPage() {
         }
 
         try {
+            // Delete removed images first
+            for (const imageId of deletedImageIds) {
+                try {
+                    await deleteReviewImage(imageId);
+                } catch (deleteErr) {
+                    console.error(`Failed to delete image ${imageId}:`, deleteErr);
+                    // Continue with other deletions even if one fails
+                }
+            }
+
             if (reviewId) {
                 await updateReview(payload);
             } else {

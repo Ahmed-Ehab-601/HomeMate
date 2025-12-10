@@ -46,3 +46,14 @@ export async function deleteReview(reviewId) {
         method: "DELETE",
     });
 }
+
+/**
+ * Delete a review image
+ * @param {number} imageId - The image ID
+ * @returns {Promise<void>}
+ */
+export async function deleteReviewImage(imageId) {
+    return apiRequest(`${REVIEWS_ENDPOINT}/image/${imageId}`, {
+        method: "DELETE",
+    });
+}
