@@ -219,11 +219,6 @@ function RequestTaskPage() {
     requestTask(requestDto)
       .then((response) => {
         console.info("[RequestTaskPage] Task request response", response);
-        setSuccessBanner({
-          message:
-            "✓ Task request sent successfully! The Tasker will review your request shortly.",
-          details: response,
-        });
         setConfirmModalOpen(false);
         setDescription("");
         setDateValue("");
@@ -235,7 +230,12 @@ function RequestTaskPage() {
         setLimitError("");
         setDuplicateModalOpen(false);
         setDuplicateMessage("");
-        // TODO: Navigate to task details once page is available.
+        // Redirect to Task Details page with confirmation state
+        if (response?.taskID) {
+          navigate(`/tasks/${response.taskID}`, {
+            state: { requestSubmitted: true },
+          });
+        }
       })
       .catch((error) => {
         // Close confirm modal to show error messages

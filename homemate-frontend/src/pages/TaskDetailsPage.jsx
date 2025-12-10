@@ -99,17 +99,24 @@ function TaskDetailsPage() {
   const userRole = getUserRole();
   const isTasker = userRole === "ROLE_TASKER";
 
-  // Check for review submitted success message
+  // Check for review submitted or request submitted success message
   useEffect(() => {
     if (location.state?.reviewSubmitted) {
       setSuccessBanner("✅ Review submitted successfully!");
       const timer = setTimeout(() => {
         setSuccessBanner(null);
       }, 3000);
-
-      // Clear the state to prevent showing message on refresh
       window.history.replaceState({}, document.title);
-
+      return () => clearTimeout(timer);
+    }
+    if (location.state?.requestSubmitted) {
+      setSuccessBanner(
+        "✅ Task request sent successfully! The Tasker will review your request shortly."
+      );
+      const timer = setTimeout(() => {
+        setSuccessBanner(null);
+      }, 4000);
+      window.history.replaceState({}, document.title);
       return () => clearTimeout(timer);
     }
   }, [location.state]);
