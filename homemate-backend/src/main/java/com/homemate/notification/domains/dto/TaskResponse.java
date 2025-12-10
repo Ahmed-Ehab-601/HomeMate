@@ -6,6 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class TaskDtoNtofication{
+public class TaskResponse {
+    
+    private boolean success;
+    private String message;
 }

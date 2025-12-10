@@ -1,6 +1,5 @@
 package com.homemate. taskmanagementtests;
 
-import com.homemate.taskmanagement.dao.TaskDao;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.service.*;

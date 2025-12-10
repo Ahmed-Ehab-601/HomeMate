@@ -149,6 +149,7 @@ public class TaskManagementService {
         taskDao.updateStatus(taskID,newStatus);
         TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
         simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
+        // TO DO SEND EMAIL
         return new TaskRequestResponseDto(taskID,newStatus);
 
 
@@ -204,6 +205,7 @@ public class TaskManagementService {
             throw new IllegalStateException("Task could not be rescheduled");
         }
         simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDao.getTaskDetails(taskID));
+        // TO DO SEND EMAIL
 
         return RescheduleResponseDto.builder()
                 .taskID(taskID)
