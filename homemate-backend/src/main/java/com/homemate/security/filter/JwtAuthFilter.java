@@ -31,7 +31,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/users/taskers/",
             "/api/tasker-profile/reviews",
             "/api/auth/otp/verify",
-            "/api/auth/otp/send"
+            "/api/auth/otp/send","/HomeMate"
     );
 
     private final JwtService jwtService;
@@ -76,7 +76,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         boolean isPublic = false;
 
         for (String p : PUBLIC_URLS) {
-            if (path.equals(p) || path.startsWith(p)) {
+            if (path.equals(p) || path.startsWith(p + "/")) {
                 isPublic = true;
                 break;
             }

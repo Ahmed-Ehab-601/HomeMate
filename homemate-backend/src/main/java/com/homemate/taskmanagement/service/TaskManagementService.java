@@ -12,6 +12,7 @@ import com.homemate.taskmanagement.mappers.TaskMapper;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 import lombok.AllArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.config.Task;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class TaskManagementService {
     private final TaskDao taskDao;
     private final StatusFactory statusFactory;
     private final ReviewDao reviewDao;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     public Optional<TaskDto> requestTask(TaskRequestDto requestDto){
         checkRequest(requestDto);
@@ -143,6 +145,8 @@ public class TaskManagementService {
             throw new BadAcceptRejectException("the task id does not belong to this tasker");
         }
         taskDao.updateStatus(taskID,newStatus);
+        TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
+        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
         return new TaskRequestResponseDto(taskID,newStatus);
 
 
@@ -164,7 +168,9 @@ public class TaskManagementService {
         taskContext.updateWorkedHours();
         taskContext.updateStatus();
         taskContext.sendEmail();
-        return getTaskDetails(taskID).get();
+        TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
+        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDto);
+        return taskDto;
     }
 
     public RescheduleResponseDto rescheduleTask(Long taskID, RescheduleRequestDto rescheduleRequestDto ,long requestID) {
@@ -195,6 +201,7 @@ public class TaskManagementService {
         if (!updated) {
             throw new IllegalStateException("Task could not be rescheduled");
         }
+        simpMessagingTemplate.convertAndSend("/send/task/"+taskID,taskDao.getTaskDetails(taskID));
 
         return RescheduleResponseDto.builder()
                 .taskID(taskID)

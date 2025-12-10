@@ -13,6 +13,7 @@ import { acceptTask, rejectTask } from "../api/taskActionsApi";
 import { getTaskerById } from "../api/taskerProfileApi";
 import TaskerCard from "../components/TaskerCard";
 import Modal from "../components/Modal";
+import { websocketService } from "../services/websocketService";
 import "../styles/TaskDetails.css";
 
 const normalizeImage = (imageValue) => {
@@ -71,7 +72,7 @@ function TaskDetailsPage() {
   const { taskId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { getUserRole } = useAuth();
+  const { getUserRole, getToken } = useAuth();
 
   const [task, setTask] = useState(null);
   const [review, setReview] = useState(null);
@@ -133,6 +134,54 @@ function TaskDetailsPage() {
       return () => clearInterval(interval);
     }
   }, [task?.status, task?.startInProgress, task?.workedHours]);
+
+  // WebSocket connection and subscription
+  useEffect(() => {
+    const token = getToken();
+    if (!token || !taskId) return;
+
+    let isSubscribed = false;
+
+    const connectAndSubscribe = async () => {
+      try {
+        await websocketService.connect(token);
+
+        websocketService.subscribeToTask(taskId, (updatedTask) => {
+          console.log("📬 Task update received:", updatedTask);
+
+          // Check if status changed
+          if (task && task.status !== updatedTask.status) {
+            const statusLabel =
+              STATUS_STYLES[
+                updatedTask.status?.toUpperCase().replace(/\s+/g, "")
+              ]?.label || updatedTask.status;
+            showSuccessBanner(`✅ Task status changed to: ${statusLabel}`);
+          }
+
+          // Check if rescheduled (startDate changed)
+          if (task && task.startDate !== updatedTask.startDate) {
+            const newDate = formatDate(updatedTask.startDate);
+            showSuccessBanner(`📅 Task rescheduled to: ${newDate}`);
+          }
+
+          // Update task state
+          setTask(updatedTask);
+        });
+
+        isSubscribed = true;
+      } catch (error) {
+        console.error("Failed to connect WebSocket:", error);
+      }
+    };
+
+    connectAndSubscribe();
+
+    return () => {
+      if (isSubscribed) {
+        websocketService.unsubscribeFromTask(taskId);
+      }
+    };
+  }, [taskId, getToken, task?.status, task?.startDate]);
 
   const loadTaskDetails = async () => {
     setLoading(true);
