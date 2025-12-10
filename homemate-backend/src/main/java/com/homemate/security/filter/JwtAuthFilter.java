@@ -22,16 +22,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private static final List<String> PUBLIC_URLS = List.of(
             "/api/auth/login",
+            "/api/auth/google",
+            "/api/auth/otp/send",
+            "/api/auth/otp/verify",
+            "/api/auth/signup/google/init",
             "/api/user/signup",
             "/api/tasker/signup",
             "/api/services",
             "/api/taskers/search",
-            "/api/auth/google",
-            "/api/taskers/search",
             "/api/users/taskers/",
-            "/api/tasker-profile/reviews",
-            "/api/auth/otp/verify",
-            "/api/auth/otp/send"
+            "/api/tasker-profile/reviews"
     );
 
     private final JwtService jwtService;

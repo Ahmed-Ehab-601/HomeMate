@@ -14,6 +14,7 @@ public class TaskerSignupDTO {
     private String firstName;
     private String lastName;
     private String city;
+    private String verifyToken;
 
     public String getUsername() {
         return username;
@@ -109,5 +110,13 @@ public class TaskerSignupDTO {
 
     public void setCity(String city) {
         this.city = city;
+    }
+
+    public String getVerifyToken() {
+        return verifyToken;
+    }
+
+    public void setVerifyToken(String verifyToken) {
+        this.verifyToken = verifyToken;
     }
 }

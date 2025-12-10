@@ -222,3 +222,60 @@
     font-size: 0.875rem;
   }
 }
+
+/* Signup Method Choice Page Styles */
+.verify-email-container .signup-method-options {
+  margin-top: 2rem;
+}
+
+.verify-email-container .signup-method-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #f7fafc;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  transition: border-color 0.2s ease;
+}
+
+.verify-email-container .signup-method-section:hover {
+  border-color: #667eea;
+}
+
+.verify-email-container .method-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 0.5rem;
+}
+
+.verify-email-container .method-description {
+  font-size: 0.875rem;
+  color: #718096;
+  margin-bottom: 1rem;
+}
+
+.verify-email-container .google-button-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.verify-email-container .divider-section {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+  gap: 1rem;
+}
+
+.verify-email-container .divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: #e2e8f0;
+}
+
+.verify-email-container .divider-text {
+  color: #718096;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0 0.5rem;
+}

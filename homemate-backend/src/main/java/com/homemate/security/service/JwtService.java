@@ -67,6 +67,17 @@ public class JwtService {
         }
     }
 
+    // Validate and extract email from verification token
+    public String validateVerifyToken(String verifyToken) {
+        try {
+            Claims claims = extractAllClaims(verifyToken);
+            if (claims == null) return null;
+            return (String) claims.get("email");
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private Claims extractAllClaims(String token) {
         try {
             return Jwts.parser()

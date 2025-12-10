@@ -137,6 +137,11 @@ export function AuthProvider({ children }) {
       setToken(null);
       localStorage.removeItem("homemate_user");
       localStorage.removeItem("homemate_token");
+      
+      // Clear email verification related data
+      localStorage.removeItem("verify_token");
+      localStorage.removeItem("verified_email");
+      localStorage.removeItem("verified_user_type");
     }
   };
 

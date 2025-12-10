@@ -102,7 +102,7 @@ public class OTPServiceImp implements OTPService {
             return OtpVerificationResult.builder()
                 .success(false)
                 .message("Maximum attempts exceeded")
-                .token(jwtService.generateVerifyToken(otpVerifyRequest.getRecipientEmail()))
+                .token("")
                 .build();
         }
 
@@ -112,7 +112,7 @@ public class OTPServiceImp implements OTPService {
             return OtpVerificationResult.builder()
                 .success(true)
                 .message("OTP verified successfully")
-                .token("")
+                .token(jwtService.generateVerifyToken(otpVerifyRequest.getRecipientEmail()))
                 .build();
         }
 

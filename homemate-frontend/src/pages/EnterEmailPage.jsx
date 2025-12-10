@@ -12,6 +12,7 @@ function EnterEmailPage() {
 
   // Get the flow type from location state (either 'FORGOT_PASSWORD' or 'EMAIL_VERIFICATION')
   const flowType = location.state?.flowType || "EMAIL_VERIFICATION";
+  const userType = location.state?.userType; // "user" or "tasker" for signup flow
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +33,7 @@ function EnterEmailPage() {
         state: {
           email: email,
           flowType: flowType,
+          userType: userType,
         },
       });
     } catch (err) {

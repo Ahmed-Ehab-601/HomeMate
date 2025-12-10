@@ -16,6 +16,7 @@ function VerifyOtpPage() {
   // Get email and flow type from location state
   const email = location.state?.email;
   const flowType = location.state?.flowType || "EMAIL_VERIFICATION";
+  const userType = location.state?.userType; // "user" or "tasker" for signup flow
 
   useEffect(() => {
     // Redirect if no email provided
@@ -53,13 +54,26 @@ function VerifyOtpPage() {
 
     try {
       const result = await verifyOtp(email, otp, flowType);
+      console.log("OTP verification result:", result);
 
       if (result.success) {
         setSuccessMessage("Verification successful!");
 
         // Store the verification token if provided
         if (result.token) {
+          console.log("Storing verify token:", result.token);
           localStorage.setItem("verify_token", result.token);
+        } else {
+          console.warn("No token received in OTP verification response");
+        }
+
+        // Persist verified email and user type for signup flows
+        if (flowType === "EMAIL_VERIFICATION") {
+          localStorage.setItem("verified_email", email);
+          if (userType) {
+            localStorage.setItem("verified_user_type", userType);
+          }
+          console.log("Stored verified_email:", email, "verified_user_type:", userType);
         }
 
         // Navigate based on flow type
@@ -73,11 +87,12 @@ function VerifyOtpPage() {
               },
             });
           } else if (flowType === "EMAIL_VERIFICATION") {
-            // Navigate to complete signup page (could be profile setup or signin)
-            navigate("/signup/complete", {
+            // Navigate to signup page with verified email and token
+            navigate("/signup", {
               state: {
-                email: email,
-                token: result.token,
+                userType: userType,
+                verifiedEmail: email,
+                verifyToken: result.token,
               },
             });
           }
@@ -186,7 +201,7 @@ function VerifyOtpPage() {
 
         <div className="back-link">
           <button
-            onClick={() => navigate("/verify-email", { state: { flowType } })}
+            onClick={() => navigate("/verify-email", { state: { flowType, userType } })}
             className="back-button"
             disabled={isLoading}
           >

@@ -12,6 +12,7 @@ public class SignupUserDTO {
     private Timestamp birthDate;
     private Character gender;
     private String phone;
+    private String verifyToken;
 
     public String getUsername() {
         return username;
@@ -76,5 +77,12 @@ public class SignupUserDTO {
     public void setPhone(String phone) {
         this.phone = phone;
     }
-}
 
+    public String getVerifyToken() {
+        return verifyToken;
+    }
+
+    public void setVerifyToken(String verifyToken) {
+        this.verifyToken = verifyToken;
+    }
+}
