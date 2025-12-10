@@ -20,6 +20,7 @@ import TaskerDashboardPage from "./pages/TaskerDashboardPage";
 import SignUpPage from "./pages/SignUpPage";
 import UserTasksPage from "./pages/UserTasksPage";
 import TaskerTasksPage from "./pages/TaskerTasksPage";
+import SubmitReviewPage from "./pages/SubmitReviewPage";
 import AdminRoutes from "./admin/routing/AdminRoutes";
 import SubmitReportPage from "./pages/SubmitReportPage";
 import ChatPage from "./pages/ChatPage";
@@ -66,6 +67,14 @@ function AppRoutes() {
       <Route path="/taskers/:taskerId" element={<TaskerProfilePage />} />
       <Route path="/taskers/:taskerId/request" element={<RequestTaskPage />} />
       <Route
+        path="/submit-review/:taskId"
+        element={
+          <ProtectedRoute requiredRole="ROLE_USER">
+            <SubmitReviewPage />
+            </ProtectedRoute>
+            }
+            />
+      <Route      
         path="/report/submit/:taskId"
         element={
           <ProtectedRoute>

@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Modal from "./Modal";
+import { useEffect, useCallback } from "react";
 import { acceptTask, rejectTask } from "../api/taskActionsApi";
+import { getReviewByTask } from "../api/reviewsApi";
 import "../styles/TaskCard.css";
 
 const STATUS_STYLES = {
@@ -45,6 +47,8 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   const [successBanner, setSuccessBanner] = useState(null);
   const [errorBanner, setErrorBanner] = useState(null);
   const [localStatus, setLocalStatus] = useState(task.status);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [checkingReview, setCheckingReview] = useState(false);
 
   // Normalize status: remove spaces and convert to uppercase to match STATUS_STYLES keys
   const normalizedStatus =
@@ -75,6 +79,29 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
     const minutes = String(date.getMinutes()).padStart(2, "0");
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
+ // can be moved to task details page
+  const checkReviewStatus = useCallback(async () => {
+    // Only check for DONE tasks in User view
+    if (viewType === "user" && normalizedStatus === "DONE" && !hasReviewed) {
+      setCheckingReview(true);
+      try {
+        await getReviewByTask(task.taskID);
+        // If successful, it means a review exists
+        setHasReviewed(true);
+      } catch (error) {
+        // 404 means no review, other errors ignored
+        if (error.status !== 404) {
+          console.error("Failed to check review status", error);
+        }
+      } finally {
+        setCheckingReview(false);
+      }
+    }
+  }, [task.taskID, viewType, normalizedStatus, hasReviewed]);
+
+  useEffect(() => {
+    checkReviewStatus();
+  }, [checkReviewStatus]);
 
   const handleViewDetails = () => {
     // Navigate to task details page (to be implemented in another story)
@@ -240,15 +267,34 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
               View Details
             </button>
           )}
-          {/* {viewType === "user" && (
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleViewTasker}
-          >
-            View Tasker
-          </button>
-        )} */}
+
+          {/* Review Button can be moved to task details page */}
+          {viewType === "user" && normalizedStatus === "DONE" && (
+            <button
+              type="button"
+              className={`btn ${hasReviewed ? "btn-secondary" : "btn-primary"}`}
+              style={{ marginLeft: "auto", opacity: checkingReview ? 0.7 : 1 }}
+              disabled={hasReviewed || checkingReview}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!hasReviewed) {
+                  navigate(`/submit-review/${task.taskID}`);
+                }
+              }}
+            >
+              {hasReviewed ? (
+                <>
+                  <span className="btn-icon">✓</span> Reviewed
+                </>
+              ) : (
+                <>
+                  <span className="btn-icon">★</span> Review
+                </>
+              )}
+            </button>
+          )}
+
+
         </div>
       </article>
 
