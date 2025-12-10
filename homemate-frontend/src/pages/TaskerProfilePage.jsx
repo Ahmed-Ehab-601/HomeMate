@@ -135,7 +135,7 @@ function TaskerProfilePage() {
   const loadReviews = () => {
     setReviewsLoading(true);
     // Adjust page to 1-based if backend expects it, or keep 0-based.
-    // Dashboard uses 1-based page in variable `page` passed to getTaskerReviews({page, pageSize}). 
+    // Dashboard uses 1-based page in variable `page` passed to getTaskerReviews({page, pageSize}).
     // And getTaskerReviews in taskersApi.js now sends `page`.
     // Let's assume 1-based for consistency with Dashboard.
     const pageToSend = currentPage + 1;
@@ -259,8 +259,9 @@ function TaskerProfilePage() {
   };
 
   const getInitials = (firstName, lastName) => {
-    return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""
-      }`.toUpperCase();
+    return `${firstName?.charAt(0) || ""}${
+      lastName?.charAt(0) || ""
+    }`.toUpperCase();
   };
 
   const formatDate = (dateString) => {
@@ -419,27 +420,81 @@ function TaskerProfilePage() {
             <>
               <ul className="review-list">
                 {reviews.map((review) => (
-                  <li key={review.reviewId ?? review.taskId} className="review-item" style={{ listStyle: 'none', padding: '16px 0', borderBottom: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column' }}>
-                    <div className="review-item__header" style={{ display: 'flex', alignItems: 'center', marginBottom: '22px', gap: '12px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>{"@" + (review.reviewerUsername || "Client")}</span>
-                      <span style={{ color: 'var(--text-secondary)' }}>•</span>
-                      <span className="tasker-card__meta" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                        {review.time ? new Date(review.time).toLocaleDateString() : ""}
+                  <li
+                    key={review.reviewId ?? review.taskId}
+                    className="review-item"
+                    style={{
+                      listStyle: "none",
+                      padding: "16px 0",
+                      borderBottom: "1px solid #f3f4f6",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <div
+                      className="review-item__header"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        marginBottom: "22px",
+                        gap: "12px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "0.95rem",
+                          color: "var(--text-primary)",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {"@" + (review.reviewerUsername || "Client")}
                       </span>
-                      <span style={{ color: 'var(--text-secondary)' }}>•</span>
-                      <span style={{ color: '#fbbf24', fontSize: '0.95rem', fontWeight: 'bold' }}>
-                        {review.rate?.toFixed ? review.rate.toFixed(1) : review.rate}★
+                      <span style={{ color: "var(--text-secondary)" }}>•</span>
+                      <span
+                        className="tasker-card__meta"
+                        style={{
+                          fontSize: "0.85rem",
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        {review.time
+                          ? new Date(review.time).toLocaleDateString("en-GB")
+                          : ""}
+                      </span>
+                      <span style={{ color: "var(--text-secondary)" }}>•</span>
+                      <span
+                        style={{
+                          color: "#fbbf24",
+                          fontSize: "0.95rem",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {review.rate?.toFixed
+                          ? review.rate.toFixed(1)
+                          : review.rate}
+                        ★
                       </span>
                     </div>
-                    <p style={{ margin: '0', fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+                    <p
+                      style={{
+                        margin: "0",
+                        fontSize: "0.95rem",
+                        color: "var(--text-primary)",
+                        lineHeight: "1.5",
+                      }}
+                    >
                       {review.text ?? "No review text provided."}
                     </p>
                     {review.reviewImages && review.reviewImages.length > 0 && (
                       <div className="review-images">
                         {review.reviewImages.map((img, index) => {
-                          const imgSrc = img.imgFile && img.imgFile.startsWith("data:")
-                            ? img.imgFile
-                            : `data:image/${img.format || "jpeg"};base64,${img.imgFile}`;
+                          const imgSrc =
+                            img.imgFile && img.imgFile.startsWith("data:")
+                              ? img.imgFile
+                              : `data:image/${img.format || "jpeg"};base64,${
+                                  img.imgFile
+                                }`;
                           return (
                             <img
                               key={img.imgId ?? index}
@@ -487,10 +542,25 @@ function TaskerProfilePage() {
       </section>
       {/* Image Modal */}
       {expandedImage && (
-        <div className="image-modal-overlay" onClick={() => setExpandedImage(null)}>
-          <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="image-modal-close" onClick={() => setExpandedImage(null)}>×</button>
-            <img src={expandedImage} alt="Full size" className="image-modal-img" />
+        <div
+          className="image-modal-overlay"
+          onClick={() => setExpandedImage(null)}
+        >
+          <div
+            className="image-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="image-modal-close"
+              onClick={() => setExpandedImage(null)}
+            >
+              ×
+            </button>
+            <img
+              src={expandedImage}
+              alt="Full size"
+              className="image-modal-img"
+            />
           </div>
         </div>
       )}

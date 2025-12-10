@@ -79,29 +79,6 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
     const minutes = String(date.getMinutes()).padStart(2, "0");
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
- // can be moved to task details page
-  const checkReviewStatus = useCallback(async () => {
-    // Only check for DONE tasks in User view
-    if (viewType === "user" && normalizedStatus === "DONE" && !hasReviewed) {
-      setCheckingReview(true);
-      try {
-        await getReviewByTask(task.taskID);
-        // If successful, it means a review exists
-        setHasReviewed(true);
-      } catch (error) {
-        // 404 means no review, other errors ignored
-        if (error.status !== 404) {
-          console.error("Failed to check review status", error);
-        }
-      } finally {
-        setCheckingReview(false);
-      }
-    }
-  }, [task.taskID, viewType, normalizedStatus, hasReviewed]);
-
-  useEffect(() => {
-    checkReviewStatus();
-  }, [checkReviewStatus]);
 
   const handleViewDetails = () => {
     // Navigate to task details page (to be implemented in another story)
@@ -160,11 +137,6 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
     }
   };
 
-  // const handleViewTasker = () => {
-  //   // Mock tasker ID for now
-  //   const taskerId = 1;
-  //   navigate(`/taskers/${taskerId}`);
-  // };
 
   return (
     <>
@@ -267,33 +239,6 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
               View Details
             </button>
           )}
-
-          {/* Review Button can be moved to task details page */}
-          {viewType === "user" && normalizedStatus === "DONE" && (
-            <button
-              type="button"
-              className={`btn ${hasReviewed ? "btn-secondary" : "btn-primary"}`}
-              style={{ marginLeft: "auto", opacity: checkingReview ? 0.7 : 1 }}
-              disabled={hasReviewed || checkingReview}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!hasReviewed) {
-                  navigate(`/submit-review/${task.taskID}`);
-                }
-              }}
-            >
-              {hasReviewed ? (
-                <>
-                  <span className="btn-icon">✓</span> Reviewed
-                </>
-              ) : (
-                <>
-                  <span className="btn-icon">★</span> Review
-                </>
-              )}
-            </button>
-          )}
-
 
         </div>
       </article>

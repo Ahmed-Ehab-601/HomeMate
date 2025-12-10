@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
   getTaskDetails,
@@ -70,6 +70,7 @@ const STATUS_STYLES = {
 function TaskDetailsPage() {
   const { taskId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { getUserRole } = useAuth();
 
   const [task, setTask] = useState(null);
@@ -96,6 +97,21 @@ function TaskDetailsPage() {
 
   const userRole = getUserRole();
   const isTasker = userRole === "ROLE_TASKER";
+
+  // Check for review submitted success message
+  useEffect(() => {
+    if (location.state?.reviewSubmitted) {
+      setSuccessBanner("✅ Review submitted successfully!");
+      const timer = setTimeout(() => {
+        setSuccessBanner(null);
+      }, 3000);
+
+      // Clear the state to prevent showing message on refresh
+      window.history.replaceState({}, document.title);
+
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     loadTaskDetails();
@@ -408,7 +424,10 @@ function TaskDetailsPage() {
   const showCompleteButton =
     isTasker &&
     (normalizedStatus === "INPROGRESS" || normalizedStatus === "SUSPENDED");
-  const showBill = normalizedStatus === "DONE" && task.bill;
+  const showBill =
+    normalizedStatus === "DONE" &&
+    task.bill !== undefined &&
+    task.bill !== null;
   const showTimer = normalizedStatus === "INPROGRESS";
   const showWorkedHours =
     normalizedStatus === "SUSPENDED" || normalizedStatus === "DONE";
@@ -438,9 +457,6 @@ function TaskDetailsPage() {
                 <h1 className="task-title">
                   {task.serviceName || "Task Details"}
                 </h1>
-                <p className="task-post-date">
-                  Listed {new Date(task.startDate).toLocaleDateString()}
-                </p>
               </div>
               <div
                 className="task-card__status-badge"
@@ -463,7 +479,7 @@ function TaskDetailsPage() {
           )}
 
           {/* Worked Hours (for Suspended/Done tasks) */}
-          {showWorkedHours && task.workedHours > 0 && (
+          {showWorkedHours && (
             <div className="work-timer-section suspended">
               <div className="work-timer-label">Total Worked</div>
               <div className="work-timer-value">
@@ -608,7 +624,7 @@ function TaskDetailsPage() {
                         }}
                       >
                         {review.time
-                          ? new Date(review.time).toLocaleDateString()
+                          ? new Date(review.time).toLocaleDateString("en-GB")
                           : ""}
                       </span>
                       <span style={{ color: "var(--text-secondary)" }}>•</span>

@@ -93,8 +93,8 @@ function SubmitReviewPage() {
 
         try {
             await submitReview(payload);
-            // Success - navigate back or to confirmation
-            navigate(-1); // Or to previous page
+            // Success - navigate to task details with success message
+            navigate(`/tasks/${taskId}`, { state: { reviewSubmitted: true } });
         } catch (err) {
             console.error("Failed to submit review:", err);
 
