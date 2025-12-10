@@ -9,6 +9,7 @@ import com.homemate.notification.service.utils.EmailTemplate;
 import com.homemate.security.service.JwtService;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -27,6 +28,7 @@ import static com.homemate.notification.domains.dto.EmailRequest.EmailType.FORGO
 @RequiredArgsConstructor
 @Component
 public class OTPServiceImp implements OTPService {
+
     private final JwtService jwtService;
     private final EmailTemplate emailTemplate;
     private final JavaMailSender javaMailSender;
