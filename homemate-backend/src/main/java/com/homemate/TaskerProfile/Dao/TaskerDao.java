@@ -116,5 +116,10 @@ public class TaskerDao {
 
         return keyHolder.getKey().longValue();
     }
+
+    public void updatePassword(String email, String newPassword) {
+        String sql = "UPDATE Tasker SET password = ? WHERE email = ?";
+        jdbcTemplate.update(sql, newPassword, email);
+    }
     
 }
