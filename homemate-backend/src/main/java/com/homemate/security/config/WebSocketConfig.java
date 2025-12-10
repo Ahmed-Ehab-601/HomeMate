@@ -1,4 +1,4 @@
-package com.homemate.taskmanagement.config;
+package com.homemate.security.config;
 
 import com.homemate.security.service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;

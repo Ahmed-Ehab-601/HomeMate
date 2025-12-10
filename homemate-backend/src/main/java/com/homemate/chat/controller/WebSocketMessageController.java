@@ -21,7 +21,7 @@ import java.util.Map;
 @Controller
 public class WebSocketMessageController {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketMessageController.class);
+    //private static final Logger logger = LoggerFactory.getLogger(WebSocketMessageController.class);
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
@@ -39,7 +39,7 @@ public class WebSocketMessageController {
             @DestinationVariable Long chatId,
             @Payload MessageDto messageDto) {
 
-        logger.info("📨 Received WebSocket message for chat: {}", chatId);
+       // logger.info("📨 Received WebSocket message for chat: {}", chatId);
 
         try {
             // Save message to database using existing HTTP endpoint logic
@@ -47,7 +47,7 @@ public class WebSocketMessageController {
 
             // Broadcast message to all subscribers of this chat
             messagingTemplate.convertAndSend(
-                    "/topic/chat/" + chatId,
+                    "/send/chat/" + chatId,
                     messageDto
             );
 
@@ -64,14 +64,14 @@ public class WebSocketMessageController {
             notification.put("timestamp", messageDto.getTimestamp());
 
             messagingTemplate.convertAndSend(
-                    "/queue/notifications/" + recipientRole.toLowerCase() + "/" + recipientId,
+                    "/send/notifications/" + recipientRole.toLowerCase() + "/" + recipientId,
                     notification
             );
 
-            logger.info("✅ Message broadcast successfully to chat: {}", chatId);
+            //logger.info("✅ Message broadcast successfully to chat: {}", chatId);
 
         } catch (Exception e) {
-            logger.error("❌ Error broadcasting message via WebSocket: {}", e.getMessage(), e);
+           // logger.error("❌ Error broadcasting message via WebSocket: {}", e.getMessage(), e);
 
             // Send error back to sender
             Map<String, Object> error = new HashMap<>();
@@ -80,7 +80,7 @@ public class WebSocketMessageController {
             error.put("chatId", chatId);
 
             messagingTemplate.convertAndSend(
-                    "/queue/errors/" + messageDto.getSenderId(),
+                    "/send/errors/" + messageDto.getSenderId(),
                     error
             );
         }
@@ -96,7 +96,7 @@ public class WebSocketMessageController {
             @DestinationVariable Long chatId,
             @Payload Map<String, Object> statusUpdate) {
 
-        logger.info("📊 Message status update for chat: {}", chatId);
+       // logger.info("📊 Message status update for chat: {}", chatId);
 
         try {
             String status = (String) statusUpdate.get("status");
@@ -110,14 +110,14 @@ public class WebSocketMessageController {
             statusBroadcast.put("timestamp", System.currentTimeMillis());
 
             messagingTemplate.convertAndSend(
-                    "/topic/chat/" + chatId + "/status",
+                    "/send/chat/" + chatId + "/status",
                     statusBroadcast
             );
 
-            logger.info("✅ Message status broadcasted: {} -> {}", messageId, status);
+           // logger.info("✅ Message status broadcasted: {} -> {}", messageId, status);
 
         } catch (Exception e) {
-            logger.error("❌ Error broadcasting message status: {}", e.getMessage(), e);
+            // logger.error("❌ Error broadcasting message status: {}", e.getMessage(), e);
         }
     }
 
@@ -144,12 +144,12 @@ public class WebSocketMessageController {
 
             // Broadcast typing indicator to chat participants
             messagingTemplate.convertAndSend(
-                    "/topic/chat/" + chatId + "/typing",
+                    "/send/chat/" + chatId + "/typing",
                     typingIndicator
             );
 
         } catch (Exception e) {
-            logger.error("❌ Error handling typing indicator: {}", e.getMessage(), e);
+           // logger.error("❌ Error handling typing indicator: {}", e.getMessage(), e);
         }
     }
 
@@ -162,7 +162,7 @@ public class WebSocketMessageController {
             @DestinationVariable Long chatId,
             @Payload Map<String, Object> data) {
 
-        logger.info("📖 Mark all as read for chat: {}", chatId);
+        //logger.info("📖 Mark all as read for chat: {}", chatId);
 
         try {
             // The actual marking as read is done via HTTP endpoint
@@ -178,14 +178,14 @@ public class WebSocketMessageController {
             readReceipt.put("timestamp", System.currentTimeMillis());
 
             messagingTemplate.convertAndSend(
-                    "/topic/chat/" + chatId + "/read-receipt",
+                    "/send/chat/" + chatId + "/read-receipt",
                     readReceipt
             );
 
-            logger.info("✅ Read receipt broadcast for chat: {}", chatId);
+            //logger.info("✅ Read receipt broadcast for chat: {}", chatId);
 
         } catch (Exception e) {
-            logger.error("❌ Error broadcasting read receipt: {}", e.getMessage(), e);
+            //logger.error("❌ Error broadcasting read receipt: {}", e.getMessage(), e);
         }
     }
 }

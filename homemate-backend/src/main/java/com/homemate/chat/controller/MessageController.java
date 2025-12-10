@@ -16,7 +16,7 @@ import java.util.List;
 @RequestMapping("/api/message")
 @CrossOrigin(origins = "*")
 public class MessageController {
-    private MessageService messageService;
+    private final MessageService messageService;
     public MessageController(MessageService messageService){
         this.messageService=messageService;
     }

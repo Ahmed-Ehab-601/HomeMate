@@ -41,7 +41,7 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
   const typingTimeoutRef = useRef(null);
 
   // Constants
-  const WEBSOCKET_URL = 'http://localhost:8080/ws';
+  const WEBSOCKET_URL = 'http://localhost:8080/HomeMate';
   const API_BASE = 'http://localhost:8080/api';
   const MAX_RECONNECT_ATTEMPTS = 5;
   const RECONNECT_DELAY_BASE = 1000;
@@ -129,7 +129,7 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
     try {
       // 1. Subscribe to chat messages (Only if chatId exists)
       if (chatId) {
-        const chatSub = client.subscribe(`/topic/chat/${chatId}`, (message) => {
+        const chatSub = client.subscribe(`/send/chat/${chatId}`, (message) => {
           try {
             const newMessage = JSON.parse(message.body);
             console.log('📨 WS Received in hook (MAIN):', newMessage);
@@ -158,10 +158,10 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
 
         // DEBUG: Subscribe to fallback topics
         const fallbackTopics = [
-          `/topic/chat/${chatId}/message`,
-          `/topic/messages/${chatId}`,
-          `/topic/message/${chatId}`,
-          `/queue/chat/${chatId}`
+          `/send/chat/${chatId}/message`,
+          `/send/messages/${chatId}`,
+          `/send/message/${chatId}`,
+          `/send/chat/${chatId}`
         ];
 
         fallbackTopics.forEach(topic => {
@@ -180,7 +180,7 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
         });
 
         // 2. Subscribe to message status updates
-        const statusSub = client.subscribe(`/topic/chat/${chatId}/status`, (message) => {
+        const statusSub = client.subscribe(`/send/chat/${chatId}/status`, (message) => {
           try {
             const statusUpdate = JSON.parse(message.body);
             console.log('📊 WS Status update in hook:', statusUpdate);
@@ -195,7 +195,7 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
         subscriptionsRef.current.push(statusSub);
 
         // 3. Subscribe to typing indicators
-        const typingSub = client.subscribe(`/topic/chat/${chatId}/typing`, (message) => {
+        const typingSub = client.subscribe(`/send/chat/${chatId}/typing`, (message) => {
           try {
             const typingData = JSON.parse(message.body);
             console.log('⌨️ Typing indicator:', typingData);
@@ -226,7 +226,7 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
         subscriptionsRef.current.push(typingSub);
 
         // 4. Subscribe to read receipts
-        const readReceiptSub = client.subscribe(`/topic/chat/${chatId}/read-receipt`, (message) => {
+        const readReceiptSub = client.subscribe(`/send/chat/${chatId}/read-receipt`, (message) => {
           try {
             const receipt = JSON.parse(message.body);
             console.log('📖 Read receipt:', receipt);
@@ -255,7 +255,7 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
 
       // 5. Subscribe to personal notifications
       const notificationSub = client.subscribe(
-        `/queue/notifications/${role.toLowerCase()}/${userId}`,
+        `/send/notifications/${role.toLowerCase()}/${userId}`,
         (message) => {
           try {
             const notification = JSON.parse(message.body);
@@ -273,7 +273,7 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
       subscriptionsRef.current.push(notificationSub);
 
       // 6. Subscribe to online status updates (My own status - confirming connection)
-      const statusUpdateSub = client.subscribe(`/topic/status/${userId}`, (message) => {
+      const statusUpdateSub = client.subscribe(`/send/status/${userId}`, (message) => {
         try {
           const status = JSON.parse(message.body);
           console.log('👤 My status update:', status);
@@ -288,7 +288,7 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
       // 7. Subscribe to RECIPIENT status (The other user)
       if (recipientId) {
         console.log(`👀 Watching status for recipient: ${recipientId}`);
-        const recipientStatusSub = client.subscribe(`/topic/status/${recipientId}`, (message) => {
+        const recipientStatusSub = client.subscribe(`/send/status/${recipientId}`, (message) => {
           try {
             const status = JSON.parse(message.body);
             console.log('👤 Recipient status update:', status);
