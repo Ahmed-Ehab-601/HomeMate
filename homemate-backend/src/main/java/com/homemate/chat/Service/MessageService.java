@@ -5,10 +5,8 @@ import com.homemate.chat.dao.ChatDao;
 import com.homemate.chat.dao.MessageDao;
 import com.homemate.chat.dto.MessageDto;
 import com.homemate.security.model.AppUserDetails;
-import com.homemate.taskmanagement.model.Status;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class MessageService {
@@ -19,7 +17,7 @@ public class MessageService {
         this.chatDao=chatDao;
     }
 
-    public void sendMessage(Long chatID, MessageDto messageDto, AppUserDetails userDetails)throws Exception {
+    public MessageDto sendMessage(Long chatID, MessageDto messageDto, AppUserDetails userDetails)throws Exception {
         try {
             if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
                 throw new Exception("unauthorized user");
@@ -29,7 +27,8 @@ public class MessageService {
                 messageDto.setMessageStatus(MessageStatus.received);
             } else if (!isUserSender && messageDao.getUserStatus(chatID)) {
                 messageDto.setMessageStatus(MessageStatus.received);
-            }            messageDao.save(chatID, messageDto);
+            } MessageDto messageDto1=messageDao.save(chatID, messageDto);
+                     return messageDto1;
         } catch (Exception e) {
             throw new Exception(e);
         }

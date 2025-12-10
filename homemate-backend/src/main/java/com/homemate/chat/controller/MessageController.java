@@ -21,11 +21,10 @@ public class MessageController {
     }
     @PostMapping("/userSendMessage/{chatID}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> userMessage(@PathVariable Long chatID, @RequestBody MessageDto messageDto,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception{
+    public ResponseEntity<MessageDto> userMessage(@PathVariable Long chatID, @RequestBody MessageDto messageDto,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception{
         try {
-            messageService.sendMessage(chatID,messageDto,userDetails);
-            return ResponseEntity.status(HttpStatus.OK).body("Message Sent Successfully");
-            //WEBSOCKET
+         MessageDto messageDto1=  messageService.sendMessage(chatID,messageDto,userDetails);
+           return   ResponseEntity.status(HttpStatus.OK).body(messageDto1);
         }
         catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -33,11 +32,11 @@ public class MessageController {
     }
     @PostMapping("/taskerSendMessage/{chatID}")
     @PreAuthorize("hasRole('TASKER')")
-    public  ResponseEntity<String> taskerMessage(@PathVariable Long chatID, @RequestBody MessageDto messageDto,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception{
+    public  ResponseEntity<MessageDto> taskerMessage(@PathVariable Long chatID, @RequestBody MessageDto messageDto,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception{
         try {
-            messageService.sendMessage(chatID,messageDto,userDetails);
+           MessageDto messageDto1= messageService.sendMessage(chatID,messageDto,userDetails);
             //call websocket (broadcast)
-            return ResponseEntity.status(HttpStatus.OK).body("Message Sent Successfully");
+            return   ResponseEntity.status(HttpStatus.OK).body(messageDto1);
         }
         catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

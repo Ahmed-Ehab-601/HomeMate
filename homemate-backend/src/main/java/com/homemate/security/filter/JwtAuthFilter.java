@@ -36,7 +36,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/users/taskers",
             "/api/tasker-profile/reviews",
             "/api/auth/otp/verify",
-            "/api/auth/otp/send","/HomeMate"
+            "/api/auth/otp/send","/HomeMate",
+            // ⭐ ADD WEBSOCKET ENDPOINTS
+            "/ws",
+            "/ws/**"
     );
 
     private final JwtService jwtService;
@@ -52,6 +55,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String path = request.getServletPath();
+
+        // ⭐ SKIP JWT FILTER FOR WEBSOCKET CONNECTIONS
+        // WebSocket authentication happens in STOMP headers, not HTTP headers
+        if (path.startsWith("/ws")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String authHeader = request.getHeader("Authorization");
 

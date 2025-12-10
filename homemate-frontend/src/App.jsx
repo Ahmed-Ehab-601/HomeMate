@@ -28,6 +28,8 @@ import TaskDetailsPage from "./pages/TaskDetailsPage";
 import EnterEmailPage from "./pages/EnterEmailPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
 import SignupMethodChoicePage from "./pages/SignupMethodChoicePage";
+import GlobalPresence from "./components/GlobalPresence";
+
 // Protected route component - redirects to signin on 401
 function ProtectedRoute({ children, requiredRole }) {
   const { isAuthenticated, isLoading, getUserRole } = useAuth();
@@ -148,6 +150,7 @@ function AppWrapper() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <GlobalPresence />
         <App />
       </AuthProvider>
     </BrowserRouter>
