@@ -3,35 +3,29 @@ package com.homemate.taskmanagementtests;
 import com.homemate.TaskerProfile.DTO.ReviewDTO;
 import com.homemate.TaskerProfile.DTO.ReviewImageDTO;
 import com.homemate.TaskerProfile.Dao.ReviewDao;
-import com.homemate.reviews.service.ReviewsService;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.TaskDto;
-import com.homemate.taskmanagement.dto.TaskRequestDto;
 import com.homemate.taskmanagement.exceptions.BadViewExecption;
 import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
 import com.homemate.taskmanagement.mappers.TaskMapper;
-import com.homemate.taskmanagement.model.Status;
-import com.homemate.taskmanagement.model.TaskEntity;
 import com.homemate.taskmanagement.service.TaskManagementService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
-public class TaskManagementSeviceViewTaskTest {
+public class TaskManagementServiceViewTaskTest {
     @Mock
     private TaskMapper taskMapper;
 
@@ -84,6 +78,24 @@ public class TaskManagementSeviceViewTaskTest {
         Optional<ReviewDTO> result = taskManagementService.getReviewByTaskId(taskId, viewerID);
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testGetReviewByTaskId_NotTheOwner() {
+        long taskId = 10L;
+        long viewerID = 100L;
+
+        // Mock task exists with different user and tasker IDs
+        when(taskDao.getUserID(taskId)).thenReturn(Optional.of(200L));  // Different user
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(300L)); // Different tasker
+
+        // Assert that BadViewException is thrown
+        assertThrows(BadViewExecption.class, () -> {
+            taskManagementService.getReviewByTaskId(taskId, viewerID);
+        });
+
+        // Verify that getReviewByTaskId was never called since exception is thrown first
+        verify(taskDao, never()).getReviewByTaskId(taskId);
     }
 
 
@@ -166,6 +178,36 @@ public class TaskManagementSeviceViewTaskTest {
         });
 
         assertEquals("You are neither the user nor the tasker for this task", exception.getMessage());
+    }
+
+    @Test
+    void testViewerIDEquals_ReturnsTrue_WhenIdsMatch() {
+        long viewerID = 100L;
+        Long id = 100L;
+
+        boolean result = taskManagementService.viewerIDEquals(id, viewerID);
+
+        assertTrue(result);
+    }
+
+    @Test
+    void testViewerIDEquals_ReturnsFalse_WhenIdsDoNotMatch() {
+        long viewerID = 100L;
+        Long id = 200L;
+
+        boolean result = taskManagementService.viewerIDEquals(id, viewerID);
+
+        assertFalse(result);
+    }
+
+    @Test
+    void testViewerIDEquals_ReturnsFalse_WhenIdIsNull() {
+        long viewerID = 100L;
+        Long id = null;
+
+        boolean result = taskManagementService.viewerIDEquals(id, viewerID);
+
+        assertFalse(result);
     }
 
 

@@ -1,6 +1,5 @@
 package com.homemate.taskmanagementtests;
 
-import com.homemate.TaskerProfile.DTO.ReviewDTO;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.StatusDto;
 import com.homemate.taskmanagement.dto.TaskCardDto;
@@ -27,12 +26,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("task")
-public class TaskDaoImpIntegrationTest {
+public class TaskDaoImpIntegrationInsertAndGetListTest {
 
     private final TaskDaoImpl underTest;
 
     @Autowired
-    public TaskDaoImpIntegrationTest(TaskDaoImpl underTest) {
+    public TaskDaoImpIntegrationInsertAndGetListTest(TaskDaoImpl underTest) {
         this.underTest = underTest;
     }
 

@@ -100,6 +100,14 @@ INSERT INTO Task (startDate, workedHours, userID, taskerID, serviceID, endDate, 
 ('2024-11-23 15:00:00', 2, 1, 1, 3, NULL, 1, 100.00, 'InProgress', '2024-11-23 15:00:00', 1, 'Light switch installation'),
 ('2024-11-17 13:00:00', 5, 1, 1, 2, '2024-11-17 18:00:00', 1, 250.00, 'Done', '2024-11-17 13:00:00', 1, 'Kitchen faucet replacement');
 
+
+ INSERT INTO Reviews (text, rate, time, taskID) VALUES
+ ('Excellent service, very thorough!', 5.0, '2024-11-01 14:00:00', 1),
+ ('Quick and professional work', 4.5, '2024-11-03 14:00:00', 2),
+ ('Great job, very knowledgeable', 4.8, '2024-11-05 20:00:00', 3),
+ ('Good work, on time', 4.3, '2024-11-07 15:00:00', 4),
+ ('Amazing painting skills!', 5.0, '2024-11-10 18:00:00', 5),
+ ('Very professional and efficient', 4.9, '2024-11-08 20:00:00', 6);
 -- ======================================================
 -- SUMMARY
 -- ======================================================

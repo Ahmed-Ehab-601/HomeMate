@@ -239,7 +239,7 @@ public class TaskManagementService {
         }
 
         if (!viewerIDEquals(userID.get(), viewerID) &&
-                (!taskerID.isPresent() || !viewerIDEquals(taskerID.get(), viewerID))) {
+                (taskerID.isEmpty() || !viewerIDEquals(taskerID.get(), viewerID))) {
             throw new BadViewExecption("You are neither the user nor the tasker for this task");
         }
 
@@ -253,7 +253,7 @@ public class TaskManagementService {
         return Optional.of(reviewDTO);
     }
 
-    private boolean viewerIDEquals(Long id, long viewerID) {
+    public boolean viewerIDEquals(Long id, long viewerID) {
         return id != null && id.equals(viewerID);
     }
 

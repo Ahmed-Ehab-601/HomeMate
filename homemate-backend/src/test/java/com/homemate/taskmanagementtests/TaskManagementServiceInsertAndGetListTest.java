@@ -1,7 +1,5 @@
 package com.homemate.taskmanagementtests;
 
-import com.homemate.TaskerProfile.DTO.ReviewDTO;
-import com.homemate.TaskerProfile.DTO.ReviewImageDTO;
 import com.homemate.TaskerProfile.Dao.ReviewDao;
 import com.homemate.reviews.service.ReviewsService;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
@@ -24,13 +22,12 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class TaskManagementServiceTest {
+class TaskManagementServiceInsertAndGetListTest {
 
     @Mock
     private TaskMapper taskMapper;

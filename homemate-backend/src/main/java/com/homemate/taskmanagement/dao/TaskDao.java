@@ -57,6 +57,6 @@ public interface TaskDao {
     Double getTaskWorkedHours(Long taskID);
     Double getTaskerHourRate(Long taskerID);
     boolean updateTaskerTotalEarning(Long taskerID,double bill);
-     Optional<ReviewDTO> getReviewByTaskId(long taskId);
+     Optional<ReviewDTO> getReviewByTaskId(Long taskId);
 
 }
