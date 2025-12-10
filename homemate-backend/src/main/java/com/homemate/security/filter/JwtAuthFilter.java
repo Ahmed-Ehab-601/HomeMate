@@ -3,7 +3,6 @@ package com.homemate.security.filter;
 // Change import from io.jsonwebtoken.io.IOException to java.io.IOException
 import java.io.IOException;
 
-import com.homemate.security.model.AppUserDetails;
 import com.homemate.security.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,7 +1,5 @@
 package com.homemate.security.model;
 
-import jdk.jshell.Snippet;
-import lombok.Builder;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

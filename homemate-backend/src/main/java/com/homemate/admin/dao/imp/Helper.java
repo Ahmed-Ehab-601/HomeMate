@@ -5,7 +5,6 @@ import com.homemate.admin.domain.filters.Filter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 public class Helper {
 
