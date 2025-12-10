@@ -73,11 +73,11 @@ public class LoginService {
                 );
 
                 return new LoginResponseDto(
-                        role,
-                        user.getUsername(),
-                        user.getFirstName(),
-                        user.getLastName(),
-                        token
+                    token,
+                    role,
+                    user.getUsername(),
+                    user.getFirstName(),
+                    user.getLastName()
                 );
             }
             return null;
@@ -104,11 +104,11 @@ public class LoginService {
                     );
                     chatService.setTaskerOnline(tasker.getTaskerID());
                     return new LoginResponseDto(
+                        token,
                         role,
                         tasker.getUsername(),
                         tasker.getFirstName(),
-                        tasker.getLastName(),
-                        token
+                        tasker.getLastName()
                     );
                 }
             return null;
@@ -137,13 +137,13 @@ public class LoginService {
                         role
             );
             chatService.setUserOnline(user.getUserID()) ;
-            return new LoginResponseDto(
+                return new LoginResponseDto(
+                    token,
                     role,
                     user.getUsername(),
                     user.getFirstName(),
-                    user.getLastName(),
-                    token
-            );
+                    user.getLastName()
+                );
 
         } catch (Exception e) {}
 
@@ -164,11 +164,11 @@ public class LoginService {
                 );
             chatService.setTaskerOnline(tasker.getTaskerID());
                 return new LoginResponseDto(
+                    token,
                     role,
                     tasker.getUsername(),
                     tasker.getFirstName(),
-                    tasker.getLastName(),
-                    token
+                    tasker.getLastName()
                 );
 
         } catch (Exception e) {}

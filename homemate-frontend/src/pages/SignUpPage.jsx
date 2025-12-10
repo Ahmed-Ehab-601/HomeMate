@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { GoogleLogin as GoogleOAuthLogin } from "@react-oauth/google";
 import { signupUser, signupTasker } from "../api/signupApi";
 import { useAuth } from "../contexts/AuthContext";
@@ -9,6 +9,7 @@ import ServiceCard from "../components/ServiceCard";
 
 function SignUpPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signup } = useAuth();
   const [userType, setUserType] = useState(null); // null, "user", or "tasker"
   const [error, setError] = useState("");
@@ -17,6 +18,40 @@ function SignUpPage() {
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   const [userEmailLocked, setUserEmailLocked] = useState(false);
   const [taskerEmailLocked, setTaskerEmailLocked] = useState(false);
+  const [verifyToken, setVerifyToken] = useState(null); // Store verification token
+
+  // Load persisted verify token on mount (e.g., after refresh)
+  useEffect(() => {
+    const storedToken = localStorage.getItem("verify_token");
+    if (storedToken) {
+      console.log("Loaded verify_token from localStorage:", storedToken);
+      setVerifyToken(storedToken);
+    } else {
+      console.warn("No verify_token found in localStorage");
+    }
+    const storedEmail = localStorage.getItem("verified_email");
+    const storedUserType = localStorage.getItem("verified_user_type");
+
+    if (storedUserType && !userType) {
+      setUserType(storedUserType);
+    }
+
+    if (storedEmail && storedUserType) {
+      if (storedUserType === "user") {
+        setUserForm((prev) => ({
+          ...prev,
+          email: storedEmail,
+        }));
+        setUserEmailLocked(true);
+      } else if (storedUserType === "tasker") {
+        setTaskerForm((prev) => ({
+          ...prev,
+          email: storedEmail,
+        }));
+        setTaskerEmailLocked(true);
+      }
+    }
+  }, []);
 
   // User form fields
   const [userForm, setUserForm] = useState({
@@ -61,6 +96,50 @@ function SignUpPage() {
     }
   };
 
+  // Handle location state (verified email or Google signup)
+  useEffect(() => {
+    if (location.state) {
+      const { userType: stateUserType, verifiedEmail, verifyToken: stateVerifyToken, googleData } = location.state;
+      
+      // Set user type if provided
+      if (stateUserType) {
+        setUserType(stateUserType);
+      }
+
+      // Handle verified email (from OTP or Google)
+      if (verifiedEmail && stateVerifyToken) {
+        setVerifyToken(stateVerifyToken);
+        localStorage.setItem("verify_token", stateVerifyToken);
+        if (verifiedEmail) {
+          localStorage.setItem("verified_email", verifiedEmail);
+        }
+        if (stateUserType) {
+          localStorage.setItem("verified_user_type", stateUserType);
+        }
+        
+        if (stateUserType === "user") {
+          setUserForm(prev => ({
+            ...prev,
+            email: verifiedEmail,
+            firstName: googleData?.firstName || prev.firstName,
+            lastName: googleData?.lastName || prev.lastName,
+            username: googleData?.username || prev.username,
+          }));
+          setUserEmailLocked(true);
+        } else if (stateUserType === "tasker") {
+          setTaskerForm(prev => ({
+            ...prev,
+            email: verifiedEmail,
+            firstName: googleData?.firstName || prev.firstName,
+            lastName: googleData?.lastName || prev.lastName,
+            username: googleData?.username || prev.username,
+          }));
+          setTaskerEmailLocked(true);
+        }
+      }
+    }
+  }, [location.state]);
+
   // Load services when tasker is selected
   useEffect(() => {
     if (userType === "tasker") {
@@ -71,8 +150,10 @@ function SignUpPage() {
   }, [userType]);
 
   const handleUserTypeSelect = (type) => {
-    setUserType(type);
-    setError("");
+    // Navigate to signup method choice page
+    navigate("/signup/method", {
+      state: { userType: type },
+    });
   };
 
   const handleUserFormChange = (e) => {
@@ -105,6 +186,13 @@ function SignUpPage() {
       return;
     }
 
+    const tokenToUse = verifyToken || localStorage.getItem("verify_token");
+    if (!tokenToUse) {
+      setError("Please verify your email first.");
+      return;
+    }
+    console.log("User signup - Token to use:", tokenToUse.substring(0, 20) + "...");
+
     setIsLoading(true);
 
     try {
@@ -122,6 +210,7 @@ function SignUpPage() {
         birthDate: birthDateTimestamp,
         gender: userForm.gender || null,
         phone: userForm.phone,
+        verifyToken: tokenToUse, // Always include verification token
       });
 
       // Save with ROLE_USER
@@ -143,6 +232,13 @@ function SignUpPage() {
       return;
     }
 
+    const tokenToUse = verifyToken || localStorage.getItem("verify_token");
+    if (!tokenToUse) {
+      setError("Please verify your email first.");
+      return;
+    }
+    console.log("Tasker signup - Token to use:", tokenToUse.substring(0, 20) + "...");
+
     setIsLoading(true);
 
     try {
@@ -159,6 +255,7 @@ function SignUpPage() {
         hourRate: taskerForm.hourRate ? Number(taskerForm.hourRate) : null,
         city: taskerForm.city,
         profileImage: taskerForm.profileImage,
+        verifyToken: tokenToUse, // Always include verification token
       });
 
       // Save with ROLE_TASKER
@@ -308,20 +405,6 @@ function SignUpPage() {
 
           {userType === "user" ? (
             <>
-              <div style={{ marginBottom: "16px" }}>
-                <p style={{ marginBottom: "8px", fontWeight: 500 }}>Sign up with Google</p>
-                <div className="signin-google">
-                  <GoogleOAuthLogin
-                    onSuccess={handleGoogleUserSignup}
-                    onError={handleGoogleSignupError}
-                    theme="outline"
-                    shape="pill"
-                    size="large"
-                    width="wide"
-                  />
-                </div>
-              </div>
-
               <form onSubmit={handleUserSignup} className="signin-form">
               <div className="form-field">
                 <label htmlFor="username" className="form-label">
@@ -375,7 +458,7 @@ function SignUpPage() {
 
               <div className="form-field">
                 <label htmlFor="email" className="form-label">
-                  Email *
+                  Email * {userEmailLocked && <span style={{ color: "#22c55e", fontSize: "0.875rem" }}>✓ Verified</span>}
                 </label>
                 <input
                   id="email"
@@ -387,6 +470,7 @@ function SignUpPage() {
                   required
                   disabled={isLoading || userEmailLocked}
                   readOnly={userEmailLocked}
+                  style={userEmailLocked ? { backgroundColor: "#f0fdf4", cursor: "not-allowed" } : {}}
                 />
               </div>
 
@@ -485,20 +569,6 @@ function SignUpPage() {
             </>
           ) : (
             <>
-              <div style={{ marginBottom: "16px" }}>
-                <p style={{ marginBottom: "8px", fontWeight: 500 }}>Sign up with Google</p>
-                <div className="signin-google">
-                  <GoogleOAuthLogin
-                    onSuccess={handleGoogleTaskerSignup}
-                    onError={handleGoogleSignupError}
-                    theme="outline"
-                    shape="pill"
-                    size="large"
-                    width="wide"
-                  />
-                </div>
-              </div>
-
               <form onSubmit={handleTaskerSignup} className="signin-form">
               <div className="form-field">
                 <label htmlFor="tasker-username" className="form-label">
@@ -552,7 +622,7 @@ function SignUpPage() {
 
               <div className="form-field">
                 <label htmlFor="tasker-email" className="form-label">
-                  Email *
+                  Email * {taskerEmailLocked && <span style={{ color: "#22c55e", fontSize: "0.875rem" }}>✓ Verified</span>}
                 </label>
                 <input
                   id="tasker-email"
@@ -564,6 +634,7 @@ function SignUpPage() {
                   required
                   disabled={isLoading || taskerEmailLocked}
                   readOnly={taskerEmailLocked}
+                  style={taskerEmailLocked ? { backgroundColor: "#f0fdf4", cursor: "not-allowed" } : {}}
                 />
               </div>
 

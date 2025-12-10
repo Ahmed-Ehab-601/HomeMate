@@ -1,7 +1,5 @@
-package com.homemate.UserProfile.DAO;
+package com.homemate.userprofile;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,8 +14,8 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.TestPropertySource;
 
+import com.homemate.UserProfile.DAO.AddressDao;
 import com.homemate.UserProfile.DTO.AddressDTO;
 import com.homemate.UserProfile.Mappers.AddressDTORowMapper;
 

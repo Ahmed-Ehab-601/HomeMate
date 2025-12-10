@@ -16,7 +16,6 @@ import com.homemate.UserProfile.Models.User;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.sql.Timestamp;
 
 @Repository
 public class UserDao {

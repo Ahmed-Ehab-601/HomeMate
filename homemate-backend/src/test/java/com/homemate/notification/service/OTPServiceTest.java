@@ -4,6 +4,8 @@ import com.homemate.notification.domains.dto.OtpVerificationResult;
 import com.homemate.notification.domains.dto.OtpVerifyRequest;
 import com.homemate.notification.service.imp.OTPServiceImp;
 import com.homemate.notification.service.utils.EmailTemplate;
+import com.homemate.security.service.JwtService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +25,10 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OTPServiceTest {
+
+    @Mock
+    private JwtService jwtService;
+
     @Mock
     private EmailTemplate emailTemplate;
 
@@ -40,7 +46,12 @@ class OTPServiceTest {
     @BeforeEach
     void setUp() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        underTest =new OTPServiceImp(emailTemplate, javaMailSender, redisTemplate);
+        underTest =new OTPServiceImp(
+            jwtService, 
+            emailTemplate, 
+            javaMailSender, 
+            redisTemplate
+        );
     }
 
     @Test

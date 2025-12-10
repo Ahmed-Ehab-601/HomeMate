@@ -43,11 +43,11 @@ class LoginControllerTest {
         loginRequestDto.setPassword("password123");
 
         loginResponseDto = new LoginResponseDto(
+            "jwt-token-123",
             "ROLE_USER",
             "testuser",
             "Test",
-            "User",
-            "jwt-token-123"
+            "User"
         );
 
         googleTokenDto = new GoogleTokenDto();
@@ -99,11 +99,11 @@ class LoginControllerTest {
     @Test
     void loginShouldReturnOkWithCorrectRole() {
         LoginResponseDto adminResponse = new LoginResponseDto(
+            "admin-token-123",
             "ROLE_ADMIN",
             "admin",
             "Admin",
-            "User",
-            "admin-token-123"
+            "User"
         );
         when(loginService.loginWithEmailPassword(loginRequestDto)).thenReturn(adminResponse);
 

@@ -16,8 +16,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.homemate.security.filter.JwtAuthFilter;
 
-import lombok.RequiredArgsConstructor;
-
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {

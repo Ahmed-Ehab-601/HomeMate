@@ -1,4 +1,4 @@
-package com.homemate.Authentication.dto;
+package com.homemate.UserProfile.DTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,10 +11,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class LoginResponseDto {
-    private String token;
-    private String role;
+public class GoogleSignupResponseDTO {
+    private String email;
+    private String firstName;
+    private String lastName;
     private String username;
-    private String firstname;
-    private String lastname;
+    private String verifyToken;
 }
