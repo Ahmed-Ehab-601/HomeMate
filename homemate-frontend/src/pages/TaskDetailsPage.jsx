@@ -3,13 +3,13 @@ import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
   getTaskDetails,
-  getTaskReview,
   rescheduleTask,
   startTask,
   suspendTask,
   completeTask,
 } from "../api/taskManagementApi";
 import { acceptTask, rejectTask } from "../api/taskActionsApi";
+import { getTaskReview } from "../api/taskManagementApi";
 import { getTaskerById } from "../api/taskerProfileApi";
 import TaskerCard from "../components/TaskerCard";
 import Modal from "../components/Modal";
@@ -730,9 +730,8 @@ function TaskDetailsPage() {
                               imgSrc = normalizeImage(img.imgFile);
                             } else {
                               // Assume it's base64 string
-                              imgSrc = `data:image/${
-                                img.format || "jpeg"
-                              };base64,${img.imgFile}`;
+                              imgSrc = `data:image/${img.format || "jpeg"
+                                };base64,${img.imgFile}`;
                             }
                           }
 
