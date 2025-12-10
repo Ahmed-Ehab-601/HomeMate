@@ -22,7 +22,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class TaskManagementServiceRescheduleTest {
@@ -122,6 +123,62 @@ public class TaskManagementServiceRescheduleTest {
         );
     }
 
+    @Test
+    void testRescheduleSendsEmailSuccessfully() {
+        // Arrange
+        long taskID = 10L;
+        long requesterID = 5L;
+        LocalDateTime futureDate = LocalDateTime.now().plusDays(2);
+
+        RescheduleRequestDto requestDto = new RescheduleRequestDto();
+        requestDto.setNewStartDate(futureDate);
+
+        TaskDto taskDto = new TaskDto();
+        taskDto.setUserMail("user@example.com");
+        taskDto.setTaskerMail("tasker@example.com");
+
+        when(taskDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
+        when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
+        when(taskDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
+        when(taskDao.updateTaskStartDate(taskID, futureDate)).thenReturn(true);
+        when(taskDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
+
+        // Act
+        taskManagementService.rescheduleTask(taskID, requestDto, requesterID);
+
+        // Assert: email sent
+        verify(emailServiceImp).sendUserEmail(any());
+    }
+
+
+    @Test
+    void testRescheduleEmailFails() {
+        // Arrange
+        long taskID = 10L;
+        long requesterID = 5L;
+        LocalDateTime futureDate = LocalDateTime.now().plusDays(2);
+
+        RescheduleRequestDto requestDto = new RescheduleRequestDto();
+        requestDto.setNewStartDate(futureDate);
+
+        TaskDto taskDto = new TaskDto();
+        taskDto.setUserMail("user@example.com");
+        taskDto.setTaskerMail("tasker@example.com");
+
+        when(taskDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
+        when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
+        when(taskDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
+        when(taskDao.updateTaskStartDate(taskID, futureDate)).thenReturn(true);
+        when(taskDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
+
+        // Simulate email failure
+        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendUserEmail(any());
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () ->
+                taskManagementService.rescheduleTask(taskID, requestDto, requesterID)
+        );
+    }
 
 
 }

@@ -182,6 +182,7 @@ public class TaskManagementService {
 
 
     }
+
     @Transactional
     public TaskDto updateTaskStatus(Long taskID,Long taskerID,Status newStatus){
         Optional<Status> status = taskDao.getStatus(taskID);
@@ -216,7 +217,7 @@ public class TaskManagementService {
 
         Optional<Long> taskerID = taskDao.getTaskerID(taskID);
         Optional<Long> userID = taskDao.getUserID(taskID);
-        TaskDto taskDto = taskDao.getTaskDetails(taskID).get();
+
 
         TaskDto taskDto = taskDao.getTaskDetails(taskID)
                 .orElseThrow(() -> new TaskNotFoundException("Task with ID " + taskID + " not found"));

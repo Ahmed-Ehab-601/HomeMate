@@ -154,4 +154,54 @@ class TaskManagementServiceAcceptRejectTest {
         verify(taskDao, never()).updateStatus(anyLong(), any(Status.class));
     }
 
+
+    @Test
+    void testAcceptOrRejectSendsEmailSuccessfully() {
+        // Arrange
+        Long taskId = 1L;
+        Long taskerId = 10L;
+        Status newStatus = Status.Accepted;
+
+        TaskDto taskDto = new TaskDto();
+        taskDto.setUserMail("user@example.com");
+
+        when(taskDao.getStatus(taskId)).thenReturn(Optional.of(Status.InReview));
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(taskerId));
+        when(taskDao.updateStatus(taskId, newStatus)).thenReturn(true);
+        when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
+
+        // Act & Assert
+        assertThatCode(() -> taskManagementService.acceptOrReject(taskId, taskerId, newStatus))
+                .doesNotThrowAnyException();
+
+        // Verify email was sent
+        verify(emailServiceImp).sendUserEmail(any());
+    }
+
+
+    @Test
+    void testAcceptOrRejectEmailFails() {
+        // Arrange
+        Long taskId = 1L;
+        Long taskerId = 10L;
+        Status newStatus = Status.Accepted;
+
+        TaskDto taskDto = new TaskDto();
+        taskDto.setUserMail("user@example.com");
+
+        when(taskDao.getStatus(taskId)).thenReturn(Optional.of(Status.InReview));
+        when(taskDao.getTaskerID(taskId)).thenReturn(Optional.of(taskerId));
+        when(taskDao.updateStatus(taskId, newStatus)).thenReturn(true);
+        when(taskDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
+
+        // Simulate email sending failure
+        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendUserEmail(any());
+
+        // Act & Assert
+        assertThatThrownBy(() -> taskManagementService.acceptOrReject(taskId, taskerId, newStatus))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Email failed");
+    }
+
+
 }
