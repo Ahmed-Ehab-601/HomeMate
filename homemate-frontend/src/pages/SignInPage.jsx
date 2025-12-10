@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { login } from "../api/authApi";
 import { useAuth } from "../contexts/AuthContext";
 import GoogleLogin from "../components/GoogleLogin";
+import ForgotPasswordModal from "../components/ForgotPasswordModal";
 
 function SignInPage() {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ function SignInPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,6 +63,12 @@ function SignInPage() {
     setError("Failed to sign in with Google. Please try again.");
   };
 
+  const handleForgotPasswordSuccess = () => {
+    setSuccessMessage("Password reset successfully! You can now sign in with your new password.");
+    setError("");
+    setTimeout(() => setSuccessMessage(""), 5000);
+  };
+
   return (
     <main className="page page--signin">
       <div className="signin-container">
@@ -72,6 +81,12 @@ function SignInPage() {
           {error && (
             <div className="alert alert-error" role="alert">
               {error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="alert alert-success" role="alert">
+              {successMessage}
             </div>
           )}
 
@@ -147,6 +162,25 @@ function SignInPage() {
               </div>
             </div>
 
+            <div style={{ textAlign: "right", marginBottom: "16px" }}>
+              <button
+                type="button"
+                onClick={() => setIsForgotPasswordOpen(true)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--primary)",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  textDecoration: "underline",
+                  padding: 0,
+                }}
+                disabled={isLoading || isGoogleLoading}
+              >
+                Forgot password?
+              </button>
+            </div>
+
             <button
               type="submit"
               className="btn btn-primary signin-submit"
@@ -174,6 +208,12 @@ function SignInPage() {
           </div>
         </div>
       </div>
+
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
+        onSuccess={handleForgotPasswordSuccess}
+      />
     </main>
   );
 }

@@ -5,6 +5,7 @@ import com.homemate.Authentication.dto.GoogleTokenDto;
 import com.homemate.Authentication.dto.GoogleUserDto;
 import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
+import com.homemate.Authentication.dto.PasswordResetDto;
 import com.homemate.Authentication.service.GoogleTokenVerifierService;
 import com.homemate.Authentication.service.LoginService;
 import org.junit.jupiter.api.BeforeEach;
@@ -187,6 +188,104 @@ class LoginControllerTest {
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         verify(googleTokenVerifierService, times(1)).verify(googleTokenDto.getIdToken());
         verify(loginService, times(1)).login(googleUserDto.getEmail());
+    }
+
+    @Test
+    void resetPasswordShouldReturnOkWithValidRequest() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("valid-token");
+        passwordResetDto.setNewPassword("NewPass123!");
+
+        when(loginService.resetPassword(passwordResetDto)).thenReturn(null);
+
+        ResponseEntity<String> response = loginController.resetPassword(passwordResetDto);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Password reset successfully", response.getBody());
+        verify(loginService, times(1)).resetPassword(passwordResetDto);
+    }
+
+    @Test
+    void resetPasswordShouldReturnBadRequestWithNullDto() {
+        ResponseEntity<String> response = loginController.resetPassword(null);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Invalid request: token and password are required", response.getBody());
+        verify(loginService, never()).resetPassword(any());
+    }
+
+    @Test
+    void resetPasswordShouldReturnBadRequestWithNullToken() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken(null);
+        passwordResetDto.setNewPassword("NewPass123!");
+
+        ResponseEntity<String> response = loginController.resetPassword(passwordResetDto);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Invalid request: token and password are required", response.getBody());
+        verify(loginService, never()).resetPassword(any());
+    }
+
+    @Test
+    void resetPasswordShouldReturnBadRequestWithNullPassword() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("valid-token");
+        passwordResetDto.setNewPassword(null);
+
+        ResponseEntity<String> response = loginController.resetPassword(passwordResetDto);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Invalid request: token and password are required", response.getBody());
+        verify(loginService, never()).resetPassword(any());
+    }
+
+    @Test
+    void resetPasswordShouldReturnBadRequestWithInvalidToken() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("invalid-token");
+        passwordResetDto.setNewPassword("NewPass123!");
+
+        when(loginService.resetPassword(passwordResetDto))
+            .thenReturn("Invalid or expired verification token");
+
+        ResponseEntity<String> response = loginController.resetPassword(passwordResetDto);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Invalid or expired verification token", response.getBody());
+        verify(loginService, times(1)).resetPassword(passwordResetDto);
+    }
+
+    @Test
+    void resetPasswordShouldReturnBadRequestWithWeakPassword() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("valid-token");
+        passwordResetDto.setNewPassword("weak");
+
+        when(loginService.resetPassword(passwordResetDto))
+            .thenReturn("password must be between 8 and 25 characters");
+
+        ResponseEntity<String> response = loginController.resetPassword(passwordResetDto);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("password must be between 8 and 25 characters", response.getBody());
+        verify(loginService, times(1)).resetPassword(passwordResetDto);
+    }
+
+    @Test
+    void resetPasswordShouldReturnBadRequestWhenUserNotFound() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("valid-token");
+        passwordResetDto.setNewPassword("NewPass123!");
+
+        when(loginService.resetPassword(passwordResetDto))
+            .thenReturn("No user or tasker found with this email");
+
+        ResponseEntity<String> response = loginController.resetPassword(passwordResetDto);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("No user or tasker found with this email", response.getBody());
+        verify(loginService, times(1)).resetPassword(passwordResetDto);
     }
 }
 

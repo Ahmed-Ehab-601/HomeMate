@@ -189,5 +189,11 @@ public class UserDao {
             id
         );
     }
+
+    private static final String UPDATE_PASSWORD_SQL = "UPDATE Users SET password = ? WHERE email = ?";
+
+    public void updatePassword(String email, String newPassword) {
+        jdbcTemplate.update(UPDATE_PASSWORD_SQL, newPassword, email);
+    }
 }
 

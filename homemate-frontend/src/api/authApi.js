@@ -68,3 +68,65 @@ export const setTaskerOffline = async (taskerId) => {
   // Backend returns plain text "changed", not JSON
   return response.text();
 };
+
+// Forgot Password API
+export async function sendOtpForPasswordReset(email) {
+  const response = await fetch(`${baseUrl}/api/auth/otp/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      recipientEmail: email,
+      emailType: "FORGOT_PASSWORD",
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Failed to send OTP" }));
+    throw new Error(error.message || "Failed to send OTP");
+  }
+
+  return response.json();
+}
+
+export async function verifyOtpForPasswordReset(email, code) {
+  const response = await fetch(`${baseUrl}/api/auth/otp/verify`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      recipientEmail: email,
+      code: code,
+      emailType: "FORGOT_PASSWORD",
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Invalid OTP" }));
+    throw new Error(error.message || "Invalid OTP");
+  }
+
+  return response.json();
+}
+
+export async function resetPassword(verifyToken, newPassword) {
+  const response = await fetch(`${baseUrl}/api/auth/reset-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      verifyToken: verifyToken,
+      newPassword: newPassword,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to reset password");
+  }
+
+  return response.text();
+}

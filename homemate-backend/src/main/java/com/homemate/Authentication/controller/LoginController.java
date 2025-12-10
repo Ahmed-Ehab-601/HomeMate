@@ -4,6 +4,7 @@ import com.homemate.Authentication.dto.GoogleTokenDto;
 import com.homemate.Authentication.dto.GoogleUserDto;
 import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
+import com.homemate.Authentication.dto.PasswordResetDto;
 import com.homemate.Authentication.service.GoogleTokenVerifierService;
 import com.homemate.Authentication.service.LoginService;
 import org.springframework.http.HttpStatus;
@@ -53,6 +54,22 @@ public class LoginController {
         if (dto == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody PasswordResetDto passwordResetDto) {
+        if (passwordResetDto == null || passwordResetDto.getVerifyToken() == null || 
+            passwordResetDto.getNewPassword() == null) {
+            return ResponseEntity.badRequest().body("Invalid request: token and password are required");
+        }
+
+        String result = loginService.resetPassword(passwordResetDto);
+
+        if (result == null) {
+            return ResponseEntity.ok("Password reset successfully");
+        }
+
+        return ResponseEntity.badRequest().body(result);
     }
 
 }

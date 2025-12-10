@@ -6,8 +6,8 @@ import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
+import com.homemate.Authentication.dto.PasswordResetDto;
 import com.homemate.chat.Service.ChatService;
-import com.homemate.chat.Service.MessageService;
 import com.homemate.security.service.JwtService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
@@ -173,5 +173,47 @@ public class LoginService {
 
         } catch (Exception e) {}
         return null;
+    }
+
+    public String resetPassword(PasswordResetDto passwordResetDto) {
+        // Validate and extract email from verify token
+        String email = jwtService.validateVerifyToken(passwordResetDto.getVerifyToken());
+        if (email == null) {
+            return "Invalid or expired verification token";
+        }
+
+        // Validate the new password
+        String passwordError = validateSignup.validatePassword(passwordResetDto.getNewPassword());
+        if (passwordError != null) {
+            return passwordError;
+        }
+
+        // Try to find and update user
+        try {
+            User user = userDao.getByEmail(email);
+            if (user != null) {
+                userDao.updatePassword(email, passwordResetDto.getNewPassword());
+                return null; // Success
+            }
+        } catch (EmptyResultDataAccessException e) {
+            // User not found, try tasker
+        } catch (Exception e) {
+            return "Error updating password: " + e.getMessage();
+        }
+
+        // Try to find and update tasker
+        try {
+            Tasker tasker = taskerDao.getByEmail(email);
+            if (tasker != null) {
+                taskerDao.updatePassword(email, passwordResetDto.getNewPassword());
+                return null; // Success
+            }
+        } catch (EmptyResultDataAccessException e) {
+            return "No user or tasker found with this email";
+        } catch (Exception e) {
+            return "Error updating password: " + e.getMessage();
+        }
+
+        return "No user or tasker found with this email";
     }
 }
