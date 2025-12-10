@@ -18,7 +18,7 @@ public class RedisConfig {
     public static final int OTP_TTL_MINUTES = 10;
     public static final int OTP_MAX_ATTEMPTS = 3;
     public static final int OTP_ATTEMPT_TTL_MINUTES = 15;
-    public static final int OTP_TTL_SEC= 30;
+    public static final int OTP_TTL_SEC= 120;
     public static final int OTP_ATTEMPT_TTL_HOURS_RESET_PASSWORD = 1;
 
     @Bean

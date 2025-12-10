@@ -258,7 +258,7 @@ class OTPServiceTest {
         verify(valueOperations, atLeastOnce()).set(
                 eq("otp:"+email),
                 anyString(),
-                eq(30L),
+                eq(120L),
                 eq(TimeUnit.SECONDS)
         );
     }
