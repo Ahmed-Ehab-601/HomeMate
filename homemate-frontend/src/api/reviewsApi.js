@@ -24,3 +24,25 @@ export async function getReviewByTask(taskId) {
         method: "GET",
     });
 }
+/**
+ * Update an existing review
+ * @param {Object} reviewData - The review data to update
+ * @returns {Promise<Object>} The updated review
+ */
+export async function updateReview(reviewData) {
+    return apiRequest(REVIEWS_ENDPOINT, {
+        method: "PUT",
+        body: JSON.stringify(reviewData),
+    });
+}
+
+/**
+ * Delete a review
+ * @param {number} reviewId - The review ID
+ * @returns {Promise<boolean>} True if deleted
+ */
+export async function deleteReview(reviewId) {
+    return apiRequest(`${REVIEWS_ENDPOINT}/${reviewId}`, {
+        method: "DELETE",
+    });
+}

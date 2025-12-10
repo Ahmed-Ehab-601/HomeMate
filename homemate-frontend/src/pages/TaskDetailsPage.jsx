@@ -3,13 +3,13 @@ import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
   getTaskDetails,
-  getTaskReview,
   rescheduleTask,
   startTask,
   suspendTask,
   completeTask,
 } from "../api/taskManagementApi";
 import { acceptTask, rejectTask } from "../api/taskActionsApi";
+import { getReviewByTask } from "../api/reviewsApi";
 import { getTaskerById } from "../api/taskerProfileApi";
 import TaskerCard from "../components/TaskerCard";
 import Modal from "../components/Modal";
@@ -208,7 +208,7 @@ function TaskDetailsPage() {
       // Load review if task is done
       if (taskData.status === "Done") {
         try {
-          const reviewData = await getTaskReview(taskId);
+          const reviewData = await getReviewByTask(taskId);
           setReview(reviewData);
         } catch (err) {
           console.log("No review found:", err);
@@ -730,9 +730,8 @@ function TaskDetailsPage() {
                               imgSrc = normalizeImage(img.imgFile);
                             } else {
                               // Assume it's base64 string
-                              imgSrc = `data:image/${
-                                img.format || "jpeg"
-                              };base64,${img.imgFile}`;
+                              imgSrc = `data:image/${img.format || "jpeg"
+                                };base64,${img.imgFile}`;
                             }
                           }
 
@@ -793,6 +792,17 @@ function TaskDetailsPage() {
                   <p className="no-review-message">
                     No review has been submitted yet.
                   </p>
+                  {!isTasker && (
+                    <div style={{ marginTop: "16px" }}>
+                      <Link
+                        to={`/submit-review/${task.taskID}`}
+                        className="btn btn-primary"
+                        style={{ textDecoration: "none" }}
+                      >
+                        Review
+                      </Link>
+                    </div>
+                  )}
                 </>
               )}
             </div>
