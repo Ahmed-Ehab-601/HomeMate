@@ -16,6 +16,8 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mail.javamail.JavaMailSender;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
+
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static com.homemate.notification.service.imp.OTPServiceImp.ATTEMPTS_PREFIX;
@@ -46,18 +48,18 @@ class OTPServiceTest {
     @BeforeEach
     void setUp() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        underTest =new OTPServiceImp(
-            jwtService, 
-            emailTemplate, 
-            javaMailSender, 
+        underTest = new OTPServiceImp(
+            jwtService,
+            emailTemplate,
+            javaMailSender,
             redisTemplate
         );
     }
 
     @Test
-    void testGenerateAndStoreOTPShouldReturnSixDigitCode() {
+    void testGenerateAndStoreOTPShouldReturnSixDigitCode() throws ExecutionException, InterruptedException {
         String email ="homemate@gmail.com";
-        String otp = underTest.generateAndStoreOTP(email, EmailRequest.EmailType.EMAIL_VERIFICATION);
+        String otp = underTest.generateAndStoreOTP(email, EmailRequest.EmailType.EMAIL_VERIFICATION).join();
         assertNotNull(otp);
         assertEquals(6, otp.length());
         assertTrue(otp.matches("\\d{6}"));
@@ -66,7 +68,7 @@ class OTPServiceTest {
     @Test
     void testGenerateAndStoreOTPShouldStoreInRedis() {
         String email= "homemate@gmail.com";
-        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.EMAIL_VERIFICATION);
+        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.EMAIL_VERIFICATION).join();
         verify(valueOperations, atLeastOnce()).set(
                 eq("otp:"+email),
                 anyString(),
@@ -78,7 +80,7 @@ class OTPServiceTest {
     @Test
     void testGenerateAndStoreOTPShouldInitializeAttemptsCounter() {
         String email="homemate@gmail.com";
-        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.EMAIL_VERIFICATION);
+        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.EMAIL_VERIFICATION).join();
         verify(valueOperations,atLeastOnce()).set(
                 eq("otp_attempts:" +email),
                 eq("0"),
@@ -89,7 +91,7 @@ class OTPServiceTest {
 
 
     @Test
-    void testSendOtpShouldGenerateOTPAndSendEmail() {
+    void testSendOtpShouldGenerateOTPAndSendEmail() throws ExecutionException, InterruptedException {
         String email ="homemate@gmail.com";
         EmailRequest emailRequest =new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -99,7 +101,7 @@ class OTPServiceTest {
         when(valueOperations.get(anyString())).thenReturn(null);
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
-        OtpVerificationResult result = underTest.sendOtp(emailRequest);
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
         assertTrue(result.isSuccess());
         assertEquals("OTP sent successfully", result.getMessage());
         verify(emailTemplate).buildVerificationCode(anyString());
@@ -108,7 +110,7 @@ class OTPServiceTest {
 
 
     @Test
-    void testSendOtpShouldCallEmailTemplate() {
+    void testSendOtpShouldCallEmailTemplate() throws ExecutionException, InterruptedException {
         String email ="homemate@gmail.com";
         EmailRequest emailRequest =new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -117,13 +119,13 @@ class OTPServiceTest {
         when(valueOperations.get(anyString())).thenReturn(null);
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
-        underTest.sendOtp(emailRequest);
+        underTest.sendOtp(emailRequest).get();
         verify(emailTemplate).buildVerificationCode(anyString());
     }
 
 
     @Test
-    void testValidateCodeWithValidOTPShouldReturnSuccess() {
+    void testValidateCodeWithValidOTPShouldReturnSuccess() throws ExecutionException, InterruptedException {
         String email ="homemate@gmail.com";
         String correctOtp ="123456";
         OtpVerifyRequest otpVerifyRequest =new OtpVerifyRequest();
@@ -133,7 +135,7 @@ class OTPServiceTest {
         when(valueOperations.get("otp:" + email)).thenReturn(correctOtp);
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("0");
         when(redisTemplate.delete(anyString())).thenReturn(true);
-        OtpVerificationResult otpVerificationResult = underTest.validateCode(otpVerifyRequest);
+            OtpVerificationResult otpVerificationResult = underTest.validateCode(otpVerifyRequest).join();
         assertTrue(otpVerificationResult.isSuccess());
         assertEquals("OTP verified successfully", otpVerificationResult.getMessage());
     }
@@ -163,14 +165,14 @@ class OTPServiceTest {
         request.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:" + email)).thenReturn(null);
         
-        OtpVerificationResult result = underTest.validateCode(request);
+        OtpVerificationResult result = underTest.validateCode(request).join();
         
         assertFalse(result.isSuccess());
         assertEquals("OTP expired", result.getMessage());
     }
 
     @Test
-    void testValidateCodeWithInvalidOTPShouldReturnFailure() {
+    void testValidateCodeWithInvalidOTPShouldReturnFailure() throws ExecutionException, InterruptedException {
         String email ="homemate@gmail.com";
         String storedOtp ="123456";
         String providedOtp ="654321";
@@ -180,7 +182,7 @@ class OTPServiceTest {
         request.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:" + email)).thenReturn(storedOtp);
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("0");
-        OtpVerificationResult otpVerificationResult = underTest.validateCode(request);
+            OtpVerificationResult otpVerificationResult = underTest.validateCode(request).join();
         assertFalse(otpVerificationResult.isSuccess());
         assertTrue(otpVerificationResult.getMessage().contains("Invalid OTP"));
     }
@@ -196,7 +198,7 @@ class OTPServiceTest {
         otpVerifyRequest.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:" + email)).thenReturn(storedOtp);
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("0");
-        underTest.validateCode(otpVerifyRequest);
+        underTest.validateCode(otpVerifyRequest).join();
         verify(valueOperations).set(
                 eq("otp_attempts:" + email),
                 eq("1"),
@@ -206,7 +208,7 @@ class OTPServiceTest {
     }
 
     @Test
-    void testValidateCodeWithMaxAttemptsExceededShouldReturnFailure() {
+    void testValidateCodeWithMaxAttemptsExceededShouldReturnFailure() throws ExecutionException, InterruptedException {
         String email ="homemate@gmail.com";
         OtpVerifyRequest otpVerifyRequest = new OtpVerifyRequest();
         otpVerifyRequest.setRecipientEmail(email);
@@ -216,7 +218,7 @@ class OTPServiceTest {
         when(valueOperations.get("otp_attempts:" + email)).thenReturn(String.valueOf(3));
         when(redisTemplate.delete(anyString())).thenReturn(true);
         
-        OtpVerificationResult result = underTest.validateCode(otpVerifyRequest);
+        OtpVerificationResult result = underTest.validateCode(otpVerifyRequest).join();
       String expected=  String.format(
                 "Maximum verification attempts exceeded. Please try again in %d %s.",
                 15,
@@ -236,7 +238,7 @@ class OTPServiceTest {
         when(valueOperations.get("otp:" + email)).thenReturn("654321");
         when(valueOperations.get("otp_attempts:" + email)).thenReturn(String.valueOf(3));
         when(redisTemplate.delete(anyString())).thenReturn(true);
-        underTest.validateCode(otpVerifyRequest);
+        underTest.validateCode(otpVerifyRequest).join();
         verify(redisTemplate, times(1)).delete(anyString());
     }
 
@@ -250,7 +252,7 @@ class OTPServiceTest {
         otpVerifyRequest.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:" + email)).thenReturn(storedOtp);
         when(valueOperations.get("otp_attempts:"+email)).thenReturn(null).thenReturn("0");
-        underTest.validateCode(otpVerifyRequest);
+        underTest.validateCode(otpVerifyRequest).join();
         verify(valueOperations).set(
                 eq("otp_attempts:"+email),
                 eq("0"),
@@ -262,7 +264,7 @@ class OTPServiceTest {
     @Test
     void testGenerateAndStoreOTPForResetPasswordShouldReturnSixDigitCode() {
         String email ="resetpassword@gmail.com";
-        String otp = underTest.generateAndStoreOTP(email, EmailRequest.EmailType.FORGOT_PASSWORD);
+        String otp = underTest.generateAndStoreOTP(email, EmailRequest.EmailType.FORGOT_PASSWORD).join();
         assertNotNull(otp);
         assertEquals(6, otp.length());
         assertTrue(otp.matches("\\d{6}"));
@@ -271,7 +273,7 @@ class OTPServiceTest {
     @Test
     void testGenerateAndStoreOTPForResetPasswordShouldStoreWithSeconds() {
         String email= "resetpassword@gmail.com";
-        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.FORGOT_PASSWORD);
+        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.FORGOT_PASSWORD).join();
         verify(valueOperations, atLeastOnce()).set(
                 eq("otp:"+email),
                 anyString(),
@@ -283,7 +285,7 @@ class OTPServiceTest {
     @Test
     void testGenerateAndStoreOTPForResetPasswordShouldInitializeAttemptsWithHour() {
         String email="resetpassword@gmail.com";
-        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.FORGOT_PASSWORD);
+        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.FORGOT_PASSWORD).join();
         verify(valueOperations, atLeastOnce()).set(
                 eq("otp_attempts:" +email),
                 eq("0"),
@@ -293,7 +295,7 @@ class OTPServiceTest {
     }
 
     @Test
-    void testSendOtpForResetPasswordShouldGenerateOTPAndSendEmail() {
+    void testSendOtpForResetPasswordShouldGenerateOTPAndSendEmail() throws ExecutionException, InterruptedException {
         String email ="resetpassword@gmail.com";
         EmailRequest emailRequest =new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -302,7 +304,7 @@ class OTPServiceTest {
             when(emailTemplate.buildResetPasswordCode(anyString())).thenReturn(emailBody);
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
-        underTest.sendOtp(emailRequest);
+            underTest.sendOtp(emailRequest).join();
         verify(emailTemplate).buildResetPasswordCode(anyString());
         verify(javaMailSender).send(any(MimeMessage.class));
     }
@@ -317,9 +319,8 @@ class OTPServiceTest {
         otpVerifyRequest.setEmailType(EmailRequest.EmailType.FORGOT_PASSWORD);
 
         when(valueOperations.get("otp:" + email)).thenReturn(correctOtp);
-        when(valueOperations.get("otp_attempts:" + email)).thenReturn("0");
         when(redisTemplate.delete(anyString())).thenReturn(true);
-        OtpVerificationResult otpVerificationResult = underTest.validateCode(otpVerifyRequest);
+        OtpVerificationResult otpVerificationResult = underTest.validateCode(otpVerifyRequest).join();
         assertTrue(otpVerificationResult.isSuccess());
         assertEquals("OTP verified successfully", otpVerificationResult.getMessage());
     }
@@ -335,7 +336,7 @@ class OTPServiceTest {
         otpVerifyRequest.setEmailType(EmailRequest.EmailType.FORGOT_PASSWORD);
         when(valueOperations.get("otp:" + email)).thenReturn(storedOtp);
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("0");
-        underTest.validateCode(otpVerifyRequest);
+        underTest.validateCode(otpVerifyRequest).join();
         verify(valueOperations).set(
                 eq("otp_attempts:" + email),
                 eq("1"),
@@ -355,7 +356,7 @@ class OTPServiceTest {
         when(valueOperations.get("otp_attempts:" + email)).thenReturn(String.valueOf(3));
         when(redisTemplate.delete(anyString())).thenReturn(true);
         
-        OtpVerificationResult result = underTest.validateCode(otpVerifyRequest);
+        OtpVerificationResult result = underTest.validateCode(otpVerifyRequest).join();
         assertFalse(result.isSuccess());
         String expected=  String.format(
                 "Maximum verification attempts exceeded. Please try again in %d %s.",
@@ -382,7 +383,7 @@ class OTPServiceTest {
         when(redisTemplate.delete(anyString())).thenReturn(true);
         when(jwtService.generateVerifyToken(email)).thenReturn(expectedToken);
         
-        OtpVerificationResult result = underTest.validateCode(request);
+        OtpVerificationResult result = underTest.validateCode(request).join();
         
         assertTrue(result.isSuccess());
         assertEquals(expectedToken, result.getToken());
@@ -403,7 +404,7 @@ class OTPServiceTest {
         when(valueOperations.get("otp:" + email)).thenReturn(storedOtp);
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("1");
         
-        OtpVerificationResult result = underTest.validateCode(request);
+        OtpVerificationResult result = underTest.validateCode(request).join();
         
         assertFalse(result.isSuccess());
         assertTrue(result.getMessage().contains("Attempts remaining: 1"));
@@ -411,7 +412,7 @@ class OTPServiceTest {
 
   
     @Test
-    void testSendOtpShouldSetCorrectFromAddress() {
+    void testSendOtpShouldSetCorrectFromAddress() throws ExecutionException, InterruptedException {
         String email = "user@gmail.com";
         EmailRequest emailRequest = new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -423,7 +424,7 @@ class OTPServiceTest {
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
         ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
         
-        OtpVerificationResult result = underTest.sendOtp(emailRequest);
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
         
         assertTrue(result.isSuccess());
         verify(javaMailSender).send(captor.capture());
@@ -432,7 +433,7 @@ class OTPServiceTest {
     }
 
     @Test
-    void testSendOtpShouldIncludeLogo() {
+    void testSendOtpShouldIncludeLogo() throws ExecutionException, InterruptedException {
         String email = "user@gmail.com";
         EmailRequest emailRequest = new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -443,18 +444,18 @@ class OTPServiceTest {
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
         
-        OtpVerificationResult result = underTest.sendOtp(emailRequest);
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
         
         assertTrue(result.isSuccess());
         verify(javaMailSender).send(any(MimeMessage.class));
     }
 
     @Test
-    void testGenerateCodeShouldGenerateUniqueCodes() {
+    void testGenerateCodeShouldGenerateUniqueCodes() throws ExecutionException, InterruptedException {
         String email1 ="user1@gmail.com";
         String email2 ="user2@gmail.com";
-        String otp1 =underTest.generateAndStoreOTP(email1, EmailRequest.EmailType.EMAIL_VERIFICATION);
-        String otp2 =underTest.generateAndStoreOTP(email2, EmailRequest.EmailType.EMAIL_VERIFICATION);
+        String otp1 =underTest.generateAndStoreOTP(email1, EmailRequest.EmailType.EMAIL_VERIFICATION).join();
+        String otp2 =underTest.generateAndStoreOTP(email2, EmailRequest.EmailType.EMAIL_VERIFICATION).join();
         assertNotNull(otp1);
         assertNotNull(otp2);
         assertEquals(6, otp1.length());
@@ -475,14 +476,14 @@ class OTPServiceTest {
         when(valueOperations.get("otp:" + email)).thenReturn(storedOtp);
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("2");
         
-        OtpVerificationResult result = underTest.validateCode(request);
+        OtpVerificationResult result = underTest.validateCode(request).join();
         
         assertFalse(result.isSuccess());
         assertTrue(result.getMessage().contains("Attempts remaining: 0"));
     }
 
     @Test
-    void testSendOtpForForgotPasswordShouldUseCorrectSubject() {
+    void testSendOtpForForgotPasswordShouldUseCorrectSubject() throws ExecutionException, InterruptedException {
         String email = "user@gmail.com";
         EmailRequest emailRequest = new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -493,7 +494,7 @@ class OTPServiceTest {
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
         
-        OtpVerificationResult result = underTest.sendOtp(emailRequest);
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
         
         assertTrue(result.isSuccess());
         verify(emailTemplate).buildResetPasswordCode(anyString());
@@ -507,7 +508,7 @@ class OTPServiceTest {
         request.setCode("123456");
         request.setEmailType(EmailRequest.EmailType.EMAIL_VERIFICATION);
         when(valueOperations.get("otp:" + email)).thenReturn(null);
-        OtpVerificationResult result = underTest.validateCode(request);
+        OtpVerificationResult result = underTest.validateCode(request).join();
         assertFalse(result.isSuccess());
         assertEquals("", result.getToken());
     }
@@ -515,7 +516,7 @@ class OTPServiceTest {
     @Test
     void testGenerateAndStoreOTPForEmailVerificationShouldUseMinutesTTL() {
         String email="user@gmail.com";
-        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.EMAIL_VERIFICATION);
+        underTest.generateAndStoreOTP(email, EmailRequest.EmailType.EMAIL_VERIFICATION).join();
         verify(valueOperations).set(
             eq("otp_attempts:" + email),
             eq("0"),
@@ -525,7 +526,7 @@ class OTPServiceTest {
     }
 
     @Test
-    void testSendOtpShouldCreateHtmlEmailWithCorrectStructure() {
+    void testSendOtpShouldCreateHtmlEmailWithCorrectStructure() throws ExecutionException, InterruptedException {
         String email ="user@gmail.com";
         EmailRequest emailRequest = new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -535,7 +536,7 @@ class OTPServiceTest {
         when(valueOperations.get(anyString())).thenReturn(null);
         MimeMessage mimeMessage =new MimeMessage((Session) null);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
-        OtpVerificationResult result = underTest.sendOtp(emailRequest);
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
         assertTrue(result.isSuccess());
         verify(javaMailSender).send(any(MimeMessage.class));
         verify(emailTemplate).buildVerificationCode(anyString());
@@ -551,7 +552,7 @@ class OTPServiceTest {
         when(valueOperations.get("otp:" + email)).thenReturn("654321");
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("3");
         when(redisTemplate.delete(anyString())).thenReturn(true);
-        OtpVerificationResult result = underTest.validateCode(request);
+        OtpVerificationResult result = underTest.validateCode(request).join();
         String expected =  String.format(
                 "Maximum verification attempts exceeded. Please try again in %d %s.",
                 15,
@@ -563,13 +564,13 @@ class OTPServiceTest {
     }
 
     @Test
-    void testMultipleSuccessfulOTPGenerationForDifferentUsers() {
+    void testMultipleSuccessfulOTPGenerationForDifferentUsers() throws ExecutionException, InterruptedException {
         String email1= "user1@gmail.com";
         String email2= "user2@gmail.com";
         String email3= "user3@gmail.com";
-        String otp1= underTest.generateAndStoreOTP(email1, EmailRequest.EmailType.EMAIL_VERIFICATION);
-        String otp2= underTest.generateAndStoreOTP(email2, EmailRequest.EmailType.FORGOT_PASSWORD);
-        String otp3= underTest.generateAndStoreOTP(email3, EmailRequest.EmailType.EMAIL_VERIFICATION);
+        String otp1= underTest.generateAndStoreOTP(email1, EmailRequest.EmailType.EMAIL_VERIFICATION).join();
+        String otp2= underTest.generateAndStoreOTP(email2, EmailRequest.EmailType.FORGOT_PASSWORD).join();
+        String otp3= underTest.generateAndStoreOTP(email3, EmailRequest.EmailType.EMAIL_VERIFICATION).join();
         assertNotNull(otp1);
         assertNotNull(otp2);
         assertNotNull(otp3);
@@ -591,14 +592,14 @@ class OTPServiceTest {
         when(redisTemplate.delete(anyString())).thenReturn(true);
         when(jwtService.generateVerifyToken(email)).thenReturn("token");
         
-        OtpVerificationResult result = underTest.validateCode(request);
+        OtpVerificationResult result = underTest.validateCode(request).join();
         
         assertTrue(result.isSuccess());
         assertEquals("OTP verified successfully", result.getMessage());
     }
 
     @Test
-    void testSendOtpWithMaxAttemptsExceededShouldReturnErrorMessage() {
+    void testSendOtpWithMaxAttemptsExceededShouldReturnErrorMessage() throws ExecutionException, InterruptedException {
         String email = "user@gmail.com";
         EmailRequest emailRequest = new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -606,14 +607,14 @@ class OTPServiceTest {
         
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("3");
         
-        OtpVerificationResult result = underTest.sendOtp(emailRequest);
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
         assertFalse(result.isSuccess());
         assertTrue(result.getMessage().contains("Maximum verification attempts exceeded"));
         verify(javaMailSender, never()).send(any(MimeMessage.class));
     }
 
     @Test
-    void testSendOtpWithMaxAttemptsForResetPasswordShouldShowHourMessage() {
+    void testSendOtpWithMaxAttemptsForResetPasswordShouldShowHourMessage() throws ExecutionException, InterruptedException {
         String email = "user@gmail.com";
         EmailRequest emailRequest = new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -621,7 +622,7 @@ class OTPServiceTest {
         
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("3");
         
-        OtpVerificationResult result = underTest.sendOtp(emailRequest);
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).get();
         
         assertFalse(result.isSuccess());
         assertTrue(result.getMessage().contains("hour(s)"));
@@ -629,7 +630,7 @@ class OTPServiceTest {
     }
 
     @Test
-    void testSendOtpWithMaxAttemptsForEmailVerificationShouldShowMinuteMessage() {
+    void testSendOtpWithMaxAttemptsForEmailVerificationShouldShowMinuteMessage() throws ExecutionException, InterruptedException {
         String email = "user@gmail.com";
         EmailRequest emailRequest = new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -637,7 +638,7 @@ class OTPServiceTest {
         
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("3");
         
-        OtpVerificationResult result = underTest.sendOtp(emailRequest);
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).get();
         
         assertFalse(result.isSuccess());
         assertTrue(result.getMessage().contains("minute(s)"));
@@ -646,7 +647,7 @@ class OTPServiceTest {
 
 
     @Test
-    void testSendOtpShouldReturnSuccessMessageWhenEmailSentSuccessfully() {
+    void testSendOtpShouldReturnSuccessMessageWhenEmailSentSuccessfully() throws ExecutionException, InterruptedException {
         String email = "user@gmail.com";
         EmailRequest emailRequest = new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -657,14 +658,14 @@ class OTPServiceTest {
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
         
-        OtpVerificationResult result = underTest.sendOtp(emailRequest);
+            OtpVerificationResult result = underTest.sendOtp(emailRequest).get();
         
         assertTrue(result.isSuccess());
         assertEquals("OTP sent successfully", result.getMessage());
     }
 
     @Test
-    void testSendOtpForEmailVerificationWhenAttemptsNotSetShouldProceed() {
+    void testSendOtpForEmailVerificationWhenAttemptsNotSetShouldProceed() throws ExecutionException, InterruptedException {
         String email = "user@gmail.com";
         EmailRequest emailRequest = new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -675,7 +676,7 @@ class OTPServiceTest {
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
         
-        OtpVerificationResult result = underTest.sendOtp(emailRequest);
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).get();
         
         assertTrue(result.isSuccess());
         assertEquals("OTP sent successfully", result.getMessage());
@@ -694,7 +695,7 @@ class OTPServiceTest {
         when(valueOperations.get("otp_attempts:" + email)).thenReturn("3");
         when(redisTemplate.delete(anyString())).thenReturn(true);
         
-        OtpVerificationResult result = underTest.validateCode(request);
+        OtpVerificationResult result = underTest.validateCode(request).join();
         
         assertFalse(result.isSuccess());
         assertTrue(result.getMessage().contains("Please try again in"));
@@ -702,7 +703,7 @@ class OTPServiceTest {
     }
 
     @Test 
-    void testSendOtpShouldStoreAttemptsBeforeGeneratingOTP() {
+    void testSendOtpShouldStoreAttemptsBeforeGeneratingOTP() throws ExecutionException, InterruptedException {
         String email = "user@gmail.com";
         EmailRequest emailRequest = new EmailRequest();
         emailRequest.setRecipientEmail(email);
@@ -713,8 +714,7 @@ class OTPServiceTest {
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
         
-        underTest.sendOtp(emailRequest);
-        
+        underTest.sendOtp(emailRequest).join();
         verify(valueOperations, atLeastOnce()).set(
             eq(ATTEMPTS_PREFIX + email),
             eq("0"),

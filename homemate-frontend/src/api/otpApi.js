@@ -5,7 +5,7 @@ import { baseUrl } from "../utils/apiClient";
  * Send OTP to user's email
  * @param {string} email - User's email address
  * @param {string} emailType - Type of email: 'EMAIL_VERIFICATION' or 'FORGOT_PASSWORD'
- * @returns {Promise<{message: string}>}
+ * @returns {Promise<{success: boolean, message: string}>}
  */
 export async function sendOtp(email, emailType) {
     const response = await fetch(`${baseUrl}/api/auth/otp/send`, {
@@ -19,14 +19,19 @@ export async function sendOtp(email, emailType) {
         }),
     });
 
+    const result = await response.json();
+
     if (!response.ok) {
-        const error = await response.json().catch(() => ({
-            message: "Failed to send OTP"
-        }));
-        throw new Error(error.message || "Failed to send OTP");
+        return {
+            success: false,
+            message: result.message || "Failed to send OTP"
+        };
     }
 
-    return response.json();
+    return {
+        success: result.success !== undefined ? result.success : true,
+        message: result.message || "OTP sent successfully"
+    };
 }
 
 /**
