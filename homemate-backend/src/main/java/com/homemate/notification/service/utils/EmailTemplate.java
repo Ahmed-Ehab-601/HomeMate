@@ -213,6 +213,11 @@ public class EmailTemplate {
         return switch (emailType) {
             case TASK_RESCHEDULE -> "Task Rescheduled - " + serviceName;
             case TASK_STATUS -> buildTaskStatusSubject(taskDto);
+            case TASK_ACCEPTED -> {
+                String date = formatDate(taskDto.getStartDate());
+                yield "Task Accepted - " + serviceName + " on " + date;
+            }
+            case TASK_REJECTED -> "Task Request Declined - " + serviceName;
             case TASK_REQUEST -> "New Task Request - " + serviceName;
             case TASK_RESUMED -> {
                 String taskerName = requireNonNull(taskDto.getTaskerName(), "taskerName", "TASK_RESUMED");
