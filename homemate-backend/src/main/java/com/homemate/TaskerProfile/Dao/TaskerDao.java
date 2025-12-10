@@ -98,7 +98,7 @@ public class TaskerDao {
                 ps.setString(7, dto.getPhoneNumber());
                 ps.setString(8, "M");
                 ps.setBytes(9, dto.getProfileImage());
-                ps.setString(10, "AVAILABLE");
+                ps.setString(10, "available");
                 ps.setDouble(11, 0.0);
                 ps.setDouble(12, dto.getHourRate());
                 ps.setString(13, dto.getBio());
