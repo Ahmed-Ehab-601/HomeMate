@@ -33,7 +33,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/tasker/signup",
             "/api/services",
             "/api/taskers/search",
-            "/api/users/taskers/",
+            "/api/users/taskers",
             "/api/tasker-profile/reviews",
             "/api/auth/otp/verify",
             "/api/auth/otp/send","/HomeMate"

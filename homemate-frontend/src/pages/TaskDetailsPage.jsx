@@ -792,17 +792,6 @@ function TaskDetailsPage() {
                   <p className="no-review-message">
                     No review has been submitted yet.
                   </p>
-                  {!isTasker && (
-                    <div style={{ marginTop: "16px" }}>
-                      <Link
-                        to={`/submit-review/${task.taskID}`}
-                        className="btn btn-primary"
-                        style={{ textDecoration: "none" }}
-                      >
-                        Review
-                      </Link>
-                    </div>
-                  )}
                 </>
               )}
             </div>
