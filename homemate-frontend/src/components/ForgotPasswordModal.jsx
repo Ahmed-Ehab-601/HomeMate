@@ -94,9 +94,8 @@ function ForgotPasswordModal({ isOpen, onClose, onSuccess }) {
   };
 
   if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={handleClose}>
+    <div className="modal-overlay">
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close" onClick={handleClose}>
           ×
