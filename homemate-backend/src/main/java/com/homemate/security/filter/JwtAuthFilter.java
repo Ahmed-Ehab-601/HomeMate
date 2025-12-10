@@ -29,7 +29,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/auth/google",
             "/api/taskers/search",
             "/api/users/taskers/",
-            "/api/tasker-profile/reviews"
+            "/api/tasker-profile/reviews",
+            "/api/auth/otp/verify",
+            "/api/auth/otp/send"
     );
 
     private final JwtService jwtService;
