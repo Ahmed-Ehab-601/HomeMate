@@ -31,7 +31,7 @@ public class TaskRowMapper implements RowMapper<TaskDto> {
                 addressDetails(buildAddress(rs)).
                 userMail(rs.getString("userMail")).
                 taskerMail(rs.getString("taskerMail")).
-                taskerID(rs.getLong("taskerID"))
+                taskerID(rs.getLong("taskerID")).hourRate(rs.getDouble("hourRate"))
                 .build();
     }
 
