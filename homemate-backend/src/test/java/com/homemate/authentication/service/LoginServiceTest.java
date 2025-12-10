@@ -7,6 +7,7 @@ import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
 import com.homemate.Authentication.service.LoginService;
+import com.homemate.chat.Service.ChatService;
 import com.homemate.security.service.JwtService;
 import com.homemate.security.service.ValidateSignupService;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,8 @@ class LoginServiceTest {
 
     @Mock
     private JwtService jwtService;
+    @Mock
+    private ChatService chatService;
 
     @Mock
     private ValidateSignupService validateSignup;
