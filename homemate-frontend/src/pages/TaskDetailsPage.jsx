@@ -942,15 +942,6 @@ function TaskDetailsPage() {
               >
                 <span className="btn-icon">🛡️</span> Report Issue
               </Link>
-
-              {normalizedStatus === "DONE" && !isTasker && !review && (
-                <Link
-                  to={`/submit-review/${task.taskID}`}
-                  className="btn btn-review"
-                >
-                  <span className="btn-icon">⭐</span> Leave Review
-                </Link>
-              )}
             </div>
           </div>
         </div>
