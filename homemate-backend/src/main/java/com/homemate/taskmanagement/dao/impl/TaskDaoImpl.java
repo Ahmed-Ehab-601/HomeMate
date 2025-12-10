@@ -134,7 +134,7 @@ public class TaskDaoImpl implements TaskDao {
                 a.city,
                 a.country,
                 u.email AS userMail,
-                tas.email AS taskerMail
+                tas.email AS taskerMail,tas.hourRate
             FROM Task t
                 INNER JOIN Users u ON t.userID = u.userID
                 INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
