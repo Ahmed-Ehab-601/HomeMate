@@ -1,5 +1,6 @@
 package com.homemate.taskmanagementtests;
 
+import com.homemate.TaskerProfile.Dao.ReviewDao;
 import com.homemate.taskmanagement.dao.TaskDao;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
@@ -37,6 +38,8 @@ class TaskManagementServiceUpdateStatusTest {
     private Long taskId;
     private Long taskerId;
     private TaskDto taskDto;
+    @Mock
+    private ReviewDao reviewDao;
 
     @BeforeEach
     void setUp() {
@@ -51,7 +54,7 @@ class TaskManagementServiceUpdateStatusTest {
                 .build();
 
 
-        taskManagementService = new TaskManagementService(null, taskDao,new StatusFactory(taskDao));
+        taskManagementService = new TaskManagementService(null, taskDao,new StatusFactory(taskDao),reviewDao);
     }
 
     // ========== Valid State Transitions ==========

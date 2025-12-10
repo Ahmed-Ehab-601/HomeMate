@@ -121,4 +121,14 @@ export function updateTaskerService(serviceId) {
   return request(url, { method: "PUT" });
 }
 
+/**
+ * Get tasker details by ID
+ * @param {number} taskerId - ID of the tasker
+ * @returns {Promise<Object>} Tasker card details
+ */
+export function getTaskerById(taskerId) {
+  const url = `${baseUrl}/api/taskers/${taskerId}`;
+  console.log("Fetching tasker from:", url);
+  return request(url);
+}
 

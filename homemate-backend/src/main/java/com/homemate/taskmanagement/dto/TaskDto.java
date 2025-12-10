@@ -13,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class TaskDto {
     private Long taskID;
+    private long taskerID;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private Status status;
@@ -25,9 +26,6 @@ public class TaskDto {
     private String serviceName;
     private Long chatID;
     private String addressDetails;
-    private Double rate;
-    private String review;
-    private List<ReviewImageDto> reviewImageDtoList;
     @Email
     private String userMail;
     @Email

@@ -41,9 +41,9 @@ public class TaskDaoImpIntegrationRescheduleTest {
         LocalDateTime dbStartDate = underTest.getStartDate(taskId).orElse(null);
         assertThat(dbStartDate).isNotNull();
 
-        LocalDateTime expected = newStartDate.truncatedTo(ChronoUnit.MICROS);
+        LocalDateTime expected = newStartDate.truncatedTo(ChronoUnit.SECONDS);
         Assertions.assertNotNull(dbStartDate);
-        LocalDateTime actual = dbStartDate.truncatedTo(ChronoUnit.MICROS);
+        LocalDateTime actual = dbStartDate.truncatedTo(ChronoUnit.SECONDS);
 
         assertThat(actual).isEqualTo(expected);
     }

@@ -2,9 +2,11 @@ package com.homemate.chat.controller;
 
 import com.homemate.chat.Service.MessageService;
 import com.homemate.chat.dto.MessageDto;
+import com.homemate.security.model.AppUserDetails;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,9 +21,9 @@ public class MessageController {
     }
     @PostMapping("/userSendMessage/{chatID}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> userMessage(@PathVariable Long chatID, @RequestBody MessageDto messageDto)throws Exception{
+    public ResponseEntity<String> userMessage(@PathVariable Long chatID, @RequestBody MessageDto messageDto,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception{
         try {
-            messageService.sendMessage(chatID,messageDto);
+            messageService.sendMessage(chatID,messageDto,userDetails);
             return ResponseEntity.status(HttpStatus.OK).body("Message Sent Successfully");
             //WEBSOCKET
         }
@@ -31,9 +33,9 @@ public class MessageController {
     }
     @PostMapping("/taskerSendMessage/{chatID}")
     @PreAuthorize("hasRole('TASKER')")
-    public  ResponseEntity<String> taskerMessage(@PathVariable Long chatID, @RequestBody MessageDto messageDto)throws Exception{
+    public  ResponseEntity<String> taskerMessage(@PathVariable Long chatID, @RequestBody MessageDto messageDto,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception{
         try {
-            messageService.sendMessage(chatID,messageDto);
+            messageService.sendMessage(chatID,messageDto,userDetails);
             //call websocket (broadcast)
             return ResponseEntity.status(HttpStatus.OK).body("Message Sent Successfully");
         }
@@ -43,22 +45,22 @@ public class MessageController {
     }
     @GetMapping("/{chatID}/user-unread-count")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Integer> getUnreadCountU(@PathVariable Long chatID)throws Exception {
-        int unreadMessages = messageService.getUnreadMessagesForUser(chatID);
+    public ResponseEntity<Integer> getUnreadCountU(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception {
+        int unreadMessages = messageService.getUnreadMessagesForUser(chatID,userDetails);
         return ResponseEntity.ok(unreadMessages);
     }
 
     @GetMapping("/{chatID}/tasker-unread-count")
     @PreAuthorize("hasRole('TASKER')")
-    public ResponseEntity<Integer> getUnreadCountT(@PathVariable Long chatID)throws Exception {
-        int unreadMessages = messageService.getUnreadMessagesForTasker(chatID);
+    public ResponseEntity<Integer> getUnreadCountT(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception {
+        int unreadMessages = messageService.getUnreadMessagesForTasker(chatID,userDetails);
         return ResponseEntity.ok(unreadMessages);
     }
     @PutMapping("/{chatID}/mark-read-user")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> markMessageAsRead(@PathVariable Long chatID) throws Exception{
+    public ResponseEntity<Void> markMessageAsRead(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
        try {
-           messageService.markAllAsReadUser(chatID);
+           messageService.markAllAsReadUser(chatID,userDetails);
         //websocket
         return ResponseEntity.ok().build();
     }catch (Exception e){
@@ -70,9 +72,9 @@ public class MessageController {
     @PutMapping("/{chatID}/mark-read-tasker")
     @PreAuthorize("hasRole('TASKER')")
 
-    public ResponseEntity<Void> markMessagesAsRead(@PathVariable Long chatID) throws Exception{
+    public ResponseEntity<Void> markMessagesAsRead(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
         try {
-            messageService.markAllAsReadTasker(chatID);
+            messageService.markAllAsReadTasker(chatID,userDetails);
             //websocket
             return ResponseEntity.ok().build();
         }catch (Exception e){

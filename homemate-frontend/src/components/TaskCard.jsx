@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Modal from "./Modal";
+import { useEffect, useCallback } from "react";
 import { acceptTask, rejectTask } from "../api/taskActionsApi";
+import { getReviewByTask } from "../api/reviewsApi";
 import "../styles/TaskCard.css";
 
 const STATUS_STYLES = {
@@ -45,6 +47,8 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   const [successBanner, setSuccessBanner] = useState(null);
   const [errorBanner, setErrorBanner] = useState(null);
   const [localStatus, setLocalStatus] = useState(task.status);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [checkingReview, setCheckingReview] = useState(false);
 
   // Normalize status: remove spaces and convert to uppercase to match STATUS_STYLES keys
   const normalizedStatus =
@@ -133,11 +137,6 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
     }
   };
 
-  // const handleViewTasker = () => {
-  //   // Mock tasker ID for now
-  //   const taskerId = 1;
-  //   navigate(`/taskers/${taskerId}`);
-  // };
 
   return (
     <>
@@ -240,15 +239,7 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
               View Details
             </button>
           )}
-          {/* {viewType === "user" && (
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleViewTasker}
-          >
-            View Tasker
-          </button>
-        )} */}
+
         </div>
       </article>
 

@@ -7,6 +7,7 @@ import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
 import com.homemate.Authentication.service.LoginService;
+import com.homemate.chat.Service.ChatService;
 import com.homemate.security.service.JwtService;
 import com.homemate.security.service.ValidateSignupService;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,8 @@ class LoginServiceTest {
 
     @Mock
     private JwtService jwtService;
+    @Mock
+    private ChatService chatService;
 
     @Mock
     private ValidateSignupService validateSignup;
@@ -73,6 +76,7 @@ class LoginServiceTest {
         tasker.setBirthDate(java.sql.Timestamp.valueOf(LocalDateTime.of(1990, 1, 1, 0, 0)));
         tasker.setGender('M');
         tasker.setPhone("01012345678");
+        tasker.setIsSuspended(false);
 
         lenient().when(validateSignup.validateEmail(anyString())).thenReturn((String) null);
         lenient().when(validateSignup.validatePassword(anyString())).thenReturn((String) null);

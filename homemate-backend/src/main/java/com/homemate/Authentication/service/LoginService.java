@@ -63,6 +63,7 @@ public class LoginService {
                 String role = "ROLE_USER";
                 if (Boolean.TRUE.equals(user.getIsAdmin()))
                     role = "ROLE_ADMIN";
+                chatService.setUserOnline(user.getUserID()) ;
 
                 String token = jwtService.generateToken(
                         user.getUserID(),
@@ -72,16 +73,18 @@ public class LoginService {
                 );
 
                 return new LoginResponseDto(
-                        role,
-                        user.getUsername(),
-                        user.getFirstName(),
-                        user.getLastName(),
-                        token
+                    token,
+                    role,
+                    user.getUsername(),
+                    user.getFirstName(),
+                    user.getLastName()
                 );
             }
             return null;
 
-        } catch (EmptyResultDataAccessException e) {}
+        } catch (EmptyResultDataAccessException e) {} catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         try {
 
@@ -99,18 +102,20 @@ public class LoginService {
                         tasker.getEmail(),
                         role
                     );
-
+                    chatService.setTaskerOnline(tasker.getTaskerID());
                     return new LoginResponseDto(
+                        token,
                         role,
                         tasker.getUsername(),
                         tasker.getFirstName(),
-                        tasker.getLastName(),
-                        token
+                        tasker.getLastName()
                     );
                 }
             return null;
 
-        } catch (EmptyResultDataAccessException e) {}
+        } catch (EmptyResultDataAccessException e) {} catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return null;
     }
 
@@ -132,13 +137,13 @@ public class LoginService {
                         role
             );
             chatService.setUserOnline(user.getUserID()) ;
-            return new LoginResponseDto(
+                return new LoginResponseDto(
+                    token,
                     role,
                     user.getUsername(),
                     user.getFirstName(),
-                    user.getLastName(),
-                    token
-            );
+                    user.getLastName()
+                );
 
         } catch (Exception e) {}
 
@@ -159,11 +164,11 @@ public class LoginService {
                 );
             chatService.setTaskerOnline(tasker.getTaskerID());
                 return new LoginResponseDto(
+                    token,
                     role,
                     tasker.getUsername(),
                     tasker.getFirstName(),
-                    tasker.getLastName(),
-                    token
+                    tasker.getLastName()
                 );
 
         } catch (Exception e) {}

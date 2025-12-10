@@ -62,4 +62,9 @@ public class TaskerDiscoveryService {
         }
         return dtos;
     }
+
+    public TaskerCardDto getTaskerByID(long taskID){
+        Tasker tasker =taskerDao.findTaskerByID(taskID);
+        return taskerCardMapper.mapToDto(tasker);
+    }
 }

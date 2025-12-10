@@ -3,7 +3,6 @@ package com.homemate.security.filter;
 // Change import from io.jsonwebtoken.io.IOException to java.io.IOException
 import java.io.IOException;
 
-import com.homemate.security.model.AppUserDetails;
 import com.homemate.security.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,16 +23,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/auth/login",
             "/api/auth/otp/send",
             "/api/auth/otp/verify",
+            "/api/auth/google",
+            "/api/auth/otp/send",
+            "/api/auth/otp/verify",
+            "/api/auth/signup/google/init",
             "/api/user/signup",
             "/api/tasker/signup",
             "/api/services",
             "/api/taskers/search",
-            "/api/auth/google",
-            "/api/taskers/search",
             "/api/users/taskers/",
-            "/api/tasker-profile/reviews",
-            "/api/auth/otp/verify",
-            "/api/auth/otp/send"
+            "/api/tasker-profile/reviews"
     );
 
     private final JwtService jwtService;
