@@ -101,8 +101,7 @@ public class EmailTemplate {
                 taskerName,
                 serviceName,
                 startTime,
-                address,
-                taskDto.getRate() != null ? taskDto.getRate() : 0.0
+                address
         );
     }
 
@@ -376,7 +375,6 @@ public class EmailTemplate {
                 serviceName,
                 completedTime,
                 workedTime,
-                taskDto.getRate() != null ? taskDto.getRate() : 0.0,
                 taskDto.getBill() != null ? taskDto.getBill() : 0.0
         );
     }
