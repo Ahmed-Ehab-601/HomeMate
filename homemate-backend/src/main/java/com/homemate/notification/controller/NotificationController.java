@@ -20,7 +20,7 @@ public class NotificationController {
 
 	@PostMapping("/user")
 	public ResponseEntity<Map<String, String>> sendUserEmail(
-			@Valid @RequestBody EmailRequest emailRequest
+			@RequestBody EmailRequest emailRequest
 	) {
 		emailService.sendUserEmail(emailRequest);
 		return ResponseEntity.accepted().body(Map.of("message", "Notification sent to user"));
@@ -28,7 +28,7 @@ public class NotificationController {
 
 	@PostMapping("/tasker")
 	public ResponseEntity<Map<String, String>> sendTaskerEmail(
-			@Valid @RequestBody EmailRequest emailRequest
+			 @RequestBody EmailRequest emailRequest
 	) {
 		emailService.sendTaskerEmail(emailRequest);
 		return ResponseEntity.accepted().body(Map.of("message", "Notification sent to tasker"));
