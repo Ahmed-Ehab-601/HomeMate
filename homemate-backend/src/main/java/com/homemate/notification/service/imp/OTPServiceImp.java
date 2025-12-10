@@ -6,6 +6,8 @@ import com.homemate.notification.domains.dto.OtpVerificationResult;
 import com.homemate.notification.domains.dto.OtpVerifyRequest;
 import com.homemate.notification.service.OTPService;
 import com.homemate.notification.service.utils.EmailTemplate;
+import com.homemate.security.service.JwtService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -25,12 +27,14 @@ import static com.homemate.notification.domains.dto.EmailRequest.EmailType.FORGO
 @RequiredArgsConstructor
 @Component
 public class OTPServiceImp implements OTPService {
+    private final JwtService jwtService;
     private final EmailTemplate emailTemplate;
     private final JavaMailSender javaMailSender;
     private final RedisTemplate<String, Object> redisTemplate;
     private static final String OTP_PREFIX ="otp:";
     private static final String ATTEMPTS_PREFIX ="otp_attempts:";
     private static final String HOMEMATE_EMAIL ="homematesevice8@gmail.com";
+
     public String generateAndStoreOTP(String email, EmailRequest.EmailType emailType) {
         String otp =generateCode();
         String otpCodeKey=OTP_PREFIX+email;
@@ -56,6 +60,7 @@ public class OTPServiceImp implements OTPService {
 
         return otp;
     }
+
     @Override
     public OtpVerificationResult validateCode(OtpVerifyRequest otpVerifyRequest) {
         String otpCodeKey =OTP_PREFIX+otpVerifyRequest.getRecipientEmail();
@@ -70,6 +75,7 @@ public class OTPServiceImp implements OTPService {
             return OtpVerificationResult.builder()
                 .success(false)
                 .message("OTP expired")
+                .token("")
                 .build();
         }
 
@@ -94,6 +100,7 @@ public class OTPServiceImp implements OTPService {
             return OtpVerificationResult.builder()
                 .success(false)
                 .message("Maximum attempts exceeded")
+                .token(jwtService.generateVerifyToken(otpVerifyRequest.getRecipientEmail()))
                 .build();
         }
 
@@ -103,6 +110,7 @@ public class OTPServiceImp implements OTPService {
             return OtpVerificationResult.builder()
                 .success(true)
                 .message("OTP verified successfully")
+                .token("")
                 .build();
         }
 
@@ -119,6 +127,7 @@ public class OTPServiceImp implements OTPService {
                 .success(false)
                 .message("Invalid OTP. Attempts remaining: " +
                         (RedisConfig.OTP_MAX_ATTEMPTS -updatedAttempts))
+                .token("")
                 .build();
     }
 

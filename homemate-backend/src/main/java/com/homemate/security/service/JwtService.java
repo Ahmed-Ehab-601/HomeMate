@@ -16,6 +16,7 @@ public class JwtService {
 
     private static final String SECRET = "NOT_SECRET_KEY_123456789012345678";
     private static final long EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+    private static final long VERIFY_EXPIRATION_MS = 30 * 60 * 1000; // 30 min
 
     public String generateToken(Long userId, String username, String email, String role) {
         Map<String, String> claims = new HashMap<>();
@@ -29,6 +30,18 @@ public class JwtService {
                 .setSubject(userId.toString())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_MS))
+                .signWith(SignatureAlgorithm.HS256, SECRET.getBytes())
+                .compact();
+    }
+
+    public String generateVerifyToken(String email) {
+        Map<String, String> claims = new HashMap<>();
+        claims.put("email", email);
+        return Jwts.builder()
+                .claims(claims)
+                .subject(email)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + VERIFY_EXPIRATION_MS))
                 .signWith(SignatureAlgorithm.HS256, SECRET.getBytes())
                 .compact();
     }
