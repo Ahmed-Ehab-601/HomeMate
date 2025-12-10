@@ -1,12 +1,12 @@
 package com.homemate.taskmanagement.dao;
 
+import com.homemate.TaskerProfile.DTO.ReviewDTO;
 import com.homemate.taskmanagement.dto.StatusDto;
 import com.homemate.taskmanagement.dto.TaskCardDto;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -57,5 +57,6 @@ public interface TaskDao {
     Double getTaskWorkedHours(Long taskID);
     Double getTaskerHourRate(Long taskerID);
     boolean updateTaskerTotalEarning(Long taskerID,double bill);
+     Optional<ReviewDTO> getReviewByTaskId(long taskId);
 
 }

@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface TaskerDao {
     List<Tasker> findTaskersWithFilters(FindTaskerCriteriaDto filter, int page, int pageSize);
+    public Tasker findTaskerByID(long taskerID);
 }

@@ -1,6 +1,9 @@
 package com.homemate.taskmanagement.service;
 
 //import com.homemate.TaskManagement.Dao.impl.TaskDaoImpl;
+import com.homemate.TaskerProfile.DTO.ReviewDTO;
+import com.homemate.TaskerProfile.DTO.ReviewImageDTO;
+import com.homemate.TaskerProfile.Dao.ReviewDao;
 import com.homemate.taskmanagement.dao.TaskDao;
 import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
 import com.homemate.taskmanagement.dto.*;
@@ -9,6 +12,7 @@ import com.homemate.taskmanagement.mappers.TaskMapper;
 import com.homemate.taskmanagement.model.Status;
 import com.homemate.taskmanagement.model.TaskEntity;
 import lombok.AllArgsConstructor;
+import org.springframework.scheduling.config.Task;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +28,7 @@ public class TaskManagementService {
     private final TaskMapper taskMapper;
     private final TaskDao taskDao;
     private final StatusFactory statusFactory;
-
-
+    private final ReviewDao reviewDao;
 
     public Optional<TaskDto> requestTask(TaskRequestDto requestDto){
         checkRequest(requestDto);
@@ -55,9 +58,6 @@ public class TaskManagementService {
         } else if (taskDao.checkIfTaskLimit(requestDto.getUserID(),10)) {
             throw new RequestLimitExceededException();
         }
-    }
-    public Optional<TaskDto> getTaskDetails(Long taskID){
-        return taskDao.getTaskDetails(taskID);
     }
 
     public Optional<PaginatedResponse> getUserTasks(Long userID, StatusDto statusDto, int page, int pageSize){
@@ -202,6 +202,34 @@ public class TaskManagementService {
                 .rescheduleStatus(StatusDto.Accepted)
                 .build();
     }
+
+
+
+    public Optional<TaskDto> getTaskDetails(Long taskID){
+        //check if task not found return throw exeption??
+        // check for user or tasker are owners
+        return taskDao.getTaskDetails(taskID);
+    }
+
+
+    public Optional<ReviewDTO> getReviewByTaskId(long taskId) {
+        Optional<Long> task = taskDao.getUserID(taskId);
+        if (task.isEmpty()) {
+            throw new TaskNotFoundException("Task with ID " + taskId + " not found");
+        }
+
+        Optional<ReviewDTO> review = taskDao.getReviewByTaskId(taskId);
+
+        if (review.isEmpty()) {
+            return review;
+        }
+        ReviewDTO reviewDTO = review.get();
+        List<ReviewImageDTO> images = reviewDao.getReviewImages(reviewDTO.getReviewId());
+        reviewDTO.setReviewImages(images);
+        return Optional.of(reviewDTO);
+    }
+
+
 
 
 }

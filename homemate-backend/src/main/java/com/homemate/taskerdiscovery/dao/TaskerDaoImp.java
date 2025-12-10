@@ -111,4 +111,9 @@ public class TaskerDaoImp implements TaskerDao {
             return Collections.emptyList();
         }
     }
+
+    public Tasker findTaskerByID(long taskerID){
+        String sql = "SELECT * FROM Tasker WHERE taskerID = ?";
+        return jdbcTemplate.queryForObject(sql, rowMapper,taskerID);
+    }
 }

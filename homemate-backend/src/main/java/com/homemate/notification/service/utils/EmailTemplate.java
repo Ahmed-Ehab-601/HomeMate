@@ -40,8 +40,8 @@ public class EmailTemplate {
                 taskDto.getTaskerName(),
                 taskDto.getServiceName(),
                 startTime,
-                taskDto.getAddressDetails(),
-                taskDto.getRate()!=null?taskDto.getRate():0.0
+                taskDto.getAddressDetails()
+
         );
     }
     private String buildTaskAcceptedBody(TaskDto taskDto) {
@@ -239,7 +239,6 @@ public class EmailTemplate {
                 taskDto.getServiceName(),
                 completedTime,
                 workedTime,
-                taskDto.getRate()!=null?taskDto.getRate():0.0,
                 taskDto.getBill()!=null?taskDto.getBill():0.0
         );
     }

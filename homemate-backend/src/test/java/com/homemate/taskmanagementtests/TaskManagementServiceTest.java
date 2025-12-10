@@ -80,9 +80,6 @@ class TaskManagementServiceTest {
                 .serviceName("Plumbing")
                 .chatID(50L)
                 .addressDetails("123 Main St")
-                .rate(null)
-                .review(null)
-                .reviewImageDtoList(new ArrayList<>())
                 .userMail("john@example.com")
                 .taskerMail("jane@example.com")
                 .build();
