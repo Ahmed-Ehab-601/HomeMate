@@ -1,34 +1,39 @@
-/* Chat Interface Component - Complete Version with Error Handling and Character Limit */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Phone, Image, X, ArrowLeft } from 'lucide-react';
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const ChatInterface = () => {
-  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [chatDetails, setChatDetails] = useState(null);
   const [recipientName, setRecipientName] = useState('');
+  const [recipientOnline, setRecipientOnline] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState(null);
   const [showCallModal, setShowCallModal] = useState(false);
   const [error, setError] = useState(null);
   const [showError, setShowError] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [expandedImage, setExpandedImage] = useState(null); // ADD THIS LINE
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+
   const { getToken, getUserRole, isTasker, user } = useAuth();
   const navigate = useNavigate();
   const { chatId } = useParams();
-  const location = useLocation();
 
-  // Safe JWT payload decoder. Returns null on failure.
+  const MESSAGE_CHAR_LIMIT = 1000;
+  const API_BASE = 'http://localhost:8080/api';
+
+  // Decode JWT
   function decodeJwtPayload(token) {
     if (!token) return null;
     try {
@@ -36,15 +41,11 @@ const ChatInterface = () => {
       if (parts.length < 2) return null;
       const payload = parts[1];
       const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-      // Add padding if necessary
       const pad = b64.length % 4;
       const padded = pad ? b64 + '='.repeat(4 - pad) : b64;
       const decoded = atob(padded);
       const json = decodeURIComponent(
-        decoded
-          .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
+        decoded.split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
       );
       return JSON.parse(json);
     } catch (err) {
@@ -52,23 +53,153 @@ const ChatInterface = () => {
     }
   }
 
-  // Determine the effective role: prefer token role (if present), otherwise fall back.
   const _token = getToken();
   const _decoded = decodeJwtPayload(_token);
   const _tokenRole = _decoded
-    ? (_decoded.role ||
-       (Array.isArray(_decoded.roles) ? _decoded.roles[0] : _decoded.roles) ||
-       (Array.isArray(_decoded.authorities) ? _decoded.authorities[0] : _decoded.authorities) ||
-       _decoded.authority)
+    ? (_decoded.role || (Array.isArray(_decoded.roles) ? _decoded.roles[0] : _decoded.roles) ||
+      (Array.isArray(_decoded.authorities) ? _decoded.authorities[0] : _decoded.authorities) ||
+      _decoded.authority)
     : null;
 
   const userRole = _tokenRole || getUserRole() || user?.role || 'ROLE_USER';
   const isUserRole = userRole === 'ROLE_USER';
-  const isTaskerRole = userRole === 'ROLE_TASKER' || isTasker();
-  const API_BASE = 'http://localhost:8080/api';
-  const MESSAGE_CHAR_LIMIT = 200;
+  const currentUserId = user?.id || _decoded?.sub;
 
-  // Display error message
+  // Determine recipient ID for presence tracking
+  const recipientId = chatDetails
+    ? (isUserRole ? chatDetails.taskerId : chatDetails.userId)
+    : null;
+
+  useEffect(() => {
+    if (recipientId) {
+      console.log('👥 ChatPage identified recipientId:', recipientId);
+    }
+  }, [recipientId]);
+
+  // Initialize WebSocket
+  const handleMessageReceived = useCallback((newMessage) => {
+    setAllMessages(prev => {
+      // Avoid duplicates
+      const exists = prev.some(msg => String(msg.messageId) === String(newMessage.messageId));
+      if (exists) return prev;
+
+      // If we are currently watching this chat, mark incoming messages as read instantly?
+      // Typically we rely on the component mount or visibility.
+      // But for now, just add it.
+
+      // CHECK: If message has image but no data (lightweight notification), fetch full message
+      if (newMessage.imageDto && !newMessage.imageDto.fileData) {
+        console.log('🖼️ Received lightweight image message, fetching details...');
+        // We can either fetch the single message or just reload the latest page
+        // Since we don't have a clean getMessage(id) endpoint ready, let's reload the first page quietly
+        // OR: just let the user see "Loading image..." if we had that UI.
+        // For now, let's trigger a reload of messages to get the data.
+        loadMessages(0, true);
+        return prev; // Don't add the incomplete message yet, wait for reload
+      }
+
+      return [...prev, newMessage];
+    });
+
+    // Scroll to bottom if near bottom?
+    // We have an effect for allMessages changes, so that handles scroll.
+  }, []);
+
+  const handleStatusUpdate = useCallback((update) => {
+    console.log('🔄 ChatPage handleStatusUpdate:', update);
+    setAllMessages(prev => prev.map(msg => {
+      // Handle explicit Read Receipts
+      if (update.type === 'READ_RECEIPT') {
+        // If the receipt says it was read by the OTHER user
+        // Then mark all MY sent messages as SEEN
+        // (Assuming simple logic: if they read one, they read all prior? Or typical "Mark/Seen by X")
+        // The receipt has { chatId, readBy, role }
+
+        // If update.readBy is NOT me, then it means THEY read my messages.
+        if (String(update.readBy) !== String(currentUserId)) {
+          if (msg.isUserSender === isUserRole) { // If I sent this message
+            if (msg.messageStatus !== 'SEEN' && msg.messageStatus !== 'READ') {
+              return { ...msg, messageStatus: 'SEEN' };
+            }
+          }
+        }
+        return msg;
+      }
+
+      if (update.bulkUpdate) {
+        // Bulk update logic (Legacy/Fallback)
+        if (update.status === 'READ') {
+          const isMyMessage = isUserRole ? msg.isUserSender : !msg.isUserSender;
+          if (isMyMessage && msg.messageStatus !== 'READ' && msg.messageStatus !== 'SEEN') {
+            return { ...msg, messageStatus: 'SEEN' };
+          }
+        }
+
+        if (msg.messageStatus === 'SENT' && update.status === 'RECEIVED') {
+          return { ...msg, messageStatus: 'RECEIVED' };
+        }
+        return msg;
+      }
+
+      if (msg.messageId == update.messageId) { // Loose equality
+        // Simple status update
+        console.log(`🔄 Updating message ${msg.messageId} status to ${update.status}`);
+        return {
+          ...msg,
+          messageStatus: update.status
+        };
+      }
+      return msg;
+    }));
+  }, [currentUserId, isUserRole]);
+
+  // Initialize WebSocket with callbacks
+  const {
+    connected,
+    typingUsers,
+    onlineStatus,
+    sendTypingIndicator,
+    sendMessage,
+    markMessageAsReceived,
+    markMessageAsRead,
+    markAllMessagesAsRead
+  } = useWebSocket(chatId, currentUserId, recipientId, userRole.replace('ROLE_', ''), _token, handleMessageReceived, handleStatusUpdate);
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  const [allMessages, setAllMessages] = useState([]);
+
+  // Auto-mark incoming messages as read when viewed
+  useEffect(() => {
+    if (allMessages.length > 0 && connected) {
+      const lastMsg = allMessages[allMessages.length - 1];
+      const isSender = isUserRole ? lastMsg.isUserSender : !lastMsg.isUserSender;
+      const status = lastMsg.messageStatus?.toUpperCase();
+
+      // If messages exist and I am reading them (connected), mark all as read?
+      // Or just the last one?
+      // Let's mark ALL as read when we have messages.
+      if (!isSender && status !== 'READ' && status !== 'SEEN') {
+        markAllMessagesAsRead(_token);
+      }
+    }
+  }, [allMessages, connected, isUserRole, markAllMessagesAsRead, _token]);
+
+  // Sync online status
+  useEffect(() => {
+    if (recipientId && onlineStatus) {
+      const isOnline = !!onlineStatus[recipientId];
+      // Only log if status changed to avoid spam? No, effect only runs on change.
+      console.log(`👤 Recipient ${recipientId} is ${isOnline ? 'ONLINE' : 'OFFLINE'}`);
+      setRecipientOnline(isOnline);
+    }
+  }, [recipientId, onlineStatus]);
+
+  // Display error
   const showErrorMessage = (message) => {
     setError(message);
     setShowError(true);
@@ -78,6 +209,7 @@ const ChatInterface = () => {
     }, 4000);
   };
 
+  // Load initial data
   useEffect(() => {
     if (!chatId) {
       isUserRole ? navigate('/my-tasks') : navigate('/tasker/my-tasks');
@@ -86,106 +218,129 @@ const ChatInterface = () => {
     fetchChat();
     fetchRecipient();
     loadMessages(0, true);
-    
-    markAsRead();
   }, [chatId]);
 
-  const fetchChat = async () => {
+  // Mark online / Join chat presence
+  useEffect(() => {
+    if (connected && chatId) {
+      markAsRead();
+      // If there was a join method, we would call it here.
+      // For now, rely on connection + markAsRead.
+    }
+  }, [connected, chatId]);
+
+
+
+  // Update recipient online status
+  useEffect(() => {
+    if (chatDetails) {
+      const recipientId = isUserRole ? chatDetails.taskerId : chatDetails.userId;
+      setRecipientOnline(onlineStatus[recipientId] === true);
+    }
+  }, [onlineStatus, chatDetails, isUserRole]);
+
+  // Check if someone is typing
+  useEffect(() => {
+    setIsTyping(typingUsers.size > 0);
+    scrollToBottom();
+  }, [typingUsers]);
+
+  // Auto-scroll to bottom for new messages
+  useEffect(() => {
+    if (allMessages.length > 0 && page === 0) {
+      scrollToBottom();
+    }
+  }, [allMessages]);
+
+  // Mark messages as read when chat opens
+  const markAsRead = async () => {
     try {
-      const response = await fetch(`${API_BASE}/chat/getChat/${chatId}`, {
+      const endpoint = isUserRole
+        ? `${API_BASE}/message/${chatId}/mark-read-user`
+        : `${API_BASE}/message/${chatId}/mark-read-tasker`;
+
+      const response = await fetch(endpoint, {
+        method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${getToken()}`
+          'Authorization': `Bearer ${_token}`
         }
       });
 
       if (response.ok) {
-        const chatDetails = await response.json();
-        setChatDetails(chatDetails);
-        console.log('Chat details loaded:', chatDetails);
+        console.log('Messages marked as read via REST endpoint');
       } else {
-        showErrorMessage('Unable to load chat details');
+        console.error('Failed to mark messages as read:', response.status);
+      }
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
+  };
+
+  // Then your useEffect that calls markAsRead
+  useEffect(() => {
+    if (connected && chatId) {
+      markAsRead();
+    }
+  }, [connected, chatId]);
+  const fetchChat = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/chat/getChat/${chatId}`, {
+        headers: { 'Authorization': `Bearer ${_token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setChatDetails(data);
       }
     } catch (error) {
       console.error('Error fetching chat:', error);
-      showErrorMessage('Network error. Please check your connection.');
-    } finally {
-      setLoading(false);
+      showErrorMessage('Network error loading chat');
     }
   };
 
   const fetchRecipient = async () => {
-    try { 
+    try {
       const endpoint = isUserRole
         ? `chat/user/getRecipientName/${chatId}`
         : `chat/tasker/getRecipientName/${chatId}`;
-      
-      console.log('Fetching recipient - Role:', userRole, 'isUserRole:', isUserRole, 'Endpoint:', endpoint);
-      
+
       const response = await fetch(`${API_BASE}/${endpoint}`, {
-        headers: {
-          'Authorization': `Bearer ${getToken()}`
-        }
+        headers: { 'Authorization': `Bearer ${_token}` }
       });
 
       if (response.ok) {
         const name = await response.text();
         setRecipientName(name);
-        console.log('Recipient name loaded:', name);
-      } else {
-        console.error('Failed to fetch recipient name:', response.status);
-        showErrorMessage('Unable to load recipient name');
       }
     } catch (error) {
-      console.error('Error fetching recipient name:', error);
-      showErrorMessage('Network error loading recipient');
+      console.error('Error fetching recipient:', error);
     }
-  };
-
-  useEffect(() => {
-    if (messages.length > 0 && page === 0) {
-      scrollToBottom();
-    }
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const loadMessages = async (pageNum, isInitial = false) => {
     if (loading) return;
-    
     setLoading(true);
+
     try {
-      console.log('Loading messages - Role:', userRole, 'isUserRole:', isUserRole);
       const endpoint = isUserRole
         ? `${API_BASE}/chat/getHistory/user/${chatId}`
         : `${API_BASE}/chat/getHistory/tasker/${chatId}`;
-      
-      console.log(`Loading messages - Page: ${pageNum}, Initial: ${isInitial}`);
-      console.log('Endpoint:', endpoint);
+
       const response = await fetch(`${endpoint}?page=${pageNum}&size=20`, {
-        headers: {
-          'Authorization': `Bearer ${getToken()}`
-        }
+        headers: { 'Authorization': `Bearer ${_token}` }
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Messages loaded:', data);
-        
         const newMessages = data.messages || [];
-        
+
         if (isInitial) {
-          setMessages(newMessages.reverse());
+          setAllMessages(newMessages.reverse());
         } else {
-          setMessages(prev => [...newMessages.reverse(), ...prev]);
+          setAllMessages(prev => [...newMessages.reverse(), ...prev]);
         }
-        
+
         setHasMore(data.hasNext || false);
         setPage(pageNum);
-      } else {
-        console.error('Failed to load messages:', response.status);
-        showErrorMessage('Unable to load messages');
       }
     } catch (error) {
       console.error('Error loading messages:', error);
@@ -195,9 +350,12 @@ const ChatInterface = () => {
     }
   };
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const handleScroll = (e) => {
     const { scrollTop } = e.target;
-    
     if (scrollTop === 0 && hasMore && !loading) {
       const previousScrollHeight = messagesContainerRef.current.scrollHeight;
       loadMessages(page + 1).then(() => {
@@ -207,17 +365,33 @@ const ChatInterface = () => {
     }
   };
 
+  const handleInputChange = (e) => {
+    setInputMessage(e.target.value);
+
+    // Send typing indicator
+    sendTypingIndicator(true);
+
+    // Clear previous timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Stop typing indicator after 2 seconds of no typing
+    typingTimeoutRef.current = setTimeout(() => {
+      sendTypingIndicator(false);
+    }, 2000);
+  };
+
   const handleSendMessage = async () => {
     if (!inputMessage.trim() && !selectedImage) return;
 
-    // Check character limit
     if (inputMessage.trim().length > MESSAGE_CHAR_LIMIT) {
       showErrorMessage(`Message exceeds ${MESSAGE_CHAR_LIMIT} character limit`);
       return;
     }
 
     const messageDto = {
-      chatId: chatId,
+      chatId: parseInt(chatId),
       content: inputMessage.trim(),
       isUserSender: isUserRole,
       messageStatus: 'sent',
@@ -246,21 +420,35 @@ const ChatInterface = () => {
       });
 
       if (response.ok) {
-        const newMessage = {
-          ...messageDto,
-          messageId: Date.now(),
-        };
-        setMessages(prev => [...prev, newMessage]);
+        const savedMessage = await response.json();  // Now expecting JSON
         setInputMessage('');
+        setAllMessages(prev => {
+          const exists = prev.some(msg => String(msg.messageId) === String(savedMessage.messageId));
+          if (exists) return prev;
+          return [...prev, savedMessage];
+        });
+
+        // Broadcast via WebSocket
+        // CRITICAL: Strip the base64 data to prevent WebSocket crash on large payloads
+        const wsMessage = {
+          ...savedMessage,
+          imageDto: savedMessage.imageDto ? {
+            ...savedMessage.imageDto,
+            fileData: null // Send null data, receiver will fetch
+          } : null
+        };
+        sendMessage(wsMessage);
+
         setSelectedImage(null);
         setImagePreview(null);
+        sendTypingIndicator(false);
         scrollToBottom();
       } else {
         showErrorMessage('Failed to send message');
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      showErrorMessage('Network error. Message not sent.');
+      showErrorMessage('Network error');
     }
   };
 
@@ -271,9 +459,7 @@ const ChatInterface = () => {
         : `${API_BASE}/chat/callUser/${chatId}`;
 
       const response = await fetch(endpoint, {
-        headers: {
-          'Authorization': `Bearer ${getToken()}`
-        }
+        headers: { 'Authorization': `Bearer ${_token}` }
       });
 
       if (response.ok) {
@@ -281,36 +467,37 @@ const ChatInterface = () => {
         setPhoneNumber(phone);
         setShowCallModal(true);
       } else {
-        showErrorMessage('Unable to retrieve phone number');
+        // Try to get error message from text or json
+        const errorText = await response.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          showErrorMessage(errorJson.message || errorText || 'Unable to place call');
+        } catch (e) {
+          showErrorMessage(errorText || 'Unable to place call');
+        }
       }
     } catch (error) {
-      console.error('Error getting phone number:', error);
-      showErrorMessage('Network error. Unable to place call.');
+      console.error('Error getting phone:', error);
+      showErrorMessage('Unable to place call');
     }
-  };
-
-  const confirmCall = () => {
-    if (!phoneNumber) return;
-    window.open(`tel:${phoneNumber}`);
-    setShowCallModal(false);
   };
 
   const copyPhoneToClipboard = async () => {
     if (!phoneNumber) return;
     try {
       await navigator.clipboard.writeText(phoneNumber);
-      showErrorMessage('Phone number copied to clipboard!');
+      showErrorMessage('Phone number copied!');
     } catch (err) {
       console.warn('Copy failed', err);
-      showErrorMessage('Failed to copy phone number');
+      showErrorMessage('Failed to copy');
     }
   };
 
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showErrorMessage('Image size must be less than 5MB');
+      if (file.size > 16 * 1024 * 1024) {
+        showErrorMessage('Image size must be less than 16MB');
         return;
       }
 
@@ -324,43 +511,13 @@ const ChatInterface = () => {
         });
         setImagePreview(reader.result);
       };
-      reader.onerror = () => {
-        showErrorMessage('Failed to read image file');
-      };
       reader.readAsDataURL(file);
-    }
-  };
-
-  const markAsRead = async () => {
-    try {
-      const endpoint = isUserRole
-        ? `${API_BASE}/message/${chatId}/mark-read-user`
-        : `${API_BASE}/message/${chatId}/mark-read-tasker`;
-      
-      console.log(endpoint);
-      const response = await fetch(endpoint, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`
-        }
-      });
-      
-      if (response.ok) {
-        setUnreadCount(0);
-        console.log('Messages marked as read');
-      } else {
-        console.error('Failed to mark messages as read:', response.status);
-      }
-    } catch (error) {
-      console.error('Error marking as read:', error);
     }
   };
 
   const getStatusIcon = (status) => {
     const statusLower = status?.toLowerCase();
-    
     switch (statusLower) {
-      case 'read':
       case 'seen':
         return (
           <svg style={{ width: '16px', height: '16px', color: '#3d8ca0ff' }} viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -369,7 +526,6 @@ const ChatInterface = () => {
           </svg>
         );
       case 'received':
-      case 'delivered':
         return (
           <svg style={{ width: '16px', height: '16px', color: '#a7df2d' }} viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -388,19 +544,24 @@ const ChatInterface = () => {
   };
 
   const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
+    // Ensure timestamp is treated as UTC if it doesn't have timezone info
+    let timeStr = timestamp;
+    if (typeof timeStr === 'string' && !timeStr.endsWith('Z') && !timeStr.includes('+')) {
+      timeStr += 'Z';
+    }
+    const date = new Date(timeStr);
     const now = new Date();
     const diffInHours = (now - date) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 24) {
       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     } else {
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
-             date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     }
   };
 
-  // Styles
+  // Styles (keeping the same styles from original)
   const styles = {
     container: {
       position: 'fixed',
@@ -413,7 +574,7 @@ const ChatInterface = () => {
       height: '100vh',
       width: '100vw',
       background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       overflow: 'hidden',
       zIndex: 1000
     },
@@ -426,7 +587,6 @@ const ChatInterface = () => {
       justifyContent: 'space-between',
       borderBottom: '2px solid #a7df2d',
       zIndex: 100,
-      backgroundColor: '#ffffff',
       flexShrink: 0
     },
     contentWrapper: {
@@ -441,17 +601,6 @@ const ChatInterface = () => {
       alignItems: 'center',
       gap: '1rem'
     },
-    backButton: {
-      padding: '0.625rem',
-      background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-      border: '2px solid #e0e0e0',
-      borderRadius: '12px',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    },
     chatInfo: {
       display: 'flex',
       flexDirection: 'column',
@@ -461,8 +610,27 @@ const ChatInterface = () => {
       fontSize: '1.375rem',
       fontWeight: '700',
       color: '#2c3e50',
-      margin: 0,
-      letterSpacing: '-0.5px'
+      margin: 0
+    },
+    statusIndicator: {
+      fontSize: '0.8125rem',
+      color: '#95a5a6',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.375rem'
+    },
+    onlineDot: {
+      width: '8px',
+      height: '8px',
+      borderRadius: '50%',
+      backgroundColor: '#2ecc71',
+      animation: 'pulse 2s infinite'
+    },
+    offlineDot: {
+      width: '8px',
+      height: '8px',
+      borderRadius: '50%',
+      backgroundColor: '#95a5a6'
     },
     callButton: {
       padding: '0.875rem',
@@ -487,27 +655,15 @@ const ChatInterface = () => {
       gap: '1rem',
       minHeight: 0
     },
-    loadingSpinner: {
-      textAlign: 'center',
-      padding: '1rem'
-    },
-    spinner: {
-      display: 'inline-block',
-      width: '2rem',
-      height: '2rem',
-      border: '3px solid #f3f3f3',
-      borderTop: '3px solid #a7df2d',
-      borderRadius: '50%',
-      animation: 'spin 0.8s linear infinite'
-    },
-    noMessages: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100%',
-      color: '#95a5a6',
-      fontSize: '1rem',
-      fontWeight: '500'
+    typingIndicator: {
+      padding: '0.5rem 1rem',
+      background: '#ffffff',
+      borderRadius: '18px',
+      alignSelf: 'flex-start',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+      fontSize: '0.875rem',
+      color: '#7f8c8d',
+      fontStyle: 'italic'
     },
     messageWrapper: {
       display: 'flex'
@@ -517,21 +673,10 @@ const ChatInterface = () => {
       display: 'flex',
       flexDirection: 'column'
     },
-    messageImage: {
-      borderRadius: '16px',
-      marginBottom: '0.5rem',
-      maxWidth: '70%',
-      cursor: 'default', 
-      transition: 'all 0.3s ease',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-    },
-   messageBubble: {
+    messageBubble: {
       borderRadius: '18px',
       padding: '0.875rem 1.125rem',
       wordWrap: 'break-word',
-      wordBreak: 'break-word',
-      overflowWrap: 'break-word',
-      whiteSpace: 'pre-wrap',
       position: 'relative',
       transition: 'all 0.2s ease',
       maxWidth: '100%'
@@ -554,48 +699,47 @@ const ChatInterface = () => {
       margin: 0,
       lineHeight: '1.5'
     },
+    messageImage: {
+      maxWidth: '100%',
+      maxHeight: '300px',
+      borderRadius: '12px',
+      marginTop: '0.5rem',
+      cursor: 'pointer',
+      objectFit: 'cover',
+      display: 'block'
+    },
     messageFooter: {
       display: 'flex',
       alignItems: 'center',
       gap: '0.375rem',
-      marginTop: '0.375rem',
-      padding: '0 0.25rem'
+      marginTop: '0.375rem'
     },
     messageTime: {
       fontSize: '0.75rem',
       color: '#95a5a6',
       fontWeight: '500'
     },
-    imagePreviewContainer: {
-      background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-      borderTop: '2px solid #e9ecef',
-      padding: '1rem 1.5rem'
-    },
-    imagePreviewWrapper: {
-      position: 'relative',
-      display: 'inline-block'
-    },
-    imagePreview: {
-      height: '6rem',
-      borderRadius: '12px',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-      border: '2px solid #e9ecef'
-    },
-    removeImageButton: {
-      position: 'absolute',
-      top: '-0.5rem',
-      right: '-0.5rem',
-      background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
-      color: '#ffffff',
-      border: '2px solid #ffffff',
-      borderRadius: '50%',
-      padding: '0.375rem',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      boxShadow: '0 2px 8px rgba(231, 76, 60, 0.3)',
+    connectionIndicator: {
+      position: 'fixed',
+      bottom: '1rem',
+      right: '1rem',
+      padding: '0.5rem 1rem',
+      borderRadius: '20px',
+      fontSize: '0.8125rem',
+      fontWeight: '500',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      zIndex: 1000,
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      gap: '0.5rem'
+    },
+    connected: {
+      background: '#2ecc71',
+      color: '#ffffff'
+    },
+    disconnected: {
+      background: '#e74c3c',
+      color: '#ffffff'
     },
     inputContainer: {
       background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
@@ -603,6 +747,32 @@ const ChatInterface = () => {
       padding: '1.25rem 1.5rem',
       boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.05)',
       flexShrink: 0
+    },
+    imagePreviewContainer: {
+      position: 'relative',
+      marginBottom: '0.75rem',
+      display: 'inline-block'
+    }, imagePreview: {
+      maxWidth: '150px',
+      maxHeight: '150px',
+      borderRadius: '12px',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+    },
+    removeImageButton: {
+      position: 'absolute',
+      top: '-8px',
+      right: '-8px',
+      background: '#e74c3c',
+      color: '#ffffff',
+      border: 'none',
+      borderRadius: '50%',
+      width: '24px',
+      height: '24px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
     },
     inputWrapper: {
       display: 'flex',
@@ -621,10 +791,7 @@ const ChatInterface = () => {
       border: 'none',
       borderRadius: '16px',
       cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
+      transition: 'all 0.3s ease'
     },
     messageInput: {
       flex: 1,
@@ -635,8 +802,7 @@ const ChatInterface = () => {
       maxHeight: '8rem',
       outline: 'none',
       background: 'transparent',
-      color: '#2c3e50',
-      lineHeight: '1.5'
+      color: '#2c3e50'
     },
     sendButton: {
       padding: '0.875rem',
@@ -646,10 +812,19 @@ const ChatInterface = () => {
       borderRadius: '16px',
       cursor: 'pointer',
       transition: 'all 0.3s ease',
-      boxShadow: '0 4px 12px rgba(167, 223, 45, 0.3)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
+      boxShadow: '0 4px 12px rgba(167, 223, 45, 0.3)'
+    },
+    charCounter: {
+      fontSize: '0.75rem',
+      color: '#95a5a6',
+      padding: '0 0.5rem'
+    },
+    charCounterWarning: {
+      color: '#e67e22'
+    },
+    charCounterError: {
+      color: '#e74c3c',
+      fontWeight: '600'
     },
     modalOverlay: {
       position: 'fixed',
@@ -670,61 +845,56 @@ const ChatInterface = () => {
     },
     modalButtons: {
       display: 'flex',
-      gap: '0.5rem',
-      marginTop: '1rem',
+      gap: '0.75rem',
+      marginTop: '1.5rem',
       justifyContent: 'center'
     },
     modalButtonPrimary: {
-      padding: '0.6rem 1rem',
-      background: '#2e7d32',
-      color: '#fff',
+      padding: '0.625rem 1.25rem',
+      background: 'linear-gradient(135deg, #a7df2d 0%, #95c927 100%)',
+      color: '#ffffff',
       border: 'none',
-      borderRadius: '8px',
-      cursor: 'pointer'
+      borderRadius: '12px',
+      cursor: 'pointer',
+      fontWeight: '600'
     },
     modalButtonSecondary: {
-      padding: '0.6rem 1rem',
-      background: '#f1f1f1',
-      color: '#222',
-      border: 'none',
+      padding: '0.625rem 1.25rem',
+      background: '#f8f9fa',
+      color: '#2c3e50',
+      border: '1px solid #e9ecef',
+      borderRadius: '12px',
+      cursor: 'pointer',
+      fontWeight: '500'
+    }, imageModal: {
+      background: 'transparent',
+      padding: '2rem',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    expandedImage: {
+      maxWidth: '100%',
+      maxHeight: '80vh',
       borderRadius: '8px',
-      cursor: 'pointer'
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
     },
     errorToast: {
       position: 'fixed',
       top: '5rem',
       left: '50%',
       transform: 'translateX(-50%)',
-      background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
-      color: '#ffffff',
-      padding: '1rem 1.5rem',
-      borderRadius: '12px',
-      boxShadow: '0 8px 24px rgba(231, 76, 60, 0.4)',
-      zIndex: 1200,
-      maxWidth: '90%',
-      textAlign: 'center',
-      fontSize: '0.9375rem',
+      backgroundColor: '#e74c3c',
+      color: 'white',
+      padding: '0.75rem 1.5rem',
+      borderRadius: '24px',
+      zIndex: 2000,
+      boxShadow: '0 4px 12px rgba(231, 76, 60, 0.3)',
       fontWeight: '500',
-      transition: 'all 0.3s ease',
-      opacity: 1,
+      fontSize: '0.9375rem',
       animation: 'slideDown 0.3s ease'
-    },
-    errorToastHiding: {
-      opacity: 0,
-      transform: 'translateX(-50%) translateY(-20px)'
-    },
-    charCounter: {
-      fontSize: '0.75rem',
-      color: '#95a5a6',
-      padding: '0 0.5rem',
-      fontWeight: '500'
-    },
-    charCounterWarning: {
-      color: '#e67e22'
-    },
-    charCounterError: {
-      color: '#e74c3c',
-      fontWeight: '600'
     }
   };
 
@@ -732,107 +902,59 @@ const ChatInterface = () => {
     <div style={styles.container}>
       <style>
         {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
           }
-
-          @keyframes slideDown {
-            from {
-              opacity: 0;
-              transform: translateX(-50%) translateY(-20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(-50%) translateY(0);
-            }
-          }
-          
           body {
             overflow: hidden !important;
             position: fixed !important;
             width: 100% !important;
             height: 100% !important;
           }
+          @keyframes slideDown {
+            from { transform: translate(-50%, -100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+          }
         `}
       </style>
-      
+
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
-          <button
-            onClick={() => { isUserRole ? navigate('/my-tasks') : navigate('/tasker/my-tasks'); }}
-            style={styles.backButton}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #a7df2d 0%, #95c927 100%)';
-              e.currentTarget.style.borderColor = '#a7df2d';
-              e.currentTarget.style.transform = 'translateX(-3px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
-              e.currentTarget.style.borderColor = '#e0e0e0';
-              e.currentTarget.style.transform = 'translateX(0)';
-            }}
-          >
-            <ArrowLeft style={{ width: '20px', height: '20px', color: '#666' }} />
-          </button>
           <div style={styles.chatInfo}>
-            <h1 style={styles.chatTitle}>
-              {recipientName || 'Loading...'}
-            </h1>
+            <h1 style={styles.chatTitle}>{recipientName || 'Loading...'}</h1>
+            <div style={styles.statusIndicator}>
+              {/* <div style={recipientOnline ? styles.onlineDot : styles.offlineDot}></div> */}
+              {/* <span>{recipientOnline ? 'Online' : 'Offline'}</span> */}
+              {<span style={styles.offlineDot}></span>}
+              {<span> {'offline'}</span>}
+
+            </div>
           </div>
         </div>
-        <button
-          onClick={handleCall}
-          style={styles.callButton}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
-            e.currentTarget.style.boxShadow = '0 6px 20px rgba(167, 223, 45, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(167, 223, 45, 0.3)';
-          }}
-        >
+        <button onClick={handleCall} style={styles.callButton}>
           <Phone style={{ width: '20px', height: '20px' }} />
         </button>
       </div>
 
       {/* Error Toast */}
       {showError && error && (
-        <div 
-          style={{
-            ...styles.errorToast,
-            ...(showError ? {} : styles.errorToastHiding)
-          }}
-        >
+        <div style={styles.errorToast}>
           {error}
         </div>
       )}
 
-      {/* Content Wrapper */}
+      {/* Messages */}
       <div style={styles.contentWrapper}>
-        {/* Messages Container */}
         <div
           ref={messagesContainerRef}
           onScroll={handleScroll}
           style={styles.messagesContainer}
         >
-          {loading && page > 0 && (
-            <div style={styles.loadingSpinner}>
-              <div style={styles.spinner}></div>
-            </div>
-          )}
-
-          {messages.length === 0 && !loading && (
-            <div style={styles.noMessages}>
-              <p>No messages yet. Start the conversation!</p>
-            </div>
-          )}
-
-          {messages.map((msg, idx) => {
+          {allMessages.map((msg, idx) => {
             const isSender = isUserRole ? msg.isUserSender : !msg.isUserSender;
-            
+
             return (
               <div
                 key={msg.messageId || idx}
@@ -845,67 +967,57 @@ const ChatInterface = () => {
                   ...styles.messageContent,
                   alignItems: isSender ? 'flex-end' : 'flex-start'
                 }}>
-                  {msg.imageDto && (
-                    <img
-                      src={`data:image/${msg.imageDto.fileFormat};base64,${msg.imageDto.fileData}`}
-                      alt={msg.imageDto.fileName}
-                      style={styles.messageImage}
-                    />
-                  )}
                   {msg.content && (
-                    <div
-                      style={{
-                        ...styles.messageBubble,
-                        ...(isSender ? styles.messageBubbleSender : styles.messageBubbleReceiver)
-                      }}
-                    >
+                    <div style={{
+                      ...styles.messageBubble,
+                      ...(isSender ? styles.messageBubbleSender : styles.messageBubbleReceiver)
+                    }}>
                       <p style={styles.messageText}>{msg.content}</p>
                     </div>
+                  )}
+                  {msg.imageDto && msg.imageDto.fileData && (
+                    <img
+                      src={`data:image/${msg.imageDto.fileFormat || 'jpeg'};base64,${msg.imageDto.fileData}`}
+                      alt={msg.imageDto.fileName || 'Image'}
+                      style={styles.messageImage}
+                      onClick={() => setExpandedImage(`data:image/${msg.imageDto.fileFormat || 'jpeg'};base64,${msg.imageDto.fileData}`)}
+                    />
                   )}
                   <div style={{
                     ...styles.messageFooter,
                     justifyContent: isSender ? 'flex-end' : 'flex-start'
                   }}>
-                    <span style={styles.messageTime}>
-                      {formatTime(msg.timestamp)}
-                    </span>
-                    {isSender && getStatusIcon(msg.messageStatus)}
+                    <span style={styles.messageTime}>{formatTime(msg.timestamp)}</span>
+                    {isSender && getStatusIcon(msg.messageStatus)
+                    }
                   </div>
                 </div>
               </div>
             );
           })}
+
+          {/* Typing Indicator */}
+          {isTyping && (
+            <div style={styles.typingIndicator}>
+              {recipientName} is typing...
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Image Preview */}
-        {imagePreview && (
-          <div style={styles.imagePreviewContainer}>
-            <div style={styles.imagePreviewWrapper}>
+        {/* Input */}
+        <div style={styles.inputContainer}>
+          {/* ADD THIS IMAGE PREVIEW */}
+          {imagePreview && (
+            <div style={styles.imagePreviewContainer}>
               <img src={imagePreview} alt="Preview" style={styles.imagePreview} />
-              <button
-                onClick={() => {
-                  setSelectedImage(null);
-                  setImagePreview(null);
-                }}
-                style={styles.removeImageButton}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.1) rotate(90deg)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(231, 76, 60, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(231, 76, 60, 0.3)';
-                }}
-              >
+              <button onClick={removeSelectedImage} style={styles.removeImageButton}>
                 <X style={{ width: '16px', height: '16px' }} />
               </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Input Area */}
-        <div style={styles.inputContainer}>
           <div style={styles.inputWrapper}>
             <input
               type="file"
@@ -914,26 +1026,13 @@ const ChatInterface = () => {
               accept="image/*"
               style={{ display: 'none' }}
             />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              style={styles.imageButton}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #a7df2d 0%, #95c927 100%)';
-                e.currentTarget.style.color = '#ffffff';
-                e.currentTarget.style.transform = 'scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
-                e.currentTarget.style.color = '#7f8c8d';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
-            >
+            <button onClick={() => fileInputRef.current?.click()} style={styles.imageButton}>
               <Image style={{ width: '20px', height: '20px' }} />
             </button>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
               <textarea
                 value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
+                onChange={handleInputChange}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -943,17 +1042,13 @@ const ChatInterface = () => {
                 placeholder="Type a message..."
                 style={styles.messageInput}
                 rows="1"
-                onInput={(e) => {
-                  e.target.style.height = 'auto';
-                  e.target.style.height = e.target.scrollHeight + 'px';
-                }}
               />
               {inputMessage.trim().length > 0 && (
                 <div style={{
                   ...styles.charCounter,
-                  ...(inputMessage.trim().length > MESSAGE_CHAR_LIMIT * 0.9 
-                    ? (inputMessage.trim().length > MESSAGE_CHAR_LIMIT 
-                      ? styles.charCounterError 
+                  ...(inputMessage.trim().length > MESSAGE_CHAR_LIMIT * 0.9
+                    ? (inputMessage.trim().length > MESSAGE_CHAR_LIMIT
+                      ? styles.charCounterError
                       : styles.charCounterWarning)
                     : {})
                 }}>
@@ -966,18 +1061,7 @@ const ChatInterface = () => {
               disabled={!inputMessage.trim() && !selectedImage}
               style={{
                 ...styles.sendButton,
-                opacity: (!inputMessage.trim() && !selectedImage) ? 0.5 : 1,
-                cursor: (!inputMessage.trim() && !selectedImage) ? 'not-allowed' : 'pointer'
-              }}
-              onMouseEnter={(e) => {
-                if (inputMessage.trim() || selectedImage) {
-                  e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(167, 223, 45, 0.4)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(167, 223, 45, 0.3)';
+                opacity: (!inputMessage.trim() && !selectedImage) ? 0.5 : 1
               }}
             >
               <Send style={{ width: '20px', height: '20px' }} />
@@ -991,13 +1075,12 @@ const ChatInterface = () => {
         <div style={styles.modalOverlay} onClick={() => setShowCallModal(false)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3 style={{ margin: 0, fontSize: '1.125rem' }}>Call {recipientName || 'Contact'}</h3>
-            <p style={{ marginTop: '0.5rem', color: '#333', wordBreak: 'break-all' }}>
-              {phoneNumber || 'Loading number...'}
+            <p style={{ marginTop: '0.5rem', color: '#333', wordBreak: 'break-all', fontSize: '1.25rem', fontWeight: 'bold' }}>
+              {phoneNumber || 'Loading...'}
             </p>
-
             <div style={styles.modalButtons}>
-              <button style={styles.modalButtonPrimary} onClick={confirmCall}>
-                Call
+              <button style={styles.modalButtonPrimary} onClick={() => window.open(`tel:${phoneNumber}`)}>
+                Call Now
               </button>
               <button style={styles.modalButtonSecondary} onClick={copyPhoneToClipboard}>
                 Copy
@@ -1009,8 +1092,17 @@ const ChatInterface = () => {
           </div>
         </div>
       )}
+      {/* ADD THIS IMAGE MODAL */}
+      {expandedImage && (
+        <div style={styles.modalOverlay} onClick={() => setExpandedImage(null)}>
+          <div style={styles.imageModal} onClick={(e) => e.stopPropagation()}>
+            <img src={expandedImage} alt="Full size" style={styles.expandedImage} />
+          </div>
+        </div>
+      )}
     </div>
   );
-};
+}
+  ;
 
 export default ChatInterface;

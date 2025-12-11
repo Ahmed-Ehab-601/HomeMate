@@ -12,7 +12,7 @@ public interface IMessageDao <M>{
 
     Long getTotalCount(Long chatId);
 
-    void save(Long chatID, MessageDto messageDto);
+    MessageDto save(Long chatID, MessageDto messageDto);
 
     int getUnreadOnesForUser(Long chatID) throws SQLException;
 

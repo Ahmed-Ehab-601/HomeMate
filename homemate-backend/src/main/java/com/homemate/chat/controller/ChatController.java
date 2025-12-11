@@ -23,7 +23,7 @@ import java.util.List;
 public class ChatController {
     @Autowired
     private ChatService chatService;
-    private MessageService messageService;
+    private final MessageService messageService;
     public ChatController(ChatService chatService,MessageService messageService){
         this.chatService=chatService;
         this.messageService=messageService;
