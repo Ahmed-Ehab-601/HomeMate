@@ -24,18 +24,57 @@ function SignInPage() {
 
     try {
       const response = await login(email, password);
+      // If no JWT is returned, treat as suspended
+      if (!response?.token) {
+        setError(
+          "Your account is suspended. Please contact support for assistance."
+        );
+        return;
+      }
+      // Try to decode JWT payload (simulate what AuthContext does)
+      let jwtPayload = null;
+      try {
+        const parts = response.token.split(".");
+        if (parts.length === 3) {
+          const payload = parts[1];
+          const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+          const pad = base64.length % 4;
+          const padded = pad ? base64 + "=".repeat(4 - pad) : base64;
+          const decoded = atob(padded);
+          const json = decodeURIComponent(
+            decoded
+              .split("")
+              .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+              .join("")
+          );
+          jwtPayload = JSON.parse(json);
+        }
+      } catch (err) {
+        jwtPayload = null;
+      }
+      if (!jwtPayload) {
+        setError(
+          "Your account is suspended. Please contact support for assistance."
+        );
+        return;
+      }
+      // If the server reports the user is suspended, show error and prevent login
+      if (
+        response?.role === "SUSPENDED" ||
+        response?.role === "ROLE_SUSPENDED"
+      ) {
+        setError(
+          "Your account has been suspended. Please contact support for assistance."
+        );
+        return;
+      }
       // Store user data in AuthContext
       loginUser(response);
-
-
-
       // Redirect based on role
       if (response.role === "ROLE_ADMIN") {
         navigate("/admin/users");
       } else if (response.role === "ROLE_TASKER") {
         navigate("/tasker/profile");
-      } else if (response.role === "SUSPENDED"){
-        setError("User is suspended");
       } else {
         navigate("/");
       }
@@ -64,7 +103,9 @@ function SignInPage() {
   };
 
   const handleForgotPasswordSuccess = () => {
-    setSuccessMessage("Password reset successfully! You can now sign in with your new password.");
+    setSuccessMessage(
+      "Password reset successfully! You can now sign in with your new password."
+    );
     setError("");
     setTimeout(() => setSuccessMessage(""), 5000);
   };
