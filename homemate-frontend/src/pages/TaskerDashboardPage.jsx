@@ -178,7 +178,7 @@ function TaskerDashboardPage() {
         setFeedback({
           type: "error",
           message: error?.message ?? "Failed to update first name.",
-        }),
+        })
       )
       .finally(() => setSubmitting(null));
   };
@@ -198,7 +198,7 @@ function TaskerDashboardPage() {
         setFeedback({
           type: "error",
           message: error?.message ?? "Failed to update last name.",
-        }),
+        })
       )
       .finally(() => setSubmitting(null));
   };
@@ -215,7 +215,7 @@ function TaskerDashboardPage() {
         setFeedback({
           type: "error",
           message: error?.message ?? "Failed to update username.",
-        }),
+        })
       )
       .finally(() => setSubmitting(null));
   };
@@ -232,7 +232,7 @@ function TaskerDashboardPage() {
         setFeedback({
           type: "error",
           message: error?.message ?? "Failed to update email.",
-        }),
+        })
       )
       .finally(() => setSubmitting(null));
   };
@@ -249,7 +249,7 @@ function TaskerDashboardPage() {
         setFeedback({
           type: "error",
           message: error?.message ?? "Failed to update phone.",
-        }),
+        })
       )
       .finally(() => setSubmitting(null));
   };
@@ -270,7 +270,7 @@ function TaskerDashboardPage() {
         setFeedback({
           type: "error",
           message: error?.message ?? "Failed to update city.",
-        }),
+        })
       )
       .finally(() => setSubmitting(null));
   };
@@ -291,7 +291,7 @@ function TaskerDashboardPage() {
         setFeedback({
           type: "error",
           message: error?.message ?? "Failed to update service.",
-        }),
+        })
       )
       .finally(() => setSubmitting(null));
   };
@@ -312,7 +312,7 @@ function TaskerDashboardPage() {
         setFeedback({
           type: "error",
           message: error?.message ?? "Failed to update hourly rate.",
-        }),
+        })
       )
       .finally(() => setSubmitting(null));
   };
@@ -329,7 +329,7 @@ function TaskerDashboardPage() {
         setFeedback({
           type: "error",
           message: error?.message ?? "Failed to update availability.",
-        }),
+        })
       )
       .finally(() => setSubmitting(null));
   };
@@ -346,7 +346,7 @@ function TaskerDashboardPage() {
         setFeedback({
           type: "error",
           message: error?.message ?? "Failed to update bio.",
-        }),
+        })
       )
       .finally(() => setSubmitting(null));
   };
@@ -354,7 +354,10 @@ function TaskerDashboardPage() {
   const handlePasswordSubmit = (event) => {
     event.preventDefault();
     if (!forms.oldPassword?.trim()) {
-      setFeedback({ type: "error", message: "Enter your current password first." });
+      setFeedback({
+        type: "error",
+        message: "Enter your current password first.",
+      });
       return;
     }
     if (!forms.newPassword?.trim()) {
@@ -378,7 +381,7 @@ function TaskerDashboardPage() {
         setFeedback({
           type: "error",
           message: error?.message ?? "Failed to update password.",
-        }),
+        })
       )
       .finally(() => setSubmitting(null));
   };
@@ -420,7 +423,9 @@ function TaskerDashboardPage() {
       return <p className="tasker-card__meta">Loading reviews…</p>;
     }
     if (reviewsStatus === "error") {
-      return <p className="tasker-card__meta">Unable to load reviews right now.</p>;
+      return (
+        <p className="tasker-card__meta">Unable to load reviews right now.</p>
+      );
     }
     if (!reviews.length) {
       return <p className="tasker-card__meta">No reviews yet.</p>;
@@ -428,19 +433,62 @@ function TaskerDashboardPage() {
     return (
       <ul className="review-list">
         {reviews.map((review) => (
-          <li key={review.reviewId ?? review.taskId} className="review-item" style={{ listStyle: 'none', padding: '16px 0', borderBottom: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column' }}>
-            <div className="review-item__header" style={{ display: 'flex', alignItems: 'center', marginBottom: '22px', gap: '12px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>{"@" + review.reviewerUsername || "Client"}</span>
-              <span style={{ color: 'var(--text-secondary)' }}>•</span>
-              <span className="tasker-card__meta" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+          <li
+            key={review.reviewId ?? review.taskId}
+            className="review-item"
+            style={{
+              listStyle: "none",
+              padding: "16px 0",
+              borderBottom: "1px solid #f3f4f6",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div
+              className="review-item__header"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                marginBottom: "22px",
+                gap: "12px",
+                flexWrap: "wrap",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "0.95rem",
+                  color: "var(--text-primary)",
+                  fontWeight: "bold",
+                }}
+              >
+                {"@" + review.reviewerUsername || "Client"}
+              </span>
+              <span style={{ color: "var(--text-secondary)" }}>•</span>
+              <span
+                className="tasker-card__meta"
+                style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}
+              >
                 {review.time ? new Date(review.time).toLocaleDateString() : ""}
               </span>
-              <span style={{ color: 'var(--text-secondary)' }}>•</span>
-              <span style={{ color: '#fbbf24', fontSize: '0.95rem', fontWeight: 'bold' }}>
+              <span style={{ color: "var(--text-secondary)" }}>•</span>
+              <span
+                style={{
+                  color: "#fbbf24",
+                  fontSize: "0.95rem",
+                  fontWeight: "bold",
+                }}
+              >
                 {review.rate?.toFixed ? review.rate.toFixed(1) : review.rate}★
               </span>
             </div>
-            <p style={{ margin: '0', fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+            <p
+              style={{
+                margin: "0",
+                fontSize: "0.95rem",
+                color: "var(--text-primary)",
+                lineHeight: "1.5",
+              }}
+            >
               {review.text ?? "No review text provided."}
             </p>
             {review.reviewImages && review.reviewImages.length > 0 && (
@@ -448,7 +496,9 @@ function TaskerDashboardPage() {
                 {review.reviewImages.map((img, index) => {
                   const imgSrc = img.imgFile.startsWith("data:")
                     ? img.imgFile
-                    : `data:image/${img.format || "jpeg"};base64,${img.imgFile}`;
+                    : `data:image/${img.format || "jpeg"};base64,${
+                        img.imgFile
+                      }`;
                   return (
                     <img
                       key={img.imgId ?? index}
@@ -467,20 +517,20 @@ function TaskerDashboardPage() {
     );
   };
 
-// Updated handleTaskerLogout function for TaskerDashboardPage.jsx
-// Replace the existing handleTaskerLogout function with this:
+  // Updated handleTaskerLogout function for TaskerDashboardPage.jsx
+  // Replace the existing handleTaskerLogout function with this:
 
-const handleTaskerLogout = async () => {
-  try {
-    // The logout function in AuthContext now handles setting offline status
-    await logout();
-    navigate("/");
-  } catch (error) {
-    console.error("Logout error:", error);
-    // Still navigate even if there's an error
-    navigate("/");
-  }
-};
+  const handleTaskerLogout = async () => {
+    try {
+      // The logout function in AuthContext now handles setting offline status
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Still navigate even if there's an error
+      navigate("/");
+    }
+  };
 
   return (
     <main className="page page--wide">
@@ -489,11 +539,18 @@ const handleTaskerLogout = async () => {
           <p className="section-kicker">Tasker workspace</p>
           <h1 className="section-heading">Manage your HomeMate profile</h1>
           <p className="tasker-card__meta">
-            Keep your availability, service details, and contact information up to date so clients can
-            find you easily.
+            Keep your availability, service details, and contact information up
+            to date so clients can find you easily.
           </p>
-          <div className="form-actions" style={{ justifyContent: "flex-start" }}>
-            <button type="button" className="btn btn-secondary" onClick={handleTaskerLogout}>
+          <div
+            className="form-actions"
+            style={{ justifyContent: "flex-start" }}
+          >
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleTaskerLogout}
+            >
               Sign out
             </button>
           </div>
@@ -501,17 +558,25 @@ const handleTaskerLogout = async () => {
 
         {feedback && (
           <div
-            className={`alert-banner ${feedback.type === "error" ? "error" : "success"} profile-alert`}
+            className={`alert-banner ${
+              feedback.type === "error" ? "error" : "success"
+            } profile-alert`}
           >
             <span>{feedback.message}</span>
-            <button type="button" className="alert-dismiss" onClick={dismissFeedback}>
+            <button
+              type="button"
+              className="alert-dismiss"
+              onClick={dismissFeedback}
+            >
               ×
             </button>
           </div>
         )}
 
         <section className="card profile-panel">
-          {profileStatus === "loading" && <p className="tasker-card__meta">Loading profile…</p>}
+          {profileStatus === "loading" && (
+            <p className="tasker-card__meta">Loading profile…</p>
+          )}
           {profileStatus === "error" && (
             <div className="alert alert-error">
               <div>
@@ -519,7 +584,11 @@ const handleTaskerLogout = async () => {
                 {profileError?.message ?? "Please refresh and try again."}
               </div>
               <div className="form-actions" style={{ marginTop: "8px" }}>
-                <button type="button" className="btn btn-primary" onClick={loadProfile}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={loadProfile}
+                >
                   Retry
                 </button>
               </div>
@@ -537,10 +606,15 @@ const handleTaskerLogout = async () => {
                 </div>
                 <div>
                   <p className="section-kicker">Profile overview</p>
-                  <h2 className="section-heading" style={{ marginBottom: "8px" }}>
+                  <h2
+                    className="section-heading"
+                    style={{ marginBottom: "8px" }}
+                  >
                     {fullName || "Tasker"}
                   </h2>
-                  <p className="tasker-card__meta">Username: {profile.username}</p>
+                  <p className="tasker-card__meta">
+                    Username: {profile.username}
+                  </p>
                 </div>
               </div>
               <dl className="profile-summary__grid">
@@ -558,7 +632,9 @@ const handleTaskerLogout = async () => {
                 </div>
                 <div>
                   <dt>Rating</dt>
-                  <dd>{profile.rating ? `${profile.rating.toFixed(1)} ★` : "—"}</dd>
+                  <dd>
+                    {profile.rating ? `${profile.rating.toFixed(1)} ★` : "—"}
+                  </dd>
                 </div>
                 <div>
                   <dt>Hourly rate</dt>
@@ -574,11 +650,20 @@ const handleTaskerLogout = async () => {
                 </div>
                 <div>
                   <dt>Total earning</dt>
-                  <dd>{profile.totalEarning ? `$${profile.totalEarning.toFixed(2)}` : "—"}</dd>
+                  <dd>
+                    {profile.totalEarning
+                      ? `$${profile.totalEarning.toFixed(2)}`
+                      : "—"}
+                  </dd>
                 </div>
                 <div>
                   <dt>Worked hours</dt>
-                  <dd>{profile.workedHours ?? "—"}</dd>
+                  <dd>
+                    {profile.workedHours !== undefined &&
+                    profile.workedHours !== null
+                      ? profile.workedHours.toFixed(2)
+                      : "—"}
+                  </dd>
                 </div>
               </dl>
             </div>
@@ -597,11 +682,17 @@ const handleTaskerLogout = async () => {
                   id="first-name-input"
                   className="input"
                   value={forms.firstName}
-                  onChange={(event) => handleChange("firstName", event.target.value)}
+                  onChange={(event) =>
+                    handleChange("firstName", event.target.value)
+                  }
                 />
               </div>
               <div className="form-actions">
-                <button type="submit" className="btn btn-primary" disabled={submitting === "firstName"}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={submitting === "firstName"}
+                >
                   {submitting === "firstName" ? "Saving…" : "Save first name"}
                 </button>
               </div>
@@ -614,11 +705,17 @@ const handleTaskerLogout = async () => {
                   id="last-name-input"
                   className="input"
                   value={forms.lastName}
-                  onChange={(event) => handleChange("lastName", event.target.value)}
+                  onChange={(event) =>
+                    handleChange("lastName", event.target.value)
+                  }
                 />
               </div>
               <div className="form-actions">
-                <button type="submit" className="btn btn-primary" disabled={submitting === "lastName"}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={submitting === "lastName"}
+                >
                   {submitting === "lastName" ? "Saving…" : "Save last name"}
                 </button>
               </div>
@@ -631,7 +728,9 @@ const handleTaskerLogout = async () => {
                   id="username-input"
                   className="input"
                   value={forms.username}
-                  onChange={(event) => handleChange("username", event.target.value)}
+                  onChange={(event) =>
+                    handleChange("username", event.target.value)
+                  }
                 />
               </div>
               <div className="form-actions">
@@ -653,7 +752,9 @@ const handleTaskerLogout = async () => {
                   type="email"
                   className="input"
                   value={forms.email}
-                  onChange={(event) => handleChange("email", event.target.value)}
+                  onChange={(event) =>
+                    handleChange("email", event.target.value)
+                  }
                 />
               </div>
               <div className="form-actions">
@@ -674,7 +775,9 @@ const handleTaskerLogout = async () => {
                   id="phone-input"
                   className="input"
                   value={forms.phone}
-                  onChange={(event) => handleChange("phone", event.target.value)}
+                  onChange={(event) =>
+                    handleChange("phone", event.target.value)
+                  }
                 />
               </div>
               <div className="form-actions">
@@ -722,7 +825,9 @@ const handleTaskerLogout = async () => {
                   id="service-select"
                   className="input"
                   value={forms.serviceId}
-                  onChange={(event) => handleChange("serviceId", event.target.value)}
+                  onChange={(event) =>
+                    handleChange("serviceId", event.target.value)
+                  }
                 >
                   <option value="">Select a service</option>
                   {services.map((service) => (
@@ -737,7 +842,11 @@ const handleTaskerLogout = async () => {
                 {servicesStatus === "error" && (
                   <p className="tasker-card__meta">
                     We couldn't load services.{" "}
-                    <button type="button" className="link-button" onClick={loadServices}>
+                    <button
+                      type="button"
+                      className="link-button"
+                      onClick={loadServices}
+                    >
                       Retry
                     </button>
                   </p>
@@ -762,7 +871,9 @@ const handleTaskerLogout = async () => {
                   type="number"
                   className="input"
                   value={forms.hourRate}
-                  onChange={(event) => handleChange("hourRate", event.target.value)}
+                  onChange={(event) =>
+                    handleChange("hourRate", event.target.value)
+                  }
                 />
               </div>
               <div className="form-actions">
@@ -783,7 +894,9 @@ const handleTaskerLogout = async () => {
                   id="availability-input"
                   className="input"
                   value={forms.availability || ""}
-                  onChange={(event) => handleChange("availability", event.target.value)}
+                  onChange={(event) =>
+                    handleChange("availability", event.target.value)
+                  }
                 >
                   <option value="">—</option>
                   <option value="AVAILABLE">Available</option>
@@ -796,7 +909,9 @@ const handleTaskerLogout = async () => {
                   className="btn btn-primary"
                   disabled={submitting === "availability"}
                 >
-                  {submitting === "availability" ? "Saving…" : "Save availability"}
+                  {submitting === "availability"
+                    ? "Saving…"
+                    : "Save availability"}
                 </button>
               </div>
             </form>
@@ -837,7 +952,9 @@ const handleTaskerLogout = async () => {
                   type="password"
                   className="input"
                   value={forms.oldPassword}
-                  onChange={(event) => handleChange("oldPassword", event.target.value)}
+                  onChange={(event) =>
+                    handleChange("oldPassword", event.target.value)
+                  }
                 />
               </div>
               <div className="form-field">
@@ -847,7 +964,9 @@ const handleTaskerLogout = async () => {
                   type="password"
                   className="input"
                   value={forms.newPassword}
-                  onChange={(event) => handleChange("newPassword", event.target.value)}
+                  onChange={(event) =>
+                    handleChange("newPassword", event.target.value)
+                  }
                 />
               </div>
               <div className="form-actions">
@@ -896,7 +1015,9 @@ const handleTaskerLogout = async () => {
                 type="button"
                 className="btn btn-ghost"
                 disabled={reviewsMeta.currentPage <= 1}
-                onClick={() => loadReviews(Math.max(1, reviewsMeta.currentPage - 1))}
+                onClick={() =>
+                  loadReviews(Math.max(1, reviewsMeta.currentPage - 1))
+                }
               >
                 Previous
               </button>
@@ -908,7 +1029,7 @@ const handleTaskerLogout = async () => {
                   loadReviews(
                     reviewsMeta.currentPage >= reviewsMeta.totalPages
                       ? reviewsMeta.currentPage
-                      : reviewsMeta.currentPage + 1,
+                      : reviewsMeta.currentPage + 1
                   )
                 }
               >
@@ -918,14 +1039,20 @@ const handleTaskerLogout = async () => {
           </div>
           {renderReviews()}
           <p className="tasker-card__meta" style={{ marginTop: "16px" }}>
-            Page {reviewsMeta.currentPage} of {reviewsMeta.totalPages} • {reviewsMeta.totalReviews} total
-            reviews
+            Page {reviewsMeta.currentPage} of {reviewsMeta.totalPages} •{" "}
+            {reviewsMeta.totalReviews} total reviews
           </p>
         </section>
       </div>
       {expandedImage && (
-        <div className="image-modal-overlay" onClick={() => setExpandedImage(null)}>
-          <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="image-modal-overlay"
+          onClick={() => setExpandedImage(null)}
+        >
+          <div
+            className="image-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               className="image-modal-close"
@@ -933,7 +1060,11 @@ const handleTaskerLogout = async () => {
             >
               ×
             </button>
-            <img src={expandedImage} alt="Expanded view" className="image-modal-img" />
+            <img
+              src={expandedImage}
+              alt="Expanded view"
+              className="image-modal-img"
+            />
           </div>
         </div>
       )}

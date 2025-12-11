@@ -393,11 +393,6 @@ const handleLogout = async () => {
           <p className="tasker-card__meta">
             Keep your personal information and service addresses up to date.
           </p>
-          <div className="form-actions" style={{ justifyContent: "flex-start" }}>
-            <button type="button" className="btn btn-secondary" onClick={handleLogout}>
-              Sign
-            </button>
-          </div>
         </header>
 
         {feedback && (
