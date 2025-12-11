@@ -945,20 +945,6 @@ const ChatInterface = () => {
         </div>
       )}
 
-      {/* Connection Status */}
-      <div style={{
-        ...styles.connectionIndicator,
-        ...(connected ? styles.connected : styles.disconnected)
-      }}>
-        <div style={{
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          backgroundColor: '#ffffff'
-        }}></div>
-        {connected ? 'Connected' : 'Connecting...'}
-      </div>
-
       {/* Messages */}
       <div style={styles.contentWrapper}>
         <div
