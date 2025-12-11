@@ -2,7 +2,8 @@ package com.homemate. taskmanagementtests;
 
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 import com.homemate.taskmanagement.model.Status;
-import com.homemate.taskmanagement.service.*;
+import com.homemate.taskmanagement.service.state.*;
+import com.homemate.taskmanagement.service.stateFactory.StatusFactory;
 import org.junit.jupiter. api.Test;
 import org. junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

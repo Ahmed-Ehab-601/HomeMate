@@ -1,12 +1,9 @@
-package com.homemate.taskmanagement.service;
+package com.homemate.taskmanagement.service.state;
 
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 
 
 public class Accepted implements TaskState{
-    @Override
-    public void sendEmail() {
-    }
     @Override
     public void updateWorkedHours() {
     }

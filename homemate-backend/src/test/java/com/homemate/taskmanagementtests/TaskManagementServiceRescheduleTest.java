@@ -2,14 +2,16 @@ package com.homemate.taskmanagementtests;
 
 
 import com.homemate.notification.service.imp.EmailServiceImp;
-import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
+import com.homemate.taskmanagement.dao.TaskRequestDao;
+import com.homemate.taskmanagement.dao.TaskRescheduleDao;
+import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.dto.RescheduleRequestDto;
 import com.homemate.taskmanagement.dto.RescheduleResponseDto;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.exceptions.BadRescheduleException;
 import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
 import com.homemate.taskmanagement.model.Status;
-import com.homemate.taskmanagement.service.TaskManagementService;
+import com.homemate.taskmanagement.service.TaskRescheduleService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,7 +30,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class TaskManagementServiceRescheduleTest {
     @Mock
-    private TaskDaoImpl taskDao;
+    private TaskRescheduleDao taskDao;
+    @Mock
+    private TaskStatusDao taskStatusDao;
+    @Mock
+    private TaskRequestDao taskRequestDao;
     @Mock
     private SimpMessagingTemplate simpMessagingTemplate;
 
@@ -36,7 +42,7 @@ public class TaskManagementServiceRescheduleTest {
     private EmailServiceImp emailServiceImp;
 
     @InjectMocks
-    private TaskManagementService taskManagementService;
+    private TaskRescheduleService taskRescheduleService;
 
     @Test
     void testValidReschedule() {
@@ -51,13 +57,13 @@ public class TaskManagementServiceRescheduleTest {
         taskDto.setUserMail("user@example.com");
         taskDto.setTaskerMail("tasker@example.com");
 
-        when(taskDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
+        when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
         when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
-        when(taskDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
+        when(taskStatusDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
         when(taskDao.updateTaskStartDate(taskID, futureDate)).thenReturn(true);
-        when(taskDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
+        when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
 
-        RescheduleResponseDto response = taskManagementService.rescheduleTask(taskID, requestDto, requesterID);
+        RescheduleResponseDto response = taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID);
 
         assertEquals(taskID, response.getTaskID());
         assertEquals(futureDate, response.getNewStartDate());
@@ -76,13 +82,12 @@ public class TaskManagementServiceRescheduleTest {
         taskDto.setUserMail("user@example.com");
         taskDto.setTaskerMail("tasker@example.com");
 
-        when(taskDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
+        when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
         when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
-        when(taskDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
-        when(taskDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
+        when(taskStatusDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
 
         assertThrows(BadRescheduleException.class, () ->
-                taskManagementService.rescheduleTask(taskID, requestDto, requesterID)
+                taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID)
         );
     }
 
@@ -97,14 +102,14 @@ public class TaskManagementServiceRescheduleTest {
         taskDto.setUserMail("user@example.com");
         taskDto.setTaskerMail("tasker@example.com");
 
-        when(taskDao.getTaskerID(taskID)).thenReturn(Optional.of(99L));
+        when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(99L));
         when(taskDao.getUserID(taskID)).thenReturn(Optional.of(100L));
-        when(taskDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
+
 
         long unauthorizedID = 50L;
 
         assertThrows(BadRescheduleException.class, () ->
-                taskManagementService.rescheduleTask(taskID, requestDto, unauthorizedID)
+                taskRescheduleService.rescheduleTask(taskID, requestDto, unauthorizedID)
         );
     }
 
@@ -116,10 +121,10 @@ public class TaskManagementServiceRescheduleTest {
         RescheduleRequestDto requestDto = new RescheduleRequestDto();
         requestDto.setNewStartDate(LocalDateTime.now().plusDays(1));
 
-        when(taskDao.getTaskerID(taskID)).thenReturn(Optional.empty());
+        when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.empty());
 
         assertThrows(TaskNotFoundException.class, () ->
-                taskManagementService.rescheduleTask(taskID, requestDto, requesterID)
+                taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID)
         );
     }
 
@@ -137,14 +142,14 @@ public class TaskManagementServiceRescheduleTest {
         taskDto.setUserMail("user@example.com");
         taskDto.setTaskerMail("tasker@example.com");
 
-        when(taskDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
+        when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
         when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
-        when(taskDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
+        when(taskStatusDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
         when(taskDao.updateTaskStartDate(taskID, futureDate)).thenReturn(true);
-        when(taskDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
+        when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
 
         // Act
-        taskManagementService.rescheduleTask(taskID, requestDto, requesterID);
+        taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID);
 
         // Assert: email sent
         verify(emailServiceImp).sendUserEmail(any());
@@ -165,18 +170,18 @@ public class TaskManagementServiceRescheduleTest {
         taskDto.setUserMail("user@example.com");
         taskDto.setTaskerMail("tasker@example.com");
 
-        when(taskDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
+        when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
         when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
-        when(taskDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
+        when(taskStatusDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
         when(taskDao.updateTaskStartDate(taskID, futureDate)).thenReturn(true);
-        when(taskDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
+        when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
 
         // Simulate email failure
         doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendUserEmail(any());
 
         // Act & Assert
         assertThrows(RuntimeException.class, () ->
-                taskManagementService.rescheduleTask(taskID, requestDto, requesterID)
+                taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID)
         );
     }
 

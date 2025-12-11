@@ -5,32 +5,39 @@ import com.homemate.TaskerProfile.DTO.ReviewDTO;
 import com.homemate.security.model.AppUserDetails;
 import com.homemate.taskmanagement.dto.*;
 import com.homemate.taskmanagement.model.Status;
-import com.homemate.taskmanagement.service.TaskManagementService;
+import com.homemate.taskmanagement.service.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
 @CrossOrigin("*")
-public class TaskManagementController {
-    private final TaskManagementService taskManagementService;
 
-    public TaskManagementController(TaskManagementService taskManagementService) {
-        this.taskManagementService = taskManagementService;
+public class TaskManagementController {
+    private final TaskRequestService taskRequestService;
+    private final GetTaskService getTaskService;
+    private final TaskStatusService taskStatusService;
+    private final TaskRescheduleService taskRescheduleService;
+    private final TaskViewService taskViewService;
+
+    public TaskManagementController(TaskRequestService taskRequestService, GetTaskService getTaskService, TaskStatusService taskStatusService, TaskRescheduleService taskRescheduleService, TaskViewService taskViewService) {
+        this.taskRequestService = taskRequestService;
+        this.getTaskService = getTaskService;
+        this.taskStatusService = taskStatusService;
+        this.taskRescheduleService = taskRescheduleService;
+        this.taskViewService = taskViewService;
     }
+
 
     @PostMapping("/user/task/request")
     @PreAuthorize("hasRole('USER')")
@@ -39,7 +46,7 @@ public class TaskManagementController {
             @AuthenticationPrincipal AppUserDetails userDetails
     ) {
         requestDto.setUserID(userDetails.getId());
-        Optional<TaskDto> taskDto = taskManagementService.requestTask(requestDto);
+        Optional<TaskDto> taskDto = taskRequestService.requestTask(requestDto);
         if(taskDto.isPresent()) return new ResponseEntity<>(taskDto.get(),HttpStatus.CREATED);
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
@@ -52,7 +59,7 @@ public class TaskManagementController {
             @PathVariable("pageSize")@Min(1) @Max(100) int pageSize,
             @AuthenticationPrincipal AppUserDetails userDetails
     ){
-        Optional<PaginatedResponse> response = taskManagementService.getUserTasks(userDetails.getId(),statusDto,page,pageSize);
+        Optional<PaginatedResponse> response = getTaskService.getUserTasks(userDetails.getId(),statusDto,page,pageSize);
         if(response.isEmpty()){
             return new ResponseEntity <> (HttpEntity.EMPTY,HttpStatus.OK);
         }else{
@@ -69,7 +76,7 @@ public class TaskManagementController {
             @AuthenticationPrincipal AppUserDetails userDetails
     ){
 
-        Optional<PaginatedResponse> response = taskManagementService.getTaskerTasks(userDetails.getId(),statusDto,page,pageSize);
+        Optional<PaginatedResponse> response = getTaskService.getTaskerTasks(userDetails.getId(),statusDto,page,pageSize);
         if(response.isEmpty()){
             return new ResponseEntity <> (HttpEntity.EMPTY,HttpStatus.OK);
         }else{
@@ -79,13 +86,13 @@ public class TaskManagementController {
 
     @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/accept")
     public ResponseEntity<?> acceptTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
-        TaskRequestResponseDto responseDto = taskManagementService.acceptOrReject(taskID,userDetails.getId(), Status.Accepted);
+        TaskRequestResponseDto responseDto = taskStatusService.acceptOrReject(taskID,userDetails.getId(), Status.Accepted);
         return new ResponseEntity<>(responseDto,HttpStatus.OK);
 
     }
     @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/reject")
     public ResponseEntity<?> rejectTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
-        TaskRequestResponseDto responseDto = taskManagementService.acceptOrReject(taskID,userDetails.getId(), Status.Rejected);
+        TaskRequestResponseDto responseDto = taskStatusService.acceptOrReject(taskID,userDetails.getId(), Status.Rejected);
         return new ResponseEntity<>(responseDto,HttpStatus.OK);
 
     }
@@ -96,23 +103,23 @@ public class TaskManagementController {
             @Valid @RequestBody RescheduleRequestDto requestDto,
             @AuthenticationPrincipal AppUserDetails user
     ) {
-        RescheduleResponseDto response = taskManagementService.rescheduleTask(taskId, requestDto, user.getId());
+        RescheduleResponseDto response = taskRescheduleService.rescheduleTask(taskId, requestDto, user.getId());
         return ResponseEntity.ok(response);
     }
     @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/start")
     public ResponseEntity<?> startTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
-        TaskDto taskDto = taskManagementService.updateTaskStatus(taskID,userDetails.getId(), Status.InProgress);
+        TaskDto taskDto = taskStatusService.updateTaskStatus(taskID,userDetails.getId(), Status.InProgress);
         return new ResponseEntity<>(taskDto,HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/suspend")
     public ResponseEntity<?> suspendTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
-        TaskDto taskDto = taskManagementService.updateTaskStatus(taskID,userDetails.getId(), Status.Suspended);
+        TaskDto taskDto = taskStatusService.updateTaskStatus(taskID,userDetails.getId(), Status.Suspended);
         return new ResponseEntity<>(taskDto,HttpStatus.OK);
     }
     @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/complete")
     public ResponseEntity<?> completeTask(@PathVariable @NotNull Long taskID, @AuthenticationPrincipal AppUserDetails userDetails){
-        TaskDto taskDto = taskManagementService.updateTaskStatus(taskID,userDetails.getId(), Status.Done);
+        TaskDto taskDto = taskStatusService.updateTaskStatus(taskID,userDetails.getId(), Status.Done);
         return new ResponseEntity<>(taskDto,HttpStatus.OK);
     }
 
@@ -122,7 +129,7 @@ public class TaskManagementController {
             @PathVariable @Valid Long taskId,
             @AuthenticationPrincipal AppUserDetails user
     ){
-        Optional<TaskDto> response = taskManagementService.getTaskDetails(taskId,user.getId());
+        Optional<TaskDto> response = taskViewService.getTaskDetails(taskId,user.getId());
         return ResponseEntity.ok(response);
     }
 
@@ -133,7 +140,7 @@ public class TaskManagementController {
             @PathVariable Long taskId,
             @AuthenticationPrincipal AppUserDetails user
     ){
-        Optional<ReviewDTO> reviewDTO = taskManagementService.getReviewByTaskId(taskId, user.getId());
+        Optional<ReviewDTO> reviewDTO = taskViewService.getReviewByTaskId(taskId, user.getId());
         return ResponseEntity.ok(reviewDTO);
     }
 
