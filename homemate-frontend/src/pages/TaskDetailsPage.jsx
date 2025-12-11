@@ -13,6 +13,7 @@ import { getTaskReview } from "../api/taskManagementApi";
 import { deleteReview } from "../api/reviewsApi";
 import { getTaskerById } from "../api/taskerProfileApi";
 import TaskerCard from "../components/TaskerCard";
+import services from "../data/services";
 import Modal from "../components/Modal";
 import { websocketService } from "../services/websocketService";
 import "../styles/TaskDetails.css";
@@ -460,7 +461,9 @@ function TaskDetailsPage() {
       setReview(null);
     } catch (error) {
       setShowDeleteReviewModal(false);
-      showErrorBanner(`✗ Failed to delete review. ${error.message || "Please try again."}`);
+      showErrorBanner(
+        `✗ Failed to delete review. ${error.message || "Please try again."}`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -751,8 +754,9 @@ function TaskDetailsPage() {
                               imgSrc = normalizeImage(img.imgFile);
                             } else {
                               // Assume it's base64 string
-                              imgSrc = `data:image/${img.format || "jpeg"
-                                };base64,${img.imgFile}`;
+                              imgSrc = `data:image/${
+                                img.format || "jpeg"
+                              };base64,${img.imgFile}`;
                             }
                           }
 
@@ -833,7 +837,12 @@ function TaskDetailsPage() {
               <h2 className="section-heading">Your Tasker</h2>
               <TaskerCard
                 tasker={tasker}
-                service={task.serviceName}
+                service={
+                  services.find((s) => s.serviceName === task.serviceName) || {
+                    serviceName: task.serviceName,
+                    serviceId: task.serviceId || task.serviceID || null,
+                  }
+                }
                 hideRequestButton={true}
               />
             </div>
@@ -931,7 +940,7 @@ function TaskDetailsPage() {
               >
                 <span className="btn-icon">🛡️</span> Report Issue
               </Link>
-                            {normalizedStatus === "DONE" && !isTasker && !review && (
+              {normalizedStatus === "DONE" && !isTasker && !review && (
                 <Link
                   to={`/submit-review/${task.taskID}`}
                   className="btn btn-review"

@@ -115,22 +115,27 @@ function VerifyOtpPage() {
     setIsLoading(true);
 
     try {
-      await sendOtp(email, flowType);
-      setSuccessMessage("New OTP code sent to your email!");
-      setCanResend(false);
-      setResendTimer(60);
+      const result = await sendOtp(email, flowType);
+      
+      if (result.success) {
+        setSuccessMessage("New OTP code sent to your email!");
+        setCanResend(false);
+        setResendTimer(60);
 
-      // Restart timer
-      const timer = setInterval(() => {
-        setResendTimer((prev) => {
-          if (prev <= 1) {
-            setCanResend(true);
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+        // Restart timer
+        const timer = setInterval(() => {
+          setResendTimer((prev) => {
+            if (prev <= 1) {
+              setCanResend(true);
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      } else {
+        setError(result.message || "Failed to resend OTP");
+      }
     } catch (err) {
       setError(err.message || "Failed to resend OTP");
     } finally {

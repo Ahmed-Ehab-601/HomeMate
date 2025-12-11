@@ -26,16 +26,20 @@ function EnterEmailPage() {
     setIsLoading(true);
 
     try {
-      await sendOtp(email, flowType);
+      const result = await sendOtp(email, flowType);
       
-      // Navigate to OTP verification page with email and flow type
-      navigate("/verify-otp", {
-        state: {
-          email: email,
-          flowType: flowType,
-          userType: userType,
-        },
-      });
+      if (result.success) {
+        // Navigate to OTP verification page with email and flow type
+        navigate("/verify-otp", {
+          state: {
+            email: email,
+            flowType: flowType,
+            userType: userType,
+          },
+        });
+      } else {
+        setError(result.message || "Failed to send OTP. Please try again.");
+      }
     } catch (err) {
       setError(err.message || "Failed to send OTP. Please try again.");
     } finally {

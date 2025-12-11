@@ -71,7 +71,7 @@ public class EmailServiceImp implements EmailService {
             EmailRequest.EmailType emailType = emailRequest.getEmailType();
 
             return switch (emailType) {
-                case TASK_ACCEPTED, TASK_STATUS, TASK_REJECTED ->
+                case  TASK_STATUS ->
                         sendNotification(
                                 emailTemplate.buildEmailSubject(emailRequest),
                                 emailTemplate.buildTaskStatusChangedBody(emailRequest.getTask()),

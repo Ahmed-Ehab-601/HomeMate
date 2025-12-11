@@ -15,8 +15,6 @@ public class EmailRequest {
     private EmailType emailType;
     private String recipientEmail;
     public enum EmailType {
-        TASK_ACCEPTED,
-        TASK_REJECTED,
         TASK_RESCHEDULE,
         TASK_STATUS,
         TASK_REQUEST,

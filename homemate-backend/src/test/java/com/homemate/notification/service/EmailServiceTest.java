@@ -6,6 +6,7 @@ import com.homemate.notification.domains.exception.EmailTemplateException;
 import com.homemate.notification.service.imp.EmailServiceImp;
 import com.homemate.notification.service.utils.EmailTemplate;
 import com.homemate.taskmanagement.dto.TaskDto;
+import com.homemate.taskmanagement.model.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,10 +42,10 @@ class EmailServiceTest {
 
     @Test
     void testSendUserEmailWithTaskAcceptedType() throws ExecutionException, InterruptedException {
-        TaskDto task =TaskDto.builder().taskID(1L).build();
+        TaskDto task =TaskDto.builder().taskID(1L).status(Status.Rejected).build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_ACCEPTED)
+                .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
                 .build();
 
@@ -60,10 +61,10 @@ class EmailServiceTest {
 
     @Test
     void testSendUserEmailWithTaskRejectedType() throws ExecutionException, InterruptedException {
-        TaskDto task =TaskDto.builder().taskID(2L).build();
+        TaskDto task =TaskDto.builder().taskID(2L).status(Status.Rejected).build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_REJECTED)
+                .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
                 .build();
 
@@ -140,10 +141,10 @@ class EmailServiceTest {
 
     @Test
     void testSendUserEmailContainsCorrectFromAddress() {
-        TaskDto task =TaskDto.builder().taskID(7L).build();
+        TaskDto task = TaskDto.builder().taskID(7L).status(Status.Accepted). build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_ACCEPTED)
+                .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
                 .build();
 
@@ -158,10 +159,10 @@ class EmailServiceTest {
 
     @Test
     void testSendUserEmailContainsCorrectToAddress() {
-        TaskDto task = TaskDto.builder().taskID(8L).build();
+        TaskDto task = TaskDto.builder().taskID(8L).status(Status.Accepted).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_ACCEPTED)
+                .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Accepted");
@@ -213,10 +214,10 @@ class EmailServiceTest {
     @Test
     void testSendTaskerEmailWithUnsupportedType() throws ExecutionException, InterruptedException {
 
-        TaskDto task = TaskDto.builder().taskID(12L).build();
+        TaskDto task = TaskDto.builder().taskID(12L).status(Status.Accepted).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_ACCEPTED)
+                .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
                 .build();
 
@@ -309,10 +310,10 @@ class EmailServiceTest {
 
     @Test
     void testSendUserEmailHandlesMailException() throws ExecutionException, InterruptedException {
-        TaskDto task = TaskDto.builder().taskID(25L).build();
+        TaskDto task = TaskDto.builder().taskID(25L).status(Status.Accepted).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_ACCEPTED)
+                .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
                 .build();
 

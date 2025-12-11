@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+
 @Component
 public class EmailTemplate {
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -40,7 +41,7 @@ public class EmailTemplate {
     }
 
     private String requireNonNull(String value, String fieldName, String operation) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null||value.trim().isEmpty()) {
             throw new EmailTemplateException(
                     String.format("Required field '%s' is null or empty for %s", fieldName, operation),
                     operation,
@@ -135,11 +136,9 @@ public class EmailTemplate {
 
     private String buildTaskRejectedBody(TaskDto taskDto) {
         validateTaskDto(taskDto, "TASK_REJECTED");
-
         String userName = requireNonNull(taskDto.getUserName(), "userName", "TASK_REJECTED");
         String taskerName = requireNonNull(taskDto.getTaskerName(), "taskerName", "TASK_REJECTED");
         String serviceName = requireNonNull(taskDto.getServiceName(), "serviceName", "TASK_REJECTED");
-
         String date = formatDate(taskDto.getStartDate());
 
         return String.format(

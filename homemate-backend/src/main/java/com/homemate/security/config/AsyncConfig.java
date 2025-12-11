@@ -21,4 +21,14 @@ public class AsyncConfig {
         executor.initialize();
         return executor;
     }
+    @Bean(name = "otpExecutor")
+    public Executor otpExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("email-async-");
+        executor.initialize();
+        return executor;
+    }
 }
