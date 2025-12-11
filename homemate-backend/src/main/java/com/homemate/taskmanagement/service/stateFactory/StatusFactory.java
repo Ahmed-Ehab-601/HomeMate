@@ -1,17 +1,18 @@
-package com.homemate.taskmanagement.service;
+package com.homemate.taskmanagement.service.stateFactory;
 
-import com.homemate.taskmanagement.dao.TaskDao;
+import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 import com.homemate.taskmanagement.model.Status;
+import com.homemate.taskmanagement.service.state.*;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
 public class StatusFactory {
-    private TaskDao taskDao;
+    private TaskStatusDao taskDao;
 
-    public TaskState createTaskState(Status status,Long taskID,Long taskerID){
+    public TaskState createTaskState(Status status, Long taskID, Long taskerID){
         return switch (status) {
             case Status.Accepted -> new Accepted();
             case Status.Suspended  -> new Suspended(taskID,taskDao);

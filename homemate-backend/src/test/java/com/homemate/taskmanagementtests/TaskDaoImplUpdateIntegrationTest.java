@@ -1,8 +1,11 @@
 package com.homemate.taskmanagementtests;
 
-import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
+
+import com.homemate.taskmanagement.dao.TaskRequestDao;
+import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
+import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,12 +24,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("task")
+
 public class TaskDaoImplUpdateIntegrationTest {
 
-    private final TaskDaoImpl underTest;
+    private final TaskStatusDao underTest;
+    private final TaskRequestDao getTaskDetails;
+
     @Autowired
-    public TaskDaoImplUpdateIntegrationTest(TaskDaoImpl underTest) {
+    public TaskDaoImplUpdateIntegrationTest(TaskStatusDao underTest, TaskRequestDao getTaskDetails) {
         this.underTest = underTest;
+        this.getTaskDetails = getTaskDetails;
     }
 
 
@@ -113,7 +120,7 @@ public class TaskDaoImplUpdateIntegrationTest {
         assertThat(updated).isTrue();
 
         // Verify end date was set (you can verify this by getting task details)
-        var taskDetails = underTest.getTaskDetails(taskId);
+        var taskDetails = getTaskDetails.getTaskDetails(taskId);
         assertThat(taskDetails).isPresent();
         assertThat(taskDetails.get().getEndDate()).isNotNull();
     }
@@ -146,7 +153,7 @@ public class TaskDaoImplUpdateIntegrationTest {
         assertThat(updated).isTrue();
 
         // Verify bill was set correctly
-        var taskDetails = underTest.getTaskDetails(taskId);
+        var taskDetails = getTaskDetails.getTaskDetails(taskId);
         assertThat(taskDetails).isPresent();
         assertThat(taskDetails.get().getBill()).isEqualTo(bill);
     }

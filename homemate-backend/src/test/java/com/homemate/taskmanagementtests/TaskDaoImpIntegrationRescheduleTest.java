@@ -1,6 +1,7 @@
 package com.homemate.taskmanagementtests;
 
-import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
+import com.homemate.taskmanagement.dao.TaskRescheduleDao;
+import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,12 +21,12 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("task")
+
 public class TaskDaoImpIntegrationRescheduleTest {
 
-    private final TaskDaoImpl underTest;
-
+    private final TaskRescheduleDao underTest;
     @Autowired
-    public TaskDaoImpIntegrationRescheduleTest(TaskDaoImpl underTest) {
+    public TaskDaoImpIntegrationRescheduleTest(TaskRescheduleDao underTest) {
         this.underTest = underTest;
     }
 

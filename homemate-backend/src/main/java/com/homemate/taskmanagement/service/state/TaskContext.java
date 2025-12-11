@@ -1,9 +1,9 @@
-package com.homemate.taskmanagement.service;
+package com.homemate.taskmanagement.service.state;
 
-import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 
 public class TaskContext {
     TaskState state;
+
 
     public TaskContext(TaskState initialState){
         state = initialState;
@@ -12,11 +12,6 @@ public class TaskContext {
         TaskState oldState = state;
         state = newState;
         oldState.changeContext(this);
-    }
-
-    public void sendEmail() {
-        this.state.sendEmail();
-
     }
 
     public void updateWorkedHours() {

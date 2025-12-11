@@ -1,6 +1,6 @@
-package com.homemate.taskmanagement.service;
+package com.homemate.taskmanagement.service.state;
 
-import com.homemate.taskmanagement.dao.TaskDao;
+import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 import com.homemate.taskmanagement.model.Status;
 import lombok.AllArgsConstructor;
@@ -12,11 +12,8 @@ import java.time.Instant;
 @AllArgsConstructor
 public class Suspended implements TaskState{
     private Long taskID;
-    TaskDao taskDao;
-    @Override
-    public void sendEmail() {
-       //TO DO
-    }
+    private TaskStatusDao taskDao;
+
 
     @Override
     public void updateWorkedHours() {

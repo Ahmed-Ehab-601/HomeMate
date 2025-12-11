@@ -1,9 +1,11 @@
 package com.homemate.taskmanagementtests;
 
-import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
+import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.model.Status;
+import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -18,14 +20,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("task")
+
 public class TaskDaoImplAcceptRejectIntegrationTest {
 
-    private final TaskDaoImpl underTest;
+    private final TaskStatusDao underTest;
 
     @Autowired
-    public TaskDaoImplAcceptRejectIntegrationTest(TaskDaoImpl underTest) {
+    public TaskDaoImplAcceptRejectIntegrationTest(TaskStatusDao underTest) {
         this.underTest = underTest;
     }
+
 
     @Test
     void testThatGetStatusReturnsCorrectStatusForExistingTask() {

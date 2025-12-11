@@ -1,7 +1,6 @@
-package com.homemate.taskmanagement.service;
+package com.homemate.taskmanagement.service.state;
 
 public interface TaskState {
-    void sendEmail();
     void updateWorkedHours();
     void updateStatus();
     void changeContext(TaskContext newContext);

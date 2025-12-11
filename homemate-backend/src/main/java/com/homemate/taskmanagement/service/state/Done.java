@@ -1,11 +1,10 @@
-package com.homemate.taskmanagement.service;
+package com.homemate.taskmanagement.service.state;
 
-import com.homemate.taskmanagement.dao.TaskDao;
+import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 import com.homemate.taskmanagement.model.Status;
 import lombok.AllArgsConstructor;
 
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -15,12 +14,9 @@ import java.time.LocalDateTime;
 public class Done implements TaskState{
     private Long taskID;
     private Long taskerID;
-    TaskDao taskDao;
+    private TaskStatusDao taskDao;
 
-    @Override
-    public void sendEmail() {
-       //TO DO
-    }
+
 
     @Override
     public void updateWorkedHours() {

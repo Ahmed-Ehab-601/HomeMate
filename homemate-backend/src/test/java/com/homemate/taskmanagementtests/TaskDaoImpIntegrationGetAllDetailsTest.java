@@ -1,7 +1,9 @@
 package com.homemate.taskmanagementtests;
 
 import com.homemate.TaskerProfile.DTO.ReviewDTO;
-import com.homemate.taskmanagement.dao.impl.TaskDaoImpl;
+import com.homemate.taskmanagement.dao.TaskRescheduleDao;
+import com.homemate.taskmanagement.dao.TaskReviewDao;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,15 +22,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("task")
+
 public class TaskDaoImpIntegrationGetAllDetailsTest {
 
-    private final TaskDaoImpl underTest;
-
+    private final TaskReviewDao underTest;
+    private final TaskRescheduleDao taskRescheduleDaoTest;
     @Autowired
-    public TaskDaoImpIntegrationGetAllDetailsTest(TaskDaoImpl underTest) {
+    public TaskDaoImpIntegrationGetAllDetailsTest(TaskReviewDao underTest, TaskRescheduleDao taskRescheduleDaoTest) {
         this.underTest = underTest;
+        this.taskRescheduleDaoTest = taskRescheduleDaoTest;
     }
-
 
 
     @Test
@@ -61,7 +64,7 @@ public class TaskDaoImpIntegrationGetAllDetailsTest {
         Long taskId = 2L;
 
         // When - Get tasker ID
-        Optional<Long> userID = underTest.getUserID(taskId);
+        Optional<Long> userID = taskRescheduleDaoTest.getUserID(taskId);
 
         // Then - Verify correct tasker ID
         assertThat(userID).isPresent();
@@ -74,7 +77,7 @@ public class TaskDaoImpIntegrationGetAllDetailsTest {
         Long taskId = 999L;
 
         // When - Get tasker ID
-        Optional<Long> userID = underTest.getUserID(taskId);
+        Optional<Long> userID = taskRescheduleDaoTest.getUserID(taskId);
 
         // Then - Verify empty result
         assertThat(userID).isEmpty();
