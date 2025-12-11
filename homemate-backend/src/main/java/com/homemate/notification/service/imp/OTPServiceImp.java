@@ -39,7 +39,7 @@ public class OTPServiceImp implements OTPService {
     public static final String ATTEMPTS_PREFIX ="otp_attempts:";
     private static final String HOMEMATE_EMAIL ="homematesevice8@gmail.com";
 
-    @Async("OtpExecutor")
+    @Async("otpExecutor")
     public CompletableFuture<String> generateAndStoreOTP(String email, EmailRequest.EmailType emailType) {
         String attemptsKey=ATTEMPTS_PREFIX+email;
         int attemptTtl =emailType == FORGOT_PASSWORD ? RedisConfig.OTP_ATTEMPT_TTL_HOURS_RESET_PASSWORD : RedisConfig.OTP_ATTEMPT_TTL_MINUTES;
@@ -60,7 +60,7 @@ public class OTPServiceImp implements OTPService {
 
         return CompletableFuture.completedFuture(otp);
     }
-    @Async("OtpExecutor")
+    @Async("otpExecutor")
     @Override
     public CompletableFuture<OtpVerificationResult> validateCode(OtpVerifyRequest otpVerifyRequest) {
         String otpCodeKey=OTP_PREFIX+otpVerifyRequest.getRecipientEmail();
@@ -146,8 +146,9 @@ public class OTPServiceImp implements OTPService {
         int otp = random.nextInt(1000000);
         return String.format("%06d", otp);
     }
-    @Async("OtpExecutor")
+
     @Override
+    @Async("otpExecutor")
     public CompletableFuture<OtpVerificationResult> sendOtp(EmailRequest emailRequest) throws ExecutionException, InterruptedException {
         if (emailRequest.getEmailType()!=null &&(emailRequest.getEmailType() == EMAIL_VERIFICATION || emailRequest.getEmailType() == FORGOT_PASSWORD)) {
             String attemptsKey =ATTEMPTS_PREFIX+emailRequest.getRecipientEmail();
