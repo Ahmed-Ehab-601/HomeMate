@@ -1,7 +1,6 @@
 package com.homemate.security.model;
 
-import jdk.jshell.Snippet;
-import lombok.Builder;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,8 +10,10 @@ import java.util.List;
 
 public class AppUserDetails implements UserDetails {
 
+    @Getter
     private final Long id;
     private final String username;
+    @Getter
     private final String email;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
@@ -27,8 +28,6 @@ public class AppUserDetails implements UserDetails {
         this.authorities = List.of(new SimpleGrantedAuthority(role));
     }
 
-    public Long getId() { return id; }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return this.authorities;
@@ -42,10 +41,6 @@ public class AppUserDetails implements UserDetails {
     @Override
     public String getUsername() {
         return this.username;
-    }
-
-    public String getEmail() {
-        return this.email;
     }
 
     @Override public boolean isAccountNonExpired() { return true; }

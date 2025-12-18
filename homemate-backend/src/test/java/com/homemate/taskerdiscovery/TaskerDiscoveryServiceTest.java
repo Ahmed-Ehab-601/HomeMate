@@ -6,6 +6,7 @@ import com.homemate.taskerdiscovery.dto.TaskerCardDto;
 import com.homemate.taskerdiscovery.mapper.TaskerCardMapper;
 import com.homemate.taskerdiscovery.model.Tasker;
 import com.homemate.taskerdiscovery.service.TaskerDiscoveryService;
+import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -141,4 +142,37 @@ class TaskerDiscoveryServiceTest {
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }
+
+
+    @Test
+    void getTaskerByID_ShouldReturnTaskerCardDto_WhenTaskerExists() {
+        long taskID = 1L;
+
+        when(taskerDao.findTaskerByID(taskID)).thenReturn(tasker1);
+        when(taskerCardMapper.mapToDto(tasker1)).thenReturn(dto1);
+
+        TaskerCardDto result = taskerDiscoveryService.getTaskerByID(taskID);
+
+        assertNotNull(result);
+        assertEquals(dto1.getTaskerId(), result.getTaskerId());
+        assertEquals(dto1.getFirstName(), result.getFirstName());
+        verify(taskerDao, times(1)).findTaskerByID(taskID);
+        verify(taskerCardMapper, times(1)).mapToDto(tasker1);
+    }
+
+    @Test
+    void getTaskerByID_ShouldThrowTaskNotFoundException_WhenTaskerDoesNotExist() {
+        long taskID = 999L;
+
+        when(taskerDao.findTaskerByID(taskID)).thenReturn(null);
+
+        TaskNotFoundException exception = assertThrows(TaskNotFoundException.class, () ->
+                taskerDiscoveryService.getTaskerByID(taskID)
+        );
+
+        assertEquals("Tasker for task ID 999 not found", exception.getMessage());
+        verify(taskerDao, times(1)).findTaskerByID(taskID);
+        verifyNoInteractions(taskerCardMapper);
+    }
+
 }

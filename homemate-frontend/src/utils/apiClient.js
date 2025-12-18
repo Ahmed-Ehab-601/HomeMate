@@ -2,8 +2,8 @@
  * Centralized API client that automatically adds JWT token to all requests
  */
 
-// Use relative path for dev (goes through Vite proxy), or env variable for production
-const DEFAULT_API_BASE_URL = "";
+// Use backend URL directly or env variable for production
+const DEFAULT_API_BASE_URL = "http://localhost:8080";
 export const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
 
 /**

@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getUserAddresses } from "../api/userProfileApi";
 import { requestTask } from "../api/tasksApi";
 import { fetchServices } from "../api/servicesApi";
+import "../styles/RequestTask.css";
 
 import Modal from "../components/Modal";
 
@@ -218,11 +219,6 @@ function RequestTaskPage() {
     requestTask(requestDto)
       .then((response) => {
         console.info("[RequestTaskPage] Task request response", response);
-        setSuccessBanner({
-          message:
-            "✓ Task request sent successfully! The Tasker will review your request shortly.",
-          details: response,
-        });
         setConfirmModalOpen(false);
         setDescription("");
         setDateValue("");
@@ -234,7 +230,12 @@ function RequestTaskPage() {
         setLimitError("");
         setDuplicateModalOpen(false);
         setDuplicateMessage("");
-        // TODO: Navigate to task details once page is available.
+        // Redirect to Task Details page with confirmation state
+        if (response?.taskID) {
+          navigate(`/tasks/${response.taskID}`, {
+            state: { requestSubmitted: true },
+          });
+        }
       })
       .catch((error) => {
         // Close confirm modal to show error messages

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Modal from "../components/Modal";
+import { setUserOffline } from "../api/authApi";
 import {
   addUserAddress,
   deleteUserAccount,
@@ -305,11 +306,23 @@ function UserProfilePage() {
       .finally(() => setSubmitting(null));
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
+ // Updated handleLogout function for UserProfilePage.jsx
+// Replace the existing handleLogout function with this:
 
+const handleLogout = async () => {
+  try {
+    // The logout function in AuthContext now handles setting offline status
+    await logout();
+    navigate("/");
+  } catch (error) {
+    console.error("Logout error:", error);
+    // Still navigate even if there's an error
+    navigate("/");
+  }
+};
+
+// Note: Remove the setUserOffline import from authApi.js in UserProfilePage.jsx
+// The offline status is now handled automatically in AuthContext
   const renderAddressesSection = () => {
     if (addressesStatus === "loading") {
       return <p className="tasker-card__meta">Loading your saved addresses…</p>;
@@ -380,11 +393,6 @@ function UserProfilePage() {
           <p className="tasker-card__meta">
             Keep your personal information and service addresses up to date.
           </p>
-          <div className="form-actions" style={{ justifyContent: "flex-start" }}>
-            <button type="button" className="btn btn-secondary" onClick={handleLogout}>
-              Sign out
-            </button>
-          </div>
         </header>
 
         {feedback && (

@@ -6,7 +6,9 @@ import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
+import com.homemate.Authentication.dto.PasswordResetDto;
 import com.homemate.Authentication.service.LoginService;
+import com.homemate.chat.Service.ChatService;
 import com.homemate.security.service.JwtService;
 import com.homemate.security.service.ValidateSignupService;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +35,8 @@ class LoginServiceTest {
 
     @Mock
     private JwtService jwtService;
+    @Mock
+    private ChatService chatService;
 
     @Mock
     private ValidateSignupService validateSignup;
@@ -73,6 +77,7 @@ class LoginServiceTest {
         tasker.setBirthDate(java.sql.Timestamp.valueOf(LocalDateTime.of(1990, 1, 1, 0, 0)));
         tasker.setGender('M');
         tasker.setPhone("01012345678");
+        tasker.setIsSuspended(false);
 
         lenient().when(validateSignup.validateEmail(anyString())).thenReturn((String) null);
         lenient().when(validateSignup.validatePassword(anyString())).thenReturn((String) null);
@@ -252,6 +257,155 @@ class LoginServiceTest {
         assertNull(response);
         verify(userDao, times(1)).getByEmail("nonexistent@example.com");
         verify(taskerDao, times(1)).getByEmail("nonexistent@example.com");
+    }
+
+    @Test
+    void resetPasswordShouldReturnNullForValidUserPasswordReset() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("valid-token");
+        passwordResetDto.setNewPassword("NewPass123!");
+
+        when(jwtService.validateVerifyToken("valid-token")).thenReturn("test@example.com");
+        when(validateSignup.validatePassword("NewPass123!")).thenReturn(null);
+        when(userDao.getByEmail("test@example.com")).thenReturn(user);
+
+        String result = loginService.resetPassword(passwordResetDto);
+
+        assertNull(result);
+        verify(jwtService, times(1)).validateVerifyToken("valid-token");
+        verify(validateSignup, times(1)).validatePassword("NewPass123!");
+        verify(userDao, times(1)).getByEmail("test@example.com");
+        verify(userDao, times(1)).updatePassword("test@example.com", "NewPass123!");
+        verify(taskerDao, never()).getByEmail(anyString());
+    }
+
+    @Test
+    void resetPasswordShouldReturnNullForValidTaskerPasswordReset() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("valid-token");
+        passwordResetDto.setNewPassword("NewPass123!");
+
+        when(jwtService.validateVerifyToken("valid-token")).thenReturn("tasker@example.com");
+        when(validateSignup.validatePassword("NewPass123!")).thenReturn(null);
+        when(userDao.getByEmail("tasker@example.com")).thenThrow(new EmptyResultDataAccessException(1));
+        when(taskerDao.getByEmail("tasker@example.com")).thenReturn(tasker);
+
+        String result = loginService.resetPassword(passwordResetDto);
+
+        assertNull(result);
+        verify(jwtService, times(1)).validateVerifyToken("valid-token");
+        verify(validateSignup, times(1)).validatePassword("NewPass123!");
+        verify(userDao, times(1)).getByEmail("tasker@example.com");
+        verify(taskerDao, times(1)).getByEmail("tasker@example.com");
+        verify(taskerDao, times(1)).updatePassword("tasker@example.com", "NewPass123!");
+    }
+
+    @Test
+    void resetPasswordShouldReturnErrorForInvalidToken() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("invalid-token");
+        passwordResetDto.setNewPassword("NewPass123!");
+
+        when(jwtService.validateVerifyToken("invalid-token")).thenReturn(null);
+
+        String result = loginService.resetPassword(passwordResetDto);
+
+        assertEquals("Invalid or expired verification token", result);
+        verify(jwtService, times(1)).validateVerifyToken("invalid-token");
+        verify(validateSignup, never()).validatePassword(anyString());
+        verify(userDao, never()).getByEmail(anyString());
+        verify(taskerDao, never()).getByEmail(anyString());
+    }
+
+    @Test
+    void resetPasswordShouldReturnErrorForWeakPassword() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("valid-token");
+        passwordResetDto.setNewPassword("weak");
+
+        when(jwtService.validateVerifyToken("valid-token")).thenReturn("test@example.com");
+        when(validateSignup.validatePassword("weak"))
+            .thenReturn("password must be between 8 and 25 characters");
+
+        String result = loginService.resetPassword(passwordResetDto);
+
+        assertEquals("password must be between 8 and 25 characters", result);
+        verify(jwtService, times(1)).validateVerifyToken("valid-token");
+        verify(validateSignup, times(1)).validatePassword("weak");
+        verify(userDao, never()).getByEmail(anyString());
+        verify(taskerDao, never()).getByEmail(anyString());
+    }
+
+    @Test
+    void resetPasswordShouldReturnErrorWhenUserNotFound() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("valid-token");
+        passwordResetDto.setNewPassword("NewPass123!");
+
+        when(jwtService.validateVerifyToken("valid-token")).thenReturn("nonexistent@example.com");
+        when(validateSignup.validatePassword("NewPass123!")).thenReturn(null);
+        when(userDao.getByEmail("nonexistent@example.com")).thenThrow(new EmptyResultDataAccessException(1));
+        when(taskerDao.getByEmail("nonexistent@example.com")).thenThrow(new EmptyResultDataAccessException(1));
+
+        String result = loginService.resetPassword(passwordResetDto);
+
+        assertEquals("No user or tasker found with this email", result);
+        verify(userDao, times(1)).getByEmail("nonexistent@example.com");
+        verify(taskerDao, times(1)).getByEmail("nonexistent@example.com");
+        verify(userDao, never()).updatePassword(anyString(), anyString());
+        verify(taskerDao, never()).updatePassword(anyString(), anyString());
+    }
+
+    @Test
+    void resetPasswordShouldReturnErrorForPasswordWithoutUppercase() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("valid-token");
+        passwordResetDto.setNewPassword("newpass123!");
+
+        when(jwtService.validateVerifyToken("valid-token")).thenReturn("test@example.com");
+        when(validateSignup.validatePassword("newpass123!"))
+            .thenReturn("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
+
+        String result = loginService.resetPassword(passwordResetDto);
+
+        assertEquals("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character", result);
+        verify(validateSignup, times(1)).validatePassword("newpass123!");
+        verify(userDao, never()).updatePassword(anyString(), anyString());
+    }
+
+    @Test
+    void resetPasswordShouldHandleUserDaoException() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("valid-token");
+        passwordResetDto.setNewPassword("NewPass123!");
+
+        when(jwtService.validateVerifyToken("valid-token")).thenReturn("test@example.com");
+        when(validateSignup.validatePassword("NewPass123!")).thenReturn(null);
+        when(userDao.getByEmail("test@example.com")).thenReturn(user);
+        doThrow(new RuntimeException("Database error")).when(userDao).updatePassword("test@example.com", "NewPass123!");
+
+        String result = loginService.resetPassword(passwordResetDto);
+
+        assertEquals("Error updating password: Database error", result);
+        verify(userDao, times(1)).updatePassword("test@example.com", "NewPass123!");
+    }
+
+    @Test
+    void resetPasswordShouldHandleTaskerDaoException() {
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setVerifyToken("valid-token");
+        passwordResetDto.setNewPassword("NewPass123!");
+
+        when(jwtService.validateVerifyToken("valid-token")).thenReturn("tasker@example.com");
+        when(validateSignup.validatePassword("NewPass123!")).thenReturn(null);
+        when(userDao.getByEmail("tasker@example.com")).thenThrow(new EmptyResultDataAccessException(1));
+        when(taskerDao.getByEmail("tasker@example.com")).thenReturn(tasker);
+        doThrow(new RuntimeException("Database error")).when(taskerDao).updatePassword("tasker@example.com", "NewPass123!");
+
+        String result = loginService.resetPassword(passwordResetDto);
+
+        assertEquals("Error updating password: Database error", result);
+        verify(taskerDao, times(1)).updatePassword("tasker@example.com", "NewPass123!");
     }
 }
 

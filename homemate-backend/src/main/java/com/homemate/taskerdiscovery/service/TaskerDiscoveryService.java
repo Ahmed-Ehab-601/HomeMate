@@ -5,6 +5,7 @@ import com.homemate.taskerdiscovery.dto.FindTaskerCriteriaDto;
 import com.homemate.taskerdiscovery.dto.TaskerCardDto;
 import com.homemate.taskerdiscovery.mapper.TaskerCardMapper;
 import com.homemate.taskerdiscovery.model.Tasker;
+import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -62,4 +63,13 @@ public class TaskerDiscoveryService {
         }
         return dtos;
     }
+
+    public TaskerCardDto getTaskerByID(long taskID) {
+        Tasker tasker = taskerDao.findTaskerByID(taskID);
+        if (tasker == null) {
+            throw new TaskNotFoundException("Tasker for task ID " + taskID + " not found");
+        }
+        return taskerCardMapper.mapToDto(tasker);
+    }
+
 }

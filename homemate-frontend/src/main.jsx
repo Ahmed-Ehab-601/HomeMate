@@ -1,3 +1,10 @@
+// src/main.jsx
+// Polyfill `global` for libraries (sockjs-client) that expect a Node-like global
+if (typeof global === "undefined") {
+  // Use globalThis so this works in any modern environment
+  globalThis.global = globalThis;
+}
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleOAuthProvider } from "@react-oauth/google";

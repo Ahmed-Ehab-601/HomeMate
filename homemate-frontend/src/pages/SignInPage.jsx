@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { login } from "../api/authApi";
 import { useAuth } from "../contexts/AuthContext";
 import GoogleLogin from "../components/GoogleLogin";
+import ForgotPasswordModal from "../components/ForgotPasswordModal";
 
 function SignInPage() {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ function SignInPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,18 +24,57 @@ function SignInPage() {
 
     try {
       const response = await login(email, password);
+      // If no JWT is returned, treat as suspended
+      if (!response?.token) {
+        setError(
+          "Your account is suspended. Please contact support for assistance."
+        );
+        return;
+      }
+      // Try to decode JWT payload (simulate what AuthContext does)
+      let jwtPayload = null;
+      try {
+        const parts = response.token.split(".");
+        if (parts.length === 3) {
+          const payload = parts[1];
+          const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+          const pad = base64.length % 4;
+          const padded = pad ? base64 + "=".repeat(4 - pad) : base64;
+          const decoded = atob(padded);
+          const json = decodeURIComponent(
+            decoded
+              .split("")
+              .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+              .join("")
+          );
+          jwtPayload = JSON.parse(json);
+        }
+      } catch (err) {
+        jwtPayload = null;
+      }
+      if (!jwtPayload) {
+        setError(
+          "Your account is suspended. Please contact support for assistance."
+        );
+        return;
+      }
+      // If the server reports the user is suspended, show error and prevent login
+      if (
+        response?.role === "SUSPENDED" ||
+        response?.role === "ROLE_SUSPENDED"
+      ) {
+        setError(
+          "Your account has been suspended. Please contact support for assistance."
+        );
+        return;
+      }
       // Store user data in AuthContext
       loginUser(response);
-
-
-
       // Redirect based on role
       if (response.role === "ROLE_ADMIN") {
         navigate("/admin/users");
       } else if (response.role === "ROLE_TASKER") {
         navigate("/tasker/profile");
-      } else if (response.role === "SUSPENDED"){
-        setError("User is suspended");
       } else {
         navigate("/");
       }
@@ -60,6 +102,14 @@ function SignInPage() {
     setError("Failed to sign in with Google. Please try again.");
   };
 
+  const handleForgotPasswordSuccess = () => {
+    setSuccessMessage(
+      "Password reset successfully! You can now sign in with your new password."
+    );
+    setError("");
+    setTimeout(() => setSuccessMessage(""), 5000);
+  };
+
   return (
     <main className="page page--signin">
       <div className="signin-container">
@@ -72,6 +122,12 @@ function SignInPage() {
           {error && (
             <div className="alert alert-error" role="alert">
               {error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="alert alert-success" role="alert">
+              {successMessage}
             </div>
           )}
 
@@ -147,6 +203,25 @@ function SignInPage() {
               </div>
             </div>
 
+            <div style={{ textAlign: "right", marginBottom: "16px" }}>
+              <button
+                type="button"
+                onClick={() => setIsForgotPasswordOpen(true)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--primary)",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  textDecoration: "underline",
+                  padding: 0,
+                }}
+                disabled={isLoading || isGoogleLoading}
+              >
+                Forgot password?
+              </button>
+            </div>
+
             <button
               type="submit"
               className="btn btn-primary signin-submit"
@@ -174,6 +249,12 @@ function SignInPage() {
           </div>
         </div>
       </div>
+
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
+        onSuccess={handleForgotPasswordSuccess}
+      />
     </main>
   );
 }

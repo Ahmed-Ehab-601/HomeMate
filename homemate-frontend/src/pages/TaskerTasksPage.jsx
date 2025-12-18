@@ -203,7 +203,12 @@ function TaskerTasksPage() {
           <>
             <div className="tasks-container">
               {tasks.map((task) => (
-                <TaskCard key={task.taskId} task={task} viewType="tasker" />
+                <TaskCard
+                  key={task.taskId}
+                  task={task}
+                  viewType="tasker"
+                  onTaskUpdated={loadTasks}
+                />
               ))}
             </div>
 

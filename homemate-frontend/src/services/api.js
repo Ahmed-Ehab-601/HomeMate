@@ -30,6 +30,20 @@ const convertImageData = (service) => {
   return service;
 };
 
+export const setUserOffline = async (userId) => {
+  const token = localStorage.getItem("token");
+  const response = await fetch(`/api/user/${userId}/offline`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to set user offline");
+  }
+  return response.json();
+};
 // Helper function to handle API errors
 const handleApiError = async (response) => {
   const contentType = response.headers.get('content-type');

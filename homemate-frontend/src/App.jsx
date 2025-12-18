@@ -20,7 +20,15 @@ import TaskerDashboardPage from "./pages/TaskerDashboardPage";
 import SignUpPage from "./pages/SignUpPage";
 import UserTasksPage from "./pages/UserTasksPage";
 import TaskerTasksPage from "./pages/TaskerTasksPage";
+import SubmitReviewPage from "./pages/SubmitReviewPage";
 import AdminRoutes from "./admin/routing/AdminRoutes";
+import SubmitReportPage from "./pages/SubmitReportPage";
+import ChatPage from "./pages/ChatPage";
+import TaskDetailsPage from "./pages/TaskDetailsPage";
+import EnterEmailPage from "./pages/EnterEmailPage";
+import VerifyOtpPage from "./pages/VerifyOtpPage";
+import SignupMethodChoicePage from "./pages/SignupMethodChoicePage";
+import GlobalPresence from "./components/GlobalPresence";
 
 // Protected route component - redirects to signin on 401
 function ProtectedRoute({ children, requiredRole }) {
@@ -64,8 +72,37 @@ function AppRoutes() {
       <Route path="/services/:slug/taskers" element={<TaskerDiscoveryPage />} />
       <Route path="/taskers/:taskerId" element={<TaskerProfilePage />} />
       <Route path="/taskers/:taskerId/request" element={<RequestTaskPage />} />
+      <Route
+        path="/submit-review/:taskId"
+        element={
+          <ProtectedRoute requiredRole="ROLE_USER">
+            <SubmitReviewPage />
+            </ProtectedRoute>
+            }
+            />
+      <Route      
+        path="/report/submit/:taskId"
+        element={
+          <ProtectedRoute>
+            <SubmitReportPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/signin" element={<SignInPage />} />
       <Route path="/signup" element={<SignUpPage />} />
+      <Route path="/signup/method" element={<SignupMethodChoicePage />} />
+      <Route path="/verify-email" element={<EnterEmailPage />} />
+      <Route path="/verify-otp" element={<VerifyOtpPage />} />
+      <Route path="/chat/:chatId" element={<ChatPage />} />
+      <Route
+        path="/tasks/:taskId"
+        element={
+          <ProtectedRoute>
+            <TaskDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/profile"
         element={
@@ -113,6 +150,7 @@ function AppWrapper() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <GlobalPresence />
         <App />
       </AuthProvider>
     </BrowserRouter>

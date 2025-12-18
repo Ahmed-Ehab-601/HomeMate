@@ -1,6 +1,5 @@
 package com.homemate.service.integration;
 
-
 import com.homemate.service.dao.ServiceDaoImpl;
 import com.homemate.service.model.ServiceEntity;
 import org.junit.jupiter.api.*;
@@ -15,7 +14,8 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.AssertionsKt.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 
 @SpringBootTest
 @ActiveProfiles("service")  // ← Uses application-admin.properties

@@ -68,11 +68,8 @@ export function getTaskerProfile() {
 }
 
 export function getTaskerReviews({ page = 1, pageSize = 5 } = {}) {
-  return request(`${TASKER_PROFILE_ENDPOINT}/reviews`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ page, pageSize }),
-  });
+  const params = new URLSearchParams({ page, pageSize });
+  return request(`${TASKER_PROFILE_ENDPOINT}/reviews?${params.toString()}`);
 }
 
 export function getAvailableServices() {
@@ -124,4 +121,14 @@ export function updateTaskerService(serviceId) {
   return request(url, { method: "PUT" });
 }
 
+/**
+ * Get tasker details by ID
+ * @param {number} taskerId - ID of the tasker
+ * @returns {Promise<Object>} Tasker card details
+ */
+export function getTaskerById(taskerId) {
+  const url = `${baseUrl}/api/taskers/${taskerId}`;
+  console.log("Fetching tasker from:", url);
+  return request(url);
+}
 

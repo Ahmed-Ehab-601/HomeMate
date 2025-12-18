@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { getTaskerById } from "../api/userProfileApi";
 import { useAuth } from "../contexts/AuthContext";
 
-function TaskerCard({ tasker, service }) {
+function TaskerCard({ tasker, service, hideRequestButton = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isTasker } = useAuth();
@@ -58,7 +58,7 @@ function TaskerCard({ tasker, service }) {
         <span>${tasker.hourRate}/hr starting</span>
       </div>
       <div className="tasker-card__actions">
-        {!isTasker() && (
+        {!isTasker() && !hideRequestButton && (
           <button
             type="button"
             className="btn btn-primary"

@@ -16,7 +16,6 @@ import com.homemate.UserProfile.Models.User;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.sql.Timestamp;
 
 @Repository
 public class UserDao {
@@ -40,7 +39,7 @@ public class UserDao {
      */
     private static final String GET_BY_ID_SQL =
     "SELECT userID, username, password, firstName, lastName, email, birthDate, gender, phone, admin, suspended " +
-    "FROM users WHERE userID = ?";
+    "FROM Users WHERE userID = ?";
 
     /**
      * Get a user by their ID
@@ -61,7 +60,7 @@ public class UserDao {
 
     private static final String GET_BY_EMAIL_SQL =
     "SELECT userID, username, password, firstName, lastName, email, birthDate, gender, phone, admin, suspended " +
-    "FROM users WHERE email = ?";
+    "FROM Users WHERE email = ?";
 
     /**
      * Get a user by their email
@@ -81,7 +80,7 @@ public class UserDao {
      * SQL query to update a user
      */
     private static final String UPDATE_USER_SQL =
-    "UPDATE users SET username = ?, email = ?, birthDate = ?, gender = ?, phone = ?, admin = ?, suspended = ?, password = ?, firstName = ?, lastName = ? WHERE userID = ?";
+    "UPDATE Users SET username = ?, email = ?, birthDate = ?, gender = ?, phone = ?, admin = ?, suspended = ?, password = ?, firstName = ?, lastName = ? WHERE userID = ?";
 
     /**
      * Update a user
@@ -107,7 +106,7 @@ public class UserDao {
      * SQL query to delete a user
      */
     private static final String DELETE_USER_SQL =
-    "DELETE FROM users WHERE userID = ?";
+    "DELETE FROM Users WHERE userID = ?";
 
     /**
      * Delete a user
@@ -118,7 +117,7 @@ public class UserDao {
     }
 
     public Long signup(User user) {
-        String sql = "INSERT INTO users " +
+        String sql = "INSERT INTO Users " +
                 "(username, firstName, lastName, email, password, birthDate, gender, phone, admin, suspended) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -150,7 +149,7 @@ public class UserDao {
 
     private static final String GET_PROFILE_SQL =
     "SELECT userID, username, password, firstName, lastName, email, birthDate, gender, phone, admin, suspended " +
-    "FROM users WHERE userID = ? ";
+    "FROM Users WHERE userID = ? ";
 
     /**
      * Get a user's profile
@@ -165,7 +164,7 @@ public class UserDao {
 
     private static final String GET_PROFILE_DTO_SQL =
     "SELECT userID, username, firstName, lastName, email, birthDate, gender, phone, admin AS isAdmin, suspended AS isSuspended " +
-    "FROM users WHERE userID = ?";
+    "FROM Users WHERE userID = ?";
 
     @SuppressWarnings("null")
     public UserProfileDTO getProfile(Long id) {
@@ -189,6 +188,12 @@ public class UserDao {
             (RowMapper<UserRequestTaskerDTO>) this.userRequestTaskerRowMapper,
             id
         );
+    }
+
+    private static final String UPDATE_PASSWORD_SQL = "UPDATE Users SET password = ? WHERE email = ?";
+
+    public void updatePassword(String email, String newPassword) {
+        jdbcTemplate.update(UPDATE_PASSWORD_SQL, newPassword, email);
     }
 }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { GoogleLogin as GoogleOAuthLogin } from "@react-oauth/google";
 import { signupUser, signupTasker } from "../api/signupApi";
 import { useAuth } from "../contexts/AuthContext";
@@ -9,6 +9,7 @@ import ServiceCard from "../components/ServiceCard";
 
 function SignUpPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signup } = useAuth();
   const [userType, setUserType] = useState(null); // null, "user", or "tasker"
   const [error, setError] = useState("");
@@ -17,6 +18,44 @@ function SignUpPage() {
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   const [userEmailLocked, setUserEmailLocked] = useState(false);
   const [taskerEmailLocked, setTaskerEmailLocked] = useState(false);
+  const [verifyToken, setVerifyToken] = useState(null); // Store verification token
+  const [showUserPassword, setShowUserPassword] = useState(false);
+  const [showUserConfirmPassword, setShowUserConfirmPassword] = useState(false);
+  const [showTaskerPassword, setShowTaskerPassword] = useState(false);
+  const [showTaskerConfirmPassword, setShowTaskerConfirmPassword] = useState(false);
+
+  // Load persisted verify token on mount (e.g., after refresh)
+  useEffect(() => {
+    const storedToken = localStorage.getItem("verify_token");
+    if (storedToken) {
+      console.log("Loaded verify_token from localStorage:", storedToken);
+      setVerifyToken(storedToken);
+    } else {
+      console.warn("No verify_token found in localStorage");
+    }
+    const storedEmail = localStorage.getItem("verified_email");
+    const storedUserType = localStorage.getItem("verified_user_type");
+
+    if (storedUserType && !userType) {
+      setUserType(storedUserType);
+    }
+
+    if (storedEmail && storedUserType) {
+      if (storedUserType === "user") {
+        setUserForm((prev) => ({
+          ...prev,
+          email: storedEmail,
+        }));
+        setUserEmailLocked(true);
+      } else if (storedUserType === "tasker") {
+        setTaskerForm((prev) => ({
+          ...prev,
+          email: storedEmail,
+        }));
+        setTaskerEmailLocked(true);
+      }
+    }
+  }, []);
 
   // User form fields
   const [userForm, setUserForm] = useState({
@@ -61,6 +100,50 @@ function SignUpPage() {
     }
   };
 
+  // Handle location state (verified email or Google signup)
+  useEffect(() => {
+    if (location.state) {
+      const { userType: stateUserType, verifiedEmail, verifyToken: stateVerifyToken, googleData } = location.state;
+      
+      // Set user type if provided
+      if (stateUserType) {
+        setUserType(stateUserType);
+      }
+
+      // Handle verified email (from OTP or Google)
+      if (verifiedEmail && stateVerifyToken) {
+        setVerifyToken(stateVerifyToken);
+        localStorage.setItem("verify_token", stateVerifyToken);
+        if (verifiedEmail) {
+          localStorage.setItem("verified_email", verifiedEmail);
+        }
+        if (stateUserType) {
+          localStorage.setItem("verified_user_type", stateUserType);
+        }
+        
+        if (stateUserType === "user") {
+          setUserForm(prev => ({
+            ...prev,
+            email: verifiedEmail,
+            firstName: googleData?.firstName || prev.firstName,
+            lastName: googleData?.lastName || prev.lastName,
+            username: googleData?.username || prev.username,
+          }));
+          setUserEmailLocked(true);
+        } else if (stateUserType === "tasker") {
+          setTaskerForm(prev => ({
+            ...prev,
+            email: verifiedEmail,
+            firstName: googleData?.firstName || prev.firstName,
+            lastName: googleData?.lastName || prev.lastName,
+            username: googleData?.username || prev.username,
+          }));
+          setTaskerEmailLocked(true);
+        }
+      }
+    }
+  }, [location.state]);
+
   // Load services when tasker is selected
   useEffect(() => {
     if (userType === "tasker") {
@@ -71,8 +154,10 @@ function SignUpPage() {
   }, [userType]);
 
   const handleUserTypeSelect = (type) => {
-    setUserType(type);
-    setError("");
+    // Navigate to signup method choice page
+    navigate("/signup/method", {
+      state: { userType: type },
+    });
   };
 
   const handleUserFormChange = (e) => {
@@ -105,6 +190,13 @@ function SignUpPage() {
       return;
     }
 
+    const tokenToUse = verifyToken || localStorage.getItem("verify_token");
+    if (!tokenToUse) {
+      setError("Please verify your email first.");
+      return;
+    }
+    console.log("User signup - Token to use:", tokenToUse.substring(0, 20) + "...");
+
     setIsLoading(true);
 
     try {
@@ -122,6 +214,7 @@ function SignUpPage() {
         birthDate: birthDateTimestamp,
         gender: userForm.gender || null,
         phone: userForm.phone,
+        verifyToken: tokenToUse, // Always include verification token
       });
 
       // Save with ROLE_USER
@@ -143,6 +236,13 @@ function SignUpPage() {
       return;
     }
 
+    const tokenToUse = verifyToken || localStorage.getItem("verify_token");
+    if (!tokenToUse) {
+      setError("Please verify your email first.");
+      return;
+    }
+    console.log("Tasker signup - Token to use:", tokenToUse.substring(0, 20) + "...");
+
     setIsLoading(true);
 
     try {
@@ -159,6 +259,7 @@ function SignUpPage() {
         hourRate: taskerForm.hourRate ? Number(taskerForm.hourRate) : null,
         city: taskerForm.city,
         profileImage: taskerForm.profileImage,
+        verifyToken: tokenToUse, // Always include verification token
       });
 
       // Save with ROLE_TASKER
@@ -308,20 +409,6 @@ function SignUpPage() {
 
           {userType === "user" ? (
             <>
-              <div style={{ marginBottom: "16px" }}>
-                <p style={{ marginBottom: "8px", fontWeight: 500 }}>Sign up with Google</p>
-                <div className="signin-google">
-                  <GoogleOAuthLogin
-                    onSuccess={handleGoogleUserSignup}
-                    onError={handleGoogleSignupError}
-                    theme="outline"
-                    shape="pill"
-                    size="large"
-                    width="wide"
-                  />
-                </div>
-              </div>
-
               <form onSubmit={handleUserSignup} className="signin-form">
               <div className="form-field">
                 <label htmlFor="username" className="form-label">
@@ -375,7 +462,7 @@ function SignUpPage() {
 
               <div className="form-field">
                 <label htmlFor="email" className="form-label">
-                  Email *
+                  Email * {userEmailLocked && <span style={{ color: "#22c55e", fontSize: "0.875rem" }}>✓ Verified</span>}
                 </label>
                 <input
                   id="email"
@@ -387,6 +474,7 @@ function SignUpPage() {
                   required
                   disabled={isLoading || userEmailLocked}
                   readOnly={userEmailLocked}
+                  style={userEmailLocked ? { backgroundColor: "#f0fdf4", cursor: "not-allowed" } : {}}
                 />
               </div>
 
@@ -446,32 +534,110 @@ function SignUpPage() {
                 <label htmlFor="password" className="form-label">
                   Password *
                 </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  className="input"
-                  value={userForm.password}
-                  onChange={handleUserFormChange}
-                  required
-                  disabled={isLoading}
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showUserPassword ? "text" : "password"}
+                    className="input"
+                    value={userForm.password}
+                    onChange={handleUserFormChange}
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowUserPassword(!showUserPassword)}
+                    aria-label={showUserPassword ? "Hide password" : "Show password"}
+                    disabled={isLoading}
+                  >
+                    {showUserPassword ? (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="form-field">
                 <label htmlFor="confirmPassword" className="form-label">
                   Confirm Password *
                 </label>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  className="input"
-                  value={userForm.confirmPassword}
-                  onChange={handleUserFormChange}
-                  required
-                  disabled={isLoading}
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showUserConfirmPassword ? "text" : "password"}
+                    className="input"
+                    value={userForm.confirmPassword}
+                    onChange={handleUserFormChange}
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowUserConfirmPassword(!showUserConfirmPassword)}
+                    aria-label={showUserConfirmPassword ? "Hide password" : "Show password"}
+                    disabled={isLoading}
+                  >
+                    {showUserConfirmPassword ? (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -485,20 +651,6 @@ function SignUpPage() {
             </>
           ) : (
             <>
-              <div style={{ marginBottom: "16px" }}>
-                <p style={{ marginBottom: "8px", fontWeight: 500 }}>Sign up with Google</p>
-                <div className="signin-google">
-                  <GoogleOAuthLogin
-                    onSuccess={handleGoogleTaskerSignup}
-                    onError={handleGoogleSignupError}
-                    theme="outline"
-                    shape="pill"
-                    size="large"
-                    width="wide"
-                  />
-                </div>
-              </div>
-
               <form onSubmit={handleTaskerSignup} className="signin-form">
               <div className="form-field">
                 <label htmlFor="tasker-username" className="form-label">
@@ -552,7 +704,7 @@ function SignUpPage() {
 
               <div className="form-field">
                 <label htmlFor="tasker-email" className="form-label">
-                  Email *
+                  Email * {taskerEmailLocked && <span style={{ color: "#22c55e", fontSize: "0.875rem" }}>✓ Verified</span>}
                 </label>
                 <input
                   id="tasker-email"
@@ -564,6 +716,7 @@ function SignUpPage() {
                   required
                   disabled={isLoading || taskerEmailLocked}
                   readOnly={taskerEmailLocked}
+                  style={taskerEmailLocked ? { backgroundColor: "#f0fdf4", cursor: "not-allowed" } : {}}
                 />
               </div>
 
@@ -699,32 +852,110 @@ function SignUpPage() {
                 <label htmlFor="tasker-password" className="form-label">
                   Password *
                 </label>
-                <input
-                  id="tasker-password"
-                  name="password"
-                  type="password"
-                  className="input"
-                  value={taskerForm.password}
-                  onChange={handleTaskerFormChange}
-                  required
-                  disabled={isLoading}
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    id="tasker-password"
+                    name="password"
+                    type={showTaskerPassword ? "text" : "password"}
+                    className="input"
+                    value={taskerForm.password}
+                    onChange={handleTaskerFormChange}
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowTaskerPassword(!showTaskerPassword)}
+                    aria-label={showTaskerPassword ? "Hide password" : "Show password"}
+                    disabled={isLoading}
+                  >
+                    {showTaskerPassword ? (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="form-field">
                 <label htmlFor="tasker-confirmPassword" className="form-label">
                   Confirm Password *
                 </label>
-                <input
-                  id="tasker-confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  className="input"
-                  value={taskerForm.confirmPassword}
-                  onChange={handleTaskerFormChange}
-                  required
-                  disabled={isLoading}
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    id="tasker-confirmPassword"
+                    name="confirmPassword"
+                    type={showTaskerConfirmPassword ? "text" : "password"}
+                    className="input"
+                    value={taskerForm.confirmPassword}
+                    onChange={handleTaskerFormChange}
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowTaskerConfirmPassword(!showTaskerConfirmPassword)}
+                    aria-label={showTaskerConfirmPassword ? "Hide password" : "Show password"}
+                    disabled={isLoading}
+                  >
+                    {showTaskerConfirmPassword ? (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <button

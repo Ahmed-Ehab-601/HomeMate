@@ -30,4 +30,12 @@ public class TaskerDiscoveryController {
         List<TaskerCardDto> results = taskerDiscoveryService.getTaskerCardsByFilters(criteria, page, size);
         return ResponseEntity.ok(results);
     }
+
+    @GetMapping("{taskerID}")
+    public ResponseEntity<TaskerCardDto> getTaskerByID(@PathVariable long taskerID){
+        return ResponseEntity.ok(taskerDiscoveryService.getTaskerByID(taskerID));
+    }
+
+
+
 }

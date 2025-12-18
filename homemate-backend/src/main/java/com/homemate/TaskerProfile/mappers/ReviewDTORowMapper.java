@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import com.homemate.TaskerProfile.DTO.ReviewDTO;
 
-@Component
+@Component("taskerProfileReviewDTORowMapper")
 public class ReviewDTORowMapper implements RowMapper<ReviewDTO> {
 
     @Override
@@ -20,6 +20,8 @@ public class ReviewDTORowMapper implements RowMapper<ReviewDTO> {
         review.setRate(rs.getDouble("rate"));
         review.setTime(rs.getTimestamp("time"));
         review.setTaskId(rs.getInt("taskID"));
+        review.setReviewerUsername(rs.getString("reviewerUsername"));
+       
         return review;
     }
 }
