@@ -14,7 +14,7 @@ public class TaskerCardRowMapper implements RowMapper<Tasker> {
         tasker.setTaskerID(rs.getInt("taskerID"));
         tasker.setFirstName(rs.getString("firstName"));
         tasker.setLastName(rs.getString("lastName"));
-        tasker.setImage(rs.getBytes("image"));
+        //tasker.setImage(rs.getBytes("image"));
         tasker.setRating(rs.getDouble("rating"));
         tasker.setAvailability(rs.getString("availability"));
         tasker.setBio(rs.getString("bio"));
