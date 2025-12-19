@@ -12,6 +12,7 @@ import com.homemate.security.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -33,13 +34,11 @@ import static com.homemate.notification.domains.dto.EmailRequest.EmailType.FORGO
 @Validated
 @RequiredArgsConstructor
 @Component
-public class OTPServiceImp implements OTPService {
+public class OTPServiceImpl implements OTPService {
 
     private static final String HOUR_S = "hour(s)";
     private static final String MINUTE_S = "minute(s)";
     private static final String MAX_ATTEMPTS_MESSAGE = "Maximum verification attempts exceeded. Please try again in %d %s.";
-    private static final String EMAIL_VERIFY_TITLE = "Verify Your Email";
-    private static final String RESET_PASSWORD_TITLE = "Reset Your Password";
     private static final String OTP_SENT_SUCCESSFULLY = "OTP sent successfully";
     private static final String OTP_SEND_FAILED = "Failed to send OTP email. Please try again later.";
     private static final String UNSUPPORTED_EMAIL_TYPE = "Unsupported Email Type";
@@ -47,8 +46,9 @@ public class OTPServiceImp implements OTPService {
     private static final String VERIFICATION_SUCCESS_MESSAGE = "OTP verified successfully";
     private static final String OTP_EXPIRED_MESSAGE = "OTP expired";
     private static final String TASK_EMAIL_NO_OTP_MESSAGE = "Task-related emails do not require OTP verification";
-    private static final String HOMEMATE_EMAIL = "homematesevice8@gmail.com";
 
+    @Value("${homemate.email.from:homemateservice8@gmail.com}")
+    private String fromEmail;
 
     private final JwtService jwtService;
     private final EmailTemplate emailTemplate;
@@ -87,7 +87,7 @@ public class OTPServiceImp implements OTPService {
 
         // Check if max attempts reached
         long attempts = otpStorageService.getAttempts(email);
-        if (otpStorageService.hasReachedMaxAttempts(email,RedisConfig.OTP_MAX_ATTEMPTS)) {
+        if (otpStorageService.hasReachedMaxAttempts(email, RedisConfig.OTP_MAX_ATTEMPTS)) {
             log.warn("OTP validation failed - Max attempts exceeded for email: {}", email);
             otpStorageService.deleteOtp(email);
             String timeUnit = formatTimeUnit(attemptTtlUnit);
@@ -112,7 +112,6 @@ public class OTPServiceImp implements OTPService {
         return invalidOtpResult(remainingAttempts);
     }
 
-
     @Override
     @Async("otpExecutor")
     public CompletableFuture<OtpVerificationResult> sendOtp(EmailRequest emailRequest)
@@ -136,37 +135,21 @@ public class OTPServiceImp implements OTPService {
         }
 
         String otpCode = generateAndStoreOTP(email, emailType).get();
-        EmailContent content = buildEmailContent(emailType, otpCode);
+        EmailTemplate.OtpEmailContent emailContent = emailTemplate.buildOtpEmailContent(emailType, otpCode);
 
-        return sendOtpEmail(email, content);
+        return sendOtpEmail(email, emailContent);
     }
 
-
-    private EmailContent buildEmailContent(EmailRequest.EmailType emailType, String otpCode) {
-        return switch (emailType) {
-            case EMAIL_VERIFICATION -> new EmailContent(
-                    EMAIL_VERIFY_TITLE,
-                    emailTemplate.buildVerificationCode(otpCode)
-            );
-            case FORGOT_PASSWORD -> new EmailContent(
-                    RESET_PASSWORD_TITLE,
-                    emailTemplate.buildResetPasswordCode(otpCode)
-            );
-            default -> throw new IllegalStateException("Unexpected email type: " + emailType);
-        };
-    }
-
-
-    private CompletableFuture<OtpVerificationResult> sendOtpEmail(String email, EmailContent content) {
+    private CompletableFuture<OtpVerificationResult> sendOtpEmail(String email, EmailTemplate.OtpEmailContent content) {
         try {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
-            helper.setFrom(HOMEMATE_EMAIL);
+            helper.setFrom(fromEmail);
             helper.setTo(email);
-            helper.setSubject(content.title());
+            helper.setSubject(content.subject());
 
-            String htmlContent = buildHtmlContent(content.title(), content.body());
+            String htmlContent = buildHtmlContent(content.subject(), content.body());
             helper.setText(htmlContent, true);
             helper.addInline("logo", new ClassPathResource("logo.png"));
 
@@ -181,7 +164,6 @@ public class OTPServiceImp implements OTPService {
         }
     }
 
-
     private String buildHtmlContent(String title, String body) {
         return "<html><body>" +
                 "<img src='cid:logo' style='width:200px; height:auto;' />" +
@@ -189,7 +171,6 @@ public class OTPServiceImp implements OTPService {
                 "<p>" + body + "</p>" +
                 "</body></html>";
     }
-
 
     private CompletableFuture<OtpVerificationResult> handleNonOtpEmailType(
             EmailRequest.EmailType emailType, String email) {
@@ -203,7 +184,6 @@ public class OTPServiceImp implements OTPService {
         log.error("Unsupported email type: {} for email: {}", emailType, email);
         return unsupportedEmailTypeResult();
     }
-
 
     private boolean isTaskRelatedEmail(EmailRequest.EmailType emailType) {
         return emailType == EmailRequest.EmailType.TASK_REQUEST ||
@@ -224,7 +204,6 @@ public class OTPServiceImp implements OTPService {
                 : RedisConfig.OTP_ATTEMPT_TTL_MINUTES;
     }
 
-
     private static TimeUnit getTimeUnit(EmailRequest.EmailType emailType) {
         return emailType == FORGOT_PASSWORD ? TimeUnit.HOURS : TimeUnit.MINUTES;
     }
@@ -232,7 +211,6 @@ public class OTPServiceImp implements OTPService {
     private static String formatTimeUnit(TimeUnit timeUnit) {
         return timeUnit == TimeUnit.HOURS ? HOUR_S : MINUTE_S;
     }
-
 
     private CompletableFuture<OtpVerificationResult> successResult(String email) {
         return CompletableFuture.completedFuture(
@@ -313,7 +291,4 @@ public class OTPServiceImp implements OTPService {
                         .build()
         );
     }
-
-
-    private record EmailContent(String title, String body) {}
 }

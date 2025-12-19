@@ -1,19 +1,16 @@
-
 package com.homemate.notification.service.impl;
-
 import com.homemate.notification.service.OtpStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OtpStorageServiceRedisImp implements OtpStorageService {
+public class OtpStorageServiceRedisImpl implements OtpStorageService {
     private final RedisTemplate<String, Object> redisTemplate;
     private static final String OTP_PREFIX = "otp:";
     private static final String ATTEMPTS_PREFIX = "otp_attempts:";
