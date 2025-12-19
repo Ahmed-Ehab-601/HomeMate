@@ -39,8 +39,8 @@ public class EmailServiceImpl implements EmailService {
             simpleMailMessage.setFrom(fromEmail);
             javaMailSender.send(simpleMailMessage);
 
-            log.info("Email sent successfully - Type: {}, Recipient: {}",
-                    emailRequest.getEmailType(), emailRequest.getRecipientEmail());
+            log.info("Email sent successfully - Type: {}, RecipientType: {}, Recipient: {}",
+                    emailRequest.getEmailType(), emailRequest.getRecipientType(), emailRequest.getRecipientEmail());
 
             return CompletableFuture.completedFuture(
                     TaskResponse.builder()
@@ -50,8 +50,8 @@ public class EmailServiceImpl implements EmailService {
             );
 
         } catch (MailException e) {
-            log.error("Failed to send email - Type: {}, Recipient: {}, Error: {}",
-                    emailRequest.getEmailType(), emailRequest.getRecipientEmail(), e.getMessage(), e);
+            log.error("Failed to send email - Type: {}, RecipientType: {}, Recipient: {}, Error: {}",
+                    emailRequest.getEmailType(), emailRequest.getRecipientType(), emailRequest.getRecipientEmail(), e.getMessage(), e);
             return CompletableFuture.completedFuture(
                     TaskResponse.builder()
                             .success(false)
@@ -59,8 +59,8 @@ public class EmailServiceImpl implements EmailService {
                             .build()
             );
         } catch (Exception e) {
-            log.error("Unexpected error sending email - Type: {}, Recipient: {}, Error: {}",
-                    emailRequest.getEmailType(), emailRequest.getRecipientEmail(), e.getMessage(), e);
+            log.error("Unexpected error sending email - Type: {}, RecipientType: {}, Recipient: {}, Error: {}",
+                    emailRequest.getEmailType(), emailRequest.getRecipientType(), emailRequest.getRecipientEmail(), e.getMessage(), e);
             return CompletableFuture.completedFuture(
                     TaskResponse.builder()
                             .success(false)
@@ -70,43 +70,20 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
+
     @Async("taskExecutor")
     @Override
-    public CompletableFuture<TaskResponse> sendUserEmail(EmailRequest emailRequest) {
+    public CompletableFuture<TaskResponse> sendEmail(EmailRequest emailRequest) {
         try {
             String subject = emailTemplate.buildEmailSubject(emailRequest);
             String body = emailTemplate.buildEmailBody(emailRequest);
-
             return sendNotification(subject, body, emailRequest);
 
         } catch (EmailTemplateException e) {
             return handleTemplateException(e);
         } catch (Exception e) {
-            log.error("Unexpected error in sendUserEmail - Type: {}, Recipient: {}",
-                    emailRequest.getEmailType(), emailRequest.getRecipientEmail(), e);
-            return CompletableFuture.completedFuture(
-                    TaskResponse.builder()
-                            .success(false)
-                            .message("Failed to process email request: " + e.getMessage())
-                            .build()
-            );
-        }
-    }
-
-    @Async("taskExecutor")
-    @Override
-    public CompletableFuture<TaskResponse> sendTaskerEmail(EmailRequest emailRequest) {
-        try {
-            String subject = emailTemplate.buildEmailSubject(emailRequest);
-            String body = emailTemplate.buildEmailBody(emailRequest);
-
-            return sendNotification(subject, body, emailRequest);
-
-        } catch (EmailTemplateException e) {
-            return handleTemplateException(e);
-        } catch (Exception e) {
-            log.error("Unexpected error in sendTaskerEmail - Type: {}, Recipient: {}",
-                    emailRequest.getEmailType(), emailRequest.getRecipientEmail(), e);
+            log.error("Unexpected error processing email - Type: {}, RecipientType: {}, Recipient: {}",
+                    emailRequest.getEmailType(), emailRequest.getRecipientType(), emailRequest.getRecipientEmail(), e);
             return CompletableFuture.completedFuture(
                     TaskResponse.builder()
                             .success(false)

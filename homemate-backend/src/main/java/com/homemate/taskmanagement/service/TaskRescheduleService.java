@@ -29,8 +29,6 @@ public class TaskRescheduleService {
     private final SimpMessagingTemplate simpMessagingTemplate;
 
 
-
-
     public RescheduleResponseDto rescheduleTask(Long taskID, RescheduleRequestDto rescheduleRequestDto , Long requestID) {
 
         validateReschedule(taskID, requestID, rescheduleRequestDto);
@@ -63,15 +61,17 @@ public class TaskRescheduleService {
                 .recipientEmail((taskDto.getUserMail()))
                 .task(taskDto)
                 .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
+                .recipientType(EmailRequest.RecipientType.USER)
                 .build();
-        emailService.sendUserEmail(userMail);
+        emailService.sendEmail(userMail);
 
         EmailRequest taskerMail = EmailRequest.builder()
                 .recipientEmail(taskDto.getTaskerMail())
                 .task(taskDto)
                 .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
+                .recipientType(EmailRequest.RecipientType.TASKER)
                 .build();
-        emailService.sendTaskerEmail(taskerMail);
+        emailService.sendEmail(taskerMail);
 
     }
 

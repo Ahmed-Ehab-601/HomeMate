@@ -47,7 +47,7 @@ public class TaskRequestService {
                     .recipientEmail(taskDto.getTaskerMail())
                     .build();
 
-            emailService.sendTaskerEmail(emailRequest);
+            emailService.sendEmail(emailRequest);
 
         } catch (Exception ignored) {
         }

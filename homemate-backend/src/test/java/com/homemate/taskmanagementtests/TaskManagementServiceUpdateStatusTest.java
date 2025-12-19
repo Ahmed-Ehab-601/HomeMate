@@ -485,7 +485,7 @@ class TaskManagementServiceUpdateStatusTest {
         taskStatusService.updateTaskStatus(taskId, taskerId, newStatus);
 
         // Then
-        verify(emailServiceImp).sendUserEmail(any());
+        verify(emailServiceImp).sendEmail(any());
     }
 
     @Test
@@ -504,7 +504,7 @@ class TaskManagementServiceUpdateStatusTest {
         when(taskRequestDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
 
         // Simulate email failure
-        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendUserEmail(any());
+        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendEmail(any());
 
         // Act & Assert
         assertThatThrownBy(() -> taskStatusService.updateTaskStatus(taskId, taskerId, newStatus))
@@ -532,7 +532,7 @@ class TaskManagementServiceUpdateStatusTest {
 
         // Then
         ArgumentCaptor<EmailRequest> emailCaptor = ArgumentCaptor.forClass(EmailRequest.class);
-        verify(emailServiceImp).sendUserEmail(emailCaptor.capture());
+        verify(emailServiceImp).sendEmail(emailCaptor.capture());
 
         EmailRequest capturedEmail = emailCaptor.getValue();
         assertThat(capturedEmail.getEmailType()).isEqualTo(EmailRequest.EmailType.TASK_STATUS);

@@ -58,7 +58,7 @@ public class TaskStatusService {
                 .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .build();
 
-        emailService.sendUserEmail(emailRequest);
+        emailService.sendEmail(emailRequest);
     }
 
     public Status validateTaskExistAndTaskerOwner(Long taskID, Long taskerID) {

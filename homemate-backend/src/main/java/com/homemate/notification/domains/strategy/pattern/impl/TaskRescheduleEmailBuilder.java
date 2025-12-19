@@ -10,6 +10,17 @@ public class TaskRescheduleEmailBuilder implements EmailBuilder {
 
     @Override
     public String buildBody(TaskDto taskDto) {
+        return buildBodyForUser(taskDto);
+    }
+
+    @Override
+    public String buildSubject(TaskDto taskDto) {
+        EmailTemplateValidator.validateTaskDto(taskDto, "TASK_RESCHEDULE");
+        String serviceName = EmailTemplateValidator.requireNonNull(taskDto.getServiceName(), "serviceName", "TASK_RESCHEDULE");
+        return "Task Rescheduled - " + serviceName;
+    }
+
+    public String buildBodyForUser(TaskDto taskDto) {
         EmailTemplateValidator.validateTaskDto(taskDto, "TASK_RESCHEDULE");
         String userName = EmailTemplateValidator.requireNonNull(taskDto.getUserName(), "userName", "TASK_RESCHEDULE");
         String taskerName = EmailTemplateValidator.requireNonNull(taskDto.getTaskerName(), "taskerName", "TASK_RESCHEDULE");
@@ -37,11 +48,31 @@ public class TaskRescheduleEmailBuilder implements EmailBuilder {
         );
     }
 
-    @Override
-    public String buildSubject(TaskDto taskDto) {
+    public String buildBodyForTasker(TaskDto taskDto) {
         EmailTemplateValidator.validateTaskDto(taskDto, "TASK_RESCHEDULE");
+        String userName = EmailTemplateValidator.requireNonNull(taskDto.getUserName(), "userName", "TASK_RESCHEDULE");
+        String taskerName = EmailTemplateValidator.requireNonNull(taskDto.getTaskerName(), "taskerName", "TASK_RESCHEDULE");
         String serviceName = EmailTemplateValidator.requireNonNull(taskDto.getServiceName(), "serviceName", "TASK_RESCHEDULE");
-        return "Task Rescheduled - " + serviceName;
+        String address = EmailTemplateValidator.requireNonNull(taskDto.getAddressDetails(), "addressDetails", "TASK_RESCHEDULE");
+        String newDate = formatDate(taskDto.getStartDate());
+
+        return String.format(
+                "Hi %s,\n\n" +
+                        "The task has been rescheduled by the customer.\n\n" +
+                        "Updated Task Details:\n" +
+                        "• Service: %s\n" +
+                        "• New Date & Time: %s\n" +
+                        "• Customer: %s\n" +
+                        "• Location: %s\n\n" +
+                        "Please update your schedule accordingly. If you have any questions, contact the customer through the app.\n\n" +
+                        "Best regards,\n" +
+                        "The Homemate Team",
+                taskerName,
+                serviceName,
+                newDate,
+                userName,
+                address
+        );
     }
 
     private String formatDate(java.time.LocalDateTime localDateTime) {

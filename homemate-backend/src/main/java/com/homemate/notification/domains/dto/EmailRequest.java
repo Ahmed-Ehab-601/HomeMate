@@ -14,6 +14,7 @@ public class EmailRequest {
     private TaskDto task;
     private EmailType emailType;
     private String recipientEmail;
+    private RecipientType recipientType;
     public enum EmailType {
         TASK_RESCHEDULE,
         TASK_STATUS,
@@ -21,6 +22,10 @@ public class EmailRequest {
         EMAIL_VERIFICATION,
         FORGOT_PASSWORD,
         TASK_RESUMED
+    }
+    public enum RecipientType {
+        USER,
+        TASKER
     }
     
     

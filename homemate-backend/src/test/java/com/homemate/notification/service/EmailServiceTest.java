@@ -49,11 +49,12 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Accepted");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Your task has been accepted");
-        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
+        TaskResponse response = underTest.sendEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         assertEquals("Email sent successfully", response.getMessage());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
@@ -68,11 +69,12 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Rejected");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Your task has been rejected");
-        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
+        TaskResponse response = underTest.sendEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).buildEmailBody(emailRequest);
@@ -86,11 +88,12 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Status Updated");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Task status has changed");
-        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
+        TaskResponse response = underTest.sendEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).buildEmailBody(emailRequest);
@@ -103,10 +106,11 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.USER)
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Rescheduled");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Your task has been rescheduled");
-        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
+        TaskResponse response = underTest.sendEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).buildEmailBody(emailRequest);
@@ -119,10 +123,11 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_RESUMED)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.USER)
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Resumed");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Your task has been resumed");
-        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
+        TaskResponse response = underTest.sendEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).buildEmailBody(emailRequest);
@@ -135,12 +140,13 @@ class EmailServiceTest {
                                 .task(task)
                                 .emailType(EmailRequest.EmailType.EMAIL_VERIFICATION)
                                 .recipientEmail(RECIPIENT_EMAIL)
+                                .recipientType(EmailRequest.RecipientType.USER)
                                 .build();
 
                 when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Verify your email");
                 when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Verification body");
 
-                TaskResponse response = underTest.sendUserEmail(emailRequest).get();
+                TaskResponse response = underTest.sendEmail(emailRequest).get();
                 assertTrue(response.isSuccess());
                 verify(javaMailSender).send(any(SimpleMailMessage.class));
     }
@@ -152,12 +158,13 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Accepted");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Your task has been accepted");
         ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        underTest.sendUserEmail(emailRequest);
+        underTest.sendEmail(emailRequest);
         verify(javaMailSender).send(captor.capture());
         SimpleMailMessage sentMessage = captor.getValue();
         assertEquals(HOMEMATE_EMAIL, sentMessage.getFrom());
@@ -170,11 +177,12 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.USER)
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Accepted");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Your task has been accepted");
         ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        underTest.sendUserEmail(emailRequest);
+        underTest.sendEmail(emailRequest);
         verify(javaMailSender).send(captor.capture());
         SimpleMailMessage sentMessage = captor.getValue();
         assertArrayEquals(new String[]{RECIPIENT_EMAIL}, sentMessage.getTo());
@@ -189,11 +197,12 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_REQUEST)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.TASKER)
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("New Task Request");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("You have a new task request");
 
-        TaskResponse response = underTest.sendTaskerEmail(emailRequest).get();
+        TaskResponse response = underTest.sendEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).buildEmailBody(emailRequest);
@@ -207,11 +216,12 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.TASKER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Rescheduled");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("A task has been rescheduled");
-        TaskResponse response = underTest.sendTaskerEmail(emailRequest).get();
+        TaskResponse response = underTest.sendEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).buildEmailBody(emailRequest);
@@ -225,12 +235,13 @@ class EmailServiceTest {
                                 .task(task)
                                 .emailType(EmailRequest.EmailType.TASK_STATUS)
                                 .recipientEmail(RECIPIENT_EMAIL)
+                                .recipientType(EmailRequest.RecipientType.TASKER)
                                 .build();
 
                 when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task status update");
                 when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Status body");
 
-                TaskResponse response = underTest.sendTaskerEmail(emailRequest).get();
+                TaskResponse response = underTest.sendEmail(emailRequest).get();
                 assertTrue(response.isSuccess());
                 verify(javaMailSender).send(any(SimpleMailMessage.class));
     }
@@ -243,6 +254,7 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_REQUEST)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.TASKER)
                 .build();
 
         String expectedSubject = "New Task Request";
@@ -251,7 +263,7 @@ class EmailServiceTest {
 
         ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
 
-        underTest.sendTaskerEmail(emailRequest);
+        underTest.sendEmail(emailRequest);
 
         verify(javaMailSender).send(captor.capture());
         SimpleMailMessage sentMessage = captor.getValue();
@@ -265,13 +277,14 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_REQUEST)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.TASKER)
                 .build();
 
         String expectedBody = "You have a new task request";
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("New Task Request");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn(expectedBody);
         ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        underTest.sendTaskerEmail(emailRequest);
+        underTest.sendEmail(emailRequest);
         verify(javaMailSender).send(captor.capture());
         SimpleMailMessage sentMessage = captor.getValue();
         assertEquals(expectedBody, sentMessage.getText());
@@ -284,6 +297,7 @@ class EmailServiceTest {
                 .task(task1)
                 .emailType(EmailRequest.EmailType.TASK_REQUEST)
                 .recipientEmail("user1@gmail.com")
+                .recipientType(EmailRequest.RecipientType.TASKER)
                 .build();
 
         TaskDto task2 =TaskDto.builder().taskID(16L).build();
@@ -291,13 +305,14 @@ class EmailServiceTest {
                 .task(task2)
                 .emailType(EmailRequest.EmailType.TASK_REQUEST)
                 .recipientEmail("user2@gmail.com")
+                .recipientType(EmailRequest.RecipientType.TASKER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(any())).thenReturn("Task Request");
         when(emailTemplate.buildEmailBody(any())).thenReturn("Task details");
 
-        underTest.sendTaskerEmail(emailRequest1);
-        underTest.sendTaskerEmail(emailRequest2);
+        underTest.sendEmail(emailRequest1);
+        underTest.sendEmail(emailRequest2);
 
         verify(javaMailSender, times(2)).send(any(SimpleMailMessage.class));
     }
@@ -308,10 +323,11 @@ class EmailServiceTest {
                 .task(null)
                 .emailType(EmailRequest.EmailType.TASK_REQUEST)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.TASKER)
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Request");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Task details");
-        TaskResponse response = underTest.sendTaskerEmail(emailRequest).get();
+        TaskResponse response = underTest.sendEmail(emailRequest).get();
         assertTrue(response.isSuccess());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
     }
@@ -323,6 +339,7 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Accepted");
@@ -330,7 +347,7 @@ class EmailServiceTest {
         doThrow(new MailSendException("SMTP connection failed"))
                 .when(javaMailSender)
                 .send(any(SimpleMailMessage.class));
-        TaskResponse response = underTest.sendUserEmail(emailRequest).get();
+        TaskResponse response = underTest.sendEmail(emailRequest).get();
         assertFalse(response.isSuccess());
         assertTrue(response.getMessage().contains("Failed to send email: " + "SMTP connection failed"));
     }
@@ -345,6 +362,7 @@ class EmailServiceTest {
                 .task(task)
                 .emailType(EmailRequest.EmailType.TASK_REQUEST)
                 .recipientEmail(RECIPIENT_EMAIL)
+                .recipientType(EmailRequest.RecipientType.TASKER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest))
@@ -357,7 +375,7 @@ class EmailServiceTest {
                         "taskerName"
                 ));
 
-        TaskResponse response =underTest.sendTaskerEmail(emailRequest).get();
+        TaskResponse response =underTest.sendEmail(emailRequest).get();
         assertFalse(response.isSuccess());
         String expectedMsg=String.format("Template: %s, Missing: %s, Reason: %s",
                 "TASK_REQUEST",
@@ -375,12 +393,13 @@ class EmailServiceTest {
                                 .task(task)
                                 .emailType(EmailRequest.EmailType.FORGOT_PASSWORD)
                                 .recipientEmail(RECIPIENT_EMAIL)
+                                .recipientType(EmailRequest.RecipientType.USER)
                                 .build();
 
                 when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Reset password");
                 when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Reset body");
 
-                TaskResponse response = underTest.sendUserEmail(emailRequest).get();
+                TaskResponse response = underTest.sendEmail(emailRequest).get();
                 assertTrue(response.isSuccess());
                 verify(javaMailSender).send(any(SimpleMailMessage.class));
     }
@@ -392,12 +411,13 @@ class EmailServiceTest {
                                 .task(task)
                                 .emailType(EmailRequest.EmailType.EMAIL_VERIFICATION)
                                 .recipientEmail(RECIPIENT_EMAIL)
+                                .recipientType(EmailRequest.RecipientType.TASKER)
                                 .build();
 
                 when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Verify your email");
                 when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Verification body");
 
-                TaskResponse response = underTest.sendTaskerEmail(emailRequest).get();
+                TaskResponse response = underTest.sendEmail(emailRequest).get();
                 assertTrue(response.isSuccess());
                 verify(javaMailSender).send(any(SimpleMailMessage.class));
     }

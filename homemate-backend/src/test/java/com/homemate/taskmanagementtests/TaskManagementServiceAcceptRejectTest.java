@@ -183,7 +183,7 @@ class TaskManagementServiceAcceptRejectTest {
                 .doesNotThrowAnyException();
 
         // Verify email was sent
-        verify(emailServiceImp).sendUserEmail(any());
+        verify(emailServiceImp).sendEmail(any());
     }
 
 
@@ -203,7 +203,7 @@ class TaskManagementServiceAcceptRejectTest {
         when(taskRequestDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
 
         // Simulate email sending failure
-        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendUserEmail(any());
+        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendEmail(any());
 
         // Act & Assert
         assertThatThrownBy(() -> taskStatusService.acceptOrReject(taskId, taskerId, newStatus))

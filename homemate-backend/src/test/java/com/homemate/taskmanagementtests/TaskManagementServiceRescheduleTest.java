@@ -153,7 +153,7 @@ public class TaskManagementServiceRescheduleTest {
         taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID);
 
         // Assert: email sent
-        verify(emailServiceImp).sendUserEmail(any());
+        verify(emailServiceImp,times(2)).sendEmail(any());
     }
 
 
@@ -178,7 +178,7 @@ public class TaskManagementServiceRescheduleTest {
         when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
 
         // Simulate email failure
-        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendUserEmail(any());
+        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendEmail(any());
 
         // Act & Assert
         assertThrows(RuntimeException.class, () ->

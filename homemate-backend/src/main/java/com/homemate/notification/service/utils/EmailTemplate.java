@@ -33,6 +33,18 @@ public class EmailTemplate {
         TaskDto taskDto = emailRequest.getTask();
 
         EmailBuilder builder = getEmailBuilder(emailType);
+
+        if (builder instanceof TaskRescheduleEmailBuilder taskRescheduleEmailBuilder ) {
+            String body;
+            if(emailRequest.getRecipientType() == EmailRequest.RecipientType.TASKER)
+                body = taskRescheduleEmailBuilder.buildBodyForTasker(taskDto);
+            else
+                body = taskRescheduleEmailBuilder.buildBodyForUser(taskDto);
+
+        return body;
+
+        }
+
         return builder.buildBody(taskDto);
     }
 

@@ -1,5 +1,8 @@
 package com.homemate.notification.domains.exception;
 
+import lombok.Getter;
+
+@Getter
 public class EmailTemplateException extends RuntimeException {
     private final String templateType;
     private final String missingField;
@@ -16,11 +19,4 @@ public class EmailTemplateException extends RuntimeException {
         this.missingField = null;
     }
 
-    public String getTemplateType() {
-        return templateType;
-    }
-
-    public String getMissingField() {
-        return missingField;
-    }
 }
