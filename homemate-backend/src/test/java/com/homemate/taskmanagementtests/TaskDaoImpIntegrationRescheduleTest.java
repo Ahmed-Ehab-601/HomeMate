@@ -1,7 +1,6 @@
 package com.homemate.taskmanagementtests;
 
 import com.homemate.taskmanagement.dao.TaskRescheduleDao;
-import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

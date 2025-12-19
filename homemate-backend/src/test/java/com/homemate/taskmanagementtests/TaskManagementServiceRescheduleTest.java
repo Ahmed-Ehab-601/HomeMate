@@ -1,7 +1,8 @@
 package com.homemate.taskmanagementtests;
 
 
-import com.homemate.notification.service.imp.EmailServiceImp;
+
+import com.homemate.notification.service.impl.EmailServiceImpl;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dao.TaskRescheduleDao;
 import com.homemate.taskmanagement.dao.TaskStatusDao;
@@ -39,7 +40,7 @@ public class TaskManagementServiceRescheduleTest {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     @Mock
-    private EmailServiceImp emailServiceImp;
+    private EmailServiceImpl emailServiceImp;
 
     @InjectMocks
     private TaskRescheduleService taskRescheduleService;

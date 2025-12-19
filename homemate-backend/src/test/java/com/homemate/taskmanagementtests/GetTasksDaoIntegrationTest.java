@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import com.homemate.taskmanagement.dao.GetTasksDao;
 import com.homemate.taskmanagement.dto.StatusDto;
 import com.homemate.taskmanagement.dto.TaskCardDto;
-import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

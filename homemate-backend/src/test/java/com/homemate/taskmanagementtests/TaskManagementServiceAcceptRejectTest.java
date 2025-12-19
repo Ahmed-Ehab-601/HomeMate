@@ -1,6 +1,7 @@
 package com.homemate.taskmanagementtests;
 
-import com.homemate.notification.service.imp.EmailServiceImp;
+
+import com.homemate.notification.service.impl.EmailServiceImpl;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.dto.TaskDto;
@@ -33,7 +34,7 @@ class TaskManagementServiceAcceptRejectTest {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     @Mock
-    private EmailServiceImp emailServiceImp;
+    private EmailServiceImpl emailServiceImp;
 
     @InjectMocks
     private TaskStatusService taskStatusService;
