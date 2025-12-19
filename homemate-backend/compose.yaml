@@ -9,7 +9,6 @@ services:
     networks:
       - homemate-network
 
-  # Spring Boot Backend
   backend:
     build:
       context: .
@@ -18,36 +17,31 @@ services:
     ports:
       - '8080:8080'
     environment:
-      # Database Configuration
-      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/HomeMate?createDatabaseIfNotExist=TRUE&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      SPRING_DATASOURCE_URL: ${DATABASE_URL:-jdbc:mysql://host.docker.internal:3306/HomeMate?createDatabaseIfNotExist=TRUE&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC}
+      SPRING_DATASOURCE_USERNAME: ${DATABASE_USERNAME:-root}
+      SPRING_DATASOURCE_PASSWORD: ${DATABASE_PASSWORD:-${DB_PASSWORD}}
 
-      # Redis Configuration
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-redis}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT:-6379}
 
-      # Flyway Configuration
       SPRING_FLYWAY_ENABLED: 'true'
       SPRING_FLYWAY_BASELINE_ON_MIGRATE: 'true'
 
-      # Email Configuration
-      SPRING_MAIL_PASSWORD: ${HomeMateMail}
-
-      # Security
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD:-${HomeMateMail}}
       APP_SECURITY_ENABLED: 'true'
 
-      # OAuth2 (keep your existing values)
-      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: 953966255991-698hogtjc70cori6r61dbjqhk30dq44u.apps.googleusercontent.com
-      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: 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
+      # Use environment variables for OAuth
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
 
+    depends_on:
+      - redis
     networks:
       - homemate-network
     restart: unless-stopped
 
 volumes:
   redis_data:
-    driver: local
 
 networks:
   homemate-network:
