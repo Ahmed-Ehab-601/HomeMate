@@ -455,4 +455,111 @@ public class MessageDaoTest {
         assertThrows(RuntimeException.class,
                 () -> messageDao.markasReadUser(CHAT_ID));
     }
+    @Test
+    public void testListMessagesReceivedForUser_Success() {
+        List<MessageDto> expectedMessages = Arrays.asList(
+                MessageDto.builder()
+                        .messageId(1L)
+                        .content("Message 1")
+                        .receiverId(USER_ID)
+                        .IsUserSender(false)
+                        .messageStatus(MessageStatus.received)
+                        .build(),
+                MessageDto.builder()
+                        .messageId(2L)
+                        .content("Message 2")
+                        .receiverId(USER_ID)
+                        .IsUserSender(false)
+                        .messageStatus(MessageStatus.received)
+                        .build()
+        );
+
+        String sql = "SELECT * FROM Message m " +
+                "LEFT JOIN MessageImage mi ON m.messageId = mi.messageID " +
+                "WHERE m.status = 'received' " +
+                "AND m.receiverID = ? " +
+                "AND m.isUserSender = FALSE " +
+                "ORDER BY m.timestamp DESC";
+
+        when(jdbcTemplate.query(eq(sql), any(Object[].class), any(MessageRowMapper.class)))
+                .thenReturn(expectedMessages);
+
+        List<MessageDto> result = messageDao.listMessagesRecievedTasker(USER_ID, true);
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals(MessageStatus.received, result.get(0).getMessageStatus());
+        assertFalse(result.get(0).isIsUserSender());
+        verify(jdbcTemplate).query(eq(sql), any(Object[].class), any(MessageRowMapper.class));
+    }
+
+    @Test
+    public void testListMessagesReceivedForTasker_Success() {
+        List<MessageDto> expectedMessages = Arrays.asList(
+                MessageDto.builder()
+                        .messageId(3L)
+                        .content("Message 3")
+                        .receiverId(TASKER_ID)
+                        .IsUserSender(true)
+                        .messageStatus(MessageStatus.received)
+                        .build()
+        );
+
+        String sql = "SELECT * FROM Message m " +
+                "LEFT JOIN MessageImage mi ON m.messageId = mi.messageID " +
+                "WHERE m.status = 'received' " +
+                "AND m.receiverID = ? " +
+                "AND m.isUserSender = TRUE " +
+                "ORDER BY m.timestamp DESC";
+
+        when(jdbcTemplate.query(eq(sql), any(Object[].class), any(MessageRowMapper.class)))
+                .thenReturn(expectedMessages);
+
+        List<MessageDto> result = messageDao.listMessagesRecievedTasker(TASKER_ID, false);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(MessageStatus.received, result.get(0).getMessageStatus());
+        assertTrue(result.get(0).isIsUserSender());
+        verify(jdbcTemplate).query(eq(sql), any(Object[].class), any(MessageRowMapper.class));
+    }
+
+    @Test
+    public void testListMessagesReceivedForUser_EmptyList() {
+        String sql = "SELECT * FROM Message m " +
+                "LEFT JOIN MessageImage mi ON m.messageId = mi.messageID " +
+                "WHERE m.status = 'received' " +
+                "AND m.receiverID = ? " +
+                "AND m.isUserSender = FALSE " +
+                "ORDER BY m.timestamp DESC";
+
+        when(jdbcTemplate.query(eq(sql), any(Object[].class), any(MessageRowMapper.class)))
+                .thenReturn(Arrays.asList());
+
+        List<MessageDto> result = messageDao.listMessagesRecievedTasker(USER_ID, true);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(jdbcTemplate).query(eq(sql), any(Object[].class), any(MessageRowMapper.class));
+    }
+
+    @Test
+    public void testListMessagesReceivedForTasker_EmptyList() {
+        String sql = "SELECT * FROM Message m " +
+                "LEFT JOIN MessageImage mi ON m.messageId = mi.messageID " +
+                "WHERE m.status = 'received' " +
+                "AND m.receiverID = ? " +
+                "AND m.isUserSender = TRUE " +
+                "ORDER BY m.timestamp DESC";
+
+        when(jdbcTemplate.query(eq(sql), any(Object[].class), any(MessageRowMapper.class)))
+                .thenReturn(Arrays.asList());
+
+        List<MessageDto> result = messageDao.listMessagesRecievedTasker(TASKER_ID, false);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(jdbcTemplate).query(eq(sql), any(Object[].class), any(MessageRowMapper.class));
+    }
+
 }
