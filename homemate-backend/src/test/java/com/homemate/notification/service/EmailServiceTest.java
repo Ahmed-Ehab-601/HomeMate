@@ -3,10 +3,13 @@ package com.homemate.notification.service;
 import com.homemate.notification.domains.dto.EmailRequest;
 import com.homemate.notification.domains.dto.TaskResponse;
 import com.homemate.notification.domains.exception.EmailTemplateException;
+import com.homemate.notification.domains.model.EmailType;
+import com.homemate.notification.domains.model.RecipientType;
 import com.homemate.notification.service.impl.EmailServiceImpl;
 import com.homemate.notification.service.utils.EmailTemplate;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.model.Status;
+import jakarta.validation.constraints.Email;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,9 +50,9 @@ class EmailServiceTest {
         TaskDto task =TaskDto.builder().taskID(1L).status(Status.Accepted).build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .emailType(EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Accepted");
@@ -67,9 +70,9 @@ class EmailServiceTest {
         TaskDto task =TaskDto.builder().taskID(2L).status(Status.Rejected).build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .emailType(EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Rejected");
@@ -86,9 +89,9 @@ class EmailServiceTest {
         TaskDto task =TaskDto.builder().taskID(3L).build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .emailType(EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Status Updated");
@@ -104,9 +107,9 @@ class EmailServiceTest {
         TaskDto task =TaskDto.builder().taskID(4L).build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
+                .emailType(EmailType.TASK_RESCHEDULE)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Rescheduled");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Your task has been rescheduled");
@@ -121,9 +124,9 @@ class EmailServiceTest {
         TaskDto task =TaskDto.builder().taskID(5L).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_RESUMED)
+                .emailType(EmailType.TASK_RESUMED)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Resumed");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Your task has been resumed");
@@ -138,9 +141,9 @@ class EmailServiceTest {
                 TaskDto task =TaskDto.builder().taskID(6L).build();
                 EmailRequest emailRequest =EmailRequest.builder()
                                 .task(task)
-                                .emailType(EmailRequest.EmailType.EMAIL_VERIFICATION)
+                                .emailType(EmailType.EMAIL_VERIFICATION)
                                 .recipientEmail(RECIPIENT_EMAIL)
-                                .recipientType(EmailRequest.RecipientType.USER)
+                                .recipientType(RecipientType.USER)
                                 .build();
 
                 when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Verify your email");
@@ -153,12 +156,12 @@ class EmailServiceTest {
 
     @Test
     void testSendUserEmailContainsCorrectFromAddress() {
-        TaskDto task = TaskDto.builder().taskID(7L).status(Status.Accepted). build();
+        TaskDto task = TaskDto.builder().taskID(7L).status(Status.Accepted).build();
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .emailType(EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Accepted");
@@ -175,9 +178,9 @@ class EmailServiceTest {
         TaskDto task = TaskDto.builder().taskID(8L).status(Status.Accepted).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .emailType(EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Accepted");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Your task has been accepted");
@@ -195,9 +198,9 @@ class EmailServiceTest {
         TaskDto task = TaskDto.builder().taskID(10L).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                .emailType(EmailType.TASK_REQUEST)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.TASKER)
+                .recipientType(RecipientType.TASKER)
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("New Task Request");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("You have a new task request");
@@ -214,9 +217,9 @@ class EmailServiceTest {
         TaskDto task = TaskDto.builder().taskID(11L).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
+                .emailType(EmailType.TASK_RESCHEDULE)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.TASKER)
+                .recipientType(RecipientType.TASKER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Rescheduled");
@@ -233,9 +236,9 @@ class EmailServiceTest {
                 TaskDto task = TaskDto.builder().taskID(12L).status(Status.Accepted).build();
                 EmailRequest emailRequest = EmailRequest.builder()
                                 .task(task)
-                                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                                .emailType(EmailType.TASK_STATUS)
                                 .recipientEmail(RECIPIENT_EMAIL)
-                                .recipientType(EmailRequest.RecipientType.TASKER)
+                                .recipientType(RecipientType.TASKER)
                                 .build();
 
                 when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task status update");
@@ -252,9 +255,9 @@ class EmailServiceTest {
         TaskDto task = TaskDto.builder().taskID(13L).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                .emailType(EmailType.TASK_REQUEST)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.TASKER)
+                .recipientType(RecipientType.TASKER)
                 .build();
 
         String expectedSubject = "New Task Request";
@@ -275,9 +278,9 @@ class EmailServiceTest {
         TaskDto task = TaskDto.builder().taskID(14L).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                .emailType(EmailType.TASK_REQUEST)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.TASKER)
+                .recipientType(RecipientType.TASKER)
                 .build();
 
         String expectedBody = "You have a new task request";
@@ -295,17 +298,17 @@ class EmailServiceTest {
         TaskDto task1 =TaskDto.builder().taskID(15L).build();
         EmailRequest emailRequest1 =EmailRequest.builder()
                 .task(task1)
-                .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                .emailType(EmailType.TASK_REQUEST)
                 .recipientEmail("user1@gmail.com")
-                .recipientType(EmailRequest.RecipientType.TASKER)
+                .recipientType(RecipientType.TASKER)
                 .build();
 
         TaskDto task2 =TaskDto.builder().taskID(16L).build();
         EmailRequest emailRequest2 = EmailRequest.builder()
                 .task(task2)
-                .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                .emailType(EmailType.TASK_REQUEST)
                 .recipientEmail("user2@gmail.com")
-                .recipientType(EmailRequest.RecipientType.TASKER)
+                .recipientType(RecipientType.TASKER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(any())).thenReturn("Task Request");
@@ -321,9 +324,9 @@ class EmailServiceTest {
     void testEmailServiceHandlesNullTask() throws ExecutionException, InterruptedException {
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(null)
-                .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                .emailType(EmailType.TASK_REQUEST)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.TASKER)
+                .recipientType(RecipientType.TASKER)
                 .build();
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Request");
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Task details");
@@ -337,9 +340,9 @@ class EmailServiceTest {
         TaskDto task = TaskDto.builder().taskID(25L).status(Status.Accepted).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .emailType(EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Accepted");
@@ -360,9 +363,9 @@ class EmailServiceTest {
 
         EmailRequest emailRequest =EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                .emailType(EmailType.TASK_REQUEST)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.TASKER)
+                .recipientType(RecipientType.TASKER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest))
@@ -391,9 +394,9 @@ class EmailServiceTest {
                 TaskDto task =TaskDto.builder().taskID(20L).build();
                 EmailRequest emailRequest = EmailRequest.builder()
                                 .task(task)
-                                .emailType(EmailRequest.EmailType.FORGOT_PASSWORD)
+                                .emailType(EmailType.FORGOT_PASSWORD)
                                 .recipientEmail(RECIPIENT_EMAIL)
-                                .recipientType(EmailRequest.RecipientType.USER)
+                                .recipientType(RecipientType.USER)
                                 .build();
 
                 when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Reset password");
@@ -409,9 +412,9 @@ class EmailServiceTest {
                 TaskDto task = TaskDto.builder().taskID(21L).build();
                 EmailRequest emailRequest = EmailRequest.builder()
                                 .task(task)
-                                .emailType(EmailRequest.EmailType.EMAIL_VERIFICATION)
+                                .emailType(EmailType.EMAIL_VERIFICATION)
                                 .recipientEmail(RECIPIENT_EMAIL)
-                                .recipientType(EmailRequest.RecipientType.TASKER)
+                                .recipientType(RecipientType.TASKER)
                                 .build();
 
                 when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Verify your email");
@@ -427,9 +430,9 @@ class EmailServiceTest {
         TaskDto task = TaskDto.builder().taskID(22L).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .emailType(EmailType.TASK_STATUS)
                 .recipientEmail(null)
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Status");
@@ -445,9 +448,9 @@ class EmailServiceTest {
         TaskDto task = TaskDto.builder().taskID(23L).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .emailType(EmailType.TASK_STATUS)
                 .recipientEmail("")
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Status");
@@ -463,17 +466,17 @@ class EmailServiceTest {
         TaskDto task1 = TaskDto.builder().taskID(24L).status(Status.Accepted).build();
         EmailRequest emailRequest1 = EmailRequest.builder()
                 .task(task1)
-                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .emailType(EmailType.TASK_STATUS)
                 .recipientEmail("user1@gmail.com")
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
 
         TaskDto task2 = TaskDto.builder().taskID(25L).status(Status.Rejected).build();
         EmailRequest emailRequest2 = EmailRequest.builder()
                 .task(task2)
-                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .emailType(EmailType.TASK_STATUS)
                 .recipientEmail("user2@gmail.com")
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(any())).thenReturn("Task Status");
@@ -492,9 +495,9 @@ class EmailServiceTest {
         TaskDto task = TaskDto.builder().taskID(26L).status(Status.Accepted).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .emailType(EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.USER)
+                .recipientType(RecipientType.USER)
                 .build();
 
         String expectedSubject = "Task Accepted";
@@ -517,9 +520,9 @@ class EmailServiceTest {
         TaskDto task = TaskDto.builder().taskID(27L).build();
         EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
-                .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                .emailType(EmailType.TASK_REQUEST)
                 .recipientEmail(RECIPIENT_EMAIL)
-                .recipientType(EmailRequest.RecipientType.TASKER)
+                .recipientType(RecipientType.TASKER)
                 .build();
 
         when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("New Task Request");
@@ -533,22 +536,22 @@ class EmailServiceTest {
 
     @Test
     void testSendEmailWithAllEmailTypes() throws ExecutionException, InterruptedException {
-        EmailRequest.EmailType[] emailTypes = {
-            EmailRequest.EmailType.TASK_STATUS,
-            EmailRequest.EmailType.TASK_REQUEST,
-            EmailRequest.EmailType.TASK_RESCHEDULE,
-            EmailRequest.EmailType.TASK_RESUMED,
-            EmailRequest.EmailType.EMAIL_VERIFICATION,
-            EmailRequest.EmailType.FORGOT_PASSWORD
+        EmailType[] emailTypes = {
+            EmailType.TASK_STATUS,
+            EmailType.TASK_REQUEST,
+            EmailType.TASK_RESCHEDULE,
+            EmailType.TASK_RESUMED,
+            EmailType.EMAIL_VERIFICATION,
+            EmailType.FORGOT_PASSWORD
         };
 
-        for (EmailRequest.EmailType emailType : emailTypes) {
+        for (EmailType emailType : emailTypes) {
             TaskDto task = TaskDto.builder().taskID(System.nanoTime()).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
                     .emailType(emailType)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Subject");
@@ -567,9 +570,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(100L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest))
@@ -585,9 +588,9 @@ class EmailServiceTest {
         void testSendEmailHandlesNullPointerException() throws ExecutionException, InterruptedException {
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(null)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest))
@@ -604,9 +607,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(101L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                    .emailType(EmailType.TASK_REQUEST)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.TASKER)
+                    .recipientType(RecipientType.TASKER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Subject");
@@ -625,9 +628,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(102L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                    .emailType(EmailType.TASK_REQUEST)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.TASKER)
+                    .recipientType(RecipientType.TASKER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Subject");
@@ -654,9 +657,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(103L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(longEmail)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Subject");
@@ -674,9 +677,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(104L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn(longSubject);
@@ -695,9 +698,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(105L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Subject");
@@ -716,16 +719,16 @@ class EmailServiceTest {
         void testSendEmailConcurrentCallsWithDifferentEmailTypes() throws ExecutionException, InterruptedException {
             EmailRequest request1 = EmailRequest.builder()
                     .task(TaskDto.builder().taskID(106L).build())
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail("user1@test.com")
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             EmailRequest request2 = EmailRequest.builder()
                     .task(TaskDto.builder().taskID(107L).build())
-                    .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                    .emailType(EmailType.TASK_REQUEST)
                     .recipientEmail("user2@test.com")
-                    .recipientType(EmailRequest.RecipientType.TASKER)
+                    .recipientType(RecipientType.TASKER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(any())).thenReturn("Subject");
@@ -745,9 +748,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(108L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             String specialSubject = "Task Update: €$£¥ & < > \" ' @";
@@ -766,9 +769,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(109L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             String unicodeBody = "Hello 你好 مرحبا שלום 안녕하세요 🎉";
@@ -789,9 +792,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(110L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_RESUMED)
+                    .emailType(EmailType.TASK_RESUMED)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.TASKER)
+                    .recipientType(RecipientType.TASKER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Resumed");
@@ -808,9 +811,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(111L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.FORGOT_PASSWORD)
+                    .emailType(EmailType.FORGOT_PASSWORD)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.TASKER)
+                    .recipientType(RecipientType.TASKER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Reset Password");
@@ -827,9 +830,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(112L).status(Status.InReview).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task In Review");
@@ -846,9 +849,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(113L).status(Status.Done).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Done");
@@ -867,9 +870,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(114L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                    .emailType(EmailType.TASK_REQUEST)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.TASKER)
+                    .recipientType(RecipientType.TASKER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Subject");
@@ -888,9 +891,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(115L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                    .emailType(EmailType.TASK_REQUEST)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.TASKER)
+                    .recipientType(RecipientType.TASKER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest))
@@ -906,9 +909,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(116L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                    .emailType(EmailType.TASK_REQUEST)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.TASKER)
+                    .recipientType(RecipientType.TASKER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Subject");
@@ -927,9 +930,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(117L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Subject");
@@ -948,9 +951,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(118L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             String errorMessage = "Connection timeout";
@@ -972,9 +975,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(119L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Subject");
@@ -992,9 +995,9 @@ class EmailServiceTest {
             TaskDto task = TaskDto.builder().taskID(120L).build();
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(task)
-                    .emailType(EmailRequest.EmailType.TASK_STATUS)
+                    .emailType(EmailType.TASK_STATUS)
                     .recipientEmail(RECIPIENT_EMAIL)
-                    .recipientType(EmailRequest.RecipientType.USER)
+                    .recipientType(RecipientType.USER)
                     .build();
 
             when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Subject");

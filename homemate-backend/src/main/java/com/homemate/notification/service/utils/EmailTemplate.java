@@ -1,10 +1,13 @@
 package com.homemate.notification.service.utils;
-
 import com.homemate.notification.domains.dto.EmailRequest;
 import com.homemate.notification.domains.exception.EmailTemplateException;
+import com.homemate.notification.domains.model.EmailType;
+import com.homemate.notification.domains.model.RecipientType;
 import com.homemate.notification.domains.strategy.pattern.EmailBuilder;
 import com.homemate.notification.domains.strategy.pattern.EmailTemplateFactory;
-import com.homemate.notification.domains.strategy.pattern.impl.*;
+import com.homemate.notification.domains.strategy.pattern.impl.EmailVerificationEmailBuilder;
+import com.homemate.notification.domains.strategy.pattern.impl.ForgotPasswordEmailBuilder;
+import com.homemate.notification.domains.strategy.pattern.impl.TaskRescheduleEmailBuilder;
 import com.homemate.taskmanagement.dto.TaskDto;
 
 import org.springframework.stereotype.Component;
@@ -19,7 +22,7 @@ public class EmailTemplate {
 
     public String buildEmailSubject(EmailRequest emailRequest) {
         validateEmailRequest(emailRequest);
-        EmailRequest.EmailType emailType = emailRequest.getEmailType();
+        EmailType emailType = emailRequest.getEmailType();
         TaskDto taskDto = emailRequest.getTask();
 
         EmailBuilder builder = getEmailBuilder(emailType);
@@ -29,14 +32,14 @@ public class EmailTemplate {
 
     public String buildEmailBody(EmailRequest emailRequest) {
         validateEmailRequest(emailRequest);
-        EmailRequest.EmailType emailType = emailRequest.getEmailType();
+        EmailType emailType = emailRequest.getEmailType();
         TaskDto taskDto = emailRequest.getTask();
 
         EmailBuilder builder = getEmailBuilder(emailType);
 
         if (builder instanceof TaskRescheduleEmailBuilder taskRescheduleEmailBuilder ) {
             String body;
-            if(emailRequest.getRecipientType() == EmailRequest.RecipientType.TASKER)
+            if(emailRequest.getRecipientType() == RecipientType.TASKER)
                 body = taskRescheduleEmailBuilder.buildBodyForTasker(taskDto);
             else
                 body = taskRescheduleEmailBuilder.buildBodyForUser(taskDto);
@@ -48,7 +51,7 @@ public class EmailTemplate {
         return builder.buildBody(taskDto);
     }
 
-    public OtpEmailContent buildOtpEmailContent(EmailRequest.EmailType emailType, String otpCode) {
+    public OtpEmailContent buildOtpEmailContent(EmailType emailType, String otpCode) {
         EmailBuilder builder = getEmailBuilder(emailType);
         String body;
         if (builder instanceof EmailVerificationEmailBuilder verificationBuilder) {
@@ -67,7 +70,7 @@ public class EmailTemplate {
         return new OtpEmailContent(subject, body);
     }
 
-    private EmailBuilder getEmailBuilder(EmailRequest.EmailType emailType) {
+    private EmailBuilder getEmailBuilder(EmailType emailType) {
         EmailBuilder builder = emailTemplateFactory.getBuilder(emailType);
         if (builder == null) {
             throw new EmailTemplateException(

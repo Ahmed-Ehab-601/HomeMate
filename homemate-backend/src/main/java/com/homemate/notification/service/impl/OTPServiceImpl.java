@@ -4,6 +4,7 @@ import com.homemate.notification.config.RedisConfig;
 import com.homemate.notification.domains.dto.EmailRequest;
 import com.homemate.notification.domains.dto.OtpVerificationResult;
 import com.homemate.notification.domains.dto.OtpVerifyRequest;
+import com.homemate.notification.domains.model.EmailType;
 import com.homemate.notification.service.OTPService;
 import com.homemate.notification.service.OtpStorageService;
 import com.homemate.notification.service.utils.EmailTemplate;
@@ -27,8 +28,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static com.homemate.notification.domains.dto.EmailRequest.EmailType.EMAIL_VERIFICATION;
-import static com.homemate.notification.domains.dto.EmailRequest.EmailType.FORGOT_PASSWORD;
+import static com.homemate.notification.domains.model.EmailType.EMAIL_VERIFICATION;
+import static com.homemate.notification.domains.model.EmailType.FORGOT_PASSWORD;
+
 
 @Slf4j
 @Validated
@@ -56,7 +58,7 @@ public class OTPServiceImpl implements OTPService {
     private final OtpStorageService otpStorageService;
 
     @Async("otpExecutor")
-    public CompletableFuture<String> generateAndStoreOTP(String email, EmailRequest.EmailType emailType) {
+    public CompletableFuture<String> generateAndStoreOTP(String email, EmailType emailType) {
         int attemptTtl = getAttemptTtl(emailType);
         TimeUnit attemptTtlUnit = getTimeUnit(emailType);
 
@@ -117,7 +119,7 @@ public class OTPServiceImpl implements OTPService {
     public CompletableFuture<OtpVerificationResult> sendOtp(EmailRequest emailRequest)
             throws ExecutionException, InterruptedException {
 
-        EmailRequest.EmailType emailType = emailRequest.getEmailType();
+        EmailType emailType = emailRequest.getEmailType();
 
         if ((emailType != EMAIL_VERIFICATION && emailType != FORGOT_PASSWORD)) {
             return handleNonOtpEmailType(emailType, emailRequest.getRecipientEmail());
@@ -173,7 +175,7 @@ public class OTPServiceImpl implements OTPService {
     }
 
     private CompletableFuture<OtpVerificationResult> handleNonOtpEmailType(
-            EmailRequest.EmailType emailType, String email) {
+            EmailType emailType, String email) {
 
         if (emailType != null && isTaskRelatedEmail(emailType)) {
             log.warn("Task-related email type {} should not use OTP verification for email: {}",
@@ -185,11 +187,11 @@ public class OTPServiceImpl implements OTPService {
         return unsupportedEmailTypeResult();
     }
 
-    private boolean isTaskRelatedEmail(EmailRequest.EmailType emailType) {
-        return emailType == EmailRequest.EmailType.TASK_REQUEST ||
-                emailType == EmailRequest.EmailType.TASK_STATUS ||
-                emailType == EmailRequest.EmailType.TASK_RESCHEDULE ||
-                emailType == EmailRequest.EmailType.TASK_RESUMED;
+    private boolean isTaskRelatedEmail(EmailType emailType) {
+        return emailType == EmailType.TASK_REQUEST ||
+                emailType == EmailType.TASK_STATUS ||
+                emailType == EmailType.TASK_RESCHEDULE ||
+                emailType == EmailType.TASK_RESUMED;
     }
 
     private String generateCode() {
@@ -198,13 +200,13 @@ public class OTPServiceImpl implements OTPService {
         return String.format("%06d", otp);
     }
 
-    private static int getAttemptTtl(EmailRequest.EmailType emailType) {
+    private static int getAttemptTtl(EmailType emailType) {
         return emailType == FORGOT_PASSWORD
                 ? RedisConfig.OTP_ATTEMPT_TTL_HOURS_RESET_PASSWORD
                 : RedisConfig.OTP_ATTEMPT_TTL_MINUTES;
     }
 
-    private static TimeUnit getTimeUnit(EmailRequest.EmailType emailType) {
+    private static TimeUnit getTimeUnit(EmailType emailType) {
         return emailType == FORGOT_PASSWORD ? TimeUnit.HOURS : TimeUnit.MINUTES;
     }
 
