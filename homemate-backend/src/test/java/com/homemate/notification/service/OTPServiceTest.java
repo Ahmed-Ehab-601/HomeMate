@@ -391,7 +391,7 @@ class OTPServiceTest {
     private EmailRequest createEmailRequest(String email, EmailType emailType) {
         EmailRequest emailRequest = new EmailRequest();
         emailRequest.setRecipientEmail(email);
-        emailRequest.setEmailType(emailType);
+         emailRequest.setEmailType(emailType);
         return emailRequest;
     }
 

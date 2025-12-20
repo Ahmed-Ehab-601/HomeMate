@@ -67,7 +67,7 @@ class EmailServiceTest {
     @Test
     void testSendUserEmailWithTaskRejectedType() throws ExecutionException, InterruptedException {
         TaskDto task =TaskDto.builder().taskID(2L).status(Status.Rejected).build();
-        EmailRequest emailRequest =EmailRequest.builder()
+        EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
                 .emailType(EmailType.TASK_STATUS)
                 .recipientEmail(RECIPIENT_EMAIL)
@@ -104,7 +104,7 @@ class EmailServiceTest {
     @Test
     void testSendUserEmailWithTaskRescheduleType() throws ExecutionException, InterruptedException {
         TaskDto task =TaskDto.builder().taskID(4L).build();
-        EmailRequest emailRequest =EmailRequest.builder()
+        EmailRequest emailRequest = EmailRequest.builder()
                 .task(task)
                 .emailType(EmailType.TASK_RESCHEDULE)
                 .recipientEmail(RECIPIENT_EMAIL)
