@@ -141,6 +141,7 @@ public class PresenceService {
             }
 
         } else {
+            System.out.println("wrong user type");
             }
     }
 
