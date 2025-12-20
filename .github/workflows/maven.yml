@@ -1,0 +1,97 @@
+# .github/workflows/maven.yml
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "main", "milestone_*" ]
+  pull_request:
+    branches: [ "main", "milestone_*" ]
+
+permissions:
+  contents: write       # For dependency graph submission and auto-merge
+  checks: write        # For test reports
+  pull-requests: write # For coverage comments and auto-merge
+  security-events: write # For dependency alerts
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Build and run tests with coverage
+      run: mvn -B verify --file  homemate-backend/pom.xml
+    
+    - name: Publish Test Report
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Maven Tests
+        path: '**/target/surefire-reports/TEST-*.xml'
+        reporter: java-junit
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./homemate-backend/target/site/jacoco/jacoco.xml
+        fail_ci_if_error: false
+        verbose: true
+    
+    - name: Upload coverage HTML report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-report
+        path: homemate-backend/target/site/jacoco/
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: package
+        path: homemate-backend/target/*.jar
+    
+    - name: Submit Dependency Graph
+      uses: advanced-security/maven-dependency-submission-action@v4
+      with:
+        directory: homemate-backend
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Auto-approve and merge Dependabot PRs if tests pass
+  dependabot:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.actor == 'dependabot[bot]'
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+    - name: Dependabot metadata
+      id: metadata
+      uses: dependabot/fetch-metadata@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Auto-approve Dependabot PR
+      if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+      run: gh pr review --approve "$PR_URL"
+      env:
+        PR_URL: ${{ github.event.pull_request.html_url }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Auto-merge Dependabot PR
+      if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
+      run: gh pr merge --auto --squash "$PR_URL"
+      env:
+        PR_URL: ${{ github.event.pull_request.html_url }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
