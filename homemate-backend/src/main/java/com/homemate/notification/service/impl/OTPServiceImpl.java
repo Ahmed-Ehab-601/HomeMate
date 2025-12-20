@@ -20,6 +20,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.mail.MailException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
@@ -160,7 +161,7 @@ public class OTPServiceImpl implements OTPService {
             log.info("OTP email sent successfully to: {}", email);
             return otpSentSuccessResult();
 
-        } catch (MessagingException e) {
+        } catch (MessagingException | MailException e) {
             log.error("Failed to send OTP email to: {}", email, e);
             return otpSendFailedResult();
         }

@@ -608,4 +608,52 @@ class OTPServiceTest {
         assertFalse(result.isSuccess());
         verify(otpStorageService).getAttempts(email);
     }
+
+    @Test
+    void testSendOtpShouldShortCircuitForTaskRelatedEmails() throws Exception {
+        EmailType[] taskEmailTypes = {
+                EmailType.TASK_REQUEST,
+                EmailType.TASK_STATUS,
+                EmailType.TASK_RESCHEDULE,
+                EmailType.TASK_RESUMED
+        };
+
+        for (EmailType taskEmailType : taskEmailTypes) {
+            EmailRequest emailRequest = createEmailRequest(TEST_EMAIL, taskEmailType);
+
+            OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
+
+            assertFalse(result.isSuccess());
+            assertEquals("Task-related emails do not require OTP verification", result.getMessage());
+        }
+
+        verifyNoInteractions(otpStorageService, emailTemplate, javaMailSender);
+    }
+
+    @Test
+    void testSendOtpShouldReturnUnsupportedForUnknownEmailType() throws Exception {
+        EmailRequest emailRequest = createEmailRequest(TEST_EMAIL, null);
+
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
+
+        assertFalse(result.isSuccess());
+        assertEquals("Unsupported Email Type", result.getMessage());
+        verifyNoInteractions(otpStorageService, emailTemplate, javaMailSender);
+    }
+
+    @Test
+    void testSendOtpShouldReturnFailureWhenMailSendFails() throws Exception {
+        EmailRequest emailRequest = createEmailRequest(TEST_EMAIL, EmailType.EMAIL_VERIFICATION);
+        OtpEmailContent emailContent = new OtpEmailContent(VERIFY_EMAIL_TITLE, VERIFY_EMAIL_BODY);
+
+        setupSendOtpMocks(TEST_EMAIL, EmailType.EMAIL_VERIFICATION, emailContent);
+        doThrow(new org.springframework.mail.MailSendException("smtp failure"))
+            .when(javaMailSender).send(any(MimeMessage.class));
+
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
+
+        assertFalse(result.isSuccess());
+        assertEquals("Failed to send OTP email. Please try again later.", result.getMessage());
+        assertEquals("", result.getToken());
+    }
 }

@@ -9,7 +9,6 @@ import com.homemate.notification.service.impl.EmailServiceImpl;
 import com.homemate.notification.service.utils.EmailTemplate;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.model.Status;
-import jakarta.validation.constraints.Email;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -354,6 +353,29 @@ class EmailServiceTest {
         assertFalse(response.isSuccess());
         assertTrue(response.getMessage().contains("Failed to send email: " + "SMTP connection failed"));
     }
+
+        @Test
+        void testSendUserEmailHandlesUnexpectedException() throws ExecutionException, InterruptedException {
+                TaskDto task = TaskDto.builder().taskID(27L).status(Status.Accepted).build();
+                EmailRequest emailRequest = EmailRequest.builder()
+                                .task(task)
+                                .emailType(EmailType.TASK_STATUS)
+                                .recipientEmail(RECIPIENT_EMAIL)
+                                .recipientType(RecipientType.USER)
+                                .build();
+
+                when(emailTemplate.buildEmailSubject(emailRequest)).thenReturn("Task Accepted");
+                when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Your task has been accepted");
+                doThrow(new RuntimeException("unexpected failure"))
+                                .when(javaMailSender)
+                                .send(any(SimpleMailMessage.class));
+
+                TaskResponse response = underTest.sendEmail(emailRequest).get();
+
+                assertFalse(response.isSuccess());
+                assertEquals("An unexpected error occurred", response.getMessage());
+                verify(javaMailSender).send(any(SimpleMailMessage.class));
+        }
 
     @Test
     void testSendTaskerEmailHandlesTemplateException() throws ExecutionException, InterruptedException {
