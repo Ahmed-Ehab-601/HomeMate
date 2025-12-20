@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,7 +29,8 @@ public class MessageService {
 
     public MessageDto sendMessage(Long chatID, MessageDto messageDto, AppUserDetails userDetails)throws Exception {
         try {
-            if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
+            if(!userDetails.getId().equals(chatDao.getChat(chatID).getUserId())
+                    && !userDetails.getId().equals(chatDao.getChat(chatID).getTaskerId()))
                 throw new Exception("unauthorized user");
             boolean isUserSender = messageDto.isIsUserSender();
 
@@ -36,8 +38,8 @@ public class MessageService {
                 messageDto.setMessageStatus(MessageStatus.received);
             } else if (!isUserSender && messageDao.getUserStatus(chatID)) {
                 messageDto.setMessageStatus(MessageStatus.received);
-            } MessageDto messageDto1=messageDao.save(chatID, messageDto);
-                     return messageDto1;
+            }
+            return messageDao.save(chatID, messageDto);
         } catch (Exception e) {
             throw new Exception(e);
         }
@@ -64,7 +66,8 @@ public class MessageService {
 //    }
     public void markAllAsReadUser(Long chatID,AppUserDetails userDetails)throws Exception {
         try {
-            if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
+            if(!userDetails.getId().equals(chatDao.getChat(chatID).getUserId())
+                    && !userDetails.getId().equals(chatDao.getChat(chatID).getTaskerId()))
                 throw new Exception("unauthorized user");
 
             messageDao.markasReadUser(chatID);
@@ -77,7 +80,6 @@ public class MessageService {
         List<MessageDto> list = messageDao.listMessagesRecievedTasker(id, isUser);
         Map<Long, List<MessageDto>> messagesByChat = list.stream()
                 .collect(Collectors.groupingBy(MessageDto::getChatId));
-
         messagesByChat.forEach((chatId, messages)->{
             messages.forEach(msg-> {
                     Map<String,Object> statusUpdate=new HashMap<>();
@@ -95,7 +97,8 @@ public class MessageService {
 
     public void markAllAsReadTasker(Long chatID,AppUserDetails userDetails)throws Exception {
         try {
-            if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
+            if(!Objects.equals(userDetails.getId(), chatDao.getChat(chatID).getUserId())
+                    && !userDetails.getId().equals(chatDao.getChat(chatID).getTaskerId()))
                 throw new Exception("unauthorized user");
             messageDao.markasReadTasker(chatID);
         }catch (Exception e){

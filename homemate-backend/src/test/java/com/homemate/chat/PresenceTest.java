@@ -438,5 +438,97 @@ public class PresenceTest {
         // Should broadcast both times (status changed)
         verify(messagingTemplate, times(2)).convertAndSend(eq("/send/presence"), any(PresenceUpdate.class));
     }
+    @Test
+    public void testCheckUserStatus_UserTimesOut() {
+        // Set user online with old timestamp (more than 60 seconds ago)
+        LocalDateTime oldTime = LocalDateTime.now().minusSeconds(70);
+        PresenceUpdate onlineUpdate = new PresenceUpdate(USER_ID, USER_TYPE, OnlineStatus.ONLINE, oldTime);
+        presenceService.updatePresence(onlineUpdate);
+
+        assertTrue(presenceService.isUserOnline(USER_ID));
+        reset(messagingTemplate);
+
+        // Run the scheduled check
+        presenceService.checkUserStatus();
+
+        // User should now be offline
+        assertFalse(presenceService.isUserOnline(USER_ID));
+
+        // Should broadcast offline status
+        ArgumentCaptor<PresenceUpdate> captor = ArgumentCaptor.forClass(PresenceUpdate.class);
+        verify(messagingTemplate).convertAndSend(eq("/send/presence"), captor.capture());
+
+        PresenceUpdate captured = captor.getValue();
+        assertEquals(USER_ID, captured.getId());
+        assertEquals(USER_TYPE, captured.getUserType());
+        assertEquals(OnlineStatus.OFFLINE, captured.getOnlineStatus());
+    }
+
+    @Test
+    public void testCheckUserStatus_TaskerTimesOut() {
+        // Set tasker online with old timestamp (more than 60 seconds ago)
+        LocalDateTime oldTime = LocalDateTime.now().minusSeconds(75);
+        PresenceUpdate onlineUpdate = new PresenceUpdate(TASKER_ID, TASKER_TYPE, OnlineStatus.ONLINE, oldTime);
+        presenceService.updatePresence(onlineUpdate);
+
+        assertTrue(presenceService.isTaskerOnline(TASKER_ID));
+        reset(messagingTemplate);
+
+        // Run the scheduled check
+        presenceService.checkUserStatus();
+
+        // Tasker should now be offline
+        assertFalse(presenceService.isTaskerOnline(TASKER_ID));
+
+        // Should broadcast offline status
+        ArgumentCaptor<PresenceUpdate> captor = ArgumentCaptor.forClass(PresenceUpdate.class);
+        verify(messagingTemplate).convertAndSend(eq("/send/presence"), captor.capture());
+
+        PresenceUpdate captured = captor.getValue();
+        assertEquals(TASKER_ID, captured.getId());
+        assertEquals(TASKER_TYPE, captured.getUserType());
+        assertEquals(OnlineStatus.OFFLINE, captured.getOnlineStatus());
+    }
+
+    @Test
+    public void testCheckUserStatus_UserStillActive_NoTimeout() {
+        // Set user online with recent timestamp (less than 60 seconds ago)
+        LocalDateTime recentTime = LocalDateTime.now().minusSeconds(30);
+        PresenceUpdate onlineUpdate = new PresenceUpdate(USER_ID, USER_TYPE, OnlineStatus.ONLINE, recentTime);
+        presenceService.updatePresence(onlineUpdate);
+
+        assertTrue(presenceService.isUserOnline(USER_ID));
+        reset(messagingTemplate);
+
+        // Run the scheduled check
+        presenceService.checkUserStatus();
+
+        // User should still be online
+        assertTrue(presenceService.isUserOnline(USER_ID));
+
+        // Should NOT broadcast anything
+        verify(messagingTemplate, never()).convertAndSend(anyString(), (Object) any());
+    }
+
+    @Test
+    public void testCheckUserStatus_TaskerStillActive_NoTimeout() {
+        // Set tasker online with recent timestamp (less than 60 seconds ago)
+        LocalDateTime recentTime = LocalDateTime.now().minusSeconds(45);
+        PresenceUpdate onlineUpdate = new PresenceUpdate(TASKER_ID, TASKER_TYPE, OnlineStatus.ONLINE, recentTime);
+        presenceService.updatePresence(onlineUpdate);
+
+        assertTrue(presenceService.isTaskerOnline(TASKER_ID));
+        reset(messagingTemplate);
+
+        // Run the scheduled check
+        presenceService.checkUserStatus();
+
+        // Tasker should still be online
+        assertTrue(presenceService.isTaskerOnline(TASKER_ID));
+
+        // Should NOT broadcast anything
+        verify(messagingTemplate, never()).convertAndSend(anyString(), (Object) any());
+    }
+
 
 }

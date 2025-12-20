@@ -2,8 +2,6 @@ package com.homemate.chat.Service;
 
 import com.homemate.chat.Enum.OnlineStatus;
 import com.homemate.chat.dto.PresenceUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
