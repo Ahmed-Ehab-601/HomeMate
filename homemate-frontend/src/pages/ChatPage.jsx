@@ -3,6 +3,7 @@ import { Send, Phone, Image, X, ArrowLeft } from 'lucide-react';
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { baseUrl } from '../utils/apiClient';
 
 const ChatInterface = () => {
   const [inputMessage, setInputMessage] = useState('');
@@ -31,7 +32,7 @@ const ChatInterface = () => {
   const { chatId } = useParams();
 
   const MESSAGE_CHAR_LIMIT = 1000;
-  const API_BASE = 'http://localhost:8080/api';
+  const API_BASE = baseUrl + '/api';
 
   // Decode JWT
   function decodeJwtPayload(token) {
