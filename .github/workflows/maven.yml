@@ -30,7 +30,7 @@ jobs:
         cache: maven
     
     - name: Build and run tests with coverage
-      run: mvn -B verify --file  homemate-backend/pom.xml
+      run: mvn -B verify --file  ./homemate-backend/pom.xml
     
     - name: Publish Test Report
       uses: dorny/test-reporter@v1
