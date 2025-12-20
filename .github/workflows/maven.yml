@@ -29,13 +29,6 @@ jobs:
         distribution: 'temurin'
         cache: maven
     
-    # Make Maven Wrapper executable BEFORE any Maven operations
-    - name: Make Maven Wrapper executable
-      run: |
-        if [ -f "homemate-backend/mvnw" ]; then
-          chmod +x homemate-backend/mvnw
-        fi
-    
     - name: Build and run tests with coverage
       run: mvn -B verify --file ./homemate-backend/pom.xml
     
@@ -67,11 +60,24 @@ jobs:
         name: package
         path: homemate-backend/target/*.jar
     
-    - name: Submit Dependency Graph
-      uses: advanced-security/maven-dependency-submission-action@v4
+    # Generate dependency tree and submit manually
+    - name: Generate Dependency Tree
+      if: github.event_name == 'push'
+      run: |
+        cd homemate-backend
+        mvn dependency:tree -DoutputFile=../dependency-tree.txt -DoutputType=text
+        mvn dependency:list -DoutputFile=../dependency-list.txt
+      continue-on-error: true
+    
+    - name: Upload Dependency Information
+      if: github.event_name == 'push'
+      uses: actions/upload-artifact@v4
       with:
-        directory: homemate-backend
-        token: ${{ secrets.GITHUB_TOKEN }}
+        name: dependencies
+        path: |
+          dependency-tree.txt
+          dependency-list.txt
+      continue-on-error: true
 
   # Auto-approve and merge Dependabot PRs if tests pass
   dependabot:
