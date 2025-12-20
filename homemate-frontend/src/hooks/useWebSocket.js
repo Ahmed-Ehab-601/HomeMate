@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
+import { baseUrl } from '../utils/apiClient';
 
 /**
  * Custom React hook for WebSocket connection
@@ -41,8 +42,8 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
   const typingTimeoutRef = useRef(null);
 
   // Constants
-  const WEBSOCKET_URL = 'http://localhost:8080/HomeMate';
-  const API_BASE = 'http://localhost:8080/api';
+  const WEBSOCKET_URL = baseUrl + '/HomeMate';
+  const API_BASE = baseUrl + '/api';
   const MAX_RECONNECT_ATTEMPTS = 5;
   const RECONNECT_DELAY_BASE = 1000;
   const MAX_RECONNECT_DELAY = 30000;

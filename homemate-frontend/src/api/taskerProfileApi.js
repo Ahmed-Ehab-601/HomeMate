@@ -1,5 +1,4 @@
-const DEFAULT_API_BASE_URL = "http://localhost:8080";
-const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
+const baseUrl = (import.meta.env.VITE_API_URL).replace(/\/$/, "");
 const TASKER_PROFILE_ENDPOINT = `${baseUrl}/api/tasker-profile`;
 
 function buildError(status, body) {

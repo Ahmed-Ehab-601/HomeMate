@@ -1,5 +1,17 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+
+const env = loadEnv(
+  process.env.NODE_ENV || 'development',
+  process.cwd(),
+  ''
+)
+
+const baseUrl = env.VITE_API_URL?.replace(/\/$/, '')
+
+if (!baseUrl) {
+  throw new Error('VITE_API_URL is not defined')
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -7,7 +19,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: baseUrl,
         changeOrigin: true,
         secure: false,
         configure: (proxy, options) => {
@@ -44,27 +56,27 @@ export default defineConfig({
       },
       // Also proxy direct endpoints if they don't have /api prefix
       '/getallservices': {
-        target: 'http://localhost:8080',
+        target: baseUrl,
         changeOrigin: true,
         secure: false,
       },
       '/getservicedetails': {
-        target: 'http://localhost:8080',
+        target: baseUrl,
         changeOrigin: true,
         secure: false,
       },
       '/create': {
-        target: 'http://localhost:8080',
+        target: baseUrl,
         changeOrigin: true,
         secure: false,
       },
       '/edit': {
-        target: 'http://localhost:8080',
+        target: baseUrl,
         changeOrigin: true,
         secure: false,
       },
       '/delete': {
-        target: 'http://localhost:8080',
+        target: baseUrl,
         changeOrigin: true,
         secure: false,
       },
