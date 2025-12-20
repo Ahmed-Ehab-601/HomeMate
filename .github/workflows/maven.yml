@@ -108,9 +108,12 @@ jobs:
           const failureReason = '${{ steps.failure-reason.outputs.reason }}';
           const hasFailed = '${{ steps.failure-reason.outputs.failed }}' === 'true';
           const passed = total - failures - errors - skipped;
+          const runId = context.runId;
+          const repoUrl = context.payload.repository.html_url;
           
           // Determine overall status emoji
           const status = hasFailed ? '❌' : '✅';
+          const buildStatus = hasFailed ? '**Failed**' : '**Passed**';
           
           // Build coverage status message
           let coverageStatus = '';
@@ -118,19 +121,19 @@ jobs:
           
           if (failureReason === 'coverage_too_low') {
             coverageEmoji = '❌';
-            coverageStatus = `${coverage} ${coverageEmoji} **FAILED - Below 60% minimum threshold**`;
+            coverageStatus = `${coverage} ${coverageEmoji} **Below Minimum Threshold**`;
           } else if (coverageNum >= 80) {
-            coverageEmoji = '🎉';
-            coverageStatus = `${coverage} ${coverageEmoji} Excellent!`;
+            coverageEmoji = '✅';
+            coverageStatus = `${coverage} ${coverageEmoji} **Excellent**`;
           } else if (coverageNum >= 70) {
             coverageEmoji = '✅';
-            coverageStatus = `${coverage} ${coverageEmoji} Good`;
+            coverageStatus = `${coverage} ${coverageEmoji} **Good**`;
           } else if (coverageNum >= 60) {
             coverageEmoji = '⚠️';
-            coverageStatus = `${coverage} ${coverageEmoji} Acceptable (at minimum threshold)`;
+            coverageStatus = `${coverage} ${coverageEmoji} **Acceptable**`;
           } else if (coverage !== 'N/A') {
             coverageEmoji = '⚠️';
-            coverageStatus = `${coverage} ${coverageEmoji} Below recommended`;
+            coverageStatus = `${coverage} ${coverageEmoji} **Below Recommended**`;
           } else {
             coverageStatus = 'N/A';
           }
@@ -138,29 +141,47 @@ jobs:
           // Build failure details section
           let failureDetails = '';
           if (failureReason === 'tests_failed') {
-            failureDetails = `\n\n> ❌ **BUILD FAILED: Tests Failed**\n> \n> ${failures} test(s) failed. Please fix the failing tests before merging.\n`;
+            failureDetails = `\n### ⚠️ Build Failure Analysis\n\n**Failure Type:** Test Failures\n\n**Details:** ${failures} test(s) failed during execution. All tests must pass before this pull request can be merged.\n\n**Required Action:** Please review and fix the failing tests, then push your changes to re-trigger the build.\n`;
           } else if (failureReason === 'coverage_too_low') {
-            failureDetails = `\n\n> ❌ **BUILD FAILED: Coverage Too Low**\n> \n> Code coverage is **${coverage}**, which is below the minimum threshold of **60%** defined in pom.xml.\n> \n> **Actions needed:**\n> 1. Add unit tests to cover untested code\n> 2. Run \`mvn verify\` locally to check coverage\n> 3. Download the [coverage report artifact](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details\n> 4. Aim for at least 60% coverage to pass this check\n`;
+            failureDetails = `\n### ⚠️ Build Failure Analysis\n\n**Failure Type:** Insufficient Code Coverage\n\n**Details:** The current code coverage of **${coverage}** does not meet the minimum required threshold of **60%** as specified in the project's quality standards (pom.xml configuration).\n\n**Required Actions:**\n1. Review uncovered code sections in the coverage report\n2. Add comprehensive unit tests for untested code paths\n3. Execute \`mvn clean verify\` locally to validate coverage improvements\n4. Ensure coverage meets or exceeds the 60% threshold before requesting review\n`;
           } else if (failureReason === 'build_error') {
-            failureDetails = `\n\n> ❌ **BUILD FAILED: Build Error**\n> \n> The build failed due to compilation or other errors. Check the [build logs](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details.\n`;
+            failureDetails = `\n### ⚠️ Build Failure Analysis\n\n**Failure Type:** Build Compilation Error\n\n**Details:** The build process encountered compilation or configuration errors.\n\n**Required Action:** Please review the build logs for specific error details and resolve all compilation issues.\n`;
           }
           
-          // Build the comment body
-          const body = `## ${status} Test Results
+          // Build resources section
+          const resourcesSection = `\n### 📋 Available Resources\n\n| Resource | Description | Link |\n|----------|-------------|------|\n| 📊 Coverage Report (HTML) | Detailed line-by-line coverage analysis | [View Report](${repoUrl}/actions/runs/${runId}#artifacts) → Download \`coverage-report\` |\n| 📦 Build Artifact (JAR) | Compiled application package | ${hasFailed ? '*Not available (build failed)*' : `[Download JAR](${repoUrl}/actions/runs/${runId}#artifacts) → Download \`package\``} |\n| 📝 Test Report | Detailed test execution results | [View Tests](${repoUrl}/actions/runs/${runId}) → Check "Maven Tests" |\n| 🔍 Full Build Logs | Complete build execution logs | [View Logs](${repoUrl}/actions/runs/${runId}) |\n`;
           
-          **Build Status:** ${hasFailed ? '❌ Failed' : '✅ Passed'}
+          // Build the formal comment body
+          const body = `## ${status} Continuous Integration Build Report
           
-          **Tests Summary:**
-          - 📊 Total Tests: ${total}
-          - ✅ Passed: ${passed}
-          - ❌ Failed: ${failures}
-          - ⚠️ Errors: ${errors}
-          - ⏭️ Skipped: ${skipped}
+          ### Build Summary
           
-          **Coverage:** ${coverageStatus}
-          ${failureDetails}
+          | Metric | Status |
+          |--------|--------|
+          | **Build Status** | ${buildStatus} |
+          | **Total Tests** | ${total} |
+          | **Tests Passed** | ✅ ${passed} |
+          | **Tests Failed** | ❌ ${failures} |
+          | **Tests Errors** | ⚠️ ${errors} |
+          | **Tests Skipped** | ⏭️ ${skipped} |
+          | **Code Coverage** | ${coverageStatus} |
+          ${failureDetails}${resourcesSection}
           ---
-          *Workflow: [${context.workflow}](${context.payload.repository.html_url}/actions/runs/${context.runId})*
+          
+          <details>
+          <summary>ℹ️ Additional Information</summary>
+          
+          **Workflow:** ${context.workflow}  
+          **Run ID:** ${runId}  
+          **Triggered by:** ${context.actor}  
+          **Event:** ${context.eventName}  
+          **Commit:** ${context.sha.substring(0, 7)}
+          
+          </details>
+          
+          ---
+          
+          *This comment was automatically generated by the CI/CD pipeline. For questions or issues, please contact the development team.*
           `;
           
           github.rest.issues.createComment({
