@@ -1,5 +1,7 @@
 package com.homemate.notification.domains.dto;
 
+import com.homemate.notification.domains.model.EmailType;
+import com.homemate.notification.domains.model.RecipientType;
 import com.homemate.taskmanagement.dto.TaskDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,18 +17,4 @@ public class EmailRequest {
     private EmailType emailType;
     private String recipientEmail;
     private RecipientType recipientType;
-    public enum EmailType {
-        TASK_RESCHEDULE,
-        TASK_STATUS,
-        TASK_REQUEST,
-        EMAIL_VERIFICATION,
-        FORGOT_PASSWORD,
-        TASK_RESUMED
-    }
-    public enum RecipientType {
-        USER,
-        TASKER
-    }
-    
-    
 }

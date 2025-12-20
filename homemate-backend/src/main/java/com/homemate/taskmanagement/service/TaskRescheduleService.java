@@ -1,6 +1,8 @@
 package com.homemate.taskmanagement.service;
 
 import com.homemate.notification.domains.dto.EmailRequest;
+import com.homemate.notification.domains.model.EmailType;
+import com.homemate.notification.domains.model.RecipientType;
 import com.homemate.notification.service.EmailService;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dao.TaskRescheduleDao;
@@ -60,16 +62,16 @@ public class TaskRescheduleService {
         EmailRequest userMail = EmailRequest.builder()
                 .recipientEmail((taskDto.getUserMail()))
                 .task(taskDto)
-                .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
-                .recipientType(EmailRequest.RecipientType.USER)
+                .emailType(EmailType.TASK_RESCHEDULE)
+                .recipientType(RecipientType.USER)
                 .build();
         emailService.sendEmail(userMail);
 
         EmailRequest taskerMail = EmailRequest.builder()
                 .recipientEmail(taskDto.getTaskerMail())
                 .task(taskDto)
-                .emailType(EmailRequest.EmailType.TASK_RESCHEDULE)
-                .recipientType(EmailRequest.RecipientType.TASKER)
+                .emailType(EmailType.TASK_RESCHEDULE)
+                .recipientType(RecipientType.TASKER)
                 .build();
         emailService.sendEmail(taskerMail);
 

@@ -1,6 +1,7 @@
 package com.homemate.taskmanagementtests;
 
 import com.homemate.notification.domains.dto.EmailRequest;
+import com.homemate.notification.domains.model.EmailType;
 import com.homemate.notification.service.impl.EmailServiceImpl;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dao.TaskStatusDao;
@@ -535,7 +536,7 @@ class TaskManagementServiceUpdateStatusTest {
         verify(emailServiceImp).sendEmail(emailCaptor.capture());
 
         EmailRequest capturedEmail = emailCaptor.getValue();
-        assertThat(capturedEmail.getEmailType()).isEqualTo(EmailRequest.EmailType.TASK_STATUS);
+        assertThat(capturedEmail.getEmailType()).isEqualTo(EmailType.TASK_STATUS);
         assertThat(capturedEmail.getRecipientEmail()).isEqualTo("user@example.com");
     }
 
