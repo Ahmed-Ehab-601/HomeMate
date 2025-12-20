@@ -1,12 +1,13 @@
 package com.homemate.notification.service.utils;
-
 import com.homemate.notification.domains.dto.EmailRequest;
 import com.homemate.notification.domains.exception.EmailTemplateException;
 import com.homemate.notification.domains.model.EmailType;
 import com.homemate.notification.domains.model.RecipientType;
 import com.homemate.notification.domains.strategy.pattern.EmailBuilder;
 import com.homemate.notification.domains.strategy.pattern.EmailTemplateFactory;
-import com.homemate.notification.domains.strategy.pattern.impl.*;
+import com.homemate.notification.domains.strategy.pattern.impl.EmailVerificationEmailBuilder;
+import com.homemate.notification.domains.strategy.pattern.impl.ForgotPasswordEmailBuilder;
+import com.homemate.notification.domains.strategy.pattern.impl.TaskRescheduleEmailBuilder;
 import com.homemate.taskmanagement.dto.TaskDto;
 
 import org.springframework.stereotype.Component;
@@ -21,7 +22,7 @@ public class EmailTemplate {
 
     public String buildEmailSubject(EmailRequest emailRequest) {
         validateEmailRequest(emailRequest);
-       EmailType emailType = emailRequest.getEmailType();
+        EmailType emailType = emailRequest.getEmailType();
         TaskDto taskDto = emailRequest.getTask();
 
         EmailBuilder builder = getEmailBuilder(emailType);
@@ -31,7 +32,7 @@ public class EmailTemplate {
 
     public String buildEmailBody(EmailRequest emailRequest) {
         validateEmailRequest(emailRequest);
-       EmailType emailType = emailRequest.getEmailType();
+        EmailType emailType = emailRequest.getEmailType();
         TaskDto taskDto = emailRequest.getTask();
 
         EmailBuilder builder = getEmailBuilder(emailType);

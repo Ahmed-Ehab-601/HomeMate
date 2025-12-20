@@ -1,9 +1,11 @@
 package com.homemate.notification.domains.strategy.pattern;
-
-import com.homemate.notification.domains.dto.EmailRequest;
 import com.homemate.notification.domains.model.EmailType;
-import com.homemate.notification.domains.strategy.pattern.impl.*;
-
+import com.homemate.notification.domains.strategy.pattern.impl.EmailVerificationEmailBuilder;
+import com.homemate.notification.domains.strategy.pattern.impl.ForgotPasswordEmailBuilder;
+import com.homemate.notification.domains.strategy.pattern.impl.TaskRescheduleEmailBuilder;
+import com.homemate.notification.domains.strategy.pattern.impl.TaskRequestEmailBuilder;
+import com.homemate.notification.domains.strategy.pattern.impl.TaskResumedEmailBuilder;
+import com.homemate.notification.domains.strategy.pattern.impl.TaskStatusEmailBuilder;
 import java.util.HashMap;
 import java.util.Map;
 
