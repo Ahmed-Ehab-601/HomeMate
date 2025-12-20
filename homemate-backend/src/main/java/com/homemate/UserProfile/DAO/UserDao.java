@@ -117,8 +117,8 @@ public class UserDao {
 
     public Long signup(User user) {
         String sql = "INSERT INTO Users " +
-                "(username, firstName, lastName, email, password, birthDate, gender, phone, admin, suspended) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "(username, firstName, lastName, email, password, birthDate, gender, phone, admin, suspended, stripe_customer_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -135,6 +135,8 @@ public class UserDao {
                 ps.setString(8, user.getPhone());
                 ps.setBoolean(9, user.getIsAdmin());
                 ps.setBoolean(10, user.getIsSuspended());
+                ps.setString(11, user.getStripeCustomerId());
+
                 return ps;
             }, keyHolder);
 

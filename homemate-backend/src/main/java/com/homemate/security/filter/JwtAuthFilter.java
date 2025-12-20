@@ -39,7 +39,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/auth/otp/send","/HomeMate",
             // ⭐ ADD WEBSOCKET ENDPOINTS
             "/ws",
-            "/ws/**"
+            "/ws/**",
+            "/stripe"
     );
 
     private final JwtService jwtService;

@@ -5,6 +5,7 @@ import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.UserProfile.DTO.SignupUserDTO;
 import com.homemate.UserProfile.Models.User;
 import com.homemate.hashing.HashingService;
+import com.homemate.payment.service.StripeCustomerService;
 import com.homemate.security.service.JwtService;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -18,6 +19,7 @@ public class UserSignupService {
     private final JwtService jwtService;
     private final TaskerDao taskerDao;
     private final HashingService hashingService;
+    private final StripeCustomerService stripeCustomerService;
 
 
 
@@ -32,6 +34,12 @@ public class UserSignupService {
                 return null;
             } catch (EmptyResultDataAccessException ignored) {}
 
+         String stripeCustomerId = stripeCustomerService.createCustomer(
+                 user.getEmail(),
+                 user.getFirstName() + " " + user.getLastName()
+         );
+
+         user.setStripeCustomerId(stripeCustomerId);
          Long id = userDao.signup(user);
 
          if (id == -1) {

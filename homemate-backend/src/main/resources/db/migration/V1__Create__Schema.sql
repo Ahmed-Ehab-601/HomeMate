@@ -32,6 +32,7 @@ CREATE TABLE Users (
     phone VARCHAR(50),
     admin BOOLEAN DEFAULT FALSE NOT NULL,
     suspended BOOLEAN DEFAULT FALSE NOT NULL,
+    stripe_customer_id VARCHAR(255),
     INDEX idx_username (username),
     INDEX idx_email (email),
     INDEX idx_suspended (suspended)

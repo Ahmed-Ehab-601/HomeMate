@@ -27,6 +27,7 @@ public class UserRowMapper implements RowMapper<User> {
         user.setIsSuspended(rs.getObject("suspended") != null ? rs.getBoolean("suspended") : null);
         user.setFirstName(rs.getString("firstName"));
         user.setLastName(rs.getString("lastName"));
+        user.setStripeCustomerId(rs.getString("stripe_customer_id"));
         return user;
     }
 }
