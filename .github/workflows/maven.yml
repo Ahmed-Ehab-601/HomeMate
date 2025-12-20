@@ -8,10 +8,10 @@ on:
     branches: [ "main", "milestone_*", "feature*", "feature/**" ]
 
 permissions:
-  contents: write       # For dependency graph submission and auto-merge
-  checks: write        # For test reports
-  pull-requests: write # For coverage comments and auto-merge
-  security-events: write # For dependency alerts
+  contents: write
+  checks: write
+  pull-requests: write
+  security-events: write
 
 jobs:
   build:
@@ -30,7 +30,77 @@ jobs:
         cache: maven
     
     - name: Build and run tests with coverage
-      run: mvn -B verify --file ./homemate-backend/pom.xml
+      id: tests
+      run: |
+        mvn -B verify --file ./homemate-backend/pom.xml
+        echo "tests_passed=true" >> $GITHUB_OUTPUT
+      continue-on-error: true
+    
+    # Extract test results
+    - name: Extract Test Results
+      if: always()
+      id: test-results
+      run: |
+        if [ -d "homemate-backend/target/surefire-reports" ]; then
+          TOTAL=$(find homemate-backend/target/surefire-reports -name "TEST-*.xml" -exec grep -h "tests=" {} \; | sed 's/.*tests="\([0-9]*\)".*/\1/' | awk '{s+=$1} END {print s}')
+          FAILURES=$(find homemate-backend/target/surefire-reports -name "TEST-*.xml" -exec grep -h "failures=" {} \; | sed 's/.*failures="\([0-9]*\)".*/\1/' | awk '{s+=$1} END {print s}')
+          ERRORS=$(find homemate-backend/target/surefire-reports -name "TEST-*.xml" -exec grep -h "errors=" {} \; | sed 's/.*errors="\([0-9]*\)".*/\1/' | awk '{s+=$1} END {print s}')
+          SKIPPED=$(find homemate-backend/target/surefire-reports -name "TEST-*.xml" -exec grep -h "skipped=" {} \; | sed 's/.*skipped="\([0-9]*\)".*/\1/' | awk '{s+=$1} END {print s}')
+          
+          echo "total=${TOTAL:-0}" >> $GITHUB_OUTPUT
+          echo "failures=${FAILURES:-0}" >> $GITHUB_OUTPUT
+          echo "errors=${ERRORS:-0}" >> $GITHUB_OUTPUT
+          echo "skipped=${SKIPPED:-0}" >> $GITHUB_OUTPUT
+        fi
+    
+    # Extract coverage
+    - name: Extract Coverage
+      if: always()
+      id: coverage
+      run: |
+        if [ -f "homemate-backend/target/site/jacoco/index.html" ]; then
+          COVERAGE=$(grep -oP 'Total.*?(\d+)%' homemate-backend/target/site/jacoco/index.html | grep -oP '\d+%' | head -1 || echo "N/A")
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+        else
+          echo "coverage=N/A" >> $GITHUB_OUTPUT
+        fi
+    
+    # Post comment to PR
+    - name: Comment Test Results on PR
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const total = '${{ steps.test-results.outputs.total }}';
+          const failures = '${{ steps.test-results.outputs.failures }}';
+          const errors = '${{ steps.test-results.outputs.errors }}';
+          const skipped = '${{ steps.test-results.outputs.skipped }}';
+          const coverage = '${{ steps.coverage.outputs.coverage }}';
+          const passed = total - failures - errors - skipped;
+          
+          const status = (failures == '0' && errors == '0') ? '✅' : '❌';
+          
+          const body = `## ${status} Test Results
+          
+          **Tests Summary:**
+          - 📊 Total Tests: ${total}
+          - ✅ Passed: ${passed}
+          - ❌ Failed: ${failures}
+          - ⚠️ Errors: ${errors}
+          - ⏭️ Skipped: ${skipped}
+          
+          **Coverage:** ${coverage}
+          
+          ---
+          *Workflow: [${context.workflow}](${context.payload.repository.html_url}/actions/runs/${context.runId})*
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: body
+          });
     
     - name: Publish Test Report
       uses: dorny/test-reporter@v1
@@ -60,26 +130,15 @@ jobs:
         name: package
         path: homemate-backend/target/*.jar
     
-    # Generate dependency tree and submit manually
-    - name: Generate Dependency Tree
-      if: github.event_name == 'push'
-      run: |
-        cd homemate-backend
-        mvn dependency:tree -DoutputFile=../dependency-tree.txt -DoutputType=text
-        mvn dependency:list -DoutputFile=../dependency-list.txt
-      continue-on-error: true
-    
-    - name: Upload Dependency Information
-      if: github.event_name == 'push'
-      uses: actions/upload-artifact@v4
+    - name: Submit Dependency Graph
+      uses: advanced-security/maven-dependency-submission-action@v4
       with:
-        name: dependencies
-        path: |
-          dependency-tree.txt
-          dependency-list.txt
+        directory: homemate-backend
+        token: ${{ secrets.GITHUB_TOKEN }}
+        ignore-maven-wrapper: true
+        maven-args: -DskipTests
       continue-on-error: true
 
-  # Auto-approve and merge Dependabot PRs if tests pass
   dependabot:
     runs-on: ubuntu-latest
     needs: build
