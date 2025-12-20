@@ -29,12 +29,11 @@ jobs:
         distribution: 'temurin'
         cache: maven
     
+    # Run build and capture the outcome
     - name: Build and run tests with coverage
-      id: tests
-      run: |
-        mvn -B verify --file ./homemate-backend/pom.xml
-        echo "tests_passed=true" >> $GITHUB_OUTPUT
-      continue-on-error: true
+      id: maven-build
+      run: mvn -B verify --file ./homemate-backend/pom.xml
+      continue-on-error: true  # Continue to show details, but track failure
     
     # Extract test results
     - name: Extract Test Results
@@ -53,7 +52,7 @@ jobs:
           echo "skipped=${SKIPPED:-0}" >> $GITHUB_OUTPUT
         fi
     
-    # Extract coverage
+    # Extract coverage percentage
     - name: Extract Coverage
       if: always()
       id: coverage
@@ -61,11 +60,40 @@ jobs:
         if [ -f "homemate-backend/target/site/jacoco/index.html" ]; then
           COVERAGE=$(grep -oP 'Total.*?(\d+)%' homemate-backend/target/site/jacoco/index.html | grep -oP '\d+%' | head -1 || echo "N/A")
           echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          
+          # Extract numeric value for comparison
+          COVERAGE_NUM=$(echo $COVERAGE | grep -oP '\d+' || echo "0")
+          echo "coverage_num=$COVERAGE_NUM" >> $GITHUB_OUTPUT
         else
           echo "coverage=N/A" >> $GITHUB_OUTPUT
+          echo "coverage_num=0" >> $GITHUB_OUTPUT
         fi
     
-    # Post comment to PR
+    # Determine why build failed (if it did)
+    - name: Analyze Build Failure
+      if: always()
+      id: failure-reason
+      run: |
+        BUILD_OUTCOME="${{ steps.maven-build.outcome }}"
+        FAILURES="${{ steps.test-results.outputs.failures }}"
+        ERRORS="${{ steps.test-results.outputs.errors }}"
+        COVERAGE_NUM="${{ steps.coverage.outputs.coverage_num }}"
+        
+        if [ "$BUILD_OUTCOME" = "success" ]; then
+          echo "reason=none" >> $GITHUB_OUTPUT
+          echo "failed=false" >> $GITHUB_OUTPUT
+        elif [ "$FAILURES" != "0" ] || [ "$ERRORS" != "0" ]; then
+          echo "reason=tests_failed" >> $GITHUB_OUTPUT
+          echo "failed=true" >> $GITHUB_OUTPUT
+        elif [ "$COVERAGE_NUM" -lt 60 ] && [ "$COVERAGE_NUM" != "0" ]; then
+          echo "reason=coverage_too_low" >> $GITHUB_OUTPUT
+          echo "failed=true" >> $GITHUB_OUTPUT
+        else
+          echo "reason=build_error" >> $GITHUB_OUTPUT
+          echo "failed=true" >> $GITHUB_OUTPUT
+        fi
+    
+    # Post detailed comment to PR
     - name: Comment Test Results on PR
       if: github.event_name == 'pull_request' && always()
       uses: actions/github-script@v7
@@ -76,11 +104,51 @@ jobs:
           const errors = '${{ steps.test-results.outputs.errors }}';
           const skipped = '${{ steps.test-results.outputs.skipped }}';
           const coverage = '${{ steps.coverage.outputs.coverage }}';
+          const coverageNum = parseInt('${{ steps.coverage.outputs.coverage_num }}');
+          const failureReason = '${{ steps.failure-reason.outputs.reason }}';
+          const hasFailed = '${{ steps.failure-reason.outputs.failed }}' === 'true';
           const passed = total - failures - errors - skipped;
           
-          const status = (failures == '0' && errors == '0') ? '✅' : '❌';
+          // Determine overall status emoji
+          const status = hasFailed ? '❌' : '✅';
           
+          // Build coverage status message
+          let coverageStatus = '';
+          let coverageEmoji = '';
+          
+          if (failureReason === 'coverage_too_low') {
+            coverageEmoji = '❌';
+            coverageStatus = `${coverage} ${coverageEmoji} **FAILED - Below 60% minimum threshold**`;
+          } else if (coverageNum >= 80) {
+            coverageEmoji = '🎉';
+            coverageStatus = `${coverage} ${coverageEmoji} Excellent!`;
+          } else if (coverageNum >= 70) {
+            coverageEmoji = '✅';
+            coverageStatus = `${coverage} ${coverageEmoji} Good`;
+          } else if (coverageNum >= 60) {
+            coverageEmoji = '⚠️';
+            coverageStatus = `${coverage} ${coverageEmoji} Acceptable (at minimum threshold)`;
+          } else if (coverage !== 'N/A') {
+            coverageEmoji = '⚠️';
+            coverageStatus = `${coverage} ${coverageEmoji} Below recommended`;
+          } else {
+            coverageStatus = 'N/A';
+          }
+          
+          // Build failure details section
+          let failureDetails = '';
+          if (failureReason === 'tests_failed') {
+            failureDetails = `\n\n> ❌ **BUILD FAILED: Tests Failed**\n> \n> ${failures} test(s) failed. Please fix the failing tests before merging.\n`;
+          } else if (failureReason === 'coverage_too_low') {
+            failureDetails = `\n\n> ❌ **BUILD FAILED: Coverage Too Low**\n> \n> Code coverage is **${coverage}**, which is below the minimum threshold of **60%** defined in pom.xml.\n> \n> **Actions needed:**\n> 1. Add unit tests to cover untested code\n> 2. Run \`mvn verify\` locally to check coverage\n> 3. Download the [coverage report artifact](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details\n> 4. Aim for at least 60% coverage to pass this check\n`;
+          } else if (failureReason === 'build_error') {
+            failureDetails = `\n\n> ❌ **BUILD FAILED: Build Error**\n> \n> The build failed due to compilation or other errors. Check the [build logs](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details.\n`;
+          }
+          
+          // Build the comment body
           const body = `## ${status} Test Results
+          
+          **Build Status:** ${hasFailed ? '❌ Failed' : '✅ Passed'}
           
           **Tests Summary:**
           - 📊 Total Tests: ${total}
@@ -89,8 +157,8 @@ jobs:
           - ⚠️ Errors: ${errors}
           - ⏭️ Skipped: ${skipped}
           
-          **Coverage:** ${coverage}
-          
+          **Coverage:** ${coverageStatus}
+          ${failureDetails}
           ---
           *Workflow: [${context.workflow}](${context.payload.repository.html_url}/actions/runs/${context.runId})*
           `;
@@ -109,9 +177,11 @@ jobs:
         name: Maven Tests
         path: '**/target/surefire-reports/TEST-*.xml'
         reporter: java-junit
+        fail-on-error: true  # This will mark the check as failed if tests fail
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
+      if: always()
       with:
         files: ./homemate-backend/target/site/jacoco/jacoco.xml
         fail_ci_if_error: false
@@ -126,18 +196,28 @@ jobs:
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
+      if: steps.maven-build.outcome == 'success'
       with:
         name: package
         path: homemate-backend/target/*.jar
     
     - name: Submit Dependency Graph
       uses: advanced-security/maven-dependency-submission-action@v4
+      if: steps.maven-build.outcome == 'success'
       with:
         directory: homemate-backend
         token: ${{ secrets.GITHUB_TOKEN }}
         ignore-maven-wrapper: true
         maven-args: -DskipTests
       continue-on-error: true
+    
+    # FINAL STEP: Fail the workflow if build failed
+    - name: Final Build Status Check
+      if: steps.maven-build.outcome != 'success'
+      run: |
+        echo "::error::Build failed - see details in the PR comment and logs above"
+        echo "Failure reason: ${{ steps.failure-reason.outputs.reason }}"
+        exit 1
 
   dependabot:
     runs-on: ubuntu-latest
