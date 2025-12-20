@@ -3,6 +3,7 @@ package com.homemate.taskmanagement.service;
 import com.homemate.notification.domains.dto.EmailRequest;
 import com.homemate.notification.domains.model.EmailType;
 import com.homemate.notification.service.EmailService;
+import com.homemate.security.model.AppUserDetails;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.dto.TaskRequestDto;
@@ -12,6 +13,10 @@ import com.homemate.taskmanagement.model.TaskEntity;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -75,4 +80,16 @@ public class TaskRequestService {
         }
     }
 
+    public Map<LocalDateTime, LocalTime> getAllBusyTime(Long taskerId, LocalDate day) {
+        return taskRequestDao.getBusytime(taskerId,day);
+    }
+
+    public void addEstimation(Long taskId, LocalTime estimation, AppUserDetails userDetails) {
+        Optional<TaskDto> taskDto= taskRequestDao.getTaskDetails(taskId);
+        if(taskDto.isPresent() &&( taskDto.get().getTaskerID() == userDetails.getId())) {
+         taskRequestDao.add(taskId,estimation);
+        }
+        else
+            throw new RuntimeException("This Tasker has no Access to that task");
+    }
 }
