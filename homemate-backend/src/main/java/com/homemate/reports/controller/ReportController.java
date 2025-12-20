@@ -7,6 +7,7 @@ import com.homemate.reports.dto.ReportFilterDto;
 import com.homemate.reports.service.IReportService;
 import com.homemate.security.model.AppUserDetails;
 import com.homemate.util.PaginatedResponse;
+import com.homemate.reports.dto.ReportResponseRequest;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -74,5 +75,15 @@ public class ReportController {
         return completedReport
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+    @PostMapping("/{reportID}/response")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> respondToReport(
+            @PathVariable int reportID,
+            @RequestBody ReportResponseRequest request) {
+        
+        reportService.respondToReport(reportID, request.getMessage());
+        return ResponseEntity.ok("Response sent successfully");
     }
 }
