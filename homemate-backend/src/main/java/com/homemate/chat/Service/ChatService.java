@@ -18,9 +18,11 @@ public class ChatService {
     @Autowired
     private MessageDao messageDao;
     private ChatDao chatDao;
-    public ChatService(MessageDao messageDao, ChatDao chatDao) {
+    private MessageService messageService;
+    public ChatService(MessageDao messageDao, ChatDao chatDao,MessageService messageService) {
         this.messageDao = messageDao;
         this.chatDao = chatDao;
+        this.messageService=messageService;
     }
     public ChatDto getChat(Long chatId) throws Exception{
            return chatDao.getChat(chatId);
@@ -97,7 +99,7 @@ public class ChatService {
     }
     public void setTaskerOnline(Long taskerId) throws Exception {
         try {
-            messageDao.markasReceivedTasker(taskerId);
+            messageService.markAllAsReceivedForTasker(taskerId);
             chatDao.setTaskerOnline(taskerId);
         } catch (Exception e) {
             throw new Exception("Failed to set tasker online: " + e.getMessage());
@@ -107,7 +109,7 @@ public class ChatService {
     public void setUserOnline(Long userId) throws Exception {
         try {
 
-            messageDao.markasReceivedUser(userId);
+            messageService.markAllAsReceivedForUser(userId);
             chatDao.setUserOnline(userId);
         } catch (Exception e) {
             throw new Exception("Failed to set user online: " + e.getMessage());
