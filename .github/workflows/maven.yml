@@ -3,9 +3,9 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ "main", "milestone_*","feature*" ]
+    branches: [ "main", "milestone_*", "feature*", "feature/**" ]
   pull_request:
-    branches: [ "main", "milestone_*","feature*" ]
+    branches: [ "main", "milestone_*", "feature*", "feature/**" ]
 
 permissions:
   contents: write       # For dependency graph submission and auto-merge
