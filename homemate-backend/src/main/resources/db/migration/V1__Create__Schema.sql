@@ -89,6 +89,7 @@ CREATE TABLE Tasker (
     WorkedHours DOUBLE DEFAULT 0.00 NOT NULL,
     addressCity VARCHAR(200),
     suspended BOOLEAN DEFAULT FALSE NOT NULL,
+    stripe_account_id VARCHAR(255) ,
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE,
     INDEX idx_tasker_username (username),
     INDEX idx_tasker_email (email),
