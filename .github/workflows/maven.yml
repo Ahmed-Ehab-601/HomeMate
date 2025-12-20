@@ -29,8 +29,15 @@ jobs:
         distribution: 'temurin'
         cache: maven
     
+    # Make Maven Wrapper executable BEFORE any Maven operations
+    - name: Make Maven Wrapper executable
+      run: |
+        if [ -f "homemate-backend/mvnw" ]; then
+          chmod +x homemate-backend/mvnw
+        fi
+    
     - name: Build and run tests with coverage
-      run: mvn -B verify --file  ./homemate-backend/pom.xml
+      run: mvn -B verify --file ./homemate-backend/pom.xml
     
     - name: Publish Test Report
       uses: dorny/test-reporter@v1
@@ -65,11 +72,6 @@ jobs:
       with:
         directory: homemate-backend
         token: ${{ secrets.GITHUB_TOKEN }}
-        ignore-maven-wrapper: false
-        maven-args: -DskipTests
-
-    - name: Ensure Maven Wrapper is executable
-      run: chmod +x homemate-backend/mvnw
 
   # Auto-approve and merge Dependabot PRs if tests pass
   dependabot:
