@@ -1,5 +1,4 @@
 package com.homemate.notification.domains.dto;
-
 import com.homemate.notification.domains.model.EmailType;
 import com.homemate.notification.domains.model.RecipientType;
 import com.homemate.taskmanagement.dto.TaskDto;
@@ -17,4 +16,8 @@ public class EmailRequest {
     private EmailType emailType;
     private String recipientEmail;
     private RecipientType recipientType;
+  
+  
+    
+    
 }

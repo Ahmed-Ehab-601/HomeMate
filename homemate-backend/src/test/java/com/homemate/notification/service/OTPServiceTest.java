@@ -76,7 +76,7 @@ class OTPServiceTest {
 
     @Test
     void testGenerateAndStoreOTPShouldReturnSixDigitCode() {
-        String otp = underTest.generateAndStoreOTP(TEST_EMAIL, EmailType.EMAIL_VERIFICATION).join();
+        String otp = underTest.generateAndStoreOTP(TEST_EMAIL,EmailType.EMAIL_VERIFICATION).join();
 
         assertNotNull(otp);
         assertEquals(OTP_LENGTH, otp.length());
@@ -85,7 +85,7 @@ class OTPServiceTest {
 
     @Test
     void testGenerateAndStoreOTPShouldStoreInRedis() {
-        underTest.generateAndStoreOTP(TEST_EMAIL, EmailType.EMAIL_VERIFICATION).join();
+        underTest.generateAndStoreOTP(TEST_EMAIL,EmailType.EMAIL_VERIFICATION).join();
 
         verify(otpStorageService).storeOtp(
                 eq(TEST_EMAIL),
@@ -97,7 +97,7 @@ class OTPServiceTest {
 
     @Test
     void testGenerateAndStoreOTPShouldInitializeAttemptsCounter() {
-        underTest.generateAndStoreOTP(TEST_EMAIL, EmailType.EMAIL_VERIFICATION).join();
+        underTest.generateAndStoreOTP(TEST_EMAIL,EmailType.EMAIL_VERIFICATION).join();
 
         verify(otpStorageService).resetAttempts(
                 eq(TEST_EMAIL),
@@ -108,7 +108,7 @@ class OTPServiceTest {
 
     @Test
     void testGenerateAndStoreOTPForResetPasswordShouldReturnSixDigitCode() {
-        String otp = underTest.generateAndStoreOTP(RESET_PASSWORD_EMAIL, EmailType.FORGOT_PASSWORD).join();
+        String otp = underTest.generateAndStoreOTP(RESET_PASSWORD_EMAIL,EmailType.FORGOT_PASSWORD).join();
 
         assertNotNull(otp);
         assertEquals(OTP_LENGTH, otp.length());
@@ -143,8 +143,8 @@ class OTPServiceTest {
         String email1 = "user1@gmail.com";
         String email2 = "user2@gmail.com";
 
-        String otp1 = underTest.generateAndStoreOTP(email1, EmailType.EMAIL_VERIFICATION).join();
-        String otp2 = underTest.generateAndStoreOTP(email2, EmailType.EMAIL_VERIFICATION).join();
+        String otp1 = underTest.generateAndStoreOTP(email1,EmailType.EMAIL_VERIFICATION).join();
+        String otp2 = underTest.generateAndStoreOTP(email2,EmailType.EMAIL_VERIFICATION).join();
 
         assertNotNull(otp1);
         assertNotNull(otp2);
@@ -159,9 +159,9 @@ class OTPServiceTest {
         String email3 = "user3@gmail.com";
         int expectedCalls = 3;
 
-        String otp1 = underTest.generateAndStoreOTP(email1, EmailType.EMAIL_VERIFICATION).join();
-        String otp2 = underTest.generateAndStoreOTP(email2, EmailType.FORGOT_PASSWORD).join();
-        String otp3 = underTest.generateAndStoreOTP(email3, EmailType.EMAIL_VERIFICATION).join();
+        String otp1 = underTest.generateAndStoreOTP(email1,EmailType.EMAIL_VERIFICATION).join();
+        String otp2 = underTest.generateAndStoreOTP(email2,EmailType.FORGOT_PASSWORD).join();
+        String otp3 = underTest.generateAndStoreOTP(email3,EmailType.EMAIL_VERIFICATION).join();
 
         assertNotNull(otp1);
         assertNotNull(otp2);
@@ -174,10 +174,10 @@ class OTPServiceTest {
 
     @Test
     void testSendOtpShouldGenerateOTPAndSendEmail() throws Exception {
-        EmailRequest emailRequest = createEmailRequest(TEST_EMAIL, EmailType.EMAIL_VERIFICATION);
+        EmailRequest emailRequest = createEmailRequest(TEST_EMAIL,EmailType.EMAIL_VERIFICATION);
         OtpEmailContent emailContent = new OtpEmailContent(VERIFY_EMAIL_TITLE, VERIFY_EMAIL_BODY);
 
-        setupSendOtpMocks(TEST_EMAIL, EmailType.EMAIL_VERIFICATION, emailContent);
+        setupSendOtpMocks(TEST_EMAIL,EmailType.EMAIL_VERIFICATION, emailContent);
 
         OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
 
@@ -187,10 +187,10 @@ class OTPServiceTest {
 
     @Test
     void testSendOtpForResetPasswordShouldGenerateOTPAndSendEmail() throws Exception {
-        EmailRequest emailRequest = createEmailRequest(RESET_PASSWORD_EMAIL, EmailType.FORGOT_PASSWORD);
+        EmailRequest emailRequest = createEmailRequest(RESET_PASSWORD_EMAIL,EmailType.FORGOT_PASSWORD);
         OtpEmailContent emailContent = new OtpEmailContent(RESET_PASSWORD_TITLE, RESET_PASSWORD_BODY);
 
-        setupSendOtpMocks(RESET_PASSWORD_EMAIL, EmailType.FORGOT_PASSWORD, emailContent);
+        setupSendOtpMocks(RESET_PASSWORD_EMAIL,EmailType.FORGOT_PASSWORD, emailContent);
 
         underTest.sendOtp(emailRequest).join();
 
@@ -199,7 +199,7 @@ class OTPServiceTest {
 
     @Test
     void testSendOtpWithMaxAttemptsExceededShouldReturnErrorMessage() throws Exception {
-        EmailRequest emailRequest = createEmailRequest(TEST_EMAIL, EmailType.EMAIL_VERIFICATION);
+        EmailRequest emailRequest = createEmailRequest(TEST_EMAIL,EmailType.EMAIL_VERIFICATION);
 
         when(otpStorageService.hasReachedMaxAttempts(TEST_EMAIL, RedisConfig.OTP_MAX_ATTEMPTS)).thenReturn(true);
 
@@ -212,9 +212,9 @@ class OTPServiceTest {
 
     @Test
     void testValidateCodeWithValidOTPShouldReturnSuccess() {
-        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP, EmailType.EMAIL_VERIFICATION);
+        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP,EmailType.EMAIL_VERIFICATION);
 
-        setupValidOtpMocks(TEST_EMAIL, VALID_OTP, EXPECTED_TOKEN);
+        setupValidOtpMocks(TEST_EMAIL, VALID_OTP);
 
         OtpVerificationResult result = underTest.validateCode(request).join();
 
@@ -224,9 +224,9 @@ class OTPServiceTest {
 
     @Test
     void testValidateCodeWithValidOTPShouldDeleteOTPFromRedis() {
-        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP, EmailType.EMAIL_VERIFICATION);
+        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP,EmailType.EMAIL_VERIFICATION);
 
-        setupValidOtpMocks(TEST_EMAIL, VALID_OTP, EXPECTED_TOKEN);
+        setupValidOtpMocks(TEST_EMAIL, VALID_OTP);
 
         underTest.validateCode(request).join();
 
@@ -236,7 +236,7 @@ class OTPServiceTest {
 
     @Test
     void testValidateCodeWithExpiredOTPShouldReturnFailure() {
-        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP, EmailType.EMAIL_VERIFICATION);
+        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP,EmailType.EMAIL_VERIFICATION);
 
         when(otpStorageService.getOtp(TEST_EMAIL)).thenReturn(null);
 
@@ -248,7 +248,7 @@ class OTPServiceTest {
 
     @Test
     void testValidateCodeWithInvalidOTPShouldReturnFailure() {
-        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, INVALID_OTP, EmailType.EMAIL_VERIFICATION);
+        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, INVALID_OTP,EmailType.EMAIL_VERIFICATION);
 
         setupInvalidOtpMocks(TEST_EMAIL, VALID_OTP);
 
@@ -260,7 +260,7 @@ class OTPServiceTest {
 
     @Test
     void testValidateCodeWithInvalidOTPShouldIncrementAttempts() {
-        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, INVALID_OTP, EmailType.EMAIL_VERIFICATION);
+        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, INVALID_OTP,EmailType.EMAIL_VERIFICATION);
 
         setupInvalidOtpMocks(TEST_EMAIL, VALID_OTP);
 
@@ -278,7 +278,7 @@ class OTPServiceTest {
         OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP, EmailType.EMAIL_VERIFICATION);
         long maxAttempts = 3L;
 
-        setupMaxAttemptsExceededMocks(TEST_EMAIL, INVALID_OTP, maxAttempts);
+        setupMaxAttemptsExceededMocks(TEST_EMAIL, maxAttempts);
 
         OtpVerificationResult result = underTest.validateCode(request).join();
         String expectedMessage = String.format(MAX_ATTEMPTS_FORMAT,
@@ -290,10 +290,10 @@ class OTPServiceTest {
 
     @Test
     void testValidateCodeWithMaxAttemptsExceededShouldDeleteOTPAndAttempts() {
-        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP, EmailType.EMAIL_VERIFICATION);
+        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP,EmailType.EMAIL_VERIFICATION);
         long maxAttempts = 3L;
 
-        setupMaxAttemptsExceededMocks(TEST_EMAIL, INVALID_OTP, maxAttempts);
+        setupMaxAttemptsExceededMocks(TEST_EMAIL, maxAttempts);
 
         underTest.validateCode(request).join();
 
@@ -302,9 +302,9 @@ class OTPServiceTest {
 
     @Test
     void testValidateCodeForResetPasswordWithValidOTPShouldReturnSuccess() {
-        OtpVerifyRequest request = createOtpVerifyRequest(RESET_PASSWORD_EMAIL, INVALID_OTP, EmailType.FORGOT_PASSWORD);
+        OtpVerifyRequest request = createOtpVerifyRequest(RESET_PASSWORD_EMAIL, INVALID_OTP,EmailType.FORGOT_PASSWORD);
 
-        setupValidOtpMocks(RESET_PASSWORD_EMAIL, INVALID_OTP, EXPECTED_TOKEN);
+        setupValidOtpMocks(RESET_PASSWORD_EMAIL, INVALID_OTP);
 
         OtpVerificationResult result = underTest.validateCode(request).join();
 
@@ -314,7 +314,7 @@ class OTPServiceTest {
 
     @Test
     void testValidateCodeForResetPasswordWithHourBasedAttempts() {
-        OtpVerifyRequest request = createOtpVerifyRequest(RESET_PASSWORD_EMAIL, VALID_OTP, EmailType.FORGOT_PASSWORD);
+        OtpVerifyRequest request = createOtpVerifyRequest(RESET_PASSWORD_EMAIL, VALID_OTP,EmailType.FORGOT_PASSWORD);
 
         setupInvalidOtpMocks(RESET_PASSWORD_EMAIL, INVALID_OTP);
 
@@ -329,10 +329,10 @@ class OTPServiceTest {
 
     @Test
     void testValidateCodeForResetPasswordWithMaxAttemptsExceededShouldDeleteOTP() {
-        OtpVerifyRequest request = createOtpVerifyRequest(RESET_PASSWORD_EMAIL, VALID_OTP, EmailType.FORGOT_PASSWORD);
+        OtpVerifyRequest request = createOtpVerifyRequest(RESET_PASSWORD_EMAIL, VALID_OTP,EmailType.FORGOT_PASSWORD);
         long maxAttempts = 3L;
 
-        setupMaxAttemptsExceededMocks(RESET_PASSWORD_EMAIL, INVALID_OTP, maxAttempts);
+        setupMaxAttemptsExceededMocks(RESET_PASSWORD_EMAIL, maxAttempts);
 
         OtpVerificationResult result = underTest.validateCode(request).join();
         String expectedMessage = String.format(MAX_ATTEMPTS_FORMAT,
@@ -346,9 +346,9 @@ class OTPServiceTest {
     @Test
     void testValidateCodeWithValidOTPShouldGenerateJwtToken() {
         String email = "user@gmail.com";
-        OtpVerifyRequest request = createOtpVerifyRequest(email, VALID_OTP, EmailType.EMAIL_VERIFICATION);
+        OtpVerifyRequest request = createOtpVerifyRequest(email, VALID_OTP,EmailType.EMAIL_VERIFICATION);
 
-        setupValidOtpMocks(email, VALID_OTP, EXPECTED_TOKEN);
+        setupValidOtpMocks(email, VALID_OTP);
 
         OtpVerificationResult result = underTest.validateCode(request).join();
 
@@ -362,7 +362,7 @@ class OTPServiceTest {
         String email = "user@gmail.com";
         long currentAttempts = 1L;
         long remainingAttempts = 1L;
-        OtpVerifyRequest request = createOtpVerifyRequest(email, INVALID_OTP, EmailType.EMAIL_VERIFICATION);
+        OtpVerifyRequest request = createOtpVerifyRequest(email, INVALID_OTP,EmailType.EMAIL_VERIFICATION);
 
         when(otpStorageService.getOtp(email)).thenReturn(VALID_OTP);
         when(otpStorageService.getAttempts(email)).thenReturn(currentAttempts);
@@ -377,7 +377,7 @@ class OTPServiceTest {
     @Test
     void testValidateCodeEmptyTokenWhenFailed() {
         String email = "user@gmail.com";
-        OtpVerifyRequest request = createOtpVerifyRequest(email, VALID_OTP, EmailType.EMAIL_VERIFICATION);
+        OtpVerifyRequest request = createOtpVerifyRequest(email, VALID_OTP,EmailType.EMAIL_VERIFICATION);
 
         when(otpStorageService.getOtp(email)).thenReturn(null);
 
@@ -395,7 +395,7 @@ class OTPServiceTest {
         return emailRequest;
     }
 
-    private OtpVerifyRequest createOtpVerifyRequest(String email, String code, EmailType emailType) {
+    private OtpVerifyRequest createOtpVerifyRequest(String email, String code,EmailType emailType) {
         OtpVerifyRequest request = new OtpVerifyRequest();
         request.setRecipientEmail(email);
         request.setCode(code);
@@ -403,18 +403,18 @@ class OTPServiceTest {
         return request;
     }
 
-    private void setupSendOtpMocks(String email, EmailType emailType, OtpEmailContent emailContent) {
+    private void setupSendOtpMocks(String email,EmailType emailType , OtpEmailContent emailContent) {
         when(emailTemplate.buildOtpEmailContent(eq(emailType), anyString())).thenReturn(emailContent);
         when(otpStorageService.hasReachedMaxAttempts(email, RedisConfig.OTP_MAX_ATTEMPTS)).thenReturn(false);
         MimeMessage mimeMessage = new MimeMessage((Session) null);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
     }
 
-    private void setupValidOtpMocks(String email, String otp, String token) {
+    private void setupValidOtpMocks(String email, String otp) {
         when(otpStorageService.getOtp(email)).thenReturn(otp);
         when(otpStorageService.getAttempts(email)).thenReturn(0L);
         when(otpStorageService.hasReachedMaxAttempts(email, RedisConfig.OTP_MAX_ATTEMPTS)).thenReturn(false);
-        when(jwtService.generateVerifyToken(email)).thenReturn(token);
+        when(jwtService.generateVerifyToken(email)).thenReturn(OTPServiceTest.EXPECTED_TOKEN);
     }
 
     private void setupInvalidOtpMocks(String email, String storedOtp) {
@@ -423,9 +423,237 @@ class OTPServiceTest {
         when(otpStorageService.hasReachedMaxAttempts(email, RedisConfig.OTP_MAX_ATTEMPTS)).thenReturn(false);
     }
 
-    private void setupMaxAttemptsExceededMocks(String email, String storedOtp, long attempts) {
-        when(otpStorageService.getOtp(email)).thenReturn(storedOtp);
+    private void setupMaxAttemptsExceededMocks(String email, long attempts) {
+        when(otpStorageService.getOtp(email)).thenReturn(OTPServiceTest.INVALID_OTP);
         when(otpStorageService.getAttempts(email)).thenReturn(attempts);
         when(otpStorageService.hasReachedMaxAttempts(email, RedisConfig.OTP_MAX_ATTEMPTS)).thenReturn(true);
+    }
+
+    @Test
+    void testGenerateAndStoreOTPShouldReturnDifferentCodesForSameEmail() {
+        String otp1 = underTest.generateAndStoreOTP(TEST_EMAIL,EmailType.EMAIL_VERIFICATION).join();
+        String otp2 = underTest.generateAndStoreOTP(TEST_EMAIL,EmailType.EMAIL_VERIFICATION).join();
+
+        assertNotNull(otp1);
+        assertNotNull(otp2);
+        assertEquals(OTP_LENGTH, otp1.length());
+        assertEquals(OTP_LENGTH, otp2.length());
+        assertTrue(otp1.matches(OTP_PATTERN));
+        assertTrue(otp2.matches(OTP_PATTERN));
+    }
+
+    @Test
+    void testSendOtpShouldReturnSuccessWithCorrectMessage() throws Exception {
+        EmailRequest emailRequest = createEmailRequest(TEST_EMAIL,EmailType.EMAIL_VERIFICATION);
+        OtpEmailContent emailContent = new OtpEmailContent(VERIFY_EMAIL_TITLE, VERIFY_EMAIL_BODY);
+
+        setupSendOtpMocks(TEST_EMAIL,EmailType.EMAIL_VERIFICATION, emailContent);
+
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
+
+        assertTrue(result.isSuccess());
+        assertEquals(SENT_SUCCESS_MESSAGE, result.getMessage());
+        assertNotNull(result.getToken());
+    }
+
+    @Test
+    void testValidateCodeShouldReturnCorrectTokenForValidOTP() {
+        String email = "testuser@gmail.com";
+        OtpVerifyRequest request = createOtpVerifyRequest(email, VALID_OTP,EmailType.EMAIL_VERIFICATION);
+
+        setupValidOtpMocks(email, VALID_OTP);
+
+        OtpVerificationResult result = underTest.validateCode(request).join();
+
+        assertTrue(result.isSuccess());
+        assertEquals(EXPECTED_TOKEN, result.getToken());
+        verify(jwtService).generateVerifyToken(email);
+    }
+
+    @Test
+    void testValidateCodeWithInvalidOTPShouldNotGenerateToken() {
+        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, INVALID_OTP,EmailType.EMAIL_VERIFICATION);
+
+        setupInvalidOtpMocks(TEST_EMAIL, VALID_OTP);
+
+        OtpVerificationResult result = underTest.validateCode(request).join();
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.getToken().isEmpty());
+        verify(jwtService, never()).generateVerifyToken(any());
+    }
+
+    @Test
+    void testValidateCodeShouldIncrementAttemptsMultipleTimes() {
+        OtpVerifyRequest request1 = createOtpVerifyRequest(TEST_EMAIL, INVALID_OTP,EmailType.EMAIL_VERIFICATION);
+        OtpVerifyRequest request2 = createOtpVerifyRequest(TEST_EMAIL, INVALID_OTP,EmailType.EMAIL_VERIFICATION);
+
+        setupInvalidOtpMocks(TEST_EMAIL, VALID_OTP);
+
+        underTest.validateCode(request1).join();
+        underTest.validateCode(request2).join();
+
+        verify(otpStorageService, times(2)).incrementAttempts(
+                eq(TEST_EMAIL),
+                eq(EXPIRE_TIME_IN_MINS_FOR_EMAIL_VERIFICATION),
+                eq(TimeUnit.MINUTES)
+        );
+    }
+
+    @Test
+    void testValidateCodeShouldDeleteBothOtpAndAttemptsOnSuccess() {
+        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP,EmailType.EMAIL_VERIFICATION);
+
+        setupValidOtpMocks(TEST_EMAIL, VALID_OTP);
+
+        underTest.validateCode(request).join();
+
+        verify(otpStorageService).deleteOtp(TEST_EMAIL);
+        verify(otpStorageService).deleteAttempts(TEST_EMAIL);
+    }
+
+    @Test
+    void testValidateCodeForResetPasswordShouldUseHourTimeUnit() {
+        OtpVerifyRequest request = createOtpVerifyRequest(RESET_PASSWORD_EMAIL, INVALID_OTP,EmailType.FORGOT_PASSWORD);
+
+        setupInvalidOtpMocks(RESET_PASSWORD_EMAIL, VALID_OTP);
+
+        underTest.validateCode(request).join();
+
+        verify(otpStorageService).incrementAttempts(
+                eq(RESET_PASSWORD_EMAIL),
+                eq(EXPIRE_TIME_IN_HOURS_RESET_PASSWORD),
+                eq(TimeUnit.HOURS)
+        );
+    }
+
+    @Test
+    void testValidateCodeWithMaxAttemptsExceededShouldDeleteOtpOnly() {
+        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP,EmailType.EMAIL_VERIFICATION);
+        long maxAttempts = 3L;
+
+        setupMaxAttemptsExceededMocks(TEST_EMAIL, maxAttempts);
+
+        underTest.validateCode(request).join();
+
+        verify(otpStorageService).deleteOtp(TEST_EMAIL);
+    }
+
+    @Test
+    void testSendOtpShouldCheckMaxAttemptsBeforeSending() throws Exception {
+        EmailRequest emailRequest = createEmailRequest(TEST_EMAIL,EmailType.EMAIL_VERIFICATION);
+
+        when(otpStorageService.hasReachedMaxAttempts(TEST_EMAIL, RedisConfig.OTP_MAX_ATTEMPTS)).thenReturn(true);
+
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
+
+        assertFalse(result.isSuccess());
+        verify(otpStorageService).hasReachedMaxAttempts(TEST_EMAIL, RedisConfig.OTP_MAX_ATTEMPTS);
+    }
+
+    @Test
+    void testValidateCodeWithNullOtpShouldReturnExpiredMessage() {
+        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP,EmailType.EMAIL_VERIFICATION);
+
+        when(otpStorageService.getOtp(TEST_EMAIL)).thenReturn(null);
+
+        OtpVerificationResult result = underTest.validateCode(request).join();
+
+        assertFalse(result.isSuccess());
+        assertEquals(EXPIRED_MESSAGE, result.getMessage());
+    }
+
+    @Test
+    void testValidateCodeShouldVerifyCorrectOtpFormat() {
+        OtpVerifyRequest request = createOtpVerifyRequest(TEST_EMAIL, VALID_OTP,EmailType.EMAIL_VERIFICATION);
+
+        setupValidOtpMocks(TEST_EMAIL, VALID_OTP);
+
+        OtpVerificationResult result = underTest.validateCode(request).join();
+
+        assertTrue(result.isSuccess());
+        // Verify that the OTP stored in Redis was exactly what we passed
+        verify(otpStorageService).getOtp(TEST_EMAIL);
+    }
+
+    @Test
+    void testMultipleEmailTypesForOTPGeneration() {
+        EmailType[] emailTypes = {
+           EmailType.EMAIL_VERIFICATION,
+           EmailType.FORGOT_PASSWORD
+        };
+
+        for (EmailType emailType : emailTypes) {
+            String otp = underTest.generateAndStoreOTP(TEST_EMAIL + emailType.toString(), emailType).join();
+            assertNotNull(otp);
+            assertEquals(OTP_LENGTH, otp.length());
+            assertTrue(otp.matches(OTP_PATTERN));
+        }
+
+        verify(otpStorageService, times(2)).storeOtp(anyString(), anyString(), anyLong(), any(TimeUnit.class));
+    }
+
+    @Test
+    void testValidateCodeShouldCheckAttemptsBeforeReturningError() {
+        String email = "check@gmail.com";
+        long remainingAttempts = 2L;
+        OtpVerifyRequest request = createOtpVerifyRequest(email, INVALID_OTP,EmailType.EMAIL_VERIFICATION);
+
+        when(otpStorageService.getOtp(email)).thenReturn(VALID_OTP);
+        when(otpStorageService.getAttempts(email)).thenReturn(remainingAttempts);
+        when(otpStorageService.hasReachedMaxAttempts(email, RedisConfig.OTP_MAX_ATTEMPTS)).thenReturn(false);
+
+        OtpVerificationResult result = underTest.validateCode(request).join();
+
+        assertFalse(result.isSuccess());
+        verify(otpStorageService).getAttempts(email);
+    }
+
+    @Test
+    void testSendOtpShouldShortCircuitForTaskRelatedEmails() throws Exception {
+        EmailType[] taskEmailTypes = {
+                EmailType.TASK_REQUEST,
+                EmailType.TASK_STATUS,
+                EmailType.TASK_RESCHEDULE,
+                EmailType.TASK_RESUMED
+        };
+
+        for (EmailType taskEmailType : taskEmailTypes) {
+            EmailRequest emailRequest = createEmailRequest(TEST_EMAIL, taskEmailType);
+
+            OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
+
+            assertFalse(result.isSuccess());
+            assertEquals("Task-related emails do not require OTP verification", result.getMessage());
+        }
+
+        verifyNoInteractions(otpStorageService, emailTemplate, javaMailSender);
+    }
+
+    @Test
+    void testSendOtpShouldReturnUnsupportedForUnknownEmailType() throws Exception {
+        EmailRequest emailRequest = createEmailRequest(TEST_EMAIL, null);
+
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
+
+        assertFalse(result.isSuccess());
+        assertEquals("Unsupported Email Type", result.getMessage());
+        verifyNoInteractions(otpStorageService, emailTemplate, javaMailSender);
+    }
+
+    @Test
+    void testSendOtpShouldReturnFailureWhenMailSendFails() throws Exception {
+        EmailRequest emailRequest = createEmailRequest(TEST_EMAIL, EmailType.EMAIL_VERIFICATION);
+        OtpEmailContent emailContent = new OtpEmailContent(VERIFY_EMAIL_TITLE, VERIFY_EMAIL_BODY);
+
+        setupSendOtpMocks(TEST_EMAIL, EmailType.EMAIL_VERIFICATION, emailContent);
+        doThrow(new org.springframework.mail.MailSendException("smtp failure"))
+            .when(javaMailSender).send(any(MimeMessage.class));
+
+        OtpVerificationResult result = underTest.sendOtp(emailRequest).join();
+
+        assertFalse(result.isSuccess());
+        assertEquals("Failed to send OTP email. Please try again later.", result.getMessage());
+        assertEquals("", result.getToken());
     }
 }

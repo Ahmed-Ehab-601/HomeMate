@@ -20,6 +20,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.mail.MailException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.homemate.notification.domains.model.EmailType.EMAIL_VERIFICATION;
 import static com.homemate.notification.domains.model.EmailType.FORGOT_PASSWORD;
+
 
 @Slf4j
 @Validated
@@ -57,7 +59,7 @@ public class OTPServiceImpl implements OTPService {
     private final OtpStorageService otpStorageService;
 
     @Async("otpExecutor")
-    public CompletableFuture<String> generateAndStoreOTP(String email,EmailType emailType) {
+    public CompletableFuture<String> generateAndStoreOTP(String email, EmailType emailType) {
         int attemptTtl = getAttemptTtl(emailType);
         TimeUnit attemptTtlUnit = getTimeUnit(emailType);
 
@@ -159,7 +161,7 @@ public class OTPServiceImpl implements OTPService {
             log.info("OTP email sent successfully to: {}", email);
             return otpSentSuccessResult();
 
-        } catch (MessagingException e) {
+        } catch (MessagingException | MailException e) {
             log.error("Failed to send OTP email to: {}", email, e);
             return otpSendFailedResult();
         }

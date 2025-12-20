@@ -12,5 +12,5 @@ public class OtpVerifyRequest {
     private String recipientEmail;
     @NotBlank
     private String code;
-    EmailType emailType;
+    private EmailType emailType;
 }
