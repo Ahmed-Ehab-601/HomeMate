@@ -1,6 +1,7 @@
 package com.homemate.taskmanagement.service;
 
 import com.homemate.notification.domains.dto.EmailRequest;
+import com.homemate.notification.domains.model.EmailType;
 import com.homemate.notification.service.EmailService;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dto.TaskDto;
@@ -43,11 +44,11 @@ public class TaskRequestService {
         try {
             EmailRequest emailRequest = EmailRequest.builder()
                     .task(taskDto)
-                    .emailType(EmailRequest.EmailType.TASK_REQUEST)
+                    .emailType(EmailType.TASK_REQUEST)
                     .recipientEmail(taskDto.getTaskerMail())
                     .build();
 
-            emailService.sendTaskerEmail(emailRequest);
+            emailService.sendEmail(emailRequest);
 
         } catch (Exception ignored) {
         }

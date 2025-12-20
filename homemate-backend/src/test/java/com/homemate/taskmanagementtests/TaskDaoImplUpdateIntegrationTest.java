@@ -5,7 +5,6 @@ import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
-import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

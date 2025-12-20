@@ -1,7 +1,8 @@
 package com.homemate.taskmanagementtests;
 
 import com.homemate.notification.domains.dto.EmailRequest;
-import com.homemate.notification.service.imp.EmailServiceImp;
+import com.homemate.notification.domains.model.EmailType;
+import com.homemate.notification.service.impl.EmailServiceImpl;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.dto.TaskDto;
@@ -42,7 +43,7 @@ class TaskManagementServiceUpdateStatusTest {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     @Mock
-    private EmailServiceImp emailServiceImp;
+    private EmailServiceImpl emailServiceImp;
 
     @InjectMocks
     private TaskStatusService taskStatusService;
@@ -485,7 +486,7 @@ class TaskManagementServiceUpdateStatusTest {
         taskStatusService.updateTaskStatus(taskId, taskerId, newStatus);
 
         // Then
-        verify(emailServiceImp).sendUserEmail(any());
+        verify(emailServiceImp).sendEmail(any());
     }
 
     @Test
@@ -504,7 +505,7 @@ class TaskManagementServiceUpdateStatusTest {
         when(taskRequestDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
 
         // Simulate email failure
-        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendUserEmail(any());
+        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendEmail(any());
 
         // Act & Assert
         assertThatThrownBy(() -> taskStatusService.updateTaskStatus(taskId, taskerId, newStatus))
@@ -532,10 +533,10 @@ class TaskManagementServiceUpdateStatusTest {
 
         // Then
         ArgumentCaptor<EmailRequest> emailCaptor = ArgumentCaptor.forClass(EmailRequest.class);
-        verify(emailServiceImp).sendUserEmail(emailCaptor.capture());
+        verify(emailServiceImp).sendEmail(emailCaptor.capture());
 
         EmailRequest capturedEmail = emailCaptor.getValue();
-        assertThat(capturedEmail.getEmailType()).isEqualTo(EmailRequest.EmailType.TASK_STATUS);
+        assertThat(capturedEmail.getEmailType()).isEqualTo(EmailType.TASK_STATUS);
         assertThat(capturedEmail.getRecipientEmail()).isEqualTo("user@example.com");
     }
 

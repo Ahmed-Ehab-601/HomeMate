@@ -1,6 +1,7 @@
 package com.homemate.taskmanagement.service;
 
 import com.homemate.notification.domains.dto.EmailRequest;
+import com.homemate.notification.domains.model.EmailType;
 import com.homemate.notification.service.EmailService;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dao.TaskStatusDao;
@@ -55,10 +56,10 @@ public class TaskStatusService {
         EmailRequest emailRequest = EmailRequest.builder()
                 .recipientEmail(taskDto.getUserMail())
                 .task(taskDto)
-                .emailType(EmailRequest.EmailType.TASK_STATUS)
+                .emailType(EmailType.TASK_STATUS)
                 .build();
 
-        emailService.sendUserEmail(emailRequest);
+        emailService.sendEmail(emailRequest);
     }
 
     public Status validateTaskExistAndTaskerOwner(Long taskID, Long taskerID) {

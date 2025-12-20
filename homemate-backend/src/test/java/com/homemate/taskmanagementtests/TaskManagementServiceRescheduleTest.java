@@ -1,7 +1,8 @@
 package com.homemate.taskmanagementtests;
 
 
-import com.homemate.notification.service.imp.EmailServiceImp;
+
+import com.homemate.notification.service.impl.EmailServiceImpl;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dao.TaskRescheduleDao;
 import com.homemate.taskmanagement.dao.TaskStatusDao;
@@ -39,7 +40,7 @@ public class TaskManagementServiceRescheduleTest {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     @Mock
-    private EmailServiceImp emailServiceImp;
+    private EmailServiceImpl emailServiceImp;
 
     @InjectMocks
     private TaskRescheduleService taskRescheduleService;
@@ -152,7 +153,7 @@ public class TaskManagementServiceRescheduleTest {
         taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID);
 
         // Assert: email sent
-        verify(emailServiceImp).sendUserEmail(any());
+        verify(emailServiceImp,times(2)).sendEmail(any());
     }
 
 
@@ -177,7 +178,7 @@ public class TaskManagementServiceRescheduleTest {
         when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
 
         // Simulate email failure
-        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendUserEmail(any());
+        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendEmail(any());
 
         // Act & Assert
         assertThrows(RuntimeException.class, () ->

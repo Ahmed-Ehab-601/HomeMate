@@ -23,7 +23,7 @@ public class NotificationController {
 			 @RequestBody EmailRequest emailRequest
 	) {
 		try {
-			TaskResponse taskResponse= emailService.sendUserEmail(emailRequest).get();
+			TaskResponse taskResponse= emailService.sendEmail(emailRequest).get();
 			if (taskResponse.isSuccess()) {
 				return ResponseEntity.accepted().body(taskResponse);
 			} else {
@@ -44,7 +44,7 @@ public class NotificationController {
 			@RequestBody EmailRequest emailRequest
 	) {
 		try {
-			TaskResponse taskResponse= emailService.sendTaskerEmail(emailRequest).get();
+			TaskResponse taskResponse= emailService.sendEmail(emailRequest).get();
 			if (taskResponse.isSuccess()) {
 				return ResponseEntity.accepted().body(taskResponse);
 			} else {

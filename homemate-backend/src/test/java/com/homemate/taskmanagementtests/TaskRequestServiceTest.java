@@ -121,7 +121,7 @@ class TaskRequestServiceTest {
         ));
         verify(taskRequestDao).getTaskDetails(taskId);
         verify(taskRequestDao, never()).insertChat(anyLong(), anyLong());
-        verify(emailService).sendTaskerEmail(any());
+        verify(emailService).sendEmail(any());
     }
 
     @Test
@@ -151,7 +151,7 @@ class TaskRequestServiceTest {
         verify(taskRequestDao).insertChat(1L, 2L);
         verify(taskRequestDao).insertTask(argThat(task -> task.getChatID().equals(newChatId)));
         verify(taskRequestDao).getTaskDetails(taskId);
-        verify(emailService).sendTaskerEmail(any());
+        verify(emailService).sendEmail(any());
     }
 
     @Test
