@@ -65,6 +65,11 @@ jobs:
       with:
         directory: homemate-backend
         token: ${{ secrets.GITHUB_TOKEN }}
+        ignore-maven-wrapper: false
+        maven-args: -DskipTests
+
+    - name: Ensure Maven Wrapper is executable
+      run: chmod +x homemate-backend/mvnw
 
   # Auto-approve and merge Dependabot PRs if tests pass
   dependabot:
