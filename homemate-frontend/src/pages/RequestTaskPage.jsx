@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getUserAddresses } from "../api/userProfileApi";
 import { requestTask } from "../api/tasksApi";
 import { fetchServices } from "../api/servicesApi";
+import { getTaskerBusyTime } from "../api/taskManagementApi";
+import { useAuth } from "../contexts/AuthContext";
 import "../styles/RequestTask.css";
 
 import Modal from "../components/Modal";
@@ -19,7 +21,13 @@ const timeSlots = Array.from({ length: 25 }, (_, index) => {
   return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
 }).filter(Boolean);
 
-const formatDateForInput = (date) => date.toISOString().split("T")[0];
+const formatDateForInput = (date) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const formatDisplayDateTime = (date, time) => {
   if (!date || !time) return "--";
@@ -39,6 +47,7 @@ function RequestTaskPage() {
   const { taskerId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const stateTasker = location.state?.tasker;
   const stateService = location.state?.service;
   const fromPath = location.state?.from;
@@ -64,6 +73,9 @@ function RequestTaskPage() {
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
   const [duplicateMessage, setDuplicateMessage] = useState("");
   const [limitError, setLimitError] = useState("");
+  const [busyTimes, setBusyTimes] = useState({});
+  const [loadingBusyTime, setLoadingBusyTime] = useState(false);
+  const [taskerUnavailable, setTaskerUnavailable] = useState(false);
 
   const hasUnsavedChanges =
     Boolean(description) ||
@@ -79,6 +91,13 @@ function RequestTaskPage() {
   }, [today]);
 
   useEffect(() => {
+    // Only fetch addresses if user is authenticated
+    if (!isAuthenticated) {
+      setAddressStatus("error");
+      setAddresses([]);
+      return;
+    }
+
     let cancelled = false;
     getUserAddresses()
       .then((data) => {
@@ -102,22 +121,60 @@ function RequestTaskPage() {
         }
         setAddressStatus("success");
       })
-      .catch(() => {
+      .catch((error) => {
         if (!cancelled) {
-          setAddressStatus("error");
+          // Handle 401 gracefully - user just needs to sign in
+          if (error?.status === 401) {
+            setAddressStatus("error");
+            setAddresses([]);
+          } else {
+            setAddressStatus("error");
+          }
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!successBanner) return undefined;
     const timeoutId = window.setTimeout(() => setSuccessBanner(null), 5000);
     return () => window.clearTimeout(timeoutId);
   }, [successBanner]);
+
+  // Fetch busy time when date is selected
+  useEffect(() => {
+    if (!dateValue || !tasker?.id) {
+      setBusyTimes({});
+      setTimeValue(""); // Clear time when date changes
+      setTaskerUnavailable(false);
+      return;
+    }
+
+    // Reset time when date changes
+    setTimeValue("");
+    setBusyTimes({});
+    setTaskerUnavailable(false);
+
+    const fetchBusyTime = async () => {
+      setLoadingBusyTime(true);
+      try {
+        const busyTimeData = await getTaskerBusyTime(tasker.id, dateValue);
+        setBusyTimes(busyTimeData || {});
+        setTaskerUnavailable(false);
+      } catch (error) {
+        console.error("Failed to fetch busy time:", error);
+        setBusyTimes({});
+        setTaskerUnavailable(false);
+      } finally {
+        setLoadingBusyTime(false);
+      }
+    };
+
+    fetchBusyTime();
+  }, [dateValue, tasker?.id]);
 
   if (!tasker || !service) {
     return <div className="page">We couldn't find that tasker.</div>;
@@ -138,6 +195,73 @@ function RequestTaskPage() {
       const max = new Date(formatDateForInput(maxDate));
       return selected >= min && selected <= max;
     })();
+
+  // Check if a time slot is busy
+  const isTimeSlotBusy = (timeSlot) => {
+    if (!dateValue || Object.keys(busyTimes).length === 0) return false;
+
+    const [hours, minutes] = timeSlot.split(":").map(Number);
+    const slotDateTime = new Date(`${dateValue}T${timeSlot}:00`);
+    const slotTime = slotDateTime.getTime();
+
+    // Check each busy time interval
+    // estimation comes from backend as minutes
+    for (const [busyStartStr, estimationMinutes] of Object.entries(busyTimes)) {
+      const busyStart = new Date(busyStartStr);
+      const busyEnd = new Date(busyStart.getTime() + estimationMinutes * 60 * 1000); // estimation is in minutes, convert to milliseconds
+
+      // Check if the slot overlaps with any busy period
+      if (slotTime >= busyStart.getTime() && slotTime < busyEnd.getTime()) {
+        return true;
+      }
+
+      // Also check if the slot is within 30 minutes of a busy period (same time slot)
+      const slotStart = slotTime;
+      const slotEnd = slotTime + 30 * 60 * 1000; // 30 minutes
+
+      if (
+        (slotStart >= busyStart.getTime() && slotStart < busyEnd.getTime()) ||
+        (slotEnd > busyStart.getTime() && slotEnd <= busyEnd.getTime()) ||
+        (slotStart <= busyStart.getTime() && slotEnd >= busyEnd.getTime())
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  // Check if date is in the past
+  const isDatePast = (dateStr) => {
+    if (!dateStr) return false;
+    const selected = new Date(dateStr);
+    const todayStart = new Date(formatDateForInput(today));
+    todayStart.setHours(0, 0, 0, 0);
+    return selected < todayStart;
+  };
+
+  // Filter available time slots
+  const availableTimeSlots = timeSlots.filter((slot) => {
+    if (!dateValue) return true;
+    
+    // Disable if date is today and time has passed
+    const selectedDate = new Date(dateValue);
+    const todayDate = new Date(formatDateForInput(today));
+    const isToday = selectedDate.getTime() === todayDate.getTime();
+    
+    if (isToday) {
+      const [hours, minutes] = slot.split(":").map(Number);
+      const slotTime = new Date();
+      slotTime.setHours(hours, minutes, 0, 0);
+      const now = new Date();
+      if (slotTime <= now) {
+        return false;
+      }
+    }
+    
+    // Disable if slot is busy
+    return !isTimeSlotBusy(slot);
+  });
 
   const canSubmit =
     !isAddressMissing &&
@@ -337,9 +461,15 @@ function RequestTaskPage() {
               <p className="tasker-card__meta">Loading addresses…</p>
             )}
             {addressStatus === "error" && (
-              <p className="error-text">
-                We couldn't load your addresses. Please retry.
-              </p>
+              <div className="error-text">
+                {!isAuthenticated ? (
+                  <>
+                    Please <a href="/signin">sign in</a> to load your addresses and request a task.
+                  </>
+                ) : (
+                  "We couldn't load your addresses. Please retry."
+                )}
+              </div>
             )}
             {addressStatus === "success" && addresses.length === 0 && (
               <div className="empty-state">
@@ -384,7 +514,22 @@ function RequestTaskPage() {
                 min={formatDateForInput(today)}
                 max={formatDateForInput(maxDate)}
                 value={dateValue}
-                onChange={(event) => setDateValue(event.target.value)}
+                onChange={(event) => {
+                  const selectedDate = event.target.value;
+                  const minDate = formatDateForInput(today);
+                  const maxDateStr = formatDateForInput(maxDate);
+                  
+                  // Only set if the date is within valid range (not in the past)
+                  if (selectedDate >= minDate && selectedDate <= maxDateStr) {
+                    setDateValue(selectedDate);
+                  } else if (selectedDate < minDate) {
+                    // If user tries to select a past date, don't update
+                    // The browser's date picker should already prevent this, but this adds extra protection
+                    setDateValue("");
+                  } else {
+                    setDateValue(selectedDate);
+                  }
+                }}
               />
               {showErrors && !isDateWithinBounds && (
                 <p className="error-text">Please select a valid date.</p>
@@ -392,14 +537,33 @@ function RequestTaskPage() {
             </div>
             <div className="form-field">
               <label htmlFor="time-select">Preferred time*</label>
+              {loadingBusyTime && dateValue && (
+                <p className="tasker-card__meta" style={{ marginBottom: "8px" }}>
+                  Loading available times...
+                </p>
+              )}
+              {taskerUnavailable && dateValue && (
+                <p className="error-text" style={{ marginBottom: "8px" }}>
+                  Tasker is unavailable on this day.
+                </p>
+              )}
               <select
                 id="time-select"
                 className={`input ${showErrors && !timeValue ? "error" : ""}`}
                 value={timeValue}
                 onChange={(event) => setTimeValue(event.target.value)}
+                disabled={loadingBusyTime || !dateValue || taskerUnavailable}
               >
-                <option value="">Select time</option>
-                {timeSlots.map((slot) => (
+                <option value="">
+                  {!dateValue
+                    ? "Select date first"
+                    : loadingBusyTime
+                    ? "Loading..."
+                    : availableTimeSlots.length === 0
+                    ? "No available times"
+                    : "Select time"}
+                </option>
+                {availableTimeSlots.map((slot) => (
                   <option key={slot} value={slot}>
                     {slot}
                   </option>
@@ -407,6 +571,11 @@ function RequestTaskPage() {
               </select>
               {showErrors && !timeValue && (
                 <p className="error-text">Please select a valid time.</p>
+              )}
+              {dateValue && !loadingBusyTime && availableTimeSlots.length === 0 && (
+                <p className="error-text">
+                  No available time slots on this day. Please select another date.
+                </p>
               )}
             </div>
           </div>
