@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchTaskerTasks } from "../api/tasksApi";
 import TaskCard from "../components/TaskCard";
-
+import { useAuth } from "../contexts/AuthContext";
 const STATUS_OPTIONS = [
   { value: "All", label: "All" },
   { value: "InReview", label: "In Review" },
@@ -31,7 +31,9 @@ function TaskerTasksPage() {
   const [error, setError] = useState(null);
 
   // TODO: Replace with actual tasker ID from authentication
-  const taskerId = 1;
+  const { user } = useAuth(); // ← ADD THIS
+  const taskerId = user?.taskerId || user?.id;
+
   const isFirstLoad = tasks.length === 0 && !loading;
 
   useEffect(() => {

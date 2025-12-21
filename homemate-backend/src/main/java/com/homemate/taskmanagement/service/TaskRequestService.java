@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -91,6 +92,7 @@ public class TaskRequestService {
     }
 
     public void addEstimation(Long taskId, int estimation, AppUserDetails userDetails) {
+        if(checkValidEstimation(estimation,taskId)==false) throw new RuntimeException("invalid estimation");;
         if (estimation<=0) throw new RuntimeException("estimation need to be > 0");
         Optional<TaskDto> taskDto= taskRequestDao.getTaskDetails(taskId);
         if(taskDto.isPresent() &&( taskDto.get().getTaskerID() == userDetails.getId())) {
@@ -98,5 +100,30 @@ public class TaskRequestService {
         }
         else
             throw new RuntimeException("This Tasker has no Access to that task");
+    }
+    public Boolean checkValidEstimation(int estimation, Long taskId) {
+        Optional<TaskDto> taskDto = taskRequestDao.getTaskDetails(taskId);
+        if (taskDto.isEmpty()) return false;
+
+        Map<LocalDateTime, Integer> mp = taskRequestDao.getBusytime(
+                taskDto.get().getTaskerID(),
+                taskDto.get().getStartDate().toLocalDate()
+        );
+
+        LocalDateTime startDateTime = taskDto.get().getStartDate();
+        LocalDateTime endDateTime = startDateTime.plusMinutes(estimation);
+
+        for (Map.Entry<LocalDateTime, Integer> entry : mp.entrySet()) {
+            LocalDateTime busyStart = entry.getKey();
+            LocalDateTime busyEnd = busyStart.plusMinutes(entry.getValue());
+
+            if (startDateTime.isBefore(busyEnd) && endDateTime.isAfter(busyStart)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    public int getTaskDetails(Long taskId) {
+        return taskRequestDao.getEstimation(taskId);
     }
 }

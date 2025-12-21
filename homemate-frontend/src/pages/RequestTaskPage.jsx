@@ -223,32 +223,65 @@ function RequestTaskPage() {
     })();
 
   // Check if a time slot is busy
+  // Uses local date/time components to avoid timezone conversion issues
   const isTimeSlotBusy = (timeSlot) => {
     if (!dateValue || Object.keys(busyTimes).length === 0) return false;
 
-    const [hours, minutes] = timeSlot.split(":").map(Number);
-    const slotDateTime = new Date(`${dateValue}T${timeSlot}:00`);
-    const slotTime = slotDateTime.getTime();
+    const [slotHours, slotMinutes] = timeSlot.split(":").map(Number);
+    
+    // Parse the selected date (YYYY-MM-DD format)
+    const [year, month, day] = dateValue.split("-").map(Number);
+    
+    // Create slot time as a Date object in local timezone (no timezone conversion)
+    const slotDateTime = new Date(year, month - 1, day, slotHours, slotMinutes, 0, 0);
+    const slotDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
     // Check each busy time interval
     // estimation comes from backend as minutes
     for (const [busyStartStr, estimationMinutes] of Object.entries(busyTimes)) {
-      const busyStart = new Date(busyStartStr);
-      const busyEnd = new Date(busyStart.getTime() + estimationMinutes * 60 * 1000); // estimation is in minutes, convert to milliseconds
-
-      // Check if the slot overlaps with any busy period
-      if (slotTime >= busyStart.getTime() && slotTime < busyEnd.getTime()) {
-        return true;
+      // Parse the busy start date string from backend
+      // Backend returns LocalDateTime which serializes to ISO format
+      // We need to extract the local time components, not rely on timezone conversion
+      let busyStart;
+      try {
+        busyStart = new Date(busyStartStr);
+      } catch (e) {
+        console.warn("Failed to parse busy start date:", busyStartStr);
+        continue;
       }
-
-      // Also check if the slot is within 30 minutes of a busy period (same time slot)
-      const slotStart = slotTime;
-      const slotEnd = slotTime + 30 * 60 * 1000; // 30 minutes
-
+      
+      // Extract date components in local timezone
+      const busyYear = busyStart.getFullYear();
+      const busyMonth = busyStart.getMonth();
+      const busyDay = busyStart.getDate();
+      const busyHours = busyStart.getHours();
+      const busyMins = busyStart.getMinutes();
+      
+      // Reconstruct busy start in local timezone (no timezone conversion)
+      const busyStartLocal = new Date(busyYear, busyMonth, busyDay, busyHours, busyMins, 0, 0);
+      const busyEndLocal = new Date(busyStartLocal.getTime() + estimationMinutes * 60 * 1000);
+      
+      // Compare dates first to ensure we're on the same day
+      // Compare date components directly to avoid timezone issues
+      const slotDate = `${slotDateTime.getFullYear()}-${String(slotDateTime.getMonth() + 1).padStart(2, '0')}-${String(slotDateTime.getDate()).padStart(2, '0')}`;
+      const busyDate = `${busyYear}-${String(busyMonth + 1).padStart(2, '0')}-${String(busyDay).padStart(2, '0')}`;
+      
+      // Only check if dates match
+      if (slotDate !== busyDate) {
+        continue;
+      }
+      
+      // Now compare times using minute-based calculations (more reliable)
+      const slotStartMinutes = slotHours * 60 + slotMinutes;
+      const slotEndMinutes = slotStartMinutes + 30; // 30 minutes slot duration
+      const busyStartMinutes = busyHours * 60 + busyMins;
+      const busyEndMinutes = busyStartMinutes + estimationMinutes;
+      
+      // Check if slot overlaps with busy period
       if (
-        (slotStart >= busyStart.getTime() && slotStart < busyEnd.getTime()) ||
-        (slotEnd > busyStart.getTime() && slotEnd <= busyEnd.getTime()) ||
-        (slotStart <= busyStart.getTime() && slotEnd >= busyEnd.getTime())
+        (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
+        (slotEndMinutes > busyStartMinutes && slotEndMinutes <= busyEndMinutes) ||
+        (slotStartMinutes <= busyStartMinutes && slotEndMinutes >= busyEndMinutes)
       ) {
         return true;
       }

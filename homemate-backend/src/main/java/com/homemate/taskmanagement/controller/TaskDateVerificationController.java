@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -27,11 +28,7 @@ public class TaskDateVerificationController {
                                             @RequestParam LocalDate day){
           try {
              Map<LocalDateTime, Integer> response= taskRequestService.getAllBusyTime(taskerId,day);
-             if(response.isEmpty())
-             { return new ResponseEntity <> (HttpEntity.EMPTY,HttpStatus.OK);}
-             else {
                  return new ResponseEntity<>(response, HttpStatus.OK);
-             }
           } catch (RuntimeException e) {
               // Check if the error is due to tasker being unavailable
               if (e.getMessage() != null && e.getMessage().contains("UNAVAILABLE")) {
@@ -55,8 +52,62 @@ public class TaskDateVerificationController {
    try{
         taskRequestService.addEstimation(taskId,estimation,userDetails);
         return ResponseEntity.status(HttpStatus.OK).build();
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
+   catch (RuntimeException e) {
+       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+               .body(Map.of("error", e.getMessage()));
+   }
+   catch (Exception e) {
+       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+               .body(Map.of("error", "Failed to add estimation: " + e.getMessage()));
+   }
     }
+    @GetMapping("/get-tasker-tasks-tasker-only/{taskerId}")
+    @PreAuthorize("hasRole('TASKER')")
+    public ResponseEntity<?> getAllBusy(@PathVariable Long taskerId,
+                                            @RequestParam LocalDate day){
+        try {
+            Map<LocalDateTime, Integer> response= taskRequestService.getAllBusyTime(taskerId,day);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            // Check if the error is due to tasker being unavailable
+            if (e.getMessage() != null && e.getMessage().contains("UNAVAILABLE")) {
+                Map<String, String> errorResponse = new java.util.HashMap<>();
+                errorResponse.put("error", "TASKER_UNAVAILABLE");
+                errorResponse.put("message", "This Tasker is UNAVAILABLE Now");
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(errorResponse);
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+    }
+    @GetMapping("/get-taskDetails-estimation/{taskID}")
+    @PreAuthorize("hasRole('TASKER')")
+    public ResponseEntity<?> getEstimation (@PathVariable Long taskId){
+        try{
+            int response= taskRequestService.getTaskDetails(taskId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }
+        catch (Exception e)
+        {return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", e.getMessage()));        }
+
+    }
+
+    @GetMapping("/get-taskDetails-estimation-user/{taskID}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> getEstimationU (@PathVariable Long taskId){
+        try{
+            int response= taskRequestService.getTaskDetails(taskId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }
+        catch (Exception e)
+        {
+            return ResponseEntity.status(500)
+                    .body(e.getMessage());
+        }
+}
 }
