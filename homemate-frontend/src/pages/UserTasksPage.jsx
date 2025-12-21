@@ -135,7 +135,13 @@ function UserTasksPage() {
   return (
     <main className="page">
       {viewMode === "calendar" ? (
-        <TaskCalendar onBackToList={() => setViewMode("list")} />
+        <TaskCalendar
+          onBackToList={() => {
+            // Return to list and refresh tasks so reschedules appear without full reload
+            setViewMode("list");
+            loadTasks();
+          }}
+        />
       ) : (
         <>
           {error && (
