@@ -40,7 +40,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             // ⭐ ADD WEBSOCKET ENDPOINTS
             "/ws",
             "/ws/**",
-            "/stripe"
+            "/stripe",
+            "/api/tasker/create-connected-account/"
     );
 
     private final JwtService jwtService;

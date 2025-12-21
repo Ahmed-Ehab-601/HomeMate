@@ -1,0 +1,181 @@
+package com.homemate.payment.dao;
+import com.homemate.payment.model.Payment;
+import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
+import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
+import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Repository;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.util.Optional;
+
+@Repository
+@RequiredArgsConstructor
+public class PaymentDao {
+
+    private final JdbcTemplate jdbcTemplate;
+    public Optional<Long> create(Payment payment) {
+
+        String sql = """
+            INSERT INTO payments
+            (taskId, userId, taskerId, totalAmount, platformFee, taskerAmount)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """;
+
+        try {
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+
+            jdbcTemplate.update(con -> {
+                PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                // ✅ FIXED: Correct parameter order
+                ps.setLong(1, payment.getTaskId());        // taskId
+                ps.setLong(2, payment.getUserId());        // userId
+                ps.setLong(3, payment.getTaskerId());      // taskerId
+                ps.setDouble(4, payment.getTotalAmount()); // totalAmount
+                ps.setDouble(5, payment.getPlatformFee()); // platformFee
+                ps.setDouble(6, payment.getTaskerAmount()); // taskerAmount
+                return ps;
+            }, keyHolder);
+
+            Number key = keyHolder.getKey();
+            return key != null ? Optional.of(key.longValue()) : Optional.empty();
+
+        } catch (DataAccessException e) {
+            throw new BadTaskRequestException();
+        }
+    }
+
+//    CREATE TABLE payments (
+//            paymentID INT AUTO_INCREMENT PRIMARY KEY ,
+//            taskId INT NOT NULL,
+//            userId INT NOT NULL,
+//            taskerId INT NOT NULL,
+//            totalAmount  FLOAT DEFAULT 0,
+//            platformFee FLOAT DEFAULT 0,
+//            taskerAmount FLOAT DEFAULT 0,
+//            stripePaymentIntentId VARCHAR(255),
+//    status VARCHAR(30), -- CREATED, REQUIRES_PAYMENT, PAID, FAILED
+//    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//    paid_at TIMESTAMP,
+//    FOREIGN KEY (taskId) REFERENCES Task(taskID)
+//            );
+
+
+//
+//
+
+    public void attachStripeIntent(Long paymentId, String intentId) {
+        jdbcTemplate.update("""
+            UPDATE payments
+            SET stripePaymentIntentId = ?, status = 'REQUIRES_PAYMENT'
+            WHERE paymentID = ?
+        """, intentId, paymentId);
+    }
+
+      public void markPaid(Long paymentId) {
+        // ✅ FIXED: Using paymentID instead of id
+        jdbcTemplate.update("""
+            UPDATE payments
+            SET status = 'PAID', paid_at = NOW()
+            WHERE paymentID = ?
+        """, paymentId);
+    }
+
+//    public Optional<Payment> getByTaskId(Long taskId) {
+//        try {
+//            return Optional.ofNullable(
+//                    jdbcTemplate.queryForObject(
+//                            "SELECT * FROM payments WHERE taskId = ?",
+//                            new PaymentRowMapper(),
+//                            taskId
+//                    )
+//            );
+//        } catch (Exception e) {
+//            return Optional.empty();
+//        }
+//    }
+
+    public void updateStatus(Long paymentId, String status) {
+        // ✅ FIXED: Using paymentID instead of id
+        jdbcTemplate.update("""
+            UPDATE payments
+            SET status = ?
+            WHERE paymentID = ?
+        """, status, paymentId);
+    }
+    public void setPaidAt(Long paymentId) {
+        // ✅ FIXED: Using paymentID instead of id
+        jdbcTemplate.update("""
+            UPDATE payments
+            SET paid_at = NOW()
+            WHERE paymentID = ?
+        """, paymentId);
+    }
+
+
+    public Payment getByStripeIntentId(String intentId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                    "SELECT * FROM payments WHERE stripePaymentIntentId = ?",
+                    new PaymentRowMapper(),
+                    intentId
+            );
+        } catch (EmptyResultDataAccessException e) {
+            throw new RuntimeException("Payment not found for Stripe Intent ID: " + intentId);
+        }
+    }
+
+    public String getTaskerStripeAccountId(Long taskerID) {
+        String sql = "SELECT stripe_account_id FROM Tasker WHERE taskerID = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, String.class, taskerID);
+        } catch (EmptyResultDataAccessException e) {
+            throw new BadStateUpdateException("Tasker ID not correct");
+        }
+    }
+
+    public Long getTaskerID(Long taskID) {
+        String sql = "SELECT taskerID FROM Task WHERE taskID = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, Long.class, taskID);
+        } catch (EmptyResultDataAccessException e) {
+            throw new TaskNotFoundException("Task ID not found: " + taskID);
+        }
+    }
+
+    public Long getUserID(Long taskID) {
+        String sql = "SELECT userID FROM Task WHERE taskID = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, Long.class, taskID);
+        } catch (EmptyResultDataAccessException e) {
+            throw new TaskNotFoundException("Task ID not found: " + taskID);
+        }
+    }
+
+
+    public Double getTaskBill(Long taskID) {
+        String sql = "SELECT bill FROM Task WHERE taskID = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, Double.class, taskID);
+        } catch (EmptyResultDataAccessException e) {
+            throw new TaskNotFoundException("Task id not found");
+        }
+    }
+
+    public Payment getById(Long paymentId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                    "SELECT * FROM payments WHERE paymentID = ?",
+                    new PaymentRowMapper(),
+                    paymentId
+            );
+        } catch (EmptyResultDataAccessException e) {
+            throw new RuntimeException("Payment not found with ID: " + paymentId);
+        }
+    }
+}

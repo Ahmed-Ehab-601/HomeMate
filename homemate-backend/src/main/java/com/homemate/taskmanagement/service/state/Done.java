@@ -1,21 +1,39 @@
 package com.homemate.taskmanagement.service.state;
 
+import com.homemate.TaskerProfile.Dao.TaskerDao;
+import com.homemate.TaskerProfile.models.Tasker;
+import com.homemate.payment.dao.PaymentDao;
+import com.homemate.payment.model.Payment;
+import com.homemate.payment.service.StripeCustomerService;
+import com.homemate.payment.service.StripePaymentService;
 import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 import com.homemate.taskmanagement.model.Status;
+import com.stripe.model.PaymentIntent;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @AllArgsConstructor
+@NoArgsConstructor
 public class Done implements TaskState{
     private Long taskID;
     private Long taskerID;
     private TaskStatusDao taskDao;
+    private PaymentDao paymentDao;
+    private StripePaymentService stripePaymentService;
+    private long userID;
 
+    public Done (long taskID, long taskerID, TaskStatusDao taskDao){
+           this.taskID=taskID;
+           this.taskerID=taskerID;
+           this.taskDao=taskDao;
+    }
 
 
     @Override
@@ -34,10 +52,21 @@ public class Done implements TaskState{
 
         double bill = hourRate * workedHours;
         taskDao.updateTaskBill(taskID,bill);
-        taskDao.updateTaskerTotalEarning(taskerID,bill);
-
         taskDao.updateTaskEndData(taskID,Timestamp.valueOf(LocalDateTime.now()));
 
+//        userID= paymentDao.getUserID(taskID);
+
+//        try {
+//            stripePaymentService.createPayment(
+//                    taskID,
+//                    userID,
+//                    taskerID,
+//                    bill,
+//                    paymentDao.getTaskerStripeAccountId(taskerID)
+//            );
+//        } catch (Exception e) {
+//            throw new RuntimeException("Payment creation failed: " + e.getMessage());
+//        }
 
     }
 

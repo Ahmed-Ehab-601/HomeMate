@@ -2,7 +2,7 @@ package com.homemate.TaskerProfile.Dao;
 
 import java.sql.PreparedStatement;
 
-import com.homemate.payment.StripeAccountService;
+import com.homemate.payment.service.StripeAccountService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
