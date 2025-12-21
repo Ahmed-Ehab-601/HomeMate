@@ -25,6 +25,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
+import BarChartIcon from "@mui/icons-material/BarChart";
 import { useAdminThemeMode } from "../../theme/ThemeProviderSwitcher";
 
 const navItems = [
@@ -48,6 +49,11 @@ const navItems = [
     path: "/admin/reports",
     icon: <ReportIcon fontSize="small" />,
   },
+  {
+    label: "Analysis",
+    path: "/admin/analysis",
+    icon: <BarChartIcon fontSize="small" />,
+  },
 ];
 
 const AdminLayout = () => {
@@ -66,6 +72,7 @@ const AdminLayout = () => {
     if (location.pathname.startsWith("/admin/services"))
       return "/admin/services";
     if (location.pathname.startsWith("/admin/reports")) return "/admin/reports";
+    if (location.pathname.startsWith("/admin/analysis")) return "/admin/analysis";
     if (location.pathname.startsWith("/admin/users")) return "/admin/users";
 
     return "/admin/users";

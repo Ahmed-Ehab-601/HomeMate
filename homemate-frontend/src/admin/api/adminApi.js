@@ -225,6 +225,21 @@ export const getReports = async ({
     return data;
 };
 
+export const getAnalysis = async () => {
+    const response = await apiFetch('/api/analysis');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch analysis',
+            data,
+        };
+    }
+
+    return data;
+};
+
 export default {
     getUsers,
     getTaskers,
@@ -245,4 +260,5 @@ export default {
     suspendUsers,
     reactiveUsers,
     getReports,
+    getAnalysis,
 };

@@ -19,6 +19,7 @@ export {
   suspendUsers,
   reactiveUsers,
   getReports,
+  getAnalysis,
   default,
 } from '../api/adminApi';
 
