@@ -2,6 +2,7 @@ package com.homemate.taskmanagementtests;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -171,4 +172,52 @@ class TaskRequestServiceEstimationAndBusyTimeTest {
         assertEquals(30, result.get(LocalDateTime.of(2025, 1, 1, 10, 0)));
     }
 
+    @Test
+    void testGetAllBusyTime_WithDifferentDays() {
+        // Arrange
+        Long taskerId = 2L;
+        LocalDate day1 = LocalDate.of(2025, 11, 20);
+        LocalDate day2 = LocalDate.of(2025, 11, 21);
+
+        Map<LocalDateTime, Integer> busyTimesDay1 = new HashMap<>();
+        busyTimesDay1.put(LocalDateTime.of(2025, 11, 20, 10, 0), 120);
+
+        Map<LocalDateTime, Integer> busyTimesDay2 = new HashMap<>();
+        busyTimesDay2.put(LocalDateTime.of(2025, 11, 21, 14, 0), 60);
+
+        when(taskRequestDao.CheckAvailability(taskerId)).thenReturn(TaskerAvailability.AVAILABLE);
+        when(taskRequestDao.getBusytime(taskerId, day1)).thenReturn(busyTimesDay1);
+        when(taskRequestDao.getBusytime(taskerId, day2)).thenReturn(busyTimesDay2);
+
+        // Act
+        Map<LocalDateTime, Integer> result1 = taskRequestService.getAllBusyTime(taskerId, day1);
+        Map<LocalDateTime, Integer> result2 = taskRequestService.getAllBusyTime(taskerId, day2);
+
+        // Assert
+        assertThat(result1).hasSize(1);
+        assertThat(result1).containsEntry(LocalDateTime.of(2025, 11, 20, 10, 0), 120);
+
+        assertThat(result2).hasSize(1);
+        assertThat(result2).containsEntry(LocalDateTime.of(2025, 11, 21, 14, 0), 60);
+
+        verify(taskRequestDao, times(2)).CheckAvailability(taskerId);
+        verify(taskRequestDao).getBusytime(taskerId, day1);
+        verify(taskRequestDao).getBusytime(taskerId, day2);
+    }
+
+    @Test
+    void testGetAllBusyTime_WithNullAvailability_ThrowsException() {
+        // Arrange
+        Long taskerId = 2L;
+        LocalDate day = LocalDate.of(2025, 11, 20);
+
+        when(taskRequestDao.CheckAvailability(taskerId))
+                .thenReturn(TaskerAvailability.UNAVAILABLE);
+
+        assertThatThrownBy(() -> taskRequestService.getAllBusyTime(taskerId, day))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("This Tasker is UNAVAILABLE Now");
+        verify(taskRequestDao).CheckAvailability(taskerId);
+        verify(taskRequestDao, never()).getBusytime(anyLong(), any(LocalDate.class));
+    }
 }
