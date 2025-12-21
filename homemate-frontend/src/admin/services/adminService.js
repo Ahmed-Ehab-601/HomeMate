@@ -20,6 +20,7 @@ export {
   reactiveUsers,
   getReports,
   respondToReport,
+  getAnalysis,
   default,
 } from '../api/adminApi';
 

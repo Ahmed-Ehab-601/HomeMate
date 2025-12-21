@@ -233,6 +233,21 @@ export const respondToReport = async (reportId, message) => {
         },
         body: JSON.stringify({ message }),
     });
+}
+
+export const getAnalysis = async () => {
+    const response = await apiFetch('/api/analysis');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch analysis',
+            data,
+        };
+    }
+
+    return data;
 };
 
 export default {
@@ -256,4 +271,5 @@ export default {
     reactiveUsers,
     getReports,
     respondToReport,
+    getAnalysis,
 };
