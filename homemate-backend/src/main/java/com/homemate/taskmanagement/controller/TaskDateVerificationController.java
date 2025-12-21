@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Map;
 
 @RestController
@@ -33,9 +32,18 @@ public class TaskDateVerificationController {
              else {
                  return new ResponseEntity<>(response, HttpStatus.OK);
              }
+          } catch (RuntimeException e) {
+              // Check if the error is due to tasker being unavailable
+              if (e.getMessage() != null && e.getMessage().contains("UNAVAILABLE")) {
+                  Map<String, String> errorResponse = new java.util.HashMap<>();
+                  errorResponse.put("error", "TASKER_UNAVAILABLE");
+                  errorResponse.put("message", "This Tasker is UNAVAILABLE Now");
+                  return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                          .body(errorResponse);
+              }
+              return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
           } catch (Exception e) {
               return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-
           }
 
     }
@@ -44,11 +52,11 @@ public class TaskDateVerificationController {
     public ResponseEntity<?> addEstimationTime(@PathVariable Long taskId,
                                                @RequestParam int estimation,
                                                @AuthenticationPrincipal AppUserDetails userDetails) {
-//    try{
+   try{
         taskRequestService.addEstimation(taskId,estimation,userDetails);
         return ResponseEntity.status(HttpStatus.OK).build();
-//    } catch (Exception e) {
-//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-//    }
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
     }
 }

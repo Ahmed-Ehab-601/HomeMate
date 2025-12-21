@@ -91,6 +91,7 @@ public class TaskRequestService {
     }
 
     public void addEstimation(Long taskId, int estimation, AppUserDetails userDetails) {
+        if (estimation<=0) throw new RuntimeException("estimation need to be > 0");
         Optional<TaskDto> taskDto= taskRequestDao.getTaskDetails(taskId);
         if(taskDto.isPresent() &&( taskDto.get().getTaskerID() == userDetails.getId())) {
          taskRequestDao.add(taskId,estimation);
