@@ -4,6 +4,7 @@
 
 // Use backend URL directly or env variable for production
 export const baseUrl = (import.meta.env.VITE_API_URL).replace(/\/$/, "");
+//export const baseUrl = "https://homemate-homemate.up.railway.app"
 /**
  * Get authentication headers with JWT token
  * @returns {Object} Headers object with Authorization header if token exists

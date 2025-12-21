@@ -34,9 +34,17 @@ export const setUserOffline = async (userId) => {
 // Helper function to handle API errors
 const handleApiError = async (response) => {
   const contentType = response.headers.get('content-type');
+  
+  console.error('❌ API Error Response:', {
+    status: response.status,
+    statusText: response.statusText,
+    contentType,
+    url: response.url
+  });
 
   if (contentType && contentType.includes('application/json')) {
     const errorData = await response.json();
+    console.error('❌ Error data:', errorData);
 
     // Handle Spring Boot validation errors (from GlobalExceptionHandler)
     if (errorData.errors) {
@@ -55,6 +63,7 @@ const handleApiError = async (response) => {
     throw new Error(JSON.stringify(errorData));
   } else {
     const errorText = await response.text();
+    console.error('❌ Error text:', errorText);
     throw new Error(errorText || `Request failed with status ${response.status}`);
   }
 };
@@ -67,6 +76,7 @@ export const serviceAPI = {
       const user = JSON.parse(localStorage.getItem('homemate_user') || '{}');
       console.log('🔵 [SERVICE] API Request:', {
         url: `${API_BASE_URL}/getallservices`,
+        baseUrl: API_BASE_URL,
         method: 'GET',
         auth: {
           hasToken: !!token,
@@ -78,15 +88,21 @@ export const serviceAPI = {
       const response = await fetch(`${API_BASE_URL}/getallservices`, {
         method: 'GET',
         headers: getAuthHeaders(),
+        mode: 'cors',
+        credentials: 'omit',
       });
+
+      console.log('🔵 [SERVICE] Response status:', response.status);
 
       if (!response.ok) {
         await handleApiError(response);
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log('✅ [SERVICE] Response data:', data);
+      return data;
     } catch (err) {
-      console.error('Fetch error:', err);
+      console.error('❌ [SERVICE] Fetch error:', err);
       throw err;
     }
   },

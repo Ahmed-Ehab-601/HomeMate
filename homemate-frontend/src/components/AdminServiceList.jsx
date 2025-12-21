@@ -16,8 +16,9 @@ const AdminServiceList = ({ onServiceClick, onCreateNew }) => {
     try {
       setLoading(true);
       setError(null);
+      console.log('🔵 Loading services from API...');
       const data = await serviceAPI.getAllServices();
-      console.log('Loaded services raw data:', data);
+      console.log('✅ Loaded services raw data:', data);
       
       // Handle both array and object responses
       let servicesArray = [];
@@ -58,8 +59,13 @@ const AdminServiceList = ({ onServiceClick, onCreateNew }) => {
       
       setServices(servicesArray);
     } catch (err) {
-      console.error('Error loading services:', err);
-      setError(err.message || 'Failed to load services. Please check if the backend is running and CORS is configured.');
+      console.error('❌ Error loading services:', err);
+      console.error('Error details:', {
+        message: err.message,
+        stack: err.stack,
+        fullError: err
+      });
+      setError(err.message || 'Failed to load services');
     } finally {
       setLoading(false);
     }
@@ -96,9 +102,6 @@ const AdminServiceList = ({ onServiceClick, onCreateNew }) => {
           <div className="error">
             <h3>Error Loading Services</h3>
             <p>{error}</p>
-            <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#6c757d' }}>
-              Make sure your backend is running on http://localhost:8080 and CORS is configured.
-            </p>
             <button className="btn btn-primary" onClick={loadServices} style={{ marginTop: '1rem' }}>
               Retry
             </button>

@@ -24,7 +24,7 @@ public class ServiceDaoImpl implements IServiceDao<ServiceEntity> {
     @Override
     public void save(ServiceEntity service) throws SQLException {
         try {
-            String sql = "INSERT INTO service(name, description, imageData, imageName, imageType) " +
+            String sql = "INSERT INTO Service(name, description, imageData, imageName, imageType) " +
                     "VALUES (?, ?, ?, ?, ?)";
 
             jdbcTemplate.update(
@@ -43,7 +43,7 @@ public class ServiceDaoImpl implements IServiceDao<ServiceEntity> {
     @Override
     public void delete(long id) throws SQLException {
         try {
-            String sql = "DELETE FROM service WHERE serviceID = ?";
+            String sql = "DELETE FROM Service WHERE serviceID = ?";
             int rowsAffected = jdbcTemplate.update(sql, id);
 
             if (rowsAffected == 0) {
@@ -63,7 +63,7 @@ public class ServiceDaoImpl implements IServiceDao<ServiceEntity> {
     @Override
     public void update(long id, ServiceEntity service) throws SQLException {
         try {
-            String sql = "UPDATE service SET name = ?, description = ?, " +
+            String sql = "UPDATE Service SET name = ?, description = ?, " +
                     "imageData = ?, imageName = ?, imageType = ? WHERE serviceID = ?";
 
             int rowsAffected = jdbcTemplate.update(
@@ -88,7 +88,7 @@ public class ServiceDaoImpl implements IServiceDao<ServiceEntity> {
     public ServiceEntity get(long serviceID) throws SQLException {
         try {
             String sql = "SELECT serviceID, name, description, imageData, imageName, imageType " +
-                    "FROM service WHERE serviceID = ?";
+                    "FROM Service WHERE serviceID = ?";
             return jdbcTemplate.queryForObject(sql, new ServiceMapRow(), serviceID);
         } catch (EmptyResultDataAccessException e) {
             return null;
@@ -101,7 +101,7 @@ public class ServiceDaoImpl implements IServiceDao<ServiceEntity> {
     public List<ServiceEntity> getAll() throws SQLException {
         try {
             String sql = "SELECT serviceID, name, description, imageData, imageName, imageType " +
-                    "FROM service";
+                    "FROM Service";
             return jdbcTemplate.query(sql, new ServiceMapRow());
         } catch (DataAccessException e) {
             throw new SQLException("Failed to fetch services: " + e.getMessage(), e);
@@ -132,7 +132,7 @@ public class ServiceDaoImpl implements IServiceDao<ServiceEntity> {
 
     public Long findIdByName(String name) throws Exception {
         try {
-            String sql = "SELECT serviceID FROM service WHERE name = ?";
+            String sql = "SELECT serviceID FROM Service WHERE name = ?";
             return jdbcTemplate.queryForObject(sql, Long.class, name);
         } catch (EmptyResultDataAccessException e) {
             return null;
@@ -144,7 +144,7 @@ public class ServiceDaoImpl implements IServiceDao<ServiceEntity> {
     public ServiceEntity findById(long id) throws Exception {
         try {
             String sql = "SELECT serviceID, name, description, imageData, imageName, imageType " +
-                    "FROM service WHERE serviceID = ?";
+                    "FROM Service WHERE serviceID = ?";
             return jdbcTemplate.queryForObject(sql, new ServiceMapRow(), id);
         } catch (EmptyResultDataAccessException e) {
             return null;
