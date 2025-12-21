@@ -7,19 +7,7 @@ const ServiceDetails = ({ serviceDetails, onBack }) => {
     if (!service?.imageData) {
       return 'https://via.placeholder.com/300x200?text=No+Image';
     }
-
-    // Image data is coming as a string from backend
-    // It should be base64 encoded already, just add the data URL prefix
-    const imageData = service.imageData;
-    const imageType = service.imageType || 'image/jpeg';
-    
-    // If it already has data: prefix, return as-is
-    if (imageData.startsWith('data:')) {
-      return imageData;
-    }
-    
-    // Otherwise, construct the data URL with base64 string
-    return `data:${imageType};base64,${imageData}`;
+    return service.imageData;
   };
 
   return (

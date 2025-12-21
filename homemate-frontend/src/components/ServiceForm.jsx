@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
+import { uploadToCloudinary } from '../utils/cloudinary';
+import { useAuth } from '../contexts/AuthContext';
 import './ServiceForm.css';
 
 const ServiceForm = ({ service, onSubmit, onCancel, onReview }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     imageData: '',
-    imageName: '',
-    imageType: '',
   });
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -21,20 +22,13 @@ const ServiceForm = ({ service, onSubmit, onCancel, onReview }) => {
         name: service.name || '',
         description: service.description || '',
         imageData: service.imageData || '',
-        imageName: service.imageName || '',
-        imageType: service.imageType || '',
       });
       if (service.imageData) {
-        setPreview(
-          typeof service.imageData === 'string' && service.imageData.startsWith('data:')
-            ? service.imageData
-            : `data:${service.imageType || 'image/jpeg'};base64,${service.imageData}`
-        );
+        setPreview(service.imageData);
       }
     }
   }, [service]);
 
-  // Client-side validation
   const validateForm = () => {
     const newErrors = {};
     
@@ -48,18 +42,6 @@ const ServiceForm = ({ service, onSubmit, onCancel, onReview }) => {
       newErrors.description = 'Description is required';
     } else if (formData.description.length > 100) {
       newErrors.description = 'Description must not exceed 100 characters';
-    }
-    
-    if (formData.imageData && formData.imageData.length > 22369621) {
-      newErrors.imageData = 'Image data must not exceed 16MB';
-    }
-    
-    if (formData.imageName && formData.imageName.length > 200) {
-      newErrors.imageName = 'Image name must not exceed 200 characters';
-    }
-    
-    if (formData.imageType && formData.imageType.length > 200) {
-      newErrors.imageType = 'Image type must not exceed 200 characters';
     }
     
     setErrors(newErrors);
@@ -83,7 +65,6 @@ const ServiceForm = ({ service, onSubmit, onCancel, onReview }) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file size (16MB = 16 * 1024 * 1024 bytes)
     const maxSize = 16 * 1024 * 1024;
     if (file.size > maxSize) {
       setErrors(prev => ({ 
@@ -94,19 +75,9 @@ const ServiceForm = ({ service, onSubmit, onCancel, onReview }) => {
     }
 
     setImageFile(file);
-    setFormData((prev) => ({
-      ...prev,
-      imageName: file.name,
-      imageType: file.type,
-    }));
-
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64String = reader.result.split(',')[1];
-      setFormData((prev) => ({ ...prev, imageData: base64String }));
       setPreview(reader.result);
-      
-      // Clear any previous image errors
       if (errors.imageData) {
         setErrors(prev => ({ ...prev, imageData: '' }));
       }
@@ -117,11 +88,9 @@ const ServiceForm = ({ service, onSubmit, onCancel, onReview }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Clear previous errors
     setErrors({});
     setGeneralError('');
     
-    // Client-side validation
     if (!validateForm()) {
       return;
     }
@@ -129,38 +98,27 @@ const ServiceForm = ({ service, onSubmit, onCancel, onReview }) => {
     setIsSubmitting(true);
     
     try {
-      // If onReview is provided, show review step first
+      let imageUrl = formData.imageData;
+      
+      if (imageFile) {
+        imageUrl = await uploadToCloudinary(imageFile, user?.username || user?.id || 'admin');
+      }
+      
+      const submitData = {
+        name: formData.name,
+        description: formData.description,
+        imageData: imageUrl,
+      };
+      
       if (onReview) {
-        onReview(formData);
+        onReview(submitData);
       } else {
-        // Otherwise submit directly
-        await onSubmit(formData);
+        await onSubmit(submitData);
       }
     } catch (err) {
       console.error('Form submission error:', err);
-      
-      // Parse backend validation errors
       const errorMessage = err.message || err.toString();
-      
-      if (errorMessage.includes(':')) {
-        // Parse field-specific errors (format: "fieldName: error message")
-        const fieldErrors = {};
-        errorMessage.split('\n').forEach(line => {
-          const [field, message] = line.split(':').map(s => s.trim());
-          if (field && message) {
-            fieldErrors[field] = message;
-          }
-        });
-        
-        if (Object.keys(fieldErrors).length > 0) {
-          setErrors(fieldErrors);
-        } else {
-          setGeneralError(errorMessage);
-        }
-      } else {
-        // General error
-        setGeneralError(errorMessage);
-      }
+      setGeneralError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -221,8 +179,8 @@ const ServiceForm = ({ service, onSubmit, onCancel, onReview }) => {
             className={errors.imageData ? 'error' : ''}
           />
           {errors.imageData && <span className="error-message">{errors.imageData}</span>}
-          {formData.imageName && !errors.imageData && (
-            <span className="file-info">Selected: {formData.imageName}</span>
+          {imageFile && !errors.imageData && (
+            <span className="file-info">Selected: {imageFile.name}</span>
           )}
           {preview && (
             <div className="image-preview">

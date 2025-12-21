@@ -12,18 +12,7 @@ import { getTaskerReviews } from "../api/taskersApi";
 const normalizeImage = (imageValue) => {
   if (!imageValue) return null;
   if (typeof imageValue === "string") {
-    if (imageValue.startsWith("data:")) return imageValue;
-    return `data:image/jpeg;base64,${imageValue}`;
-  }
-  if (Array.isArray(imageValue)) {
-    if (typeof window === "undefined" || typeof window.btoa !== "function") {
-      return null;
-    }
-    let binary = "";
-    for (let i = 0; i < imageValue.length; i += 1) {
-      binary += String.fromCharCode(imageValue[i] & 0xff);
-    }
-    return `data:image/jpeg;base64,${window.btoa(binary)}`;
+    return imageValue;
   }
   return null;
 };
@@ -169,7 +158,7 @@ function TaskerProfilePage() {
       // Normalize the profile image from backend
       const normalizedTasker = {
         ...response,
-        profileImage: normalizeImage(response.image || response.profileImage),
+        profileImage: normalizeImage(response.image || response.profileImage || response.imageBase64),
       };
       console.log("🔍 [TASKER PROFILE] Normalized Tasker:", normalizedTasker);
       setTasker(normalizedTasker);
@@ -489,12 +478,7 @@ function TaskerProfilePage() {
                     {review.reviewImages && review.reviewImages.length > 0 && (
                       <div className="review-images">
                         {review.reviewImages.map((img, index) => {
-                          const imgSrc =
-                            img.imgFile && img.imgFile.startsWith("data:")
-                              ? img.imgFile
-                              : `data:image/${img.format || "jpeg"};base64,${
-                                  img.imgFile
-                                }`;
+                          const imgSrc = img.imgFile || '';
                           return (
                             <img
                               key={img.imgId ?? index}

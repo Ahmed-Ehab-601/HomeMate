@@ -32,7 +32,7 @@ public class UserRequestTaskerDTORowMapper implements RowMapper<UserRequestTaske
         dto.setBio(rs.getString("bio"));
         dto.setAddressCity(rs.getString("addressCity"));
         dto.setWorkedHours(rs.getObject("WorkedHours") != null ? rs.getDouble("WorkedHours") : null);
-        dto.setImage(rs.getBytes("image"));
+        dto.setImage(rs.getString("image"));
         dto.setServiceName(rs.getString("serviceName"));
         return dto;
     }

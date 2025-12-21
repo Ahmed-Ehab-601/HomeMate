@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { uploadToCloudinary } from "../utils/cloudinary";
 import {
   getAvailableServices,
   getTaskerProfile,
@@ -23,18 +24,7 @@ const REVIEW_PAGE_SIZE = 4;
 const normalizeImage = (imageValue) => {
   if (!imageValue) return null;
   if (typeof imageValue === "string") {
-    if (imageValue.startsWith("data:")) return imageValue;
-    return `data:image/jpeg;base64,${imageValue}`;
-  }
-  if (Array.isArray(imageValue)) {
-    if (typeof window === "undefined" || typeof window.btoa !== "function") {
-      return null;
-    }
-    let binary = "";
-    for (let i = 0; i < imageValue.length; i += 1) {
-      binary += String.fromCharCode(imageValue[i] & 0xff);
-    }
-    return `data:image/jpeg;base64,${window.btoa(binary)}`;
+    return imageValue;
   }
   return null;
 };
@@ -386,23 +376,14 @@ function TaskerDashboardPage() {
       .finally(() => setSubmitting(null));
   };
 
-  const fileToBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-
   const handleImageChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setImageStatus("uploading");
     try {
-      const base64 = await fileToBase64(file);
-      const payload = base64.includes(",") ? base64.split(",")[1] : base64;
-      await updateTaskerImage({ newImage: payload });
-      setImagePreview(base64);
+      const imageUrl = await uploadToCloudinary(file, user?.username || user?.id);
+      await updateTaskerImage({ newImage: imageUrl });
+      setImagePreview(imageUrl);
       loadProfile();
       setFeedback({ type: "success", message: "Profile photo updated." });
     } catch (error) {
@@ -494,11 +475,7 @@ function TaskerDashboardPage() {
             {review.reviewImages && review.reviewImages.length > 0 && (
               <div className="review-images">
                 {review.reviewImages.map((img, index) => {
-                  const imgSrc = img.imgFile.startsWith("data:")
-                    ? img.imgFile
-                    : `data:image/${img.format || "jpeg"};base64,${
-                        img.imgFile
-                      }`;
+                  const imgSrc = img.imgFile || '';
                   return (
                     <img
                       key={img.imgId ?? index}

@@ -4,6 +4,7 @@ import { GoogleLogin as GoogleOAuthLogin } from "@react-oauth/google";
 import { signupUser, signupTasker } from "../api/signupApi";
 import { useAuth } from "../contexts/AuthContext";
 import { fetchServices } from "../api/servicesApi";
+import { uploadToCloudinary } from "../utils/cloudinary";
 import Modal from "../components/Modal";
 import ServiceCard from "../components/ServiceCard";
 
@@ -241,11 +242,15 @@ function SignUpPage() {
       setError("Please verify your email first.");
       return;
     }
-    console.log("Tasker signup - Token to use:", tokenToUse.substring(0, 20) + "...");
 
     setIsLoading(true);
 
     try {
+      let profileImageUrl = null;
+      if (taskerForm.profileImage) {
+        profileImageUrl = await uploadToCloudinary(taskerForm.profileImage, taskerForm.username || taskerForm.email);
+      }
+
       const token = await signupTasker({
         username: taskerForm.username,
         firstName: taskerForm.firstName,
@@ -258,11 +263,10 @@ function SignUpPage() {
         serviceID: taskerForm.serviceID ? Number(taskerForm.serviceID) : null,
         hourRate: taskerForm.hourRate ? Number(taskerForm.hourRate) : null,
         city: taskerForm.city,
-        profileImage: taskerForm.profileImage,
-        verifyToken: tokenToUse, // Always include verification token
+        profileImage: profileImageUrl,
+        verifyToken: tokenToUse,
       });
 
-      // Save with ROLE_TASKER
       signup(token, "ROLE_TASKER");
       navigate("/");
     } catch (err) {

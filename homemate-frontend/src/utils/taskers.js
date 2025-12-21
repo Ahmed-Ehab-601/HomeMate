@@ -18,15 +18,7 @@ const buildName = (tasker) => {
 };
 
 const buildPhoto = (tasker) => {
-  if (tasker.photoUrl) return tasker.photoUrl;
-  if (tasker.photo) return tasker.photo;
-  if (tasker.imageBase64) {
-    return `data:image/jpeg;base64,${tasker.imageBase64}`;
-  }
-  if (tasker.photoData && tasker.photoType) {
-    return `data:${tasker.photoType};base64,${tasker.photoData}`;
-  }
-  return "";
+  return tasker.imageBase64 ?? tasker.photoUrl ?? tasker.photo ?? tasker.photoData ?? "";
 };
 
 const mapAvailabilityTag = (availability = "") => {

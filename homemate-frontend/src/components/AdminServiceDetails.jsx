@@ -124,50 +124,11 @@ const AdminServiceDetails = ({ serviceID, onBack, onServiceUpdated }) => {
   const getImageSrc = () => {
     const service = serviceDetails?.service;
     
-    if (!service) {
-      console.warn('⚠️ No service object found');
-      return 'https://via.placeholder.com/400x300?text=No+Service';
-    }
-    
-    const imageData = service.imageData;
-    const imageType = service.imageType || 'image/jpeg';
-    
-    if (!imageData) {
-      console.warn(`⚠️ No imageData for service: "${service.name}"`, {
-        hasImageName: !!service.imageName,
-        imageName: service.imageName,
-        allKeys: Object.keys(service)
-      });
+    if (!service?.imageData) {
       return 'https://via.placeholder.com/400x300?text=No+Image+Data';
     }
     
-    if (typeof imageData !== 'string') {
-      console.warn(`⚠️ imageData is not a string for service: "${service.name}"`, {
-        type: typeof imageData,
-        value: imageData
-      });
-      return 'https://via.placeholder.com/400x300?text=Invalid+Image+Data';
-    }
-    
-    // If it's already a data URL
-    if (imageData.startsWith('data:')) {
-      console.log(`✅ Using existing data URL for: "${service.name}"`);
-      return imageData;
-    }
-    
-    // If it's a base64 string, add the data URL prefix
-    if (imageData.length > 0) {
-      const dataUrl = `data:${imageType};base64,${imageData}`;
-      console.log(`✅ Created data URL for: "${service.name}"`, {
-        imageType,
-        dataLength: imageData.length,
-        preview: imageData.substring(0, 50) + '...'
-      });
-      return dataUrl;
-    }
-    
-    console.warn(`⚠️ Empty imageData string for service: "${service.name}"`);
-    return 'https://via.placeholder.com/400x300?text=Empty+Image';
+    return service.imageData;
   };
 
   if (loading) {

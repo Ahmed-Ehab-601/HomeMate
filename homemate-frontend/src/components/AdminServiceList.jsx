@@ -66,45 +66,13 @@ const AdminServiceList = ({ onServiceClick, onCreateNew }) => {
   };
 
   const getImageSrc = (service) => {
-    // Debug: Log what we're trying to process
     const imageData = service?.imageData;
-    const imageType = service?.imageType || 'image/jpeg';
     
     if (!imageData) {
-      console.warn(`❌ No imageData for service: "${service?.name}"`, {
-        serviceId: service?.id || service?.serviceID,
-        availableFields: Object.keys(service || {})
-      });
       return 'https://via.placeholder.com/400x250?text=No+Image';
     }
     
-    if (typeof imageData !== 'string') {
-      console.warn(`❌ imageData is not a string for service: "${service?.name}"`, {
-        type: typeof imageData,
-        value: imageData
-      });
-      return 'https://via.placeholder.com/400x250?text=Invalid+Image+Data';
-    }
-    
-    // If it's already a data URL
-    if (imageData.startsWith('data:')) {
-      console.log(`✅ Using existing data URL for: "${service?.name}"`);
-      return imageData;
-    }
-    
-    // If it's a base64 string, add the data URL prefix
-    if (imageData.length > 0) {
-      const dataUrl = `data:${imageType};base64,${imageData}`;
-      console.log(`✅ Created data URL for: "${service?.name}"`, {
-        imageType,
-        dataLength: imageData.length,
-        preview: imageData.substring(0, 50) + '...'
-      });
-      return dataUrl;
-    }
-    
-    console.warn(`❌ Empty imageData string for service: "${service?.name}"`);
-    return 'https://via.placeholder.com/400x250?text=Empty+Image';
+    return imageData;
   };
 
   const filteredServices = services.filter((service) =>
