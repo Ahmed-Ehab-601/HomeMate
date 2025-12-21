@@ -2,6 +2,7 @@ package com.homemate.taskmanagementtests;
 
 import com.homemate.TaskerProfile.models.TaskerAvailability;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
+import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
 import com.homemate.taskmanagement.mappers.TaskerBusyTimeMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.Timestamp;
@@ -373,6 +375,88 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
         // Assert
         assertThat(result).isEqualTo(TaskerAvailability.UNAVAILABLE);
         verify(jdbcTemplate).queryForObject(anyString(), eq(String.class), eq(taskerId));
+    }
+    @Test
+    void testCheckAvailability_ReturnsUnavailable_WhenNull() {
+        // Arrange
+        when(jdbcTemplate.queryForObject(anyString(), eq(String.class), eq(taskerId)))
+                .thenReturn(null);
+
+        // Act
+        TaskerAvailability result = taskRequestDao.CheckAvailability(taskerId);
+
+        // Assert
+        assertThat(result).isEqualTo(TaskerAvailability.UNAVAILABLE);
+        verify(jdbcTemplate).queryForObject(anyString(), eq(String.class), eq(taskerId));
+    }
+    @Test
+    void testGetEstimation_ReturnsEstimation_WhenTaskExists() {
+        // Arrange
+        int expectedEstimation = 120;
+
+        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(taskId)))
+                .thenReturn(expectedEstimation);
+
+        // Act
+        int result = taskRequestDao.getEstimation(taskId);
+
+        // Assert
+        assertThat(result).isEqualTo(expectedEstimation);
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(jdbcTemplate).queryForObject(sqlCaptor.capture(), eq(Integer.class), eq(taskId));
+
+        String sql = sqlCaptor.getValue();
+        assertThat(sql).contains("SELECT estimation");
+        assertThat(sql).contains("FROM Task");
+        assertThat(sql).contains("WHERE taskID = ?");
+    }
+
+    @Test
+    void testGetEstimation_ReturnsZero_WhenEstimationIsNull() {
+        // Arrange
+        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(taskId)))
+                .thenReturn(null);
+
+        // Act
+        int result = taskRequestDao.getEstimation(taskId);
+
+        // Assert
+        assertThat(result).isEqualTo(0);
+        verify(jdbcTemplate).queryForObject(anyString(), eq(Integer.class), eq(taskId));
+    }
+
+    @Test
+    void testGetEstimation_ReturnsZero_WhenTaskNotFound() {
+        // Arrange
+        Long nonExistentTaskId = 999L;
+
+        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(nonExistentTaskId)))
+                .thenThrow(new EmptyResultDataAccessException(1));
+
+        // Act
+        int result = taskRequestDao.getEstimation(nonExistentTaskId);
+
+        // Assert
+        assertThat(result).isEqualTo(0);
+        verify(jdbcTemplate).queryForObject(anyString(), eq(Integer.class), eq(nonExistentTaskId));
+    }
+    @Test
+    void testAddEstimation_ThrowsException_WhenTaskNotFound() {
+        // Arrange
+        int estimationMinutes = 120;
+        Long nonExistentTaskId = 999L;
+
+        // Mock 0 rows affected (task doesn't exist)
+        when(jdbcTemplate.update(anyString(), eq(estimationMinutes), eq(nonExistentTaskId)))
+                .thenReturn(0);
+
+        // Act & Assert
+        assertThatThrownBy(() -> taskRequestDao.add(nonExistentTaskId, estimationMinutes))
+                .isInstanceOf(TaskNotFoundException.class)
+                .hasMessageContaining("Task not found with ID: " + nonExistentTaskId);
+
+        verify(jdbcTemplate).update(anyString(), eq(estimationMinutes), eq(nonExistentTaskId));
     }
 
 }
