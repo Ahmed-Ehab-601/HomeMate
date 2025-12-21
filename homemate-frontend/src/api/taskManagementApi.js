@@ -276,10 +276,16 @@ export async function completeTask(taskId) {
  * Get tasker busy time for a specific day
  * @param {number} taskerId - ID of the tasker
  * @param {string} day - Date in YYYY-MM-DD format
+ * @param {string} userRole - User role ("ROLE_TASKER" or "ROLE_USER")
  * @returns {Promise<Object>} Map of LocalDateTime to estimation hours
  */
-export async function getTaskerBusyTime(taskerId, day) {
-    const response = await apiFetch(`${baseUrl}/api/task/get-tasker-tasks/${taskerId}?day=${day}`, {
+export async function getTaskerBusyTime(taskerId, day, userRole) {
+    // Choose endpoint based on user role
+    const endpoint = userRole === "ROLE_TASKER" 
+        ? `${baseUrl}/api/task/get-tasker-tasks-tasker-only/${taskerId}?day=${day}`
+        : `${baseUrl}/api/task/get-tasker-tasks/${taskerId}?day=${day}`;
+    
+    const response = await apiFetch(endpoint, {
         method: "GET",
     }).catch((error) => {
         throw {
@@ -291,9 +297,11 @@ export async function getTaskerBusyTime(taskerId, day) {
 
     if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        // Check if error indicates tasker is unavailable (503 SERVICE_UNAVAILABLE status)
+        
+        // Check if error indicates tasker is unavailable
         const errorMessage = data.message || data.error || "";
-        if (response.status === 503 || data.error === "TASKER_UNAVAILABLE" || 
+        if (response.status === 503 || 
+            data.error === "TASKER_UNAVAILABLE" || 
             errorMessage.toLowerCase().includes("unavailable")) {
             throw {
                 status: response.status === 503 ? 503 : response.status,
@@ -301,6 +309,7 @@ export async function getTaskerBusyTime(taskerId, day) {
                 message: errorMessage || "This Tasker is UNAVAILABLE Now",
             };
         }
+        
         throw {
             status: response.status,
             error: data.error || "SERVER_ERROR",
@@ -309,10 +318,12 @@ export async function getTaskerBusyTime(taskerId, day) {
     }
 
     const data = await response.json();
+    
     // If empty response, return empty object
     if (!data || Object.keys(data).length === 0) {
         return {};
     }
+    
     return data;
 }
 
@@ -344,3 +355,16 @@ export async function addTaskEstimation(taskId, estimation) {
 
     return;
 }
+// Get estimation only
+export const getTaskEstimation = async (taskId, userRole) => {
+  const endpoint = userRole === 'ROLE_TASKER' 
+    ? `/task/get-taskDetails-estimation/${taskId}`
+    : `/task/get-taskDetails-estimation-user/${taskId}`;
+  
+  const response = await axios.get(`${API_BASE_URL}${endpoint}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  
+  return response.data; // integer in minutes
+};
+

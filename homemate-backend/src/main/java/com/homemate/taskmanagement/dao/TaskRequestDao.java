@@ -4,6 +4,7 @@ import com.homemate.TaskerProfile.models.TaskerAvailability;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
 import com.homemate.taskmanagement.exceptions.DuplicateChatException;
+import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
 import com.homemate.taskmanagement.mappers.TaskerBusyTimeMapper;
 import com.homemate.taskmanagement.model.TaskEntity;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,8 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -152,7 +155,9 @@ public class TaskRequestDao {
     public Map<LocalDateTime, Integer> getBusytime(Long taskerId, LocalDate day) {
         LocalDateTime startOfDay = day.atStartOfDay();
         LocalDateTime endOfDay = day.plusDays(1).atStartOfDay();
-        String sql = "SELECT  startDate , estimation FROM Task WHERE taskerID = ? AND startDate >= ? AND startDate < ? ";
+        String sql = "SELECT  startDate , estimation FROM Task" +
+                " WHERE taskerID = ? AND startDate >= ? AND startDate < ? " +
+                "AND status NOT IN ('Rejected', 'Done')";
         return jdbcTemplate.query(sql,taskerBusyTimeMapper,
                 taskerId,
                 Timestamp.valueOf(startOfDay),
@@ -163,7 +168,10 @@ public class TaskRequestDao {
         String sql = "UPDATE Task " +
                 "SET estimation = ? " +
                 "WHERE taskID = ?";
-        jdbcTemplate.update(sql,estimation,taskId);
+        int rowsAffected = jdbcTemplate.update(sql,estimation,taskId);
+        if (rowsAffected == 0) {
+            throw new TaskNotFoundException("Task not found with ID: " + taskId);
+        }
     }
 
     public TaskerAvailability CheckAvailability(Long taskerId) {
@@ -171,9 +179,14 @@ public class TaskRequestDao {
         String availabilityStr = jdbcTemplate.queryForObject(sql, String.class, taskerId);
 
         if (availabilityStr == null) {
-            return null;
+            return TaskerAvailability.UNAVAILABLE;
         }
         return TaskerAvailability.valueOf(availabilityStr.toUpperCase());
+    }
+
+    public int getEstimation(Long taskId) {
+        String sql="SELECT estimation FROM Task WHERE taskID = ?";
+         return jdbcTemplate.queryForObject(sql,Integer.class,taskId);
     }
     //CREATE TABLE Task (
     //    taskID INT AUTO_INCREMENT PRIMARY KEY,
