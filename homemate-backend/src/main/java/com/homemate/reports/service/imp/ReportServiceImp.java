@@ -109,7 +109,13 @@ public class ReportServiceImp implements IReportService {
         Optional<DetailedReport> reportOpt = reportDao.getDetailedReportById(reportID);
         if (reportOpt.isPresent()) {
             DetailedReport report = reportOpt.get();
-            String subject = "Admin Response to Report #" + reportID;
+
+            // Only respond if the report is marked as done
+            if (report.getAdminStatus() == null || !"done".equalsIgnoreCase(report.getAdminStatus().name())) {
+               throw new IllegalStateException("Report is not in done status");
+            }
+            
+            String subject = "Admin Response: " + report.getHeader();
             
             if (report.getUserEmail() != null) {
                 emailService.sendDirectEmail(report.getUserEmail(), subject, message);
