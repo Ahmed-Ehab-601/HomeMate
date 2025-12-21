@@ -31,6 +31,9 @@ class ReportServiceTest {
     @Mock
     private ReportDao reportDao;
 
+    @Mock
+    private com.homemate.notification.service.EmailService emailService;
+
     @InjectMocks
     private ReportServiceImp reportService;
 
@@ -474,5 +477,58 @@ class ReportServiceTest {
         // Assert
         assertTrue(result);
         verify(reportDao, times(1)).submitReport(submitReport, true);
+    }
+    @Test
+    void testRespondToReport_Success() {
+        // Arrange
+        DetailedReport mockReport = DetailedReport.builder()
+                .reportID(1)
+                .header("Test Report")
+                .body("Test Body")
+                .taskID(1)
+                .userID(1)
+                .userEmail("user@test.com")
+                .taskerID(1)
+                .taskerEmail("tasker@test.com")
+                .adminStatus(AdminStatus.DONE)
+                .build();
+
+        when(reportDao.getDetailedReportById(1)).thenReturn(Optional.of(mockReport));
+
+        // Act
+        reportService.respondToReport(1, "Test Response");
+
+        // Assert
+        verify(emailService, times(1)).sendDirectEmail("user@test.com", "Admin Response: Test Report", "Test Response");
+        verify(emailService, times(1)).sendDirectEmail("tasker@test.com", "Admin Response: Test Report", "Test Response");
+    }
+
+    @Test
+    void testRespondToReport_NotDone_ThrowsException() {
+        // Arrange
+        DetailedReport mockReport = DetailedReport.builder()
+                .reportID(1)
+                .header("Test Report")
+                .adminStatus(AdminStatus.PENDING)
+                .build();
+
+        when(reportDao.getDetailedReportById(1)).thenReturn(Optional.of(mockReport));
+
+        // Act & Assert
+        assertThrows(IllegalStateException.class, () -> reportService.respondToReport(1, "Test Response"));
+        
+        verify(emailService, never()).sendDirectEmail(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void testRespondToReport_NotFound() {
+        // Arrange
+        when(reportDao.getDetailedReportById(999)).thenReturn(Optional.empty());
+
+        // Act
+        reportService.respondToReport(999, "Test Response");
+
+        // Assert
+        verify(emailService, never()).sendDirectEmail(anyString(), anyString(), anyString());
     }
 }
