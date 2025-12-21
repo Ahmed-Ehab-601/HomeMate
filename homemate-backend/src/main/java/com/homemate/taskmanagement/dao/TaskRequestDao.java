@@ -183,7 +183,6 @@ public class TaskRequestDao {
         }
         return TaskerAvailability.valueOf(availabilityStr.toUpperCase());
     }
-
     public int getEstimation(Long taskId) {
         String sql = "SELECT estimation FROM Task WHERE taskID = ?";
         try {
