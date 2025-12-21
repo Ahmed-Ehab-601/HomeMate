@@ -157,17 +157,43 @@ function RequestTaskPage() {
     setTimeValue("");
     setBusyTimes({});
     setTaskerUnavailable(false);
+    // Clear error banner if it was about unavailability
+    if (errorBanner?.message?.includes("unavailable")) {
+      setErrorBanner(null);
+    }
 
     const fetchBusyTime = async () => {
       setLoadingBusyTime(true);
+      setTaskerUnavailable(false);
       try {
         const busyTimeData = await getTaskerBusyTime(tasker.id, dateValue);
         setBusyTimes(busyTimeData || {});
         setTaskerUnavailable(false);
+        // Clear error banner on successful fetch
+        if (errorBanner?.message?.includes("unavailable")) {
+          setErrorBanner(null);
+        }
       } catch (error) {
         console.error("Failed to fetch busy time:", error);
-        setBusyTimes({});
-        setTaskerUnavailable(false);
+        // Check if error is due to tasker being unavailable
+        const errorMessage = error?.message || "";
+        if (
+          error?.error === "TASKER_UNAVAILABLE" ||
+          error?.status === 503 ||
+          errorMessage.includes("UNAVAILABLE") ||
+          errorMessage.toLowerCase().includes("unavailable")
+        ) {
+          setTaskerUnavailable(true);
+          setBusyTimes({});
+          setTimeValue(""); // Clear selected time
+          // Show notification banner
+          setErrorBanner({
+            message: `⚠️ ${tasker.name || "This tasker"} is currently unavailable. Please select another tasker or try again later.`,
+          });
+        } else {
+          setTaskerUnavailable(false);
+          setBusyTimes({});
+        }
       } finally {
         setLoadingBusyTime(false);
       }
@@ -242,6 +268,11 @@ function RequestTaskPage() {
 
   // Filter available time slots
   const availableTimeSlots = timeSlots.filter((slot) => {
+    // If tasker is unavailable, disable all slots
+    if (taskerUnavailable) {
+      return false;
+    }
+    
     if (!dateValue) return true;
     
     // Disable if date is today and time has passed
@@ -543,22 +574,27 @@ function RequestTaskPage() {
                 </p>
               )}
               {taskerUnavailable && dateValue && (
-                <p className="error-text" style={{ marginBottom: "8px" }}>
-                  Tasker is unavailable on this day.
+                <p className="error-text" style={{ marginBottom: "8px", fontWeight: 600 }}>
+                  ⚠️ Tasker is currently unavailable. All time slots are disabled.
                 </p>
               )}
               <select
                 id="time-select"
-                className={`input ${showErrors && !timeValue ? "error" : ""}`}
+                className={`input ${showErrors && !timeValue ? "error" : ""} ${
+                  taskerUnavailable ? "disabled" : ""
+                }`}
                 value={timeValue}
                 onChange={(event) => setTimeValue(event.target.value)}
                 disabled={loadingBusyTime || !dateValue || taskerUnavailable}
+                style={taskerUnavailable ? { backgroundColor: "#f3f4f6", cursor: "not-allowed" } : {}}
               >
                 <option value="">
                   {!dateValue
                     ? "Select date first"
                     : loadingBusyTime
                     ? "Loading..."
+                    : taskerUnavailable
+                    ? "Tasker unavailable - no times available"
                     : availableTimeSlots.length === 0
                     ? "No available times"
                     : "Select time"}
@@ -569,10 +605,10 @@ function RequestTaskPage() {
                   </option>
                 ))}
               </select>
-              {showErrors && !timeValue && (
+              {showErrors && !timeValue && !taskerUnavailable && (
                 <p className="error-text">Please select a valid time.</p>
               )}
-              {dateValue && !loadingBusyTime && availableTimeSlots.length === 0 && (
+              {dateValue && !loadingBusyTime && !taskerUnavailable && availableTimeSlots.length === 0 && (
                 <p className="error-text">
                   No available time slots on this day. Please select another date.
                 </p>

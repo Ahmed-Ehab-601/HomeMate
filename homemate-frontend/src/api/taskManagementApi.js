@@ -291,10 +291,20 @@ export async function getTaskerBusyTime(taskerId, day) {
 
     if (!response.ok) {
         const data = await response.json().catch(() => ({}));
+        // Check if error indicates tasker is unavailable (503 SERVICE_UNAVAILABLE status)
+        const errorMessage = data.message || data.error || "";
+        if (response.status === 503 || data.error === "TASKER_UNAVAILABLE" || 
+            errorMessage.toLowerCase().includes("unavailable")) {
+            throw {
+                status: response.status === 503 ? 503 : response.status,
+                error: "TASKER_UNAVAILABLE",
+                message: errorMessage || "This Tasker is UNAVAILABLE Now",
+            };
+        }
         throw {
             status: response.status,
             error: data.error || "SERVER_ERROR",
-            message: data.message || "Failed to load tasker busy time",
+            message: errorMessage || "Failed to load tasker busy time",
         };
     }
 
