@@ -6,6 +6,7 @@ import {
     Loader,
 } from 'lucide-react';
 import { rescheduleTask } from '../api/taskManagementApi';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * TaskCalendar Component
@@ -20,6 +21,7 @@ const TaskCalendar = ({ onBackToList }) => {
     const [error, setError] = useState(null);
     const [draggedTask, setDraggedTask] = useState(null);
     const [snackbar, setSnackbar] = useState({ show: false, message: '', type: 'error' });
+    const { user, getUserRole } = useAuth();
 
     // Status Colors - matching project style
     const statusConfig = {
@@ -87,27 +89,22 @@ const TaskCalendar = ({ onBackToList }) => {
 
             // Calculate start and end date for current view (entire month)
             const year = currentDate.getFullYear();
-            const month = currentDate.getMonth() + 1; // 1-indexed
-            const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-            const lastDay = new Date(year, month, 0).getDate();
-            const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
+            const month = currentDate.getMonth(); // 0-indexed (0 = January, 11 = December)
+            const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+            const lastDay = new Date(year, month + 1, 0).getDate();  // Fixed: Gets correct last day of month
+            const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+            
+            console.log('🔗 URL DEBUG:', { year, month, startDate, endDate, filteredStatus });
 
             // Determine user role to pick correct endpoint
-            const userDataString = localStorage.getItem('homemate_user');
-            let role = 'ROLE_USER';
-            if (userDataString) {
-                try {
-                    const userData = JSON.parse(userDataString);
-                    role = userData.role || 'ROLE_USER';
-                } catch (e) {
-                    console.error('Failed to parse user data:', e);
-                }
-            }
-            let endpoint = role === 'ROLE_TASKER' ? '/api/tasker/getTasks' : '/api/user/getTasks';
+            const userRole = user?.role || 'ROLE_USER';
+            let endpoint = userRole === 'ROLE_TASKER' ? '/api/tasker/getTasks' : '/api/user/getTasks';
 
-            console.log('Fetching tasks with role:', role, 'endpoint:', endpoint); // Debug log
+            console.log('📅 [TaskCalendar] Fetching with role:', userRole, 'endpoint:', endpoint);
 
             const url = `http://localhost:8080${endpoint}?startDate=${startDate}&endDate=${endDate}&status=${filteredStatus}`;
+            
+            console.log('🔗 Full URL:', url);
 
             const response = await fetch(url, {
                 headers: {
@@ -117,7 +114,7 @@ const TaskCalendar = ({ onBackToList }) => {
             });
 
             if (response.status === 204) {
-                setTasks([]); // No Content
+                setTasks([]);
                 return;
             }
 
@@ -126,7 +123,7 @@ const TaskCalendar = ({ onBackToList }) => {
             }
 
             if (response.status === 403) {
-                throw new Error("Access forbidden. You don't have permission to access this resource.");
+                throw new Error("Access forbidden.");
             }
 
             if (!response.ok) {
@@ -135,12 +132,16 @@ const TaskCalendar = ({ onBackToList }) => {
             }
 
             const data = await response.json();
-            // Ensure data is array
             setTasks(Array.isArray(data) ? data : []);
+            console.log('📅 [TaskCalendar] Loaded:', (Array.isArray(data) ? data.length : 0), 'tasks');
+            console.log('📅 [TaskCalendar] Task details:', data);
+            data.forEach(task => {
+                console.log(`  - ${task.serviceName} on ${task.startDate} (${task.status})`);
+            });
 
         } catch (err) {
-            console.error("Fetch error:", err);
-            setError(err.message);
+            console.error("❌ Fetch error:", err);
+            setError(err.message || "Failed to load tasks");
         } finally {
             setLoading(false);
         }
@@ -177,6 +178,24 @@ const TaskCalendar = ({ onBackToList }) => {
         const oldDate = new Date(draggedTask.startDate);
         newDate.setHours(oldDate.getHours(), oldDate.getMinutes(), oldDate.getSeconds());
 
+        // VALIDATION: Check if new date is in the future
+        const now = new Date();
+        if (newDate <= now) {
+            const isPast = newDate.toDateString() === now.toDateString() ? 
+                "Cannot reschedule to a past time. Please select a future time." :
+                "Cannot reschedule to a past date. Please select a future date.";
+            
+            console.warn("⚠️ Invalid reschedule attempt:", isPast);
+            setSnackbar({ show: true, message: isPast, type: 'error' });
+            setDraggedTask(null);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                setSnackbar({ show: false, message: '', type: 'error' });
+            }, 5000);
+            return;
+        }
+
         const newDateStr = newDate.toISOString();
 
         console.log(`🔄 [Reschedule] Moving task ${draggedTask.taskID} to ${newDateStr}`);
@@ -198,7 +217,7 @@ const TaskCalendar = ({ onBackToList }) => {
             console.log("✅ Reschedule successful");
         } catch (err) {
             // Extract error message properly
-            let errorMessage = 'Unknown error occurred';
+            let errorMessage = 'Failed to reschedule task';
             if (err?.response?.data) {
                 if (typeof err.response.data === 'string') {
                     errorMessage = err.response.data;
@@ -209,6 +228,11 @@ const TaskCalendar = ({ onBackToList }) => {
                 }
             } else if (err?.message) {
                 errorMessage = err.message;
+            }
+            
+            // Add context for validation errors
+            if (err?.status === 400 || err?.response?.status === 400) {
+                errorMessage = "The selected date/time is not valid. Please choose a future date and time.";
             }
             
             console.error("❌ Reschedule failed:", errorMessage);
@@ -241,15 +265,30 @@ const TaskCalendar = ({ onBackToList }) => {
     const tasksByDay = useMemo(() => {
         const map = new Map();
         tasks.forEach(task => {
-            if (!task.startDate) return;
+            if (!task.startDate) {
+                console.log('⚠️ Task missing startDate:', task);
+                return;
+            }
             const date = new Date(task.startDate);
             const day = date.getDate();
+            const taskMonth = date.getMonth();
+            const taskYear = date.getFullYear();
+            const currentMonth = currentDate.getMonth();
+            const currentYear = currentDate.getFullYear();
+            
+            // Debug log for date mismatches
+            if (taskMonth !== currentMonth || taskYear !== currentYear) {
+                console.log(`📅 Task date mismatch - Task: ${date.toISOString()} (${taskMonth}/${taskYear}), Current: ${currentDate.toISOString()} (${currentMonth}/${currentYear})`);
+            }
+            
             // Filter to ensure task belongs to current month view
-            if (date.getMonth() === currentDate.getMonth() && date.getFullYear() === currentDate.getFullYear()) {
+            if (taskMonth === currentMonth && taskYear === currentYear) {
                 if (!map.has(day)) map.set(day, []);
                 map.get(day).push(task);
+                console.log(`✅ Added task to day ${day}: ${task.serviceName}`);
             }
         });
+        console.log('📊 Tasks by day map:', map);
         return map;
     }, [tasks, currentDate]);
 
@@ -373,6 +412,13 @@ const TaskCalendar = ({ onBackToList }) => {
         for (let day = 1; day <= totalDays; day++) {
             const dayTasks = tasksByDay.get(day) || [];
             
+            // Check if this day is in the past
+            const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            cellDate.setHours(0, 0, 0, 0);
+            const isPastDate = cellDate < today;
+            
             days.push(
                 <div
                     key={day}
@@ -382,21 +428,22 @@ const TaskCalendar = ({ onBackToList }) => {
                     style={{
                         minHeight: '100px',
                         padding: '8px',
-                        backgroundColor: '#ffffff',
+                        backgroundColor: isPastDate ? '#f9fafb' : '#ffffff',
                         border: '1px solid #ddd',
                         borderTop: 'none',
                         borderLeft: (day + firstDay - 1) % 7 === 0 ? '1px solid #ddd' : 'none',
-                        cursor: dayTasks.length > 0 ? 'pointer' : 'default',
+                        cursor: dayTasks.length > 0 ? 'pointer' : (isPastDate ? 'not-allowed' : 'default'),
                         position: 'relative',
                         display: 'flex',
                         flexDirection: 'column',
+                        opacity: isPastDate ? 0.5 : 1,
                     }}
                 >
                     {/* Day Number */}
                     <div style={{
                         fontSize: '12px',
                         fontWeight: '500',
-                        color: '#666',
+                        color: isPastDate ? '#9ca3af' : '#666',
                         marginBottom: '4px',
                     }}>
                         {String(day).padStart(2, '0')}
@@ -406,6 +453,14 @@ const TaskCalendar = ({ onBackToList }) => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
                         {dayTasks.slice(0, 2).map((task, idx) => {
                             const config = statusConfig[task.status] || statusConfig.InReview;
+                            
+                            // Format time from task startDate
+                            const taskTime = task.startDate ? new Date(task.startDate).toLocaleTimeString('en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                            }) : 'N/A';
+                            
                             return (
                                 <div
                                     key={task.taskID}
@@ -416,13 +471,13 @@ const TaskCalendar = ({ onBackToList }) => {
                                         e.stopPropagation();
                                         navigate(`/tasks/${task.taskID}`);
                                     }}
-                                    title={`Status: ${task.status}\nService: ${task.serviceName}\nUser: ${task.userName}\nTasker: ${task.taskerName}`}
+                                    title={`Time: ${taskTime}\nStatus: ${task.status}\nService: ${task.serviceName}\nCustomer: ${task.userName || 'N/A'}\nTasker: ${task.taskerName || 'N/A'}`}
                                     style={{
                                         backgroundColor: config.bg,
                                         color: config.text,
                                         padding: '4px 8px',
                                         borderRadius: '4px',
-                                        fontSize: '11px',
+                                        fontSize: '10px',
                                         fontWeight: '500',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
@@ -431,7 +486,14 @@ const TaskCalendar = ({ onBackToList }) => {
                                         transition: 'opacity 0.2s ease',
                                     }}
                                 >
-                                    {task.serviceName || config.display}
+                                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {task.serviceName || config.display}
+                                        </span>
+                                        <span style={{ fontSize: '9px', opacity: 0.8, whiteSpace: 'nowrap' }}>
+                                            {taskTime}
+                                        </span>
+                                    </div>
                                 </div>
                             );
                         })}

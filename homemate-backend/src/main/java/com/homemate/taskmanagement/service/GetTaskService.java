@@ -90,11 +90,13 @@ public class GetTaskService {
     public List<TaskCardDto> getTaskerTasksForNewView(
             Long taskerID, LocalDate startDate,
             LocalDate endDate, StatusDto statusDto) {
+        // Use endDate as exclusive upper bound to include all times on the endDate
+        LocalDate endExclusive = endDate.plusDays(1);
         if(statusDto == StatusDto.All){
-            return getTasksDao.getTaskerTasksByDateRange(taskerID,startDate,endDate);
+            return getTasksDao.getTaskerTasksByDateRange(taskerID,startDate,endExclusive);
         }
 
-        return  getTasksDao.getTaskerTasksByDateRangeAndStatus(taskerID,startDate,endDate,statusDto);
+        return  getTasksDao.getTaskerTasksByDateRangeAndStatus(taskerID,startDate,endExclusive,statusDto);
 
 
 
@@ -102,11 +104,13 @@ public class GetTaskService {
     public List<TaskCardDto> getUserTasksForNewView(
             Long taskerID, LocalDate startDate,
             LocalDate endDate, StatusDto statusDto) {
+        // Use endDate as exclusive upper bound to include all times on the endDate
+        LocalDate endExclusive = endDate.plusDays(1);
         if(statusDto == StatusDto.All){
-            return getTasksDao.getUserTasksByDateRange(taskerID,startDate,endDate);
+            return getTasksDao.getUserTasksByDateRange(taskerID,startDate,endExclusive);
         }
 
-        return  getTasksDao.getUserTasksByDateRangeAndStatus(taskerID,startDate,endDate,statusDto);
+        return  getTasksDao.getUserTasksByDateRangeAndStatus(taskerID,startDate,endExclusive,statusDto);
 
 
 
