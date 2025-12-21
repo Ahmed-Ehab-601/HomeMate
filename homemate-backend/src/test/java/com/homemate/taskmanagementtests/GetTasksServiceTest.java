@@ -119,6 +119,26 @@ public class GetTasksServiceTest {
     }
 
     @Test
+    void testThatGetUserTasksReturnsEmptyWhenTotalCountIsZero() {
+        // Arrange
+        Long userId = 9L;
+        StatusDto status = StatusDto.All;
+        int page = 2;
+        int pageSize = 10;
+
+        when(taskDao.countTasksByUserID(userId)).thenReturn(Optional.of(0L));
+
+        // Act
+        Optional<PaginatedResponse> result = getTaskService.getUserTasks(userId, status, page, pageSize);
+
+        // Assert
+        assertThat(result).isEmpty();
+
+        verify(taskDao).countTasksByUserID(userId);
+        verify(taskDao, never()).getListUserTasksByIDSortedByDate(anyLong(), anyInt(), anyInt());
+    }
+
+    @Test
     void testThatGetUserTasksReturnsEmptyWhenNoTasksExistForSpecificStatus() {
         // Arrange
         Long userId = 1L;
