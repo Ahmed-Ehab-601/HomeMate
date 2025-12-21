@@ -329,7 +329,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
   
   // Check if task would extend beyond working hours (20:30)
   if (slotEndMinutes > WORK_DAY_END_MINUTES) {
-    console.log(`❌ Slot ${timeSlot}: Task would end at ${Math.floor(slotEndMinutes/60)}:${String(slotEndMinutes%60).padStart(2, '0')}, beyond 20:30`);
+    console.log(`❌ Slot ${timeSlot}: Task would end at ${Math.floor(slotEndMinutes/60)}:${String(slotEndMinutes%60).padStart(2, '0')}, beyond 24:30`);
     return false;
   }
   

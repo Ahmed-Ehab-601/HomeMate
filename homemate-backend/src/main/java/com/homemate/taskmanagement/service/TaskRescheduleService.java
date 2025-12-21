@@ -97,7 +97,7 @@ public class TaskRescheduleService {
             throw new BadRescheduleException("Task must be InReview or Accepted");
         }
         if(checkValidEstimation(taskID,rescheduleRequestDto.getNewStartDate())==false) {
-            throw new BadRescheduleException("Task must be Rescheduled to valid Time");
+            throw new BadRescheduleException("Task must be Rescheduled to valid Time ,The Tasks for this tasker is overlapping");
         }
         LocalDateTime newStart = rescheduleRequestDto.getNewStartDate();
         if (newStart.isBefore(LocalDateTime.now())) {

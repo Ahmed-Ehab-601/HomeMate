@@ -49,7 +49,7 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
 
     // EXACT SAME CONSTANTS AS TASKDETAILSPAGE
     const WORK_DAY_START_MINUTES = 8 * 60;          // 08:00 = 480 minutes
-    const WORK_DAY_END_MINUTES = 20 * 60 + 30;      // 20:30 = 1230 minutes
+    const WORK_DAY_END_MINUTES = 24 * 60 + 30;      // 20:30 = 1230 minutes
     const DRAGGABLE_STATUSES = ['InReview', 'Accepted'];
 
     const isStatusDraggable = (status) => DRAGGABLE_STATUSES.includes(status);

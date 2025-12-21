@@ -93,7 +93,7 @@ public class TaskRequestService {
 
     public void addEstimation(Long taskId, int estimation, AppUserDetails userDetails) {
         if (estimation<=0) throw new BadEstimationException("estimation need to be > 0");
-        if(checkValidEstimation(estimation,taskId)==false) throw new BadEstimationException("invalid estimation");;
+        if(checkValidEstimation(estimation,taskId)==false) throw new BadEstimationException("Invalid Estimation ,The Tasks are overlapping");;
         Optional<TaskDto> taskDto= taskRequestDao.getTaskDetails(taskId);
         if(taskDto.isPresent() &&( taskDto.get().getTaskerID() == userDetails.getId())) {
          taskRequestDao.add(taskId,estimation);
