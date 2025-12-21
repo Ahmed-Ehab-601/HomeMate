@@ -58,7 +58,7 @@ class EmailServiceTest {
         when(emailTemplate.buildEmailBody(emailRequest)).thenReturn("Your task has been accepted");
         TaskResponse response = underTest.sendEmail(emailRequest).get();
         assertTrue(response.isSuccess());
-        assertEquals("Email sent successfully", response.getMessage());
+        assertEquals("Email sent successfully via SMTP", response.getMessage());
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         verify(emailTemplate).buildEmailSubject(emailRequest);
         verify(emailTemplate).buildEmailBody(emailRequest);

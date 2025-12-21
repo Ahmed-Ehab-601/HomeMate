@@ -15,16 +15,23 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.*;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.mail.MailException;
+import org.springframework.web.client.RestTemplate;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.security.SecureRandom;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -53,20 +60,30 @@ public class OTPServiceImpl implements OTPService {
     @Value("${homemate.email.from:homemateservice8@gmail.com}")
     private String fromEmail;
 
+    @Value("${homemate.email.from.name:HomeMate}")
+    private String fromName;
+
+    @Value("${brevo.key:}")
+    private String brevoApiKey;
+
+    @Value("${brevo.enabled:false}")
+    private boolean brevoEnabled;
+
+    private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
+
     private final JwtService jwtService;
     private final EmailTemplate emailTemplate;
     private final JavaMailSender javaMailSender;
     private final OtpStorageService otpStorageService;
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Async("otpExecutor")
     public CompletableFuture<String> generateAndStoreOTP(String email, EmailType emailType) {
         int attemptTtl = getAttemptTtl(emailType);
         TimeUnit attemptTtlUnit = getTimeUnit(emailType);
 
-        // Reset attempts counter when generating new OTP
         otpStorageService.resetAttempts(email, attemptTtl, attemptTtlUnit);
 
-        // Generate and store OTP
         String otp = generateCode();
         otpStorageService.storeOtp(email, otp, RedisConfig.OTP_TTL_SEC, TimeUnit.SECONDS);
 
@@ -81,14 +98,12 @@ public class OTPServiceImpl implements OTPService {
         int attemptTtl = getAttemptTtl(otpVerifyRequest.getEmailType());
         TimeUnit attemptTtlUnit = getTimeUnit(otpVerifyRequest.getEmailType());
 
-        // Check if OTP exists
         String cachedOtp = otpStorageService.getOtp(email);
         if (cachedOtp == null) {
             log.warn("OTP validation failed - OTP expired or not found for email: {}", email);
             return expiredOtpResult();
         }
 
-        // Check if max attempts reached
         long attempts = otpStorageService.getAttempts(email);
         if (otpStorageService.hasReachedMaxAttempts(email, RedisConfig.OTP_MAX_ATTEMPTS)) {
             log.warn("OTP validation failed - Max attempts exceeded for email: {}", email);
@@ -97,7 +112,6 @@ public class OTPServiceImpl implements OTPService {
             return maxAttemptsExceededResult(attemptTtl, timeUnit);
         }
 
-        // Validate OTP code
         if (cachedOtp.equals(otpVerifyRequest.getCode())) {
             log.info("OTP validation successful for email: {}", email);
             otpStorageService.deleteOtp(email);
@@ -105,7 +119,6 @@ public class OTPServiceImpl implements OTPService {
             return successResult(otpVerifyRequest.getRecipientEmail());
         }
 
-        // Increment attempts on failed validation
         otpStorageService.incrementAttempts(email, attemptTtl, attemptTtlUnit);
         long remainingAttempts = RedisConfig.OTP_MAX_ATTEMPTS - (attempts + 1);
 
@@ -130,7 +143,6 @@ public class OTPServiceImpl implements OTPService {
         int attemptTtl = getAttemptTtl(emailType);
         TimeUnit attemptTtlUnit = getTimeUnit(emailType);
 
-        // Check if max attempts already reached
         if (otpStorageService.hasReachedMaxAttempts(email, RedisConfig.OTP_MAX_ATTEMPTS)) {
             log.warn("OTP send blocked - Max attempts already reached for email: {}", email);
             String timeUnit = formatTimeUnit(attemptTtlUnit);
@@ -144,6 +156,25 @@ public class OTPServiceImpl implements OTPService {
     }
 
     private CompletableFuture<OtpVerificationResult> sendOtpEmail(String email, EmailTemplate.OtpEmailContent content) {
+        // Try Brevo API first if enabled
+        if (brevoEnabled && brevoApiKey != null && !brevoApiKey.isEmpty()) {
+            log.info("Attempting to send OTP via Brevo API");
+            CompletableFuture<OtpVerificationResult> brevoResult = sendOtpViaBrevoAPI(email, content);
+
+            // If Brevo fails, fallback to SMTP
+            if (!brevoResult.join().isSuccess()) {
+                log.warn("Brevo API failed for OTP, falling back to SMTP");
+                return sendOtpViaSMTP(email, content);
+            }
+            return brevoResult;
+        }
+
+        // Use SMTP if Brevo not enabled
+        log.info("Using SMTP to send OTP email");
+        return sendOtpViaSMTP(email, content);
+    }
+
+    private CompletableFuture<OtpVerificationResult> sendOtpViaSMTP(String email, EmailTemplate.OtpEmailContent content) {
         try {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -158,18 +189,94 @@ public class OTPServiceImpl implements OTPService {
 
             javaMailSender.send(mimeMessage);
 
-            log.info("OTP email sent successfully to: {}", email);
+            log.info("✅ OTP email sent via SMTP to: {}", email);
             return otpSentSuccessResult();
 
         } catch (MessagingException | MailException e) {
-            log.error("Failed to send OTP email to: {}", email, e);
+            log.error("❌ Failed to send OTP email via SMTP to: {}", email, e);
             return otpSendFailedResult();
+        }
+    }
+
+    private CompletableFuture<OtpVerificationResult> sendOtpViaBrevoAPI(String email, EmailTemplate.OtpEmailContent content) {
+        try {
+            String logoBase64 = getLogoBase64();
+            String htmlContent = buildHtmlContentForBrevo(content.subject(), content.body(), logoBase64);
+
+            // Build sender object
+            Map<String, String> sender = new HashMap<>();
+            sender.put("name", fromName);
+            sender.put("email", fromEmail);
+
+            // Build recipient object
+            Map<String, String> recipient = new HashMap<>();
+            recipient.put("email", email);
+
+            // Build request body according to Brevo API docs
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("sender", sender);
+            requestBody.put("to", new Object[]{recipient});
+            requestBody.put("subject", content.subject());
+            requestBody.put("htmlContent", htmlContent);
+
+            // Build headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("api-key", brevoApiKey);
+            headers.set("accept", "application/json");
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            // Send request
+            ResponseEntity<String> response = restTemplate.exchange(
+                    BREVO_API_URL,
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("✅ OTP email sent via Brevo API to: {}", email);
+                return otpSentSuccessResult();
+            } else {
+                log.error("❌ Brevo API error: {} - {}", response.getStatusCode(), response.getBody());
+                return otpSendFailedResult();
+            }
+
+        } catch (Exception e) {
+            log.error("❌ Failed to send OTP email via Brevo API to: {}", email, e);
+            return otpSendFailedResult();
+        }
+    }
+
+    private String getLogoBase64() {
+        try {
+            ClassPathResource logoResource = new ClassPathResource("logo.png");
+            byte[] logoBytes = Files.readAllBytes(logoResource.getFile().toPath());
+            return Base64.getEncoder().encodeToString(logoBytes);
+        } catch (IOException e) {
+            log.warn("Could not load logo.png, email will be sent without logo", e);
+            return "";
         }
     }
 
     private String buildHtmlContent(String title, String body) {
         return "<html><body>" +
                 "<img src='cid:logo' style='width:200px; height:auto;' />" +
+                "<h2>" + title + "</h2>" +
+                "<p>" + body + "</p>" +
+                "</body></html>";
+    }
+
+    private String buildHtmlContentForBrevo(String title, String body, String logoBase64) {
+        String logoHtml = "";
+        if (!logoBase64.isEmpty()) {
+            logoHtml = "<img src='data:image/png;base64," + logoBase64 +
+                    "' style='width:200px; height:auto;' />";
+        }
+
+        return "<html><body>" +
+                logoHtml +
                 "<h2>" + title + "</h2>" +
                 "<p>" + body + "</p>" +
                 "</body></html>";
