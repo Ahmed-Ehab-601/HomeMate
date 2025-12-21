@@ -271,3 +271,66 @@ export async function completeTask(taskId) {
 
     return response.json();
 }
+
+/**
+ * Get tasker busy time for a specific day
+ * @param {number} taskerId - ID of the tasker
+ * @param {string} day - Date in YYYY-MM-DD format
+ * @returns {Promise<Object>} Map of LocalDateTime to estimation hours
+ */
+export async function getTaskerBusyTime(taskerId, day) {
+    const response = await apiFetch(`${baseUrl}/api/task/get-tasker-tasks/${taskerId}?day=${day}`, {
+        method: "GET",
+    }).catch((error) => {
+        throw {
+            status: 0,
+            error: "NETWORK_ERROR",
+            message: "Network error. Please check your connection.",
+        };
+    });
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw {
+            status: response.status,
+            error: data.error || "SERVER_ERROR",
+            message: data.message || "Failed to load tasker busy time",
+        };
+    }
+
+    const data = await response.json();
+    // If empty response, return empty object
+    if (!data || Object.keys(data).length === 0) {
+        return {};
+    }
+    return data;
+}
+
+/**
+ * Add estimation time to a task
+ * @param {number} taskId - ID of the task
+ * @param {number} estimation - Estimation in hours
+ * @returns {Promise<void>}
+ */
+export async function addTaskEstimation(taskId, estimation) {
+    const response = await apiFetch(`${baseUrl}/api/task/add-estimation/${taskId}?estimation=${estimation}`, {
+        method: "POST",
+    }).catch((error) => {
+        throw {
+            status: 0,
+            error: "NETWORK_ERROR",
+            message: "Network error. Please check your connection.",
+        };
+    });
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw {
+            status: response.status,
+            error: data.error || "SERVER_ERROR",
+            message: data.message || "Failed to add estimation",
+        };
+    }
+
+    return;
+}

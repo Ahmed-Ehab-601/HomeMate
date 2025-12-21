@@ -12,14 +12,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-public class TaskerBusyTimeMapper implements ResultSetExtractor<Map<LocalDateTime,LocalTime>> {
+public class TaskerBusyTimeMapper implements ResultSetExtractor<Map<LocalDateTime,Integer>> {
     @Override
-    public Map<LocalDateTime, LocalTime> extractData(ResultSet rs) throws SQLException {
-        Map<LocalDateTime, LocalTime> busyTimes = new HashMap<>();
+    public Map<LocalDateTime, Integer> extractData(ResultSet rs) throws SQLException {
+        Map<LocalDateTime, Integer> busyTimes = new HashMap<>();
 
         while (rs.next()) {
             LocalDateTime startDate = rs.getTimestamp("startDate").toLocalDateTime();
-            LocalTime estimation = rs.getTime("estimation").toLocalTime();
+            int estimation = rs.getInt("estimation");
             busyTimes.put(startDate, estimation);
         }
 

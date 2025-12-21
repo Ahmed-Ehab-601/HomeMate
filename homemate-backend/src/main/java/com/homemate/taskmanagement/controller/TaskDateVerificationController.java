@@ -27,7 +27,7 @@ public class TaskDateVerificationController {
     public ResponseEntity<?> getAllBusyTime(@PathVariable Long taskerId,
                                             @RequestParam LocalDate day){
           try {
-             Map<LocalDateTime, LocalTime> response= taskRequestService.getAllBusyTime(taskerId,day);
+             Map<LocalDateTime, Integer> response= taskRequestService.getAllBusyTime(taskerId,day);
              if(response.isEmpty())
              { return new ResponseEntity <> (HttpEntity.EMPTY,HttpStatus.OK);}
              else {
@@ -42,13 +42,13 @@ public class TaskDateVerificationController {
     @PostMapping("/add-estimation/{taskId}")
     @PreAuthorize("hasRole('TASKER')")
     public ResponseEntity<?> addEstimationTime(@PathVariable Long taskId,
-                                               @RequestParam LocalTime estimation,
+                                               @RequestParam int estimation,
                                                @AuthenticationPrincipal AppUserDetails userDetails) {
-    try{
+//    try{
         taskRequestService.addEstimation(taskId,estimation,userDetails);
         return ResponseEntity.status(HttpStatus.OK).build();
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-    }
+//    } catch (Exception e) {
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//    }
     }
 }

@@ -1,5 +1,6 @@
 package com.homemate.taskmanagement.service;
 
+import com.homemate.TaskerProfile.models.TaskerAvailability;
 import com.homemate.notification.domains.dto.EmailRequest;
 import com.homemate.notification.domains.model.EmailType;
 import com.homemate.notification.service.EmailService;
@@ -80,11 +81,15 @@ public class TaskRequestService {
         }
     }
 
-    public Map<LocalDateTime, LocalTime> getAllBusyTime(Long taskerId, LocalDate day) {
+    public Map<LocalDateTime, Integer> getAllBusyTime(Long taskerId, LocalDate day) {
+        if(TaskerAvailability.UNAVAILABLE.equals(taskRequestDao.CheckAvailability(taskerId))){
+           System.out.println("This Tasker is UNAVAILABLE Now");
+            throw new RuntimeException("This Tasker is UNAVAILABLE Now");
+        }
         return taskRequestDao.getBusytime(taskerId,day);
     }
 
-    public void addEstimation(Long taskId, LocalTime estimation, AppUserDetails userDetails) {
+    public void addEstimation(Long taskId, int estimation, AppUserDetails userDetails) {
         Optional<TaskDto> taskDto= taskRequestDao.getTaskDetails(taskId);
         if(taskDto.isPresent() &&( taskDto.get().getTaskerID() == userDetails.getId())) {
          taskRequestDao.add(taskId,estimation);

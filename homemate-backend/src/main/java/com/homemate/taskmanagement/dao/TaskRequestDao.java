@@ -1,5 +1,6 @@
 package com.homemate.taskmanagement.dao;
 
+import com.homemate.TaskerProfile.models.TaskerAvailability;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
 import com.homemate.taskmanagement.exceptions.DuplicateChatException;
@@ -148,16 +149,31 @@ public class TaskRequestDao {
         return count !=null && count >= limit;
     }
 
-    public Map<LocalDateTime, LocalTime> getBusytime(Long taskerId, LocalDate day) {
-        String sql = "SELECT  startDate , estimation FROM Task WHERE taskerID = ? AND StartDate() = ? ";
-        return jdbcTemplate.query(sql,taskerBusyTimeMapper,taskerId,day);
+    public Map<LocalDateTime, Integer> getBusytime(Long taskerId, LocalDate day) {
+        LocalDateTime startOfDay = day.atStartOfDay();
+        LocalDateTime endOfDay = day.plusDays(1).atStartOfDay();
+        String sql = "SELECT  startDate , estimation FROM Task WHERE taskerID = ? AND startDate >= ? AND startDate < ? ";
+        return jdbcTemplate.query(sql,taskerBusyTimeMapper,
+                taskerId,
+                Timestamp.valueOf(startOfDay),
+                Timestamp.valueOf(endOfDay));
     }
 
-    public void add(Long taskId, LocalTime estimation) {
+    public void add(Long taskId, int estimation) {
         String sql = "UPDATE Task " +
                 "SET estimation = ? " +
                 "WHERE taskID = ?";
         jdbcTemplate.update(sql,estimation,taskId);
+    }
+
+    public TaskerAvailability CheckAvailability(Long taskerId) {
+        String sql = "SELECT availability FROM Tasker WHERE taskerID = ?";
+        String availabilityStr = jdbcTemplate.queryForObject(sql, String.class, taskerId);
+
+        if (availabilityStr == null) {
+            return null;
+        }
+        return TaskerAvailability.valueOf(availabilityStr.toUpperCase());
     }
     //CREATE TABLE Task (
     //    taskID INT AUTO_INCREMENT PRIMARY KEY,
