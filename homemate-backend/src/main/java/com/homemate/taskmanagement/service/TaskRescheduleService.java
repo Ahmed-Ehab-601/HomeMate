@@ -96,7 +96,7 @@ public class TaskRescheduleService {
                 (status.get() != Status.InReview && status.get() != Status.Accepted)) {
             throw new BadRescheduleException("Task must be InReview or Accepted");
         }
-        if(checkValidEstimation(taskID)==false) {
+        if(checkValidEstimation(taskID,rescheduleRequestDto.getNewStartDate())==false) {
             throw new BadRescheduleException("Task must be Rescheduled to valid Time");
         }
         LocalDateTime newStart = rescheduleRequestDto.getNewStartDate();
@@ -104,23 +104,24 @@ public class TaskRescheduleService {
             throw new BadRescheduleException("New date cannot be in the past");
         }
     }
-    public Boolean checkValidEstimation(Long taskId) {
+    public Boolean checkValidEstimation(Long taskId, LocalDateTime newStartDateTime) {
         Optional<TaskDto> taskDto = taskRequestDao.getTaskDetails(taskId);
         if (taskDto.isEmpty()) return false;
-        int estimation=taskRequestDao.getEstimation(taskId);
+
+        int estimation = taskRequestDao.getEstimation(taskId);
+
         Map<LocalDateTime, Integer> mp = taskRequestDao.getBusytime(
                 taskDto.get().getTaskerID(),
-                taskDto.get().getStartDate().toLocalDate()
+                newStartDateTime.toLocalDate()
         );
 
-        LocalDateTime startDateTime = taskDto.get().getStartDate();
-        LocalDateTime endDateTime = startDateTime.plusMinutes(estimation);
+        LocalDateTime endDateTime = newStartDateTime.plusMinutes(estimation);
 
         for (Map.Entry<LocalDateTime, Integer> entry : mp.entrySet()) {
             LocalDateTime busyStart = entry.getKey();
             LocalDateTime busyEnd = busyStart.plusMinutes(entry.getValue());
 
-            if (startDateTime.isBefore(busyEnd) && endDateTime.isAfter(busyStart)) {
+            if (newStartDateTime.isBefore(busyEnd) && endDateTime.isAfter(busyStart)) {
                 return false;
             }
         }

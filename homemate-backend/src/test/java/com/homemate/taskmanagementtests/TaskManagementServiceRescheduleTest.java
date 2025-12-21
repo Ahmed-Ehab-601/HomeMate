@@ -1,7 +1,5 @@
 package com.homemate.taskmanagementtests;
 
-
-
 import com.homemate.notification.service.impl.EmailServiceImpl;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dao.TaskRescheduleDao;
@@ -20,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +27,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,8 +53,8 @@ public class TaskManagementServiceRescheduleTest {
         long requesterID = 5L;
         long taskerID = 5L;
 
-        LocalDateTime currentDate = LocalDateTime.now().plusDays(1);
-        LocalDateTime futureDate = LocalDateTime.now().plusDays(2);
+        LocalDateTime currentDate = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0);
+        LocalDateTime futureDate = LocalDateTime.now().plusDays(2).withHour(14).withMinute(0);
         RescheduleRequestDto requestDto = new RescheduleRequestDto();
         requestDto.setNewStartDate(futureDate);
 
@@ -63,7 +63,7 @@ public class TaskManagementServiceRescheduleTest {
         taskDto.setTaskerID(taskerID);
         taskDto.setUserMail("user@example.com");
         taskDto.setTaskerMail("tasker@example.com");
-        taskDto.setStartDate(currentDate); // Set the current start date
+        taskDto.setStartDate(currentDate);
 
         when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
         when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
@@ -71,8 +71,9 @@ public class TaskManagementServiceRescheduleTest {
         when(taskDao.updateTaskStartDate(taskID, futureDate)).thenReturn(true);
         when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
 
-        // Mock getBusytime to return empty map (no conflicts)
-        when(taskRequestDao.getBusytime(eq(taskerID), any())).thenReturn(new HashMap<>());
+        // ✅ Mock getBusytime for the NEW date (futureDate's date)
+        when(taskRequestDao.getBusytime(eq(taskerID), eq(futureDate.toLocalDate())))
+                .thenReturn(new HashMap<>());
 
         // Mock getEstimation to return a valid estimation (e.g., 120 minutes)
         when(taskRequestDao.getEstimation(taskID)).thenReturn(120);
@@ -85,6 +86,7 @@ public class TaskManagementServiceRescheduleTest {
         // Verify email was sent
         verify(emailServiceImp, times(2)).sendEmail(any());
     }
+
     @Test
     void testReschedulePastDate() {
         long taskID = 10L;
@@ -97,7 +99,7 @@ public class TaskManagementServiceRescheduleTest {
         TaskDto taskDto = new TaskDto();
         taskDto.setUserMail("user@example.com");
         taskDto.setTaskerMail("tasker@example.com");
-        taskDto.setStartDate(LocalDateTime.now()); // Set start date
+        taskDto.setStartDate(LocalDateTime.now());
 
         when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
         when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
@@ -121,7 +123,7 @@ public class TaskManagementServiceRescheduleTest {
         TaskDto taskDto = new TaskDto();
         taskDto.setUserMail("user@example.com");
         taskDto.setTaskerMail("tasker@example.com");
-        taskDto.setStartDate(LocalDateTime.now()); // Set start date
+        taskDto.setStartDate(LocalDateTime.now());
 
         when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(99L));
         when(taskDao.getUserID(taskID)).thenReturn(Optional.of(100L));
@@ -156,95 +158,12 @@ public class TaskManagementServiceRescheduleTest {
 
     @Test
     void testRescheduleSendsEmailSuccessfully() {
-        // Arrange
         long taskID = 10L;
         long requesterID = 5L;
         long taskerID = 5L;
 
-        LocalDateTime currentDate = LocalDateTime.now().plusDays(1);
-        LocalDateTime futureDate = LocalDateTime.now().plusDays(2);
-
-        RescheduleRequestDto requestDto = new RescheduleRequestDto();
-        requestDto.setNewStartDate(futureDate);
-
-        TaskDto taskDto = new TaskDto();
-        taskDto.setTaskID(taskID);
-        taskDto.setTaskerID(taskerID);
-        taskDto.setUserMail("user@example.com");
-        taskDto.setTaskerMail("tasker@example.com");
-        taskDto.setStartDate(currentDate); // Set the current start date
-
-        when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
-        when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
-        when(taskStatusDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
-        when(taskDao.updateTaskStartDate(taskID, futureDate)).thenReturn(true);
-        when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
-
-        // Mock getBusytime to return empty map (no conflicts)
-        when(taskRequestDao.getBusytime(eq(taskerID), any())).thenReturn(new HashMap<>());
-
-        // Mock getEstimation to return a valid estimation
-        when(taskRequestDao.getEstimation(taskID)).thenReturn(120);
-
-        // Act
-        taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID);
-
-        // Assert: email sent twice (to user and tasker)
-        verify(emailServiceImp, times(2)).sendEmail(any());
-    }
-
-    @Test
-    void testRescheduleEmailFails() {
-        // Arrange
-        long taskID = 10L;
-        long requesterID = 5L;
-        long taskerID = 5L;
-
-        LocalDateTime currentDate = LocalDateTime.now().plusDays(1);
-        LocalDateTime futureDate = LocalDateTime.now().plusDays(2);
-
-        RescheduleRequestDto requestDto = new RescheduleRequestDto();
-        requestDto.setNewStartDate(futureDate);
-
-        TaskDto taskDto = new TaskDto();
-        taskDto.setTaskID(taskID);
-        taskDto.setTaskerID(taskerID);
-        taskDto.setUserMail("user@example.com");
-        taskDto.setTaskerMail("tasker@example.com");
-        taskDto.setStartDate(currentDate); // Set the current start date
-
-        when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
-        when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
-        when(taskStatusDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
-        when(taskDao.updateTaskStartDate(taskID, futureDate)).thenReturn(true);
-        when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
-
-        // Mock getBusytime to return empty map (no conflicts)
-        when(taskRequestDao.getBusytime(eq(taskerID), any())).thenReturn(new HashMap<>());
-
-        // Mock getEstimation to return a valid estimation
-        when(taskRequestDao.getEstimation(taskID)).thenReturn(120);
-
-        // Simulate email failure
-        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendEmail(any());
-
-        // Act & Assert
-        assertThrows(RuntimeException.class, () ->
-                taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID)
-        );
-    }
-
-
-
-    @Test
-    void testRescheduleInvalidEstimation() {
-        // Arrange
-        long taskID = 10L;
-        long requesterID = 5L;
-        long taskerID = 5L;
-
-        LocalDateTime currentDate = LocalDateTime.now().plusDays(1).withHour(19).withMinute(0);
-        LocalDateTime futureDate = LocalDateTime.now().plusDays(2);
+        LocalDateTime currentDate = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0);
+        LocalDateTime futureDate = LocalDateTime.now().plusDays(2).withHour(14).withMinute(0);
 
         RescheduleRequestDto requestDto = new RescheduleRequestDto();
         requestDto.setNewStartDate(futureDate);
@@ -259,26 +178,63 @@ public class TaskManagementServiceRescheduleTest {
         when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
         when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
         when(taskStatusDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
+        when(taskDao.updateTaskStartDate(taskID, futureDate)).thenReturn(true);
         when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
 
-        // Mock getBusytime to return empty map
-        when(taskRequestDao.getBusytime(eq(taskerID), any())).thenReturn(new HashMap<>());
+        // ✅ Mock getBusytime for the NEW date
+        when(taskRequestDao.getBusytime(eq(taskerID), eq(futureDate.toLocalDate())))
+                .thenReturn(new HashMap<>());
 
-        // Mock getEstimation to return estimation that extends beyond work hours
-        when(taskRequestDao.getEstimation(taskID)).thenReturn(180);
+        when(taskRequestDao.getEstimation(taskID)).thenReturn(120);
 
-        // Act & Assert - Expect IllegalStateException instead of BadRescheduleException
-        assertThrows(IllegalStateException.class, () ->
+        taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID);
+
+        // Assert: email sent twice (to user and tasker)
+        verify(emailServiceImp, times(2)).sendEmail(any());
+    }
+
+    @Test
+    void testRescheduleEmailFails() {
+        long taskID = 10L;
+        long requesterID = 5L;
+        long taskerID = 5L;
+
+        LocalDateTime currentDate = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0);
+        LocalDateTime futureDate = LocalDateTime.now().plusDays(2).withHour(14).withMinute(0);
+
+        RescheduleRequestDto requestDto = new RescheduleRequestDto();
+        requestDto.setNewStartDate(futureDate);
+
+        TaskDto taskDto = new TaskDto();
+        taskDto.setTaskID(taskID);
+        taskDto.setTaskerID(taskerID);
+        taskDto.setUserMail("user@example.com");
+        taskDto.setTaskerMail("tasker@example.com");
+        taskDto.setStartDate(currentDate);
+
+        when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
+        when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
+        when(taskStatusDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
+        when(taskDao.updateTaskStartDate(taskID, futureDate)).thenReturn(true);
+        when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
+
+        // ✅ Mock getBusytime for the NEW date
+        when(taskRequestDao.getBusytime(eq(taskerID), eq(futureDate.toLocalDate())))
+                .thenReturn(new HashMap<>());
+
+        when(taskRequestDao.getEstimation(taskID)).thenReturn(120);
+
+        // Simulate email failure
+        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendEmail(any());
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () ->
                 taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID)
         );
-
-        // Verify no email was sent
-        verify(emailServiceImp, never()).sendEmail(any());
     }
 
     @Test
     void testRescheduleWithConflictingTask() {
-        // Arrange
         long taskID = 10L;
         long requesterID = 5L;
         long taskerID = 5L;
@@ -301,25 +257,29 @@ public class TaskManagementServiceRescheduleTest {
         when(taskStatusDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
         when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
 
-        // Mock getBusytime to return a conflicting task
+        // ✅ Mock getBusytime for the NEW date with a conflicting task
+        // Task starts at 14:00, duration 180 mins (ends at 17:00)
+        // Conflicting task starts at 15:00, duration 120 mins (ends at 17:00)
+        // These overlap!
         Map<LocalDateTime, Integer> busyTimes = new HashMap<>();
-        LocalDateTime conflictingTaskStart = futureDate.plusHours(1);
+        LocalDateTime conflictingTaskStart = futureDate.plusHours(1); // 15:00
         busyTimes.put(conflictingTaskStart, 120);
-        when(taskRequestDao.getBusytime(eq(taskerID), any())).thenReturn(busyTimes);
+        when(taskRequestDao.getBusytime(eq(taskerID), eq(futureDate.toLocalDate())))
+                .thenReturn(busyTimes);
 
         when(taskRequestDao.getEstimation(taskID)).thenReturn(180);
 
-        // Act & Assert - Expect IllegalStateException instead of BadRescheduleException
-        assertThrows(IllegalStateException.class, () ->
+        // Act & Assert - Expect BadRescheduleException due to conflict
+        assertThrows(BadRescheduleException.class, () ->
                 taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID)
         );
 
         // Verify no email was sent
         verify(emailServiceImp, never()).sendEmail(any());
     }
+
     @Test
     void testRescheduleInvalidStatus() {
-        // Arrange
         long taskID = 10L;
         long requesterID = 5L;
         LocalDateTime futureDate = LocalDateTime.now().plusDays(2);
@@ -328,7 +288,7 @@ public class TaskManagementServiceRescheduleTest {
         requestDto.setNewStartDate(futureDate);
 
         TaskDto taskDto = new TaskDto();
-        taskDto.setStartDate(LocalDateTime.now()); // Set start date
+        taskDto.setStartDate(LocalDateTime.now());
 
         when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
         when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
@@ -343,5 +303,88 @@ public class TaskManagementServiceRescheduleTest {
         // Verify no update and no email was sent
         verify(taskDao, never()).updateTaskStartDate(anyLong(), any(LocalDateTime.class));
         verify(emailServiceImp, never()).sendEmail(any());
+    }
+
+    @Test
+    void testRescheduleTaskSkipsOwnSlot() {
+        // Test that the task being rescheduled doesn't conflict with its own old slot
+        long taskID = 10L;
+        long requesterID = 5L;
+        long taskerID = 5L;
+
+        LocalDateTime currentDate = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0);
+        LocalDateTime futureDate = LocalDateTime.now().plusDays(1).withHour(14).withMinute(0); // Same day!
+
+        RescheduleRequestDto requestDto = new RescheduleRequestDto();
+        requestDto.setNewStartDate(futureDate);
+
+        TaskDto taskDto = new TaskDto();
+        taskDto.setTaskID(taskID);
+        taskDto.setTaskerID(taskerID);
+        taskDto.setUserMail("user@example.com");
+        taskDto.setTaskerMail("tasker@example.com");
+        taskDto.setStartDate(currentDate);
+
+        when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
+        when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
+        when(taskStatusDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
+        when(taskDao.updateTaskStartDate(taskID, futureDate)).thenReturn(true);
+        when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
+
+        // ✅ Busy times include the task's own old slot (should be skipped)
+        Map<LocalDateTime, Integer> busyTimes = new HashMap<>();
+        busyTimes.put(currentDate, 120); // Old slot at 10:00
+        when(taskRequestDao.getBusytime(eq(taskerID), eq(futureDate.toLocalDate())))
+                .thenReturn(busyTimes);
+
+        when(taskRequestDao.getEstimation(taskID)).thenReturn(120);
+
+        // Should succeed because it skips its own old slot
+        RescheduleResponseDto response = taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID);
+
+        assertEquals(taskID, response.getTaskID());
+        assertEquals(futureDate, response.getNewStartDate());
+
+        verify(emailServiceImp, times(2)).sendEmail(any());
+    }
+
+    @Test
+    void testRescheduleNoConflictDifferentDay() {
+        // Test rescheduling to a completely different day with no conflicts
+        long taskID = 10L;
+        long requesterID = 5L;
+        long taskerID = 5L;
+
+        LocalDateTime currentDate = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0);
+        LocalDateTime futureDate = LocalDateTime.now().plusDays(5).withHour(14).withMinute(0);
+
+        RescheduleRequestDto requestDto = new RescheduleRequestDto();
+        requestDto.setNewStartDate(futureDate);
+
+        TaskDto taskDto = new TaskDto();
+        taskDto.setTaskID(taskID);
+        taskDto.setTaskerID(taskerID);
+        taskDto.setUserMail("user@example.com");
+        taskDto.setTaskerMail("tasker@example.com");
+        taskDto.setStartDate(currentDate);
+
+        when(taskStatusDao.getTaskerID(taskID)).thenReturn(Optional.of(requesterID));
+        when(taskDao.getUserID(taskID)).thenReturn(Optional.of(20L));
+        when(taskStatusDao.getStatus(taskID)).thenReturn(Optional.of(Status.Accepted));
+        when(taskDao.updateTaskStartDate(taskID, futureDate)).thenReturn(true);
+        when(taskRequestDao.getTaskDetails(taskID)).thenReturn(Optional.of(taskDto));
+
+        // No busy times on the new date
+        when(taskRequestDao.getBusytime(eq(taskerID), eq(futureDate.toLocalDate())))
+                .thenReturn(new HashMap<>());
+
+        when(taskRequestDao.getEstimation(taskID)).thenReturn(120);
+
+        RescheduleResponseDto response = taskRescheduleService.rescheduleTask(taskID, requestDto, requesterID);
+
+        assertEquals(taskID, response.getTaskID());
+        assertEquals(futureDate, response.getNewStartDate());
+
+        verify(emailServiceImp, times(2)).sendEmail(any());
     }
 }

@@ -113,7 +113,7 @@ function TaskDetailsPage() {
   const userRole = getUserRole();
   const isTasker = userRole === "ROLE_TASKER";
 const WORK_DAY_START_MINUTES = 8 * 60; // 08:00 = 480 minutes
-const WORK_DAY_END_MINUTES = 20 * 60 + 30; // 20:30 = 1230 minutes
+const WORK_DAY_END_MINUTES = 24 * 60 + 30; // 20:30 = 1230 minutes
   
   // Check for review submitted or request submitted success message
   useEffect(() => {

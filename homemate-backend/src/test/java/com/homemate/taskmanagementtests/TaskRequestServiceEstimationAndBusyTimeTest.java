@@ -151,7 +151,7 @@ class TaskRequestServiceEstimationAndBusyTimeTest {
                 () -> taskRequestService.getAllBusyTime(5L, LocalDate.now())
         );
 
-        assertEquals("This Tasker is UNAVAILABLE Now", ex.getMessage());
+        assertEquals("UNAVAILABLE: This Tasker is UNAVAILABLE Now", ex.getMessage());
         verify(taskRequestDao, never()).getBusytime(anyLong(), any());
     }
 

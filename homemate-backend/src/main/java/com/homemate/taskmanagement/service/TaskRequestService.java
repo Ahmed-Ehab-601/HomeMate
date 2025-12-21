@@ -85,21 +85,21 @@ public class TaskRequestService {
     public Map<LocalDateTime, Integer> getAllBusyTime(Long taskerId, LocalDate day) {
         if(TaskerAvailability.UNAVAILABLE.equals(taskRequestDao.CheckAvailability(taskerId))){
            System.out.println("This Tasker is UNAVAILABLE Now");
-            throw new RuntimeException("This Tasker is UNAVAILABLE Now");
+            throw new BadEstimationException("UNAVAILABLE: This Tasker is UNAVAILABLE Now");
         }
 
         return taskRequestDao.getBusytime(taskerId,day);
     }
 
     public void addEstimation(Long taskId, int estimation, AppUserDetails userDetails) {
-        if (estimation<=0) throw new RuntimeException("estimation need to be > 0");
-        if(checkValidEstimation(estimation,taskId)==false) throw new RuntimeException("invalid estimation");;
+        if (estimation<=0) throw new BadEstimationException("estimation need to be > 0");
+        if(checkValidEstimation(estimation,taskId)==false) throw new BadEstimationException("invalid estimation");;
         Optional<TaskDto> taskDto= taskRequestDao.getTaskDetails(taskId);
         if(taskDto.isPresent() &&( taskDto.get().getTaskerID() == userDetails.getId())) {
          taskRequestDao.add(taskId,estimation);
         }
         else
-            throw new RuntimeException("This Tasker has no Access to that task");
+            throw new BadEstimationException("This Tasker has no Access to that task");
     }
     public Boolean checkValidEstimation(int estimation, Long taskId) {
         Optional<TaskDto> taskDto = taskRequestDao.getTaskDetails(taskId);
