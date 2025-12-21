@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { baseUrl } from '../../utils/apiClient';
 import {
   Card,
   CardContent,
@@ -49,7 +50,7 @@ const ReportDetailsPage = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('homemate_token');
-        const response = await fetch(`/api/reports/${id}`, {
+        const response = await fetch(`${baseUrl}/api/reports/${id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -123,7 +124,7 @@ const ReportDetailsPage = () => {
     setCompleteLoading(true);
     try {
       const token = localStorage.getItem('homemate_token');
-      const response = await fetch(`/api/reports/${id}/complete`, {
+      const response = await fetch(`${baseUrl}/api/reports/${id}/complete`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

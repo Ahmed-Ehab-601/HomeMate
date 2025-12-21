@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import { apiFetch } from "../utils/apiClient";
+import { apiFetch, baseUrl } from "../utils/apiClient";
 import "../styles/ReportForm.css";
 
 export default function SubmitReportPage() {
@@ -38,7 +38,7 @@ export default function SubmitReportPage() {
     }
 
     try {
-      const response = await apiFetch("/api/reports", {
+      const response = await apiFetch(`${baseUrl}/api/reports`, {
         method: "POST",
         body: JSON.stringify({
           taskID: Number(taskId),

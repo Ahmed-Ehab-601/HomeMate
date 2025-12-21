@@ -1,4 +1,4 @@
-import { apiFetch, parseJson } from '../../utils/apiClient';
+import { apiFetch, parseJson, baseUrl } from '../../utils/apiClient';
 
 // backend API uses /api/admin prefix
 const ADMIN_PREFIX = '/api/admin';
@@ -7,7 +7,7 @@ const ADMIN_PREFIX = '/api/admin';
  * Enhanced apiFetch with admin-specific logging
  */
 async function adminApiFetch(url, options = {}) {
-    const fullUrl = url.startsWith('http') ? url : `${ADMIN_PREFIX}${url}`;
+    const fullUrl = url.startsWith('http') ? url : `${baseUrl}${ADMIN_PREFIX}${url}`;
     const token = localStorage.getItem('homemate_token');
     const user = JSON.parse(localStorage.getItem('homemate_user') || '{}');
 
@@ -203,7 +203,6 @@ export const getReports = async ({
 } = {}) => {
     const params = { pageNumber, pageSize };
 
-    // Only include filter params if they have values
     if (header) params.header = header;
     if (body) params.body = body;
     if (taskID) params.taskID = taskID;
@@ -211,7 +210,7 @@ export const getReports = async ({
     if (adminStatus) params.adminStatus = adminStatus;
 
     const queryString = buildQueryString(params);
-    const response = await apiFetch(`/api/reports/short-reports?${queryString}`);
+    const response = await apiFetch(`${baseUrl}/api/reports/short-reports?${queryString}`);
     const data = await parseJson(response);
 
     if (!response.ok) {
