@@ -15,20 +15,7 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-// Helper function to convert byte array to base64
-const convertImageData = (service) => {
-  if (service?.imageData && Array.isArray(service.imageData)) {
-    try {
-      const base64 = btoa(
-        service.imageData.map(byte => String.fromCharCode(byte)).join('')
-      );
-      service.imageData = base64;
-    } catch (error) {
-      console.error('Error converting image data:', error);
-    }
-  }
-  return service;
-};
+
 
 export const setUserOffline = async (userId) => {
   const token = localStorage.getItem("token");
@@ -97,13 +84,7 @@ export const serviceAPI = {
         await handleApiError(response);
       }
 
-      const data = await response.json();
-
-      if (Array.isArray(data)) {
-        return data.map(service => convertImageData(service));
-      }
-
-      return data;
+      return await response.json();
     } catch (err) {
       console.error('Fetch error:', err);
       throw err;
@@ -135,13 +116,7 @@ export const serviceAPI = {
         await handleApiError(response);
       }
 
-      const data = await response.json();
-
-      if (data?.service) {
-        data.service = convertImageData(data.service);
-      }
-
-      return data;
+      return await response.json();
     } catch (err) {
       console.error('Fetch error:', err);
       throw err;
