@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchTaskerTasks } from "../api/tasksApi";
 import TaskCard from "../components/TaskCard";
 import { useAuth } from "../contexts/AuthContext";
+import TaskCalendar from "../components/TaskCalendar";
+
 const STATUS_OPTIONS = [
   { value: "All", label: "All" },
   { value: "InReview", label: "In Review" },
@@ -29,6 +31,7 @@ function TaskerTasksPage() {
   const [selectedStatus, setSelectedStatus] = useState(initialStatus);
   const [loading, setLoading] = useState(true); // Start with loading true for initial fetch
   const [error, setError] = useState(null);
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
 
   // TODO: Replace with actual tasker ID from authentication
   const { user } = useAuth(); // ← ADD THIS
@@ -134,116 +137,142 @@ function TaskerTasksPage() {
 
   return (
     <main className="page">
-      {error && (
-        <div className="error-banner-fixed">
-          <span className="error-banner__icon">⚠️</span>
-          <div className="error-banner__content">
-            <p className="error-banner__message">{error}</p>
-            <div className="error-banner__actions">
+      {viewMode === "calendar" ? (
+        <TaskCalendar onBackToList={() => setViewMode("list")} />
+      ) : (
+        <>
+          {error && (
+            <div className="error-banner-fixed">
+              <span className="error-banner__icon">⚠️</span>
+              <div className="error-banner__content">
+                <p className="error-banner__message">{error}</p>
+                <div className="error-banner__actions">
+                  <button
+                    type="button"
+                    className="error-banner__retry"
+                    onClick={handleRetry}
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
               <button
                 type="button"
-                className="error-banner__retry"
-                onClick={handleRetry}
+                className="error-banner__close"
+                onClick={handleDismissError}
+                aria-label="Dismiss error"
               >
-                Retry
+                ×
               </button>
             </div>
-          </div>
-          <button
-            type="button"
-            className="error-banner__close"
-            onClick={handleDismissError}
-            aria-label="Dismiss error"
-          >
-            ×
-          </button>
-        </div>
-      )}
+          )}
 
-      <section>
-        <div className="filter-section">
-          <div>
-            <p className="section-kicker">Task Management</p>
-            <h1 className="section-heading">My Tasks</h1>
-          </div>
-          <div className="filter-dropdown">
-            <label htmlFor="status-filter">Filter by Status:</label>
-            <select
-              id="status-filter"
-              value={selectedStatus}
-              onChange={handleStatusChange}
-              disabled={loading}
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+          <section>
+            <div className="filter-section">
+              <div>
+                <p className="section-kicker">Task Management</p>
+                <h1 className="section-heading">My Tasks</h1>
+              </div>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <div className="filter-dropdown">
+                  <label htmlFor="status-filter">Filter by Status:</label>
+                  <select
+                    id="status-filter"
+                    value={selectedStatus}
+                    onChange={handleStatusChange}
+                    disabled={loading}
+                  >
+                    {STATUS_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setViewMode("calendar")}
+                  style={{
+                    padding: '8px 20px',
+                    backgroundColor: '#c6ff4d',
+                    color: '#111827',
+                    border: '1px solid #a7df2d',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#a7df2d'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#c6ff4d'}
+                >
+                  📅 Calendar View
+                </button>
+              </div>
+            </div>
+            {loading && <div className="load-indicator">Loading tasks…</div>}
 
-        {loading && <div className="load-indicator">Loading tasks…</div>}
-
-        {!loading && totalCount === 0 && (
-          <div className="empty-state-tasks">
-            <div className="empty-state-tasks__icon">📋</div>
-            <h2 className="empty-state-tasks__title">
-              {selectedStatus !== "All"
-                ? "No tasks found with this status"
-                : "You haven't received any task requests yet"}
-            </h2>
-            {selectedStatus === "All" && (
-              <p className="empty-state-tasks__subtitle">
-                Task requests from customers will appear here
-              </p>
+            {!loading && totalCount === 0 && (
+              <div className="empty-state-tasks">
+                <div className="empty-state-tasks__icon">📋</div>
+                <h2 className="empty-state-tasks__title">
+                  {selectedStatus !== "All"
+                    ? "No tasks found with this status"
+                    : "You haven't received any task requests yet"}
+                </h2>
+                {selectedStatus === "All" && (
+                  <p className="empty-state-tasks__subtitle">
+                    Task requests from customers will appear here
+                  </p>
+                )}
+              </div>
             )}
-          </div>
-        )}
 
-        {!loading && totalCount > 0 && (
-          <>
-            <div className="tasks-container">
-              {tasks.map((task) => (
-                <TaskCard
-                  key={task.taskId}
-                  task={task}
-                  viewType="tasker"
-                  onTaskUpdated={loadTasks}
-                />
-              ))}
-            </div>
+            {!loading && totalCount > 0 && (
+              <>
+                <div className="tasks-container">
+                  {tasks.map((task) => (
+                    <TaskCard
+                      key={task.taskId || task.taskID || Math.random()}
+                      task={task}
+                      viewType="tasker"
+                      onTaskUpdated={loadTasks}
+                    />
+                  ))}
+                </div>
 
-            <div className="pagination-info">
-              Showing {startItem}-{endItem} of {totalCount} tasks
-            </div>
+                <div className="pagination-info">
+                  Showing {startItem}-{endItem} of {totalCount} tasks
+                </div>
 
-            <div className="pagination-controls">
-              <button
-                type="button"
-                className="pagination-btn"
-                onClick={handlePreviousPage}
-                disabled={currentPage === 0}
-              >
-                Previous
-              </button>
+                <div className="pagination-controls">
+                  <button
+                    type="button"
+                    className="pagination-btn"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 0}
+                  >
+                    Previous
+                  </button>
 
-              <span className="pagination-page-info">
-                Page {currentPage + 1} of {totalPages || 1}
-              </span>
+                  <span className="pagination-page-info">
+                    Page {currentPage + 1} of {totalPages || 1}
+                  </span>
 
-              <button
-                type="button"
-                className="pagination-btn"
-                onClick={handleNextPage}
-                disabled={currentPage >= totalPages - 1 || totalPages === 0}
-              >
-                Next
-              </button>
-            </div>
-          </>
-        )}
-      </section>
+                  <button
+                    type="button"
+                    className="pagination-btn"
+                    onClick={handleNextPage}
+                    disabled={currentPage >= totalPages - 1 || totalPages === 0}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            )}
+          </section>
+        </>
+      )}
     </main>
   );
 }
