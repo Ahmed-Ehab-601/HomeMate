@@ -62,7 +62,7 @@ CREATE TABLE Service (
     serviceID INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     description VARCHAR(500),
-    imageData BLOB,
+    imageData VARCHAR(500),
     imageName VARCHAR(200),
     imageType VARCHAR(200)
 );

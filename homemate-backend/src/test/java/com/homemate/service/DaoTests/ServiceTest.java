@@ -26,7 +26,7 @@ public class ServiceTest {
         ServiceEntity serviceEntity = ServiceEntity.builder()
                 .name("cleaning")
                 .description("great cleaning")
-                .imageData(null)
+                .imageData("1234")
                 .imageType("jpeg")
                 .imageName("img")
                 .build();
@@ -35,10 +35,10 @@ public class ServiceTest {
         undertest.save(serviceEntity);
         undertest.isServiceInUse(undertest.findIdByName("cleaning"));
         verify(jdbcTemplate).update(
-                "INSERT INTO service(name, description, imageData, imageName, imageType) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO Service(name, description, imageData, imageName, imageType) VALUES (?, ?, ?, ?, ?)",
                 "cleaning",
                 "great cleaning",
-                null,
+                "1234",
                 "img",
                 "jpeg"
         );
@@ -59,7 +59,7 @@ public class ServiceTest {
         undertest.save(serviceEntity);
 
         verify(jdbcTemplate).update(
-                "INSERT INTO service(name, description, imageData, imageName, imageType) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO Service(name, description, imageData, imageName, imageType) VALUES (?, ?, ?, ?, ?)",
                 "plumbing",
                 "professional plumbing",
                 imageData,
