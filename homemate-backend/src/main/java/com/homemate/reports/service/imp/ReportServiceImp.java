@@ -107,22 +107,24 @@ public class ReportServiceImp implements IReportService {
     @Override
     public void respondToReport(int reportID, String message) {
         Optional<DetailedReport> reportOpt = reportDao.getDetailedReportById(reportID);
-        if (reportOpt.isPresent()) {
-            DetailedReport report = reportOpt.get();
+        if (reportOpt.isEmpty()) {
+             throw new IllegalArgumentException("Report with ID " + reportID + " not found");
+        }
 
-            // Only respond if the report is marked as done
-            if (report.getAdminStatus() == null || !"done".equalsIgnoreCase(report.getAdminStatus().name())) {
-               throw new IllegalStateException("Report is not in done status");
-            }
-            
-            String subject = "Admin Response: " + report.getHeader();
-            
-            if (report.getUserEmail() != null) {
-                emailService.sendDirectEmail(report.getUserEmail(), subject, message);
-            }
-            if (report.getTaskerEmail() != null) {
-                emailService.sendDirectEmail(report.getTaskerEmail(), subject, message);
-            }
+        DetailedReport report = reportOpt.get();
+
+        // Only respond if the report is marked as done
+        if (report.getAdminStatus() == null || !"done".equalsIgnoreCase(report.getAdminStatus().name())) {
+            throw new IllegalStateException("Report is not in done status");
+        }
+        
+        String subject = "Admin Response: " + report.getHeader();
+        
+        if (report.getUserEmail() != null) {
+            emailService.sendDirectEmail(report.getUserEmail(), subject, message);
+        }
+        if (report.getTaskerEmail() != null) {
+            emailService.sendDirectEmail(report.getTaskerEmail(), subject, message);
         }
     }
 }

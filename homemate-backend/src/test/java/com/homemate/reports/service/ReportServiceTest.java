@@ -525,10 +525,9 @@ class ReportServiceTest {
         // Arrange
         when(reportDao.getDetailedReportById(999)).thenReturn(Optional.empty());
 
-        // Act
-        reportService.respondToReport(999, "Test Response");
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> reportService.respondToReport(999, "Test Response"));
 
-        // Assert
         verify(emailService, never()).sendDirectEmail(anyString(), anyString(), anyString());
     }
 }
