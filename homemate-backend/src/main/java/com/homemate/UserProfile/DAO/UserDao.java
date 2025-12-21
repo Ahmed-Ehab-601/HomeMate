@@ -136,7 +136,6 @@ public class UserDao {
                 ps.setBoolean(9, user.getIsAdmin());
                 ps.setBoolean(10, user.getIsSuspended());
                 ps.setString(11, user.getStripeCustomerId());
-
                 return ps;
             }, keyHolder);
 
@@ -149,7 +148,7 @@ public class UserDao {
 
 
     private static final String GET_PROFILE_SQL =
-    "SELECT userID, username, password, firstName, lastName, email, birthDate, gender, phone, admin, suspended " +
+    "SELECT userID, username, password, firstName, lastName, email, birthDate, gender, phone, admin, suspended" +
     "FROM Users WHERE userID = ? ";
 
     /**
@@ -164,7 +163,7 @@ public class UserDao {
     }
 
     private static final String GET_PROFILE_DTO_SQL =
-    "SELECT userID, username, firstName, lastName, email, birthDate, gender, phone, admin AS isAdmin, suspended AS isSuspended " +
+    "SELECT userID, username, firstName, lastName, email, birthDate, gender, phone, admin AS isAdmin, suspended AS isSuspended ,stripe_customer_id " +
     "FROM Users WHERE userID = ?";
 
     @SuppressWarnings("null")
@@ -196,5 +195,14 @@ public class UserDao {
     public void updatePassword(String email, String newPassword) {
         jdbcTemplate.update(UPDATE_PASSWORD_SQL, newPassword, email);
     }
+
+
+    public void updateStripeCustomerId(Long userId, String stripeCustomerId) {
+        String sql = "UPDATE Users SET stripe_customer_id = ? WHERE userID = ?";
+        jdbcTemplate.update(sql, stripeCustomerId, userId);
+    }
+
+
+
 }
 

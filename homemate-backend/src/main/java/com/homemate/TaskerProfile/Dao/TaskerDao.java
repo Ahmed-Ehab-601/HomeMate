@@ -20,13 +20,12 @@ public class TaskerDao {
     private final JdbcTemplate jdbcTemplate;
     private final TaskerProfileDTORowMapper taskerProfileDTORowMapper;
     private final TaskerRowMapper taskerRowMapper;
-    private final StripeAccountService stripeAccountService;
 
-    public TaskerDao(JdbcTemplate jdbcTemplate, TaskerProfileDTORowMapper taskerProfileDTORowMapper, TaskerRowMapper taskerRowMapper, StripeAccountService stripeAccountService){
+
+    public TaskerDao(JdbcTemplate jdbcTemplate, TaskerProfileDTORowMapper taskerProfileDTORowMapper, TaskerRowMapper taskerRowMapper){
         this.jdbcTemplate = jdbcTemplate;
         this.taskerProfileDTORowMapper = taskerProfileDTORowMapper;
         this.taskerRowMapper = taskerRowMapper;
-        this.stripeAccountService = stripeAccountService;
     }
 
     public Tasker getByID(Long ID){
@@ -81,16 +80,11 @@ public class TaskerDao {
         String sql = """
         INSERT INTO Tasker 
         (firstName, lastName, username, password, email, birthDate, phone, gender, 
-         image, availability, rating, hourrate, bio, serviceID, totalEarning, WorkedHours, addressCity, stripe_account_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         image, availability, rating, hourrate, bio, serviceID, totalEarning, WorkedHours, addressCity)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        String stripeAccountId = stripeAccountService.createConnectedAccount(
-                dto.getEmail(),
-                dto.getFirstName(),
-                dto.getLastName()
-        );
 
         try {
             jdbcTemplate.update(con -> {
@@ -114,8 +108,6 @@ public class TaskerDao {
                 ps.setDouble(15, 0.0);
                 ps.setDouble(16, 0.0);
                 ps.setString(17, dto.getCity());
-                ps.setString(18, stripeAccountId);
-
                 return ps;
             }, keyHolder);
 
@@ -131,5 +123,11 @@ public class TaskerDao {
         String sql = "UPDATE Tasker SET password = ? WHERE email = ?";
         jdbcTemplate.update(sql, newPassword, email);
     }
-    
+
+    public void updateStripeAccountId(Long taskerId, String stripeAccountId) {
+        String sql = "UPDATE Tasker SET stripe_account_id = ? WHERE taskerID = ?";
+        jdbcTemplate.update(sql, stripeAccountId, taskerId);
+    }
+
+
 }

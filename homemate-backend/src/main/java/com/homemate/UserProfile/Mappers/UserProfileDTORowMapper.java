@@ -26,6 +26,7 @@ public class UserProfileDTORowMapper implements RowMapper<UserProfileDTO> {
         dto.setPhone(rs.getString("phone"));
         dto.setAdmin(rs.getObject("isAdmin") != null ? rs.getBoolean("isAdmin") : null);
         dto.setSuspended(rs.getObject("isSuspended") != null ? rs.getBoolean("isSuspended") : null);
+        dto.setStripeCustomerId(rs.getString("stripe_customer_id"));
         return dto;
     }
 }

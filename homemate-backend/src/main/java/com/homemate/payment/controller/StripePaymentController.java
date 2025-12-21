@@ -20,14 +20,14 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/api/tasker")
-public class StripeController {
+public class StripePaymentController {
 
     private final TaskerDao taskerDao;
     private final StripeAccountService stripeAccountService;
     private final StripePaymentService stripePaymentService;
     private final PaymentDao paymentDao;
 
-    public StripeController(
+    public StripePaymentController(
             TaskerDao taskerDao,
             StripeAccountService stripeAccountService,
             StripePaymentService stripePaymentService,
@@ -166,4 +166,6 @@ public class StripeController {
                     .body("Payment not found");
         }
     }
+
+
 }
