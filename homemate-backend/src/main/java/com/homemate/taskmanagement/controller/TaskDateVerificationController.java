@@ -84,9 +84,9 @@ public class TaskDateVerificationController {
         }
 
     }
-    @GetMapping("/get-taskDetails-estimation/{taskID}")
+    @GetMapping("/get-taskDetails-estimation/{taskId}")
     @PreAuthorize("hasRole('TASKER')")
-    public ResponseEntity<?> getEstimation (@PathVariable Long taskId){
+    public ResponseEntity<?> getEstimation (@PathVariable("taskId") Long taskId){
         try{
             int response= taskRequestService.getTaskDetails(taskId);
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -97,9 +97,9 @@ public class TaskDateVerificationController {
 
     }
 
-    @GetMapping("/get-taskDetails-estimation-user/{taskID}")
+    @GetMapping("/get-taskDetails-estimation-user/{taskId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> getEstimationU (@PathVariable Long taskId){
+    public ResponseEntity<?> getEstimationU (@PathVariable  Long taskId){
         try{
             int response= taskRequestService.getTaskDetails(taskId);
             return new ResponseEntity<>(response, HttpStatus.OK);
