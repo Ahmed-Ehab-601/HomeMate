@@ -185,8 +185,13 @@ public class TaskRequestDao {
     }
 
     public int getEstimation(Long taskId) {
-        String sql="SELECT estimation FROM Task WHERE taskID = ?";
-         return jdbcTemplate.queryForObject(sql,Integer.class,taskId);
+        String sql = "SELECT estimation FROM Task WHERE taskID = ?";
+        try {
+            Integer estimation = jdbcTemplate.queryForObject(sql, Integer.class, taskId);
+            return estimation != null ? estimation : 0;
+        } catch (EmptyResultDataAccessException e) {
+            return 0;
+        }
     }
     //CREATE TABLE Task (
     //    taskID INT AUTO_INCREMENT PRIMARY KEY,
