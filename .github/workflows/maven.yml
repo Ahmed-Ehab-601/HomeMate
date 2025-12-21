@@ -96,7 +96,7 @@ jobs:
     # Post detailed comment to PR
     - name: Comment Test Results on PR
       if: github.event_name == 'pull_request' && always()
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           const total = '${{ steps.test-results.outputs.total }}';
