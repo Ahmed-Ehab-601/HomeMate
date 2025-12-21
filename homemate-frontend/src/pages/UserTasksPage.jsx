@@ -30,11 +30,19 @@ function UserTasksPage() {
   const [selectedStatus, setSelectedStatus] = useState(initialStatus);
   const [loading, setLoading] = useState(true); // Start with loading true for initial fetch
   const [error, setError] = useState(null);
-  const [viewMode, setViewMode] = useState("list"); // 'list' or 'calendar'
+  const [viewMode, setViewMode] = useState(() => {
+    // Load view mode from localStorage, default to 'list'
+    return localStorage.getItem('taskViewMode') || 'list';
+  });
 
   // TODO: Replace with actual user ID from authentication
   const userId = 1;
   const isFirstLoad = tasks.length === 0 && !loading;
+
+  // Save viewMode to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('taskViewMode', viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     loadTasks();
@@ -141,6 +149,8 @@ function UserTasksPage() {
             setViewMode("list");
             loadTasks();
           }}
+          onTasksUpdated={loadTasks}
+          userRole="ROLE_USER"
         />
       ) : (
         <>

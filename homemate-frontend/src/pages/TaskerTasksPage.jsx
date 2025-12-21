@@ -31,13 +31,21 @@ function TaskerTasksPage() {
   const [selectedStatus, setSelectedStatus] = useState(initialStatus);
   const [loading, setLoading] = useState(true); // Start with loading true for initial fetch
   const [error, setError] = useState(null);
-  const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
+  const [viewMode, setViewMode] = useState(() => {
+    // Load view mode from localStorage, default to 'list'
+    return localStorage.getItem('taskViewMode') || 'list';
+  });
 
   // TODO: Replace with actual tasker ID from authentication
   const { user } = useAuth(); // ← ADD THIS
   const taskerId = user?.taskerId || user?.id;
 
   const isFirstLoad = tasks.length === 0 && !loading;
+
+  // Save viewMode to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('taskViewMode', viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     loadTasks();
@@ -138,7 +146,14 @@ function TaskerTasksPage() {
   return (
     <main className="page">
       {viewMode === "calendar" ? (
-        <TaskCalendar onBackToList={() => setViewMode("list")} />
+        <TaskCalendar
+          onBackToList={() => {
+            setViewMode("list");
+            loadTasks();
+          }}
+          onTasksUpdated={loadTasks}
+          userRole="ROLE_TASKER"
+        />
       ) : (
         <>
           {error && (

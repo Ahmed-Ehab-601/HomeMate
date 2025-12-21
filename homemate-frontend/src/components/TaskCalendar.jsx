@@ -1,18 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-    ChevronLeft,
-    ChevronRight,
-    Loader,
-} from 'lucide-react';
-import { rescheduleTask } from '../api/taskManagementApi';
+import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
+import { rescheduleTask, getTaskerBusyTime, getTaskEstimation, getTaskDetails } from '../api/taskManagementApi';
 import { useAuth } from '../contexts/AuthContext';
 
 /**
- * TaskCalendar Component
- * A clean calendar view matching the project's original design
+ * TaskCalendar Component - Fixed Drag & Drop
+ * Now matches TaskDetailsPage reschedule logic exactly
  */
-const TaskCalendar = ({ onBackToList }) => {
+const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [tasks, setTasks] = useState([]);
     const [filteredStatus, setFilteredStatus] = useState('All');
@@ -21,43 +17,26 @@ const TaskCalendar = ({ onBackToList }) => {
     const [error, setError] = useState(null);
     const [draggedTask, setDraggedTask] = useState(null);
     const [snackbar, setSnackbar] = useState({ show: false, message: '', type: 'error' });
+    const [showTimeModal, setShowTimeModal] = useState(false);
+    const [targetDate, setTargetDate] = useState(null);
+    const [targetTask, setTargetTask] = useState(null);
+    const [selectedTime, setSelectedTime] = useState('');
+    const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+    const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
+    const [rescheduleBusyTimes, setRescheduleBusyTimes] = useState({});
+    const [taskEstimation, setTaskEstimation] = useState(null);
     const { user, getUserRole } = useAuth();
 
-    // Status Colors - matching project style
+    // Status Colors
     const statusConfig = {
-        InReview: {
-            bg: '#FFFBEB',
-            text: '#92400E',
-            display: 'Sample Text',
-        },
-        Accepted: {
-            bg: '#DCFCE7',
-            text: '#166534',
-            display: 'Sample Text',
-        },
-        InProgress: {
-            bg: '#E0F2FE',
-            text: '#075985',
-            display: 'Sample Text',
-        },
-        Suspended: {
-            bg: '#F3F4F6',
-            text: '#374151',
-            display: 'Sample Text',
-        },
-        Done: {
-            bg: '#F0FDF4',
-            text: '#166534',
-            display: 'Sample Text',
-        },
-        Rejected: {
-            bg: '#FEF2F2',
-            text: '#991B1B',
-            display: 'Sample Text',
-        },
+        InReview: { bg: '#FFFBEB', text: '#92400E', display: 'In Review' },
+        Accepted: { bg: '#DCFCE7', text: '#166534', display: 'Accepted' },
+        InProgress: { bg: '#E0F2FE', text: '#075985', display: 'In Progress' },
+        Suspended: { bg: '#F3F4F6', text: '#374151', display: 'Suspended' },
+        Done: { bg: '#F0FDF4', text: '#166534', display: 'Done' },
+        Rejected: { bg: '#FEF2F2', text: '#991B1B', display: 'Rejected' },
     };
 
-    // Day header colors matching project style
     const dayColors = {
         Monday: '#c6ff4d',
         Tuesday: '#b8f03d',
@@ -68,64 +47,167 @@ const TaskCalendar = ({ onBackToList }) => {
         Sunday: '#a7df2d',
     };
 
-    // Helper to get days in month
+    // EXACT SAME CONSTANTS AS TASKDETAILSPAGE
+    const WORK_DAY_START_MINUTES = 8 * 60;          // 08:00 = 480 minutes
+    const WORK_DAY_END_MINUTES = 20 * 60 + 30;      // 20:30 = 1230 minutes
+    const DRAGGABLE_STATUSES = ['InReview', 'Accepted'];
+
+    const isStatusDraggable = (status) => DRAGGABLE_STATUSES.includes(status);
+
+    // Generate time slots - EXACT SAME AS TASKDETAILSPAGE
+    const timeSlots = Array.from({ length: 25 }, (_, index) => {
+        const minutes = index * 30;
+        const hours = 8 + Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        if (hours > 20 || (hours === 20 && mins > 0)) {
+            return null;
+        }
+        return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+    }).filter(Boolean);
+
     const getDaysInMonth = (date) => {
         const year = date.getFullYear();
         const month = date.getMonth();
         const days = new Date(year, month + 1, 0).getDate();
         const firstDay = new Date(year, month, 1).getDay();
-        // Adjust firstDay so Monday is 0 (convert from Sunday=0 to Monday=0)
         const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
         return { days, firstDay: adjustedFirstDay };
     };
 
+    // ==================== EXACT LOGIC FROM TASKDETAILSPAGE ====================
+    
+    // Check if task would extend beyond working hours
+    const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
+        const [hours, minutes] = timeSlot.split(":").map(Number);
+        const slotStartMinutes = hours * 60 + minutes;
+        const slotEndMinutes = slotStartMinutes + estimationMinutes;
+        
+        if (slotEndMinutes > WORK_DAY_END_MINUTES) {
+            console.log(`❌ Slot ${timeSlot}: Task would end at ${Math.floor(slotEndMinutes/60)}:${String(slotEndMinutes%60).padStart(2, '0')}, beyond 20:30`);
+            return false;
+        }
+        
+        return true;
+    };
+
+    // Check if a time slot is busy - EXACT SAME AS TASKDETAILSPAGE
+    const isRescheduleTimeSlotBusy = (timeSlot, rescheduleDate, busyTimes, currentTask, estimationMinutes) => {
+        if (!rescheduleDate || Object.keys(busyTimes).length === 0) {
+            return false;
+        }
+
+        const [slotHours, slotMinutes] = timeSlot.split(":").map(Number);
+        const [year, month, day] = rescheduleDate.split("-").map(Number);
+        
+        const slotStartMinutes = slotHours * 60 + slotMinutes;
+        const slotEndMinutes = slotStartMinutes + estimationMinutes;
+
+        for (const [busyStartStr, busyEstimationMinutes] of Object.entries(busyTimes)) {
+            let busyStart;
+            try {
+                busyStart = new Date(busyStartStr);
+            } catch (e) {
+                console.warn("Failed to parse busy start date:", busyStartStr);
+                continue;
+            }
+            
+            const busyYear = busyStart.getFullYear();
+            const busyMonth = busyStart.getMonth();
+            const busyDay = busyStart.getDate();
+            const busyHours = busyStart.getHours();
+            const busyMins = busyStart.getMinutes();
+            
+            // Skip if this is the current task being rescheduled
+            if (currentTask?.startDate) {
+                const taskStart = new Date(currentTask.startDate);
+                const taskYear = taskStart.getFullYear();
+                const taskMonth = taskStart.getMonth();
+                const taskDay = taskStart.getDate();
+                const taskHours = taskStart.getHours();
+                const taskMins = taskStart.getMinutes();
+                
+                if (
+                    busyYear === taskYear &&
+                    busyMonth === taskMonth &&
+                    busyDay === taskDay &&
+                    busyHours === taskHours &&
+                    busyMins === taskMins
+                ) {
+                    continue;
+                }
+            }
+
+            // Only check if dates match
+            if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
+                continue;
+            }
+
+            const busyStartMinutes = busyHours * 60 + busyMins;
+            const busyEndMinutes = busyStartMinutes + busyEstimationMinutes;
+
+            // Check for ANY overlap - ALL 5 SCENARIOS
+            const hasOverlap = (
+                (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
+                (slotEndMinutes > busyStartMinutes && slotEndMinutes <= busyEndMinutes) ||
+                (slotStartMinutes <= busyStartMinutes && slotEndMinutes >= busyEndMinutes) ||
+                (busyStartMinutes <= slotStartMinutes && busyEndMinutes >= slotEndMinutes) ||
+                (slotStartMinutes < busyStartMinutes && slotEndMinutes > busyStartMinutes)
+            );
+
+            if (hasOverlap) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     // ==================== API FETCHING ====================
     const fetchTasks = async () => {
+        // Don't fetch if userRole is not set
+        if (!userRole) {
+            console.log('⏸️ Skipping fetch - userRole not set yet');
+            return;
+        }
+        
         setLoading(true);
         setError(null);
         try {
             const token = localStorage.getItem('homemate_token');
-            if (!token) throw new Error("No authentication token found");
+            if (!token) throw new Error('No authentication token found');
 
-            // Calculate start and end date for current view (entire month)
             const year = currentDate.getFullYear();
-            const month = currentDate.getMonth(); // 0-indexed (0 = January, 11 = December)
+            const month = currentDate.getMonth();
             const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-            const lastDay = new Date(year, month + 1, 0).getDate();  // Fixed: Gets correct last day of month
+            const lastDay = new Date(year, month + 1, 0).getDate();
             const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+            // Use the userRole prop directly - it's passed from parent component and is the source of truth
+            const role = userRole;
             
-            console.log('🔗 URL DEBUG:', { year, month, startDate, endDate, filteredStatus });
+            console.log('📋 Fetching tasks with role:', role, { propRole: userRole });
 
-            // Determine user role to pick correct endpoint
-            const userRole = user?.role || 'ROLE_USER';
-            let endpoint = userRole === 'ROLE_TASKER' ? '/api/tasker/getTasks' : '/api/user/getTasks';
-
-            console.log('📅 [TaskCalendar] Fetching with role:', userRole, 'endpoint:', endpoint);
-
+            const endpoint = role === 'ROLE_TASKER' ? '/api/tasker/getTasks' : '/api/user/getTasks';
             const url = `http://localhost:8080${endpoint}?startDate=${startDate}&endDate=${endDate}&status=${filteredStatus}`;
             
-            console.log('🔗 Full URL:', url);
+            console.log('🔗 Task fetch URL:', url);
 
             const response = await fetch(url, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (response.status === 204) {
                 setTasks([]);
                 return;
             }
-
-            if (response.status === 401) {
-                throw new Error("Unauthorized. Please login again.");
-            }
-
+            if (response.status === 401) throw new Error('Unauthorized. Please login again.');
             if (response.status === 403) {
-                throw new Error("Access forbidden.");
+                console.error('❌ 403 Forbidden - likely wrong endpoint for user role. Role:', userRole, 'Endpoint:', endpoint);
+                throw new Error('Access forbidden.');
             }
-
             if (!response.ok) {
                 const errorText = await response.text().catch(() => response.statusText);
                 throw new Error(`Failed to fetch tasks: ${errorText}`);
@@ -133,15 +215,9 @@ const TaskCalendar = ({ onBackToList }) => {
 
             const data = await response.json();
             setTasks(Array.isArray(data) ? data : []);
-            console.log('📅 [TaskCalendar] Loaded:', (Array.isArray(data) ? data.length : 0), 'tasks');
-            console.log('📅 [TaskCalendar] Task details:', data);
-            data.forEach(task => {
-                console.log(`  - ${task.serviceName} on ${task.startDate} (${task.status})`);
-            });
-
         } catch (err) {
-            console.error("❌ Fetch error:", err);
-            setError(err.message || "Failed to load tasks");
+            console.error('❌ Fetch error:', err);
+            setError(err.message || 'Failed to load tasks');
         } finally {
             setLoading(false);
         }
@@ -149,10 +225,17 @@ const TaskCalendar = ({ onBackToList }) => {
 
     useEffect(() => {
         fetchTasks();
-    }, [currentDate, filteredStatus]);
+    }, [currentDate, filteredStatus, userRole]);
 
     // ==================== DRAG AND DROP HANDLERS ====================
     const handleDragStart = (e, task) => {
+        if (!isStatusDraggable(task?.status)) {
+            setSnackbar({ show: true, message: 'This task cannot be rescheduled in its current status.', type: 'error' });
+            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 3000);
+            e.preventDefault();
+            return;
+        }
+
         setDraggedTask(task);
         e.dataTransfer.effectAllowed = 'move';
         e.currentTarget.style.opacity = '0.5';
@@ -167,90 +250,332 @@ const TaskCalendar = ({ onBackToList }) => {
         e.dataTransfer.dropEffect = 'move';
     };
 
+    // Load available time slots - EXACT SAME LOGIC AS TASKDETAILSPAGE
+    const loadAvailableTimeSlots = async (dateStr, task) => {
+        setLoadingTimeSlots(true);
+
+        console.log('🔍 Loading slots for:', { 
+            dateStr, 
+            taskID: task.taskID, 
+            taskerID: task.taskerID,
+            taskerId: task.taskerId,
+        });
+
+        try {
+            // Use taskerID if available, otherwise use taskerId (different API endpoints use different naming)
+            let taskerID = task.taskerID || task.taskerId;
+            
+            // If taskerID still missing, fetch full task details
+            if (!taskerID) {
+                console.log('📥 Fetching full task details to get taskerID...');
+                try {
+                    const fullTaskData = await getTaskDetails(task.taskID);
+                    taskerID = fullTaskData.taskerID;
+                    console.log('✅ Got taskerID from full task details:', taskerID);
+                } catch (err) {
+                    console.error('❌ Failed to fetch task details:', err);
+                    setSnackbar({ 
+                        show: true, 
+                        message: 'Error: Cannot reschedule - failed to load task information. Please refresh and try again.', 
+                        type: 'error' 
+                    });
+                    setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 4000);
+                    setAvailableTimeSlots([]);
+                    setLoadingTimeSlots(false);
+                    return;
+                }
+            }
+            
+            if (!taskerID) {
+                console.error('❌ Task missing taskerID even after fetching details. Task object:', task);
+                setSnackbar({ 
+                    show: true, 
+                    message: 'Error: Cannot reschedule - tasker information missing. Please refresh and try again.', 
+                    type: 'error' 
+                });
+                setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 4000);
+                setAvailableTimeSlots([]);
+                setLoadingTimeSlots(false);
+                return;
+            }
+
+            // Use the userRole prop directly - it's passed from parent component and is the source of truth
+            const role = userRole;
+
+            // 1. Fetch task estimation
+            let currentTaskEstMinutes = 60;
+            try {
+                currentTaskEstMinutes = await getTaskEstimation(task.taskID, role);
+                setTaskEstimation(currentTaskEstMinutes);
+                console.log('✅ Task estimation loaded:', currentTaskEstMinutes, 'minutes');
+            } catch (err) {
+                console.error('❌ Failed to load estimation:', err);
+                setTaskEstimation(60);
+                currentTaskEstMinutes = 60;
+            }
+
+            // 2. Fetch busy times
+            let busyTimes = {};
+            try {
+                busyTimes = await getTaskerBusyTime(taskerID, dateStr, role);
+                setRescheduleBusyTimes(busyTimes || {});
+                console.log('✅ Busy times loaded for date:', dateStr, busyTimes);
+                console.log('📊 Number of busy periods:', Object.keys(busyTimes || {}).length);
+            } catch (err) {
+                console.error('❌ Failed to fetch busy time:', err);
+                console.error('Error details:', err.response?.data || err.message);
+                setRescheduleBusyTimes({});
+                busyTimes = {};
+            }
+
+            // 3. Filter available slots using EXACT TaskDetailsPage logic
+            const [year, month, day] = dateStr.split('-').map(Number);
+            
+            // IMPORTANT: Create date using year, month-1, day to avoid timezone issues
+            const selectedDate = new Date(year, month - 1, day);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            selectedDate.setHours(0, 0, 0, 0);
+            const isToday = selectedDate.getTime() === today.getTime();
+
+            console.log('🗓️ Date info:', {
+                dateStr,
+                year,
+                month,
+                day,
+                isToday,
+                selectedDate: selectedDate.toISOString(),
+                today: today.toISOString(),
+                estimation: currentTaskEstMinutes,
+                timeSlots: timeSlots.length,
+                busyTimesCount: Object.keys(busyTimes).length
+            });
+
+            const available = timeSlots.filter((slot) => {
+                const [hours, minutes] = slot.split(":").map(Number);
+                const slotStartMinutes = hours * 60 + minutes;
+                const slotEndMinutes = slotStartMinutes + currentTaskEstMinutes;
+
+                // 1. Check if date is today and time has passed
+                if (isToday) {
+                    const [slotHours, slotMins] = slot.split(":").map(Number);
+                    const slotTime = new Date();
+                    slotTime.setHours(slotHours, slotMins, 0, 0);
+                    const now = new Date();
+                    if (slotTime <= now) {
+                        return false;
+                    }
+                }
+
+                // 2. Check if there's enough time to complete
+                if (slotEndMinutes > WORK_DAY_END_MINUTES) {
+                    return false;
+                }
+
+                // 3. Check if slot conflicts with busy times
+                const isBusy = isRescheduleTimeSlotBusy(slot, dateStr, busyTimes, task, currentTaskEstMinutes);
+                return !isBusy;
+            });
+
+            console.log('✅ Available slots:', available.length, 'out of', timeSlots.length);
+            console.log('📋 Available slots list:', available);
+
+            setAvailableTimeSlots(available);
+            
+            // Auto-select current time if available
+            if (task?.startDate) {
+                const currentTime = new Date(task.startDate);
+                const hours = String(currentTime.getHours()).padStart(2, '0');
+                const minutes = String(currentTime.getMinutes()).padStart(2, '0');
+                const timeSlot = `${hours}:${minutes}`;
+                
+                if (available.includes(timeSlot)) {
+                    setSelectedTime(timeSlot);
+                    console.log('🎯 Auto-selected current time:', timeSlot);
+                } else {
+                    setSelectedTime('');
+                    console.log('⚠️ Current time not available:', timeSlot);
+                }
+            }
+        } catch (err) {
+            console.error('❌ Error loading time slots:', err);
+            setSnackbar({ show: true, message: err?.message || 'Failed to load time slots', type: 'error' });
+            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 4000);
+            setAvailableTimeSlots([]);
+        } finally {
+            setLoadingTimeSlots(false);
+        }
+    };
+
     const handleDrop = async (e, day) => {
         e.preventDefault();
         if (!draggedTask) return;
 
-        // Calculate new date string YYYY-MM-DD
+        // Create date in local timezone to avoid timezone issues
         const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-
-        // Preserve time if present or default to start of day
-        const oldDate = new Date(draggedTask.startDate);
-        newDate.setHours(oldDate.getHours(), oldDate.getMinutes(), oldDate.getSeconds());
-
-        // VALIDATION: Check if new date is in the future
         const now = new Date();
-        if (newDate <= now) {
-            const isPast = newDate.toDateString() === now.toDateString() ? 
-                "Cannot reschedule to a past time. Please select a future time." :
-                "Cannot reschedule to a past date. Please select a future date.";
-            
-            console.warn("⚠️ Invalid reschedule attempt:", isPast);
-            setSnackbar({ show: true, message: isPast, type: 'error' });
+        now.setHours(0, 0, 0, 0);
+        newDate.setHours(0, 0, 0, 0);
+
+        if (newDate < now) {
+            setSnackbar({
+                show: true,
+                message: 'Cannot reschedule to a past date. Please select a future date.',
+                type: 'error',
+            });
             setDraggedTask(null);
-            
-            // Auto-dismiss after 5 seconds
-            setTimeout(() => {
-                setSnackbar({ show: false, message: '', type: 'error' });
-            }, 5000);
+            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 5000);
             return;
         }
 
-        const newDateStr = newDate.toISOString();
+        // Format date consistently - CRITICAL: Use the day parameter directly
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const dayStr = String(day).padStart(2, '0');
+        const dateStr = `${year}-${month}-${dayStr}`;
 
-        console.log(`🔄 [Reschedule] Moving task ${draggedTask.taskID} to ${newDateStr}`);
-
-        // 1. Optimistic update
-        const previousTasks = [...tasks];
-        const updatedTasks = tasks.map(t => {
-            if (t.taskID === draggedTask.taskID) {
-                return { ...t, startDate: newDateStr };
-            }
-            return t;
+        console.log('📅 Drop detected:', {
+            day,
+            dateStr,
+            draggedTask: draggedTask.taskID,
+            taskerID: draggedTask.taskerID
         });
-        setTasks(updatedTasks);
-        setDraggedTask(null);
 
-        // 2. Call API
+        setTargetDate(dateStr);
+        setTargetTask(draggedTask);
+        setDraggedTask(null);
+        
+        await loadAvailableTimeSlots(dateStr, draggedTask);
+        setShowTimeModal(true);
+    };
+
+    // EXACT VALIDATION LOGIC FROM TASKDETAILSPAGE handleReschedule
+    const handleTimeSelection = async () => {
+        if (!selectedTime || !targetDate || !targetTask) return;
+
+        const [hours, minutes] = selectedTime.split(":").map(Number);
+        const [year, month, day] = targetDate.split("-").map(Number);
+        
+        const currentTaskEstMinutes = taskEstimation || 60;
+        const newStartMinutes = hours * 60 + minutes;
+        const newEndMinutes = newStartMinutes + currentTaskEstMinutes;
+
+        console.log("Validating reschedule:", {
+            newTime: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
+            newStartMinutes,
+            newEndMinutes,
+            currentTaskEstMinutes,
+            workDayEnd: WORK_DAY_END_MINUTES
+        });
+
+        // 1. Check if task would extend beyond working hours
+        if (newEndMinutes > WORK_DAY_END_MINUTES) {
+            const endHour = Math.floor(newEndMinutes / 60);
+            const endMin = newEndMinutes % 60;
+            setSnackbar({
+                show: true,
+                message: `⏰ Cannot reschedule: This task would end at ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}, which is beyond working hours (08:00 - 20:30). Please choose an earlier time.`,
+                type: 'error'
+            });
+            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 5000);
+            return;
+        }
+
+        // 2. Check for conflicts with busy times
+        for (const [busyStartStr, busyEstimationMinutes] of Object.entries(rescheduleBusyTimes || {})) {
+            const busyStart = new Date(busyStartStr);
+            const busyYear = busyStart.getFullYear();
+            const busyMonth = busyStart.getMonth();
+            const busyDay = busyStart.getDate();
+            const busyHours = busyStart.getHours();
+            const busyMins = busyStart.getMinutes();
+
+            if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
+                continue;
+            }
+
+            const busyStartMinutes = busyHours * 60 + busyMins;
+            const busyEndMinutes = busyStartMinutes + busyEstimationMinutes;
+
+            // Skip current task's busy period
+            if (targetTask?.startDate) {
+                const taskStart = new Date(targetTask.startDate);
+                const taskYear = taskStart.getFullYear();
+                const taskMonth = taskStart.getMonth();
+                const taskDay = taskStart.getDate();
+                const taskHours = taskStart.getHours();
+                const taskMins = taskStart.getMinutes();
+
+                if (busyYear === taskYear && busyMonth === taskMonth && busyDay === taskDay &&
+                    busyHours === taskHours && busyMins === taskMins) {
+                    continue;
+                }
+            }
+
+            // Check for overlap
+            const hasOverlap = (
+                (newStartMinutes >= busyStartMinutes && newStartMinutes < busyEndMinutes) ||
+                (newEndMinutes > busyStartMinutes && newEndMinutes <= busyEndMinutes) ||
+                (newStartMinutes <= busyStartMinutes && newEndMinutes >= busyEndMinutes) ||
+                (busyStartMinutes <= newStartMinutes && busyEndMinutes >= newEndMinutes) ||
+                (newStartMinutes < busyStartMinutes && newEndMinutes > busyStartMinutes)
+            );
+
+            if (hasOverlap) {
+                const busyTimeStr = `${String(busyHours).padStart(2, '0')}:${String(busyMins).padStart(2, '0')}`;
+                const busyDurationHours = (busyEstimationMinutes / 60).toFixed(1);
+                const taskEndTime = `${String(Math.floor(newEndMinutes/60)).padStart(2, '0')}:${String(newEndMinutes%60).padStart(2, '0')}`;
+                
+                setSnackbar({
+                    show: true,
+                    message: `⏰ Cannot reschedule: Your task (${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} - ${taskEndTime}, ${(currentTaskEstMinutes/60).toFixed(1)}h) would overlap with another scheduled period starting at ${busyTimeStr} (${busyDurationHours}h duration). Please choose a different time slot.`,
+                    type: 'error'
+                });
+                setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 5000);
+                return;
+            }
+        }
+
+        // No conflicts, proceed
+        const newDateTime = `${targetDate}T${selectedTime}:00`;
+        setShowTimeModal(false);
+
+        const previousTasks = [...tasks];
+        const updatedTasks = tasks.map((t) => 
+            t.taskID === targetTask.taskID ? { ...t, startDate: newDateTime } : t
+        );
+        setTasks(updatedTasks);
+
         try {
-            await rescheduleTask(draggedTask.taskID, newDateStr);
-            console.log("✅ Reschedule successful");
+            await rescheduleTask(targetTask.taskID, newDateTime);
+            setSnackbar({ show: true, message: '✅ Task rescheduled successfully!', type: 'success' });
+            setTimeout(() => setSnackbar({ show: false, message: '', type: 'success' }), 3000);
+            if (typeof onTasksUpdated === 'function') {
+                onTasksUpdated();
+            }
         } catch (err) {
-            // Extract error message properly
+            setTasks(previousTasks);
+            
             let errorMessage = 'Failed to reschedule task';
             if (err?.response?.data) {
-                if (typeof err.response.data === 'string') {
-                    errorMessage = err.response.data;
-                } else if (err.response.data.message) {
-                    errorMessage = err.response.data.message;
-                } else if (err.response.data.error) {
-                    errorMessage = err.response.data.error;
-                }
+                if (typeof err.response.data === 'string') errorMessage = err.response.data;
+                else if (err.response.data.message) errorMessage = err.response.data.message;
+                else if (err.response.data.error) errorMessage = err.response.data.error;
             } else if (err?.message) {
                 errorMessage = err.message;
             }
-            
-            // Add context for validation errors
-            if (err?.status === 400 || err?.response?.status === 400) {
-                errorMessage = "The selected date/time is not valid. Please choose a future date and time.";
-            }
-            
-            console.error("❌ Reschedule failed:", errorMessage);
-            
-            // Revert changes on error
-            setTasks(previousTasks);
-            
-            // Show snackbar instead of alert
+
+            console.error('❌ Reschedule failed:', errorMessage);
             setSnackbar({ show: true, message: errorMessage, type: 'error' });
-            
-            // Auto-dismiss after 5 seconds
-            setTimeout(() => {
-                setSnackbar({ show: false, message: '', type: 'error' });
-            }, 5000);
+            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 5000);
+        } finally {
+            setSelectedTime('');
+            setTargetDate(null);
+            setTargetTask(null);
         }
     };
 
-    // ==================== NAVIGATION HANDLERS ====================
+    // ==================== NAVIGATION ====================
     const handlePreviousMonth = () => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
     };
@@ -260,63 +585,56 @@ const TaskCalendar = ({ onBackToList }) => {
     };
 
     // ==================== RENDER HELPERS ====================
-
-    // Group tasks by day and calculate spanning
     const tasksByDay = useMemo(() => {
         const map = new Map();
-        tasks.forEach(task => {
-            if (!task.startDate) {
-                console.log('⚠️ Task missing startDate:', task);
-                return;
-            }
+        tasks.forEach((task) => {
+            if (!task.startDate) return;
             const date = new Date(task.startDate);
             const day = date.getDate();
             const taskMonth = date.getMonth();
             const taskYear = date.getFullYear();
             const currentMonth = currentDate.getMonth();
             const currentYear = currentDate.getFullYear();
-            
-            // Debug log for date mismatches
-            if (taskMonth !== currentMonth || taskYear !== currentYear) {
-                console.log(`📅 Task date mismatch - Task: ${date.toISOString()} (${taskMonth}/${taskYear}), Current: ${currentDate.toISOString()} (${currentMonth}/${currentYear})`);
-            }
-            
-            // Filter to ensure task belongs to current month view
+
             if (taskMonth === currentMonth && taskYear === currentYear) {
                 if (!map.has(day)) map.set(day, []);
                 map.get(day).push(task);
-                console.log(`✅ Added task to day ${day}: ${task.serviceName}`);
             }
         });
-        console.log('📊 Tasks by day map:', map);
         return map;
     }, [tasks, currentDate]);
 
-    // ==================== SNACKBAR COMPONENT ====================
     const renderSnackbar = () => {
         if (!snackbar.show) return null;
 
+        const isError = snackbar.type === 'error';
+        const isSuccess = snackbar.type === 'success';
+        const backgroundColor = isError ? '#991b1b' : (isSuccess ? '#166534' : '#991b1b');
+        const textColor = '#ffffff';
+
         return (
-            <div style={{
-                position: 'fixed',
-                bottom: '20px',
-                right: '20px',
-                backgroundColor: snackbar.type === 'error' ? '#FEE2E2' : '#ECFDF5',
-                color: snackbar.type === 'error' ? '#991B1B' : '#065F46',
-                padding: '16px 20px',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                zIndex: 9999,
-                animation: 'slideIn 0.3s ease-out',
-                border: `1px solid ${snackbar.type === 'error' ? '#FECACA' : '#A7F3D0'}`,
-                fontSize: '14px',
-                fontWeight: '500',
-                maxWidth: '400px',
-            }}>
-                <span style={{ fontSize: '18px' }}>{snackbar.type === 'error' ? '❌' : '✅'}</span>
+            <div
+                style={{
+                    position: 'fixed',
+                    bottom: '20px',
+                    right: '20px',
+                    backgroundColor,
+                    color: textColor,
+                    padding: '16px 20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    zIndex: 9999,
+                    animation: 'slideIn 0.3s ease-out',
+                    border: `1px solid ${isError ? '#FECACA' : '#A7F3D0'}`,
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    maxWidth: '500px',
+                }}
+            >
+                <span style={{ fontSize: '18px' }}>{isError ? '❌' : '✅'}</span>
                 <span style={{ flex: 1 }}>{snackbar.message}</span>
                 <button
                     onClick={() => setSnackbar({ show: false, message: '', type: 'error' })}
@@ -335,48 +653,183 @@ const TaskCalendar = ({ onBackToList }) => {
         );
     };
 
-    // Add CSS animation
-    React.useEffect(() => {
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from {
-                    transform: translateX(400px);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-        `;
-        if (!document.head.querySelector('style[data-snackbar]')) {
-            style.setAttribute('data-snackbar', 'true');
-            document.head.appendChild(style);
-        }
-    }, []);
+    const renderTimeModal = () => {
+        if (!showTimeModal) return null;
 
-    // ==================== RENDER CALENDAR GRID ====================
+        return (
+            <div
+                style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                }}
+            >
+                <div
+                    style={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        padding: '32px',
+                        maxWidth: '500px',
+                        width: '90%',
+                        maxHeight: '80vh',
+                        overflow: 'auto',
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                    }}
+                >
+                    <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827', marginBottom: '6px' }}>
+                        Select Time
+                    </h2>
+                    <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '16px', fontWeight: '500' }}>
+                        {targetDate &&
+                            (() => {
+                                const [year, month, day] = targetDate.split('-').map(Number);
+                                const dateObj = new Date(year, month - 1, day);
+                                return `Rescheduling to ${dateObj.toLocaleDateString('en-US', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                })}`;
+                            })()}
+                    </p>
+
+                    {loadingTimeSlots ? (
+                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                            <Loader style={{ animation: 'spin 1s linear infinite', margin: '0 auto' }} />
+                            <p style={{ marginTop: '16px', color: '#6b7280' }}>Loading available time slots...</p>
+                        </div>
+                    ) : availableTimeSlots.length === 0 ? (
+                        <div style={{ padding: '24px', backgroundColor: '#fef2f2', borderRadius: '8px', marginBottom: '24px', textAlign: 'center' }}>
+                            <p style={{ color: '#991b1b', fontWeight: '600' }}>No available time slots for this date.</p>
+                            <p style={{ color: '#991b1b', fontSize: '14px', marginTop: '8px' }}>
+                                The tasker is fully booked or there isn't enough time before end of day (20:30). Please choose a different date.
+                            </p>
+                        </div>
+                    ) : (
+                        <div style={{ marginBottom: '24px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <span style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>
+                                    Available Time Slots ({availableTimeSlots.length} slots)
+                                </span>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', maxHeight: '340px', overflowY: 'auto', padding: '8px' }}>
+                                {availableTimeSlots.map((slot) => (
+                                    <button
+                                        key={slot}
+                                        onClick={() => setSelectedTime(slot)}
+                                        style={{
+                                            padding: '10px 12px',
+                                            backgroundColor: selectedTime === slot ? '#c6ff4d' : '#ffffff',
+                                            border: selectedTime === slot ? '2px solid #a7df2d' : '1px solid #e5e7eb',
+                                            borderRadius: '8px',
+                                            fontSize: '14px',
+                                            fontWeight: selectedTime === slot ? '700' : '500',
+                                            color: '#111827',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            textAlign: 'center',
+                                        }}
+                                        onMouseOver={(e) => {
+                                            if (selectedTime !== slot) {
+                                                e.target.style.backgroundColor = '#f3f4f6';
+                                                e.target.style.borderColor = '#d1d5db';
+                                            }
+                                        }}
+                                        onMouseOut={(e) => {
+                                            if (selectedTime !== slot) {
+                                                e.target.style.backgroundColor = '#ffffff';
+                                                e.target.style.borderColor = '#e5e7eb';
+                                            }
+                                        }}
+                                    >
+                                        {slot}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                        <button
+                            onClick={() => {
+                                setShowTimeModal(false);
+                                setSelectedTime('');
+                                setTargetDate(null);
+                                setTargetTask(null);
+                            }}
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: '#ffffff',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: '#374151',
+                                transition: 'all 0.2s ease',
+                            }}
+                            onMouseOver={(e) => (e.target.style.backgroundColor = '#f9fafb')}
+                            onMouseOut={(e) => (e.target.style.backgroundColor = '#ffffff')}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleTimeSelection}
+                            disabled={!selectedTime || loadingTimeSlots}
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: selectedTime && !loadingTimeSlots ? '#c6ff4d' : '#e5e7eb',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: selectedTime && !loadingTimeSlots ? 'pointer' : 'not-allowed',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: '#111827',
+                                transition: 'all 0.2s ease',
+                            }}
+                            onMouseOver={(e) => {
+                                if (selectedTime && !loadingTimeSlots) e.target.style.backgroundColor = '#a7df2d';
+                            }}
+                            onMouseOut={(e) => {
+                                if (selectedTime && !loadingTimeSlots) e.target.style.backgroundColor = '#c6ff4d';
+                            }}
+                        >
+                            Confirm Reschedule
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const renderCalendar = () => {
         const { days: totalDays, firstDay } = getDaysInMonth(currentDate);
         const days = [];
         const blanks = [];
 
-        // Header Row (Mon - Sun) with colors
         const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        
+
         const headerRow = (
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                marginBottom: '0',
-                overflow: 'hidden',
-                borderTopLeftRadius: '12px',
-                borderTopRightRadius: '12px',
-            }}>
+            <div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(7, 1fr)',
+                    marginBottom: '0',
+                    overflow: 'hidden',
+                    borderTopLeftRadius: '12px',
+                    borderTopRightRadius: '12px',
+                }}
+            >
                 {weekDays.map((day) => (
-                    <div 
-                        key={day} 
+                    <div
+                        key={day}
                         style={{
                             backgroundColor: dayColors[day],
                             color: day === 'Saturday' ? '#ffffff' : '#111827',
@@ -393,11 +846,10 @@ const TaskCalendar = ({ onBackToList }) => {
             </div>
         );
 
-        // Empty slots for previous month
         for (let i = 0; i < firstDay; i++) {
             blanks.push(
-                <div 
-                    key={`blank-${i}`} 
+                <div
+                    key={`blank-${i}`}
                     style={{
                         minHeight: '100px',
                         backgroundColor: '#f5f5f5',
@@ -408,17 +860,15 @@ const TaskCalendar = ({ onBackToList }) => {
             );
         }
 
-        // Day Cells
         for (let day = 1; day <= totalDays; day++) {
             const dayTasks = tasksByDay.get(day) || [];
-            
-            // Check if this day is in the past
+
             const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             cellDate.setHours(0, 0, 0, 0);
             const isPastDate = cellDate < today;
-            
+
             days.push(
                 <div
                     key={day}
@@ -432,39 +882,39 @@ const TaskCalendar = ({ onBackToList }) => {
                         border: '1px solid #ddd',
                         borderTop: 'none',
                         borderLeft: (day + firstDay - 1) % 7 === 0 ? '1px solid #ddd' : 'none',
-                        cursor: dayTasks.length > 0 ? 'pointer' : (isPastDate ? 'not-allowed' : 'default'),
+                        cursor: dayTasks.length > 0 ? 'pointer' : isPastDate ? 'not-allowed' : 'default',
                         position: 'relative',
                         display: 'flex',
                         flexDirection: 'column',
                         opacity: isPastDate ? 0.5 : 1,
                     }}
                 >
-                    {/* Day Number */}
-                    <div style={{
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        color: isPastDate ? '#9ca3af' : '#666',
-                        marginBottom: '4px',
-                    }}>
+                    <div
+                        style={{
+                            fontSize: '12px',
+                            fontWeight: '500',
+                            color: isPastDate ? '#9ca3af' : '#666',
+                            marginBottom: '4px',
+                        }}
+                    >
                         {String(day).padStart(2, '0')}
                     </div>
 
-                    {/* Tasks */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-                        {dayTasks.slice(0, 2).map((task, idx) => {
+                        {dayTasks.slice(0, 2).map((task) => {
                             const config = statusConfig[task.status] || statusConfig.InReview;
-                            
-                            // Format time from task startDate
-                            const taskTime = task.startDate ? new Date(task.startDate).toLocaleTimeString('en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                            }) : 'N/A';
-                            
+                            const taskTime = task.startDate
+                                ? new Date(task.startDate).toLocaleTimeString('en-US', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: false,
+                                  })
+                                : 'N/A';
+
                             return (
                                 <div
                                     key={task.taskID}
-                                    draggable="true"
+                                    draggable={isStatusDraggable(task.status)}
                                     onDragStart={(e) => handleDragStart(e, task)}
                                     onDragEnd={handleDragEnd}
                                     onClick={(e) => {
@@ -482,7 +932,7 @@ const TaskCalendar = ({ onBackToList }) => {
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',
-                                        cursor: 'move',
+                                        cursor: isStatusDraggable(task.status) ? 'move' : 'not-allowed',
                                         transition: 'opacity 0.2s ease',
                                     }}
                                 >
@@ -490,19 +940,19 @@ const TaskCalendar = ({ onBackToList }) => {
                                         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {task.serviceName || config.display}
                                         </span>
-                                        <span style={{ fontSize: '9px', opacity: 0.8, whiteSpace: 'nowrap' }}>
-                                            {taskTime}
-                                        </span>
+                                        <span style={{ fontSize: '9px', opacity: 0.8, whiteSpace: 'nowrap' }}>{taskTime}</span>
                                     </div>
                                 </div>
                             );
                         })}
                         {dayTasks.length > 2 && (
-                            <div style={{
-                                fontSize: '10px',
-                                color: '#999',
-                                fontWeight: '500',
-                            }}>
+                            <div
+                                style={{
+                                    fontSize: '10px',
+                                    color: '#999',
+                                    fontWeight: '500',
+                                }}
+                            >
                                 +{dayTasks.length - 2} more
                             </div>
                         )}
@@ -514,15 +964,17 @@ const TaskCalendar = ({ onBackToList }) => {
         return (
             <div>
                 {headerRow}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(7, 1fr)',
-                    border: '1px solid #ddd',
-                    borderTop: 'none',
-                    borderBottomLeftRadius: '12px',
-                    borderBottomRightRadius: '12px',
-                    overflow: 'hidden',
-                }}>
+                <div
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(7, 1fr)',
+                        border: '1px solid #ddd',
+                        borderTop: 'none',
+                        borderBottomLeftRadius: '12px',
+                        borderBottomRightRadius: '12px',
+                        overflow: 'hidden',
+                    }}
+                >
                     {blanks}
                     {days}
                 </div>
@@ -530,17 +982,48 @@ const TaskCalendar = ({ onBackToList }) => {
         );
     };
 
+    // Add CSS animation
+    React.useEffect(() => {
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes spin {
+                from {
+                    transform: rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        `;
+        if (!document.head.querySelector('style[data-calendar-animations]')) {
+            style.setAttribute('data-calendar-animations', 'true');
+            document.head.appendChild(style);
+        }
+    }, []);
+
     // ==================== LOADING STATE ====================
     if (loading) {
         return (
-            <div style={{
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#ffffff',
-                padding: '24px',
-            }}>
+            <div
+                style={{
+                    minHeight: '100vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#ffffff',
+                    padding: '24px',
+                }}
+            >
                 <div style={{ textAlign: 'center' }}>
                     <Loader style={{ width: '48px', height: '48px', color: '#a7df2d', animation: 'spin 1s linear infinite' }} />
                     <p style={{ marginTop: '24px', fontSize: '18px', fontWeight: '600', color: '#4b5563' }}>Loading your tasks...</p>
@@ -552,24 +1035,28 @@ const TaskCalendar = ({ onBackToList }) => {
     // ==================== ERROR STATE ====================
     if (error) {
         return (
-            <div style={{
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#ffffff',
-                padding: '24px',
-            }}>
-                <div style={{
-                    maxWidth: '500px',
-                    width: '100%',
+            <div
+                style={{
+                    minHeight: '100vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     backgroundColor: '#ffffff',
-                    borderRadius: '24px',
-                    border: '1px solid #e5e7eb',
-                    padding: '32px',
-                    textAlign: 'center',
-                    boxShadow: '0 25px 50px rgba(15, 23, 42, 0.08)',
-                }}>
+                    padding: '24px',
+                }}
+            >
+                <div
+                    style={{
+                        maxWidth: '500px',
+                        width: '100%',
+                        backgroundColor: '#ffffff',
+                        borderRadius: '24px',
+                        border: '1px solid #e5e7eb',
+                        padding: '32px',
+                        textAlign: 'center',
+                        boxShadow: '0 25px 50px rgba(15, 23, 42, 0.08)',
+                    }}
+                >
                     <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
                     <div style={{ fontSize: '24px', fontWeight: '700', color: '#991B1B', marginBottom: '12px' }}>Error Loading Tasks</div>
                     <p style={{ color: '#4b5563', marginBottom: '24px' }}>{error}</p>
@@ -586,8 +1073,8 @@ const TaskCalendar = ({ onBackToList }) => {
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                         }}
-                        onMouseOver={(e) => e.target.style.backgroundColor = '#a7df2d'}
-                        onMouseOut={(e) => e.target.style.backgroundColor = '#c6ff4d'}
+                        onMouseOver={(e) => (e.target.style.backgroundColor = '#a7df2d')}
+                        onMouseOut={(e) => (e.target.style.backgroundColor = '#c6ff4d')}
                     >
                         🔄 Try Again
                     </button>
@@ -598,36 +1085,42 @@ const TaskCalendar = ({ onBackToList }) => {
 
     // ==================== MAIN RENDER ====================
     return (
-        <div style={{
-            minHeight: '100vh',
-            backgroundColor: '#ffffff',
-            padding: '40px 20px',
-        }}>
+        <div
+            style={{
+                minHeight: '100vh',
+                backgroundColor: '#ffffff',
+                padding: '40px 20px',
+            }}
+        >
             <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                {/* Header */}
-                <div style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '12px',
-                    padding: '24px',
-                    marginBottom: '20px',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: '16px',
-                    }}>
-                        <h1 style={{
-                            fontSize: '28px',
-                            fontWeight: '700',
-                            color: '#111827',
-                            margin: 0,
-                        }}>
-                            [{currentDate.toLocaleString('default', { month: 'long' })}] - [{currentDate.getFullYear()}]
+                <div
+                    style={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        marginBottom: '20px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                    }}
+                >
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: '16px',
+                        }}
+                    >
+                        <h1
+                            style={{
+                                fontSize: '28px',
+                                fontWeight: '700',
+                                color: '#111827',
+                                margin: 0,
+                            }}
+                        >
+                            {currentDate.toLocaleString('default', { month: 'long' })} {currentDate.getFullYear()}
                         </h1>
 
-                        {/* Navigation */}
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             {onBackToList && (
                                 <button
@@ -644,8 +1137,8 @@ const TaskCalendar = ({ onBackToList }) => {
                                         transition: 'all 0.2s ease',
                                         marginRight: '16px',
                                     }}
-                                    onMouseOver={(e) => e.target.style.backgroundColor = '#a7df2d'}
-                                    onMouseOut={(e) => e.target.style.backgroundColor = '#c6ff4d'}
+                                    onMouseOver={(e) => (e.target.style.backgroundColor = '#a7df2d')}
+                                    onMouseOut={(e) => (e.target.style.backgroundColor = '#c6ff4d')}
                                 >
                                     ← Back to List
                                 </button>
@@ -662,8 +1155,8 @@ const TaskCalendar = ({ onBackToList }) => {
                                     alignItems: 'center',
                                     transition: 'all 0.2s ease',
                                 }}
-                                onMouseOver={(e) => e.target.style.backgroundColor = '#e5e7eb'}
-                                onMouseOut={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                                onMouseOver={(e) => (e.target.style.backgroundColor = '#e5e7eb')}
+                                onMouseOut={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
                             >
                                 <ChevronLeft style={{ width: '20px', height: '20px' }} />
                             </button>
@@ -679,15 +1172,14 @@ const TaskCalendar = ({ onBackToList }) => {
                                     alignItems: 'center',
                                     transition: 'all 0.2s ease',
                                 }}
-                                onMouseOver={(e) => e.target.style.backgroundColor = '#e5e7eb'}
-                                onMouseOut={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                                onMouseOver={(e) => (e.target.style.backgroundColor = '#e5e7eb')}
+                                onMouseOut={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
                             >
                                 <ChevronRight style={{ width: '20px', height: '20px' }} />
                             </button>
                         </div>
                     </div>
 
-                    {/* Filter */}
                     <div>
                         <select
                             value={filteredStatus}
@@ -715,17 +1207,19 @@ const TaskCalendar = ({ onBackToList }) => {
                     </div>
                 </div>
 
-                {/* Calendar */}
-                <div style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                }}>
+                <div
+                    style={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                    }}
+                >
                     {renderCalendar()}
                 </div>
             </div>
             {renderSnackbar()}
+            {renderTimeModal()}
         </div>
     );
 };

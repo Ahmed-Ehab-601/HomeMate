@@ -290,11 +290,12 @@ public class GetTasksServiceTest {
         Long taskerID = 1L;
         LocalDate startDate = LocalDate.of(2025, 11, 1);
         LocalDate endDate = LocalDate.of(2025, 11, 30);
+        LocalDate endExclusive = endDate.plusDays(1);
         StatusDto statusDto = StatusDto.All;
 
         List<TaskCardDto> mockTasks = createMockTaskCardList(5);
 
-        when(taskDao.getTaskerTasksByDateRange(taskerID, startDate, endDate)).thenReturn(mockTasks);
+        when(taskDao.getTaskerTasksByDateRange(taskerID, startDate, endExclusive)).thenReturn(mockTasks);
 
         // Act
         List<TaskCardDto> result = getTaskService.getTaskerTasksForNewView(taskerID, startDate, endDate, statusDto);
@@ -303,7 +304,7 @@ public class GetTasksServiceTest {
         assertThat(result).hasSize(5);
         assertThat(result).isEqualTo(mockTasks);
 
-        verify(taskDao).getTaskerTasksByDateRange(taskerID, startDate, endDate);
+        verify(taskDao).getTaskerTasksByDateRange(taskerID, startDate, endExclusive);
         verify(taskDao, never()).getTaskerTasksByDateRangeAndStatus(anyLong(), any(LocalDate.class), any(LocalDate.class), any(StatusDto.class));
     }
 
@@ -313,11 +314,12 @@ public class GetTasksServiceTest {
         Long taskerID = 2L;
         LocalDate startDate = LocalDate.of(2025, 12, 1);
         LocalDate endDate = LocalDate.of(2025, 12, 31);
+        LocalDate endExclusive = endDate.plusDays(1);
         StatusDto statusDto = StatusDto.InProgress;
 
         List<TaskCardDto> mockTasks = createMockTaskCardList(3);
 
-        when(taskDao.getTaskerTasksByDateRangeAndStatus(taskerID, startDate, endDate, statusDto)).thenReturn(mockTasks);
+        when(taskDao.getTaskerTasksByDateRangeAndStatus(taskerID, startDate, endExclusive, statusDto)).thenReturn(mockTasks);
 
         // Act
         List<TaskCardDto> result = getTaskService.getTaskerTasksForNewView(taskerID, startDate, endDate, statusDto);
@@ -326,7 +328,7 @@ public class GetTasksServiceTest {
         assertThat(result).hasSize(3);
         assertThat(result).isEqualTo(mockTasks);
 
-        verify(taskDao).getTaskerTasksByDateRangeAndStatus(taskerID, startDate, endDate, statusDto);
+        verify(taskDao).getTaskerTasksByDateRangeAndStatus(taskerID, startDate, endExclusive, statusDto);
         verify(taskDao, never()).getTaskerTasksByDateRange(anyLong(), any(LocalDate.class), any(LocalDate.class));
     }
 
@@ -336,9 +338,10 @@ public class GetTasksServiceTest {
         Long taskerID = 3L;
         LocalDate startDate = LocalDate.of(2025, 10, 1);
         LocalDate endDate = LocalDate.of(2025, 10, 31);
+        LocalDate endExclusive = endDate.plusDays(1);
         StatusDto statusDto = StatusDto.All;
 
-        when(taskDao.getTaskerTasksByDateRange(taskerID, startDate, endDate)).thenReturn(new ArrayList<>());
+        when(taskDao.getTaskerTasksByDateRange(taskerID, startDate, endExclusive)).thenReturn(new ArrayList<>());
 
         // Act
         List<TaskCardDto> result = getTaskService.getTaskerTasksForNewView(taskerID, startDate, endDate, statusDto);
@@ -346,7 +349,7 @@ public class GetTasksServiceTest {
         // Assert
         assertThat(result).isEmpty();
 
-        verify(taskDao).getTaskerTasksByDateRange(taskerID, startDate, endDate);
+        verify(taskDao).getTaskerTasksByDateRange(taskerID, startDate, endExclusive);
     }
 
     @Test
@@ -355,9 +358,10 @@ public class GetTasksServiceTest {
         Long taskerID = 4L;
         LocalDate startDate = LocalDate.of(2025, 11, 1);
         LocalDate endDate = LocalDate.of(2025, 11, 30);
+        LocalDate endExclusive = endDate.plusDays(1);
         StatusDto statusDto = StatusDto.Rejected;
 
-        when(taskDao.getTaskerTasksByDateRangeAndStatus(taskerID, startDate, endDate, statusDto)).thenReturn(new ArrayList<>());
+        when(taskDao.getTaskerTasksByDateRangeAndStatus(taskerID, startDate, endExclusive, statusDto)).thenReturn(new ArrayList<>());
 
         // Act
         List<TaskCardDto> result = getTaskService.getTaskerTasksForNewView(taskerID, startDate, endDate, statusDto);
@@ -365,7 +369,7 @@ public class GetTasksServiceTest {
         // Assert
         assertThat(result).isEmpty();
 
-        verify(taskDao).getTaskerTasksByDateRangeAndStatus(taskerID, startDate, endDate, statusDto);
+        verify(taskDao).getTaskerTasksByDateRangeAndStatus(taskerID, startDate, endExclusive, statusDto);
     }
 
 
@@ -378,11 +382,12 @@ public class GetTasksServiceTest {
         Long userID = 1L;
         LocalDate startDate = LocalDate.of(2025, 11, 1);
         LocalDate endDate = LocalDate.of(2025, 11, 30);
+        LocalDate endExclusive = endDate.plusDays(1);
         StatusDto statusDto = StatusDto.All;
 
         List<TaskCardDto> mockTasks = createMockTaskCardList(5);
 
-        when(taskDao.getUserTasksByDateRange(userID, startDate, endDate)).thenReturn(mockTasks);
+        when(taskDao.getUserTasksByDateRange(userID, startDate, endExclusive)).thenReturn(mockTasks);
 
         // Act
         List<TaskCardDto> result = getTaskService.getUserTasksForNewView(userID, startDate, endDate, statusDto);
@@ -391,7 +396,7 @@ public class GetTasksServiceTest {
         assertThat(result).hasSize(5);
         assertThat(result).isEqualTo(mockTasks);
 
-        verify(taskDao).getUserTasksByDateRange(userID, startDate, endDate);
+        verify(taskDao).getUserTasksByDateRange(userID, startDate, endExclusive);
         verify(taskDao, never()).getUserTasksByDateRangeAndStatus(anyLong(), any(LocalDate.class), any(LocalDate.class), any(StatusDto.class));
     }
 
@@ -401,11 +406,12 @@ public class GetTasksServiceTest {
         Long userID = 2L;
         LocalDate startDate = LocalDate.of(2025, 12, 1);
         LocalDate endDate = LocalDate.of(2025, 12, 31);
+        LocalDate endExclusive = endDate.plusDays(1);
         StatusDto statusDto = StatusDto.Accepted;
 
         List<TaskCardDto> mockTasks = createMockTaskCardList(4);
 
-        when(taskDao.getUserTasksByDateRangeAndStatus(userID, startDate, endDate, statusDto)).thenReturn(mockTasks);
+        when(taskDao.getUserTasksByDateRangeAndStatus(userID, startDate, endExclusive, statusDto)).thenReturn(mockTasks);
 
         // Act
         List<TaskCardDto> result = getTaskService.getUserTasksForNewView(userID, startDate, endDate, statusDto);
@@ -414,7 +420,7 @@ public class GetTasksServiceTest {
         assertThat(result).hasSize(4);
         assertThat(result).isEqualTo(mockTasks);
 
-        verify(taskDao).getUserTasksByDateRangeAndStatus(userID, startDate, endDate, statusDto);
+        verify(taskDao).getUserTasksByDateRangeAndStatus(userID, startDate, endExclusive, statusDto);
         verify(taskDao, never()).getUserTasksByDateRange(anyLong(), any(LocalDate.class), any(LocalDate.class));
     }
 
@@ -424,9 +430,10 @@ public class GetTasksServiceTest {
         Long userID = 3L;
         LocalDate startDate = LocalDate.of(2025, 10, 1);
         LocalDate endDate = LocalDate.of(2025, 10, 31);
+        LocalDate endExclusive = endDate.plusDays(1);
         StatusDto statusDto = StatusDto.All;
 
-        when(taskDao.getUserTasksByDateRange(userID, startDate, endDate)).thenReturn(new ArrayList<>());
+        when(taskDao.getUserTasksByDateRange(userID, startDate, endExclusive)).thenReturn(new ArrayList<>());
 
         // Act
         List<TaskCardDto> result = getTaskService.getUserTasksForNewView(userID, startDate, endDate, statusDto);
@@ -434,7 +441,7 @@ public class GetTasksServiceTest {
         // Assert
         assertThat(result).isEmpty();
 
-        verify(taskDao).getUserTasksByDateRange(userID, startDate, endDate);
+        verify(taskDao).getUserTasksByDateRange(userID, startDate, endExclusive);
     }
 
     @Test
@@ -443,9 +450,10 @@ public class GetTasksServiceTest {
         Long userID = 4L;
         LocalDate startDate = LocalDate.of(2025, 11, 1);
         LocalDate endDate = LocalDate.of(2025, 11, 30);
+        LocalDate endExclusive = endDate.plusDays(1);
         StatusDto statusDto = StatusDto.InReview;
 
-        when(taskDao.getUserTasksByDateRangeAndStatus(userID, startDate, endDate, statusDto)).thenReturn(new ArrayList<>());
+        when(taskDao.getUserTasksByDateRangeAndStatus(userID, startDate, endExclusive, statusDto)).thenReturn(new ArrayList<>());
 
         // Act
         List<TaskCardDto> result = getTaskService.getUserTasksForNewView(userID, startDate, endDate, statusDto);
@@ -453,7 +461,7 @@ public class GetTasksServiceTest {
         // Assert
         assertThat(result).isEmpty();
 
-        verify(taskDao).getUserTasksByDateRangeAndStatus(userID, startDate, endDate, statusDto);
+        verify(taskDao).getUserTasksByDateRangeAndStatus(userID, startDate, endExclusive, statusDto);
     }
 
 
