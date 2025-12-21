@@ -25,6 +25,7 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
     const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
     const [rescheduleBusyTimes, setRescheduleBusyTimes] = useState({});
     const [taskEstimation, setTaskEstimation] = useState(null);
+    const [taskEstimations, setTaskEstimations] = useState({}); // taskID -> estimation minutes
     const { user, getUserRole } = useAuth();
 
     // Status Colors
@@ -72,6 +73,53 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
         const firstDay = new Date(year, month, 1).getDay();
         const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
         return { days, firstDay: adjustedFirstDay };
+    };
+
+    // Format estimation minutes (e.g., 90 -> "1h 30m")
+    const formatEstimation = (minutes) => {
+        const mins = Number(minutes);
+        if (!Number.isFinite(mins)) return null;
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        if (h && m) return `${h}h ${m}m`;
+        if (h) return `${h}h`;
+        return `${m}m`;
+    };
+
+    // Local fetch for estimation minutes to avoid issues in API helper
+    const fetchTaskEstimationMinutes = async (taskId, role) => {
+        const token = localStorage.getItem('homemate_token');
+        if (!token) throw new Error('No authentication token found');
+
+        const endpoint = role === 'ROLE_TASKER'
+            ? `/api/task/get-taskDetails-estimation/${taskId}`
+            : `/api/task/get-taskDetails-estimation-user/${taskId}`;
+        const url = `http://localhost:8080${endpoint}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        });
+
+        if (!response.ok) {
+            const errText = await response.text().catch(() => '');
+            throw new Error(errText || `Failed to fetch estimation (${response.status})`);
+        }
+
+        const raw = await response.text();
+        // Try parse as number; fallback to JSON
+        const directNum = Number(raw);
+        if (Number.isFinite(directNum)) return directNum;
+        try {
+            const parsed = JSON.parse(raw);
+            if (typeof parsed === 'number') return parsed;
+            if (parsed && typeof parsed.estimationMinutes === 'number') return parsed.estimationMinutes;
+        } catch (_) {
+            // ignore
+        }
+        throw new Error('Unexpected estimation response');
     };
 
     // ==================== EXACT LOGIC FROM TASKDETAILSPAGE ====================
@@ -227,6 +275,148 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
         fetchTasks();
     }, [currentDate, filteredStatus, userRole]);
 
+    // Fetch estimation for visible tasks (per month)
+    useEffect(() => {
+        if (!userRole || !Array.isArray(tasks) || tasks.length === 0) return;
+        let cancelled = false;
+        const resolveTaskerId = async (task) => {
+            let taskerID = task.taskerID || task.taskerId;
+            if (!taskerID) {
+                try {
+                    const fullTaskData = await getTaskDetails(task.taskID);
+                    taskerID = fullTaskData.taskerID || fullTaskData.taskerId;
+                } catch (e) {
+                    console.warn('Failed to resolve taskerID for task', task.taskID, e?.message || e);
+                }
+            }
+            return taskerID;
+        };
+
+        const loadEstimationsFromBusyTimes = async (tasksNeeding) => {
+            // Group by (taskerID, dayStr)
+            const groups = new Map();
+            for (const t of tasksNeeding) {
+                if (!t?.startDate) continue;
+                const d = new Date(t.startDate);
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const dayStr = `${year}-${month}-${day}`;
+                groups.set(t.taskID, { task: t, dayStr });
+            }
+
+            // Resolve taskerIDs for all tasks
+            const taskerIdCache = {};
+            for (const { task } of Object.values(Object.fromEntries(groups))) {
+                const id = await resolveTaskerId(task);
+                if (!id) continue;
+                taskerIdCache[task.taskID] = id;
+            }
+
+            // Build fetch sets by (taskerID, dayStr)
+            const fetchMap = new Map();
+            for (const [taskID, { task, dayStr }] of groups.entries()) {
+                const taskerID = taskerIdCache[taskID];
+                if (!taskerID) continue;
+                const key = `${taskerID}|${dayStr}`;
+                if (!fetchMap.has(key)) fetchMap.set(key, { taskerID, dayStr, tasks: [] });
+                fetchMap.get(key).tasks.push(task);
+            }
+
+            // Fetch busy times per group and map back to tasks
+            const updates = {};
+            for (const { taskerID, dayStr, tasks: groupTasks } of fetchMap.values()) {
+                try {
+                    const busyTimes = await getTaskerBusyTime(taskerID, dayStr, userRole);
+                    // Match each task by startDate
+                    for (const t of groupTasks) {
+                        try {
+                            const start = new Date(t.startDate);
+                            const startY = start.getFullYear();
+                            const startM = start.getMonth();
+                            const startD = start.getDate();
+                            const startH = start.getHours();
+                            const startMin = start.getMinutes();
+
+                            let matchedMinutes = null;
+                            for (const [busyStartStr, minutes] of Object.entries(busyTimes || {})) {
+                                const bs = new Date(busyStartStr);
+                                if (
+                                    bs.getFullYear() === startY &&
+                                    bs.getMonth() === startM &&
+                                    bs.getDate() === startD &&
+                                    bs.getHours() === startH &&
+                                    bs.getMinutes() === startMin
+                                ) {
+                                    const val = Number(minutes);
+                                    matchedMinutes = Number.isFinite(val) ? val : null;
+                                    if (matchedMinutes != null) break;
+                                }
+                            }
+
+                            if (matchedMinutes != null) {
+                                updates[t.taskID] = matchedMinutes;
+                            }
+                        } catch (e) {
+                            console.warn('Failed matching busy time for task', t.taskID, e?.message || e);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Busy times fetch failed for', { taskerID, dayStr }, e?.message || e);
+                }
+            }
+
+            if (!cancelled && Object.keys(updates).length > 0) {
+                setTaskEstimations((prev) => ({ ...prev, ...updates }));
+            }
+        };
+
+        const loadEstimations = async () => {
+            // Unique task IDs that don't have estimation cached yet
+            const ids = Array.from(new Set(
+                tasks.filter(t => t?.taskID).map(t => t.taskID)
+            )).filter(id => taskEstimations[id] == null);
+
+            if (ids.length === 0) return;
+
+            try {
+                const results = await Promise.all(ids.map(async (id) => {
+                    try {
+                        // Use local fetch to avoid axios/API_BASE_URL issues
+                        const minutes = await fetchTaskEstimationMinutes(id, userRole);
+                        // Ensure numeric minutes
+                        const num = Number(minutes);
+                        return { id, minutes: Number.isFinite(num) ? num : null };
+                    } catch (e) {
+                        console.warn('Failed to load estimation for task', id, e?.message || e);
+                        return { id, minutes: null };
+                    }
+                }));
+
+                if (!cancelled) {
+                    setTaskEstimations((prev) => {
+                        const next = { ...prev };
+                        results.forEach(({ id, minutes }) => {
+                            if (minutes != null) next[id] = minutes;
+                        });
+                        return next;
+                    });
+                }
+
+                // Fallback: for tasks still missing estimation, derive from busy times
+                const missingTasks = tasks.filter(t => ids.includes(t.taskID) && (results.find(r => r.id === t.taskID)?.minutes == null));
+                if (missingTasks.length > 0) {
+                    await loadEstimationsFromBusyTimes(missingTasks);
+                }
+            } catch (err) {
+                console.error('Failed to load task estimations', err);
+            }
+        };
+
+        loadEstimations();
+        return () => { cancelled = true; };
+    }, [tasks, userRole]);
+
     // ==================== DRAG AND DROP HANDLERS ====================
     const handleDragStart = (e, task) => {
         if (!isStatusDraggable(task?.status)) {
@@ -302,16 +492,24 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
             // Use the userRole prop directly - it's passed from parent component and is the source of truth
             const role = userRole;
 
-            // 1. Fetch task estimation
+            // 1. Fetch task estimation (use local fetch for robustness)
             let currentTaskEstMinutes = 60;
             try {
-                currentTaskEstMinutes = await getTaskEstimation(task.taskID, role);
+                currentTaskEstMinutes = await fetchTaskEstimationMinutes(task.taskID, role);
                 setTaskEstimation(currentTaskEstMinutes);
-                console.log('✅ Task estimation loaded:', currentTaskEstMinutes, 'minutes');
+                console.log('✅ Task estimation loaded (local):', currentTaskEstMinutes, 'minutes');
             } catch (err) {
-                console.error('❌ Failed to load estimation:', err);
-                setTaskEstimation(60);
-                currentTaskEstMinutes = 60;
+                console.error('❌ Failed to load estimation (local):', err);
+                // Fallback to cached estimation if available
+                const cached = taskEstimations[task.taskID];
+                if (Number.isFinite(Number(cached))) {
+                    currentTaskEstMinutes = Number(cached);
+                    setTaskEstimation(currentTaskEstMinutes);
+                    console.log('🔁 Using cached estimation:', currentTaskEstMinutes, 'minutes');
+                } else {
+                    setTaskEstimation(60);
+                    currentTaskEstMinutes = 60;
+                }
             }
 
             // 2. Fetch busy times
@@ -902,7 +1100,7 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
                         {dayTasks.slice(0, 2).map((task) => {
-                            const config = statusConfig[task.status] || statusConfig.InReview;
+                                                        const config = statusConfig[task.status] || statusConfig.InReview;
                             const taskTime = task.startDate
                                 ? new Date(task.startDate).toLocaleTimeString('en-US', {
                                       hour: '2-digit',
@@ -910,6 +1108,8 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                                       hour12: false,
                                   })
                                 : 'N/A';
+                                                        const estMinutes = taskEstimations[task.taskID];
+                                                        const estLabel = formatEstimation(estMinutes);
 
                             return (
                                 <div
@@ -921,7 +1121,7 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                                         e.stopPropagation();
                                         navigate(`/tasks/${task.taskID}`);
                                     }}
-                                    title={`Time: ${taskTime}\nStatus: ${task.status}\nService: ${task.serviceName}\nCustomer: ${task.userName || 'N/A'}\nTasker: ${task.taskerName || 'N/A'}`}
+                                    title={`Time: ${taskTime}\n${estLabel ? `Estimation: ${estLabel}\n` : ''}Status: ${task.status}\nService: ${task.serviceName}\nCustomer: ${task.userName || 'N/A'}\nTasker: ${task.taskerName || 'N/A'}`}
                                     style={{
                                         backgroundColor: config.bg,
                                         color: config.text,
@@ -936,11 +1136,18 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                                         transition: 'opacity 0.2s ease',
                                     }}
                                 >
-                                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {task.serviceName || config.display}
                                         </span>
-                                        <span style={{ fontSize: '9px', opacity: 0.8, whiteSpace: 'nowrap' }}>{taskTime}</span>
+                                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '9px', opacity: 0.8, whiteSpace: 'nowrap' }}>{taskTime}</span>
+                                            {estLabel && (
+                                                <span style={{ fontSize: '9px', opacity: 0.8, whiteSpace: 'nowrap', color: '#374151' }}>
+                                                    • {estLabel}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             );
