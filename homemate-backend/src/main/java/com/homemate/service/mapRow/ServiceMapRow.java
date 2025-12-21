@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
     service.setId(rs.getLong("serviceID"));
     service.setName(rs.getString("name"));
     service.setDescription(rs.getString("description"));
-    service.setImageData(rs.getBytes("imageData"));
+    service.setImageData(rs.getString("imageData"));
     service.setImageName(rs.getString("imageName"));
     service.setImageType(rs.getString("imageType"));
 

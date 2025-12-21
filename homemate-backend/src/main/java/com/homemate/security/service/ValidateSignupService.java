@@ -103,12 +103,12 @@ public class ValidateSignupService {
         return null;
     }
 
-    String validateProfileImage(byte[] profileImage) {
+    String validateProfileImage(String profileImage) {
         if (profileImage == null) {
             return "Profile image is required";
         }
-        if (profileImage.length > 1024 * 1024 * 16) {
-            return "Profile image must be less than 16MB";
+        if (profileImage.length() > 500) {
+            return "Profile image must be less than 500";
         }
         return null;
     }

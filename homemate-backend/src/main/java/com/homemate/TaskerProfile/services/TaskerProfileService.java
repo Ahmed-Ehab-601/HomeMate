@@ -239,16 +239,12 @@ public class TaskerProfileService {
 
     public Boolean changeImage(ChangeImageDTO changeImageDTO) {
 
-        final long MAX_SIZE = 16L * 1024 * 1024; // 16 MB
-    
-        byte[] newImage = changeImageDTO.getNewImage();
-        if (newImage == null || newImage.length == 0) {
+
+        String newImage = changeImageDTO.getNewImage();
+        if (newImage == null || newImage.isEmpty()) {
             throw new IllegalArgumentException("Image cannot be empty.");
         }
-        if (newImage.length > MAX_SIZE) {
-            throw new IllegalArgumentException("Image size exceeds 16MB limit.");
-        }
-    
+
         Tasker tasker = taskerDao.getByID(changeImageDTO.getTaskerID());
         tasker.setImage(newImage);
         taskerDao.update(tasker);

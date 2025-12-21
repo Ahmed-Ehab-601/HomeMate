@@ -20,7 +20,7 @@ public class ServiceDto {
     @Size(min = 1, max = 100, message = "Description must be between 1 and 100 characters")
     private String description;
 
-    @Size(max = 22369621, message = "Image data must not exceed 16MB")
+    @Size(max = 500, message = "Image data must not exceed 500")
     private String imageData;
 
     @Size(max = 200, message = "Image name must not exceed 200 characters")

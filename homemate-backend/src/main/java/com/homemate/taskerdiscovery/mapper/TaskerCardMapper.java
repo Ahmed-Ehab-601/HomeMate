@@ -19,8 +19,8 @@ public class TaskerCardMapper {
         dto.setAddressCity(tasker.getAddressCity());
         dto.setHourRate(tasker.getHourRate());
 
-        if (tasker.getImage() != null && tasker.getImage().length > 0) {
-            dto.setImageBase64(Base64.getEncoder().encodeToString(tasker.getImage()));
+        if (tasker.getImage() != null && !tasker.getImage().isEmpty()) {
+            dto.setImageBase64(tasker.getImage());
         }
         return dto;
     }

@@ -17,7 +17,7 @@ public class ReviewImageDTORowMapper implements RowMapper<ReviewImageDTO> {
         ReviewImageDTO image = new ReviewImageDTO();
         image.setImgId(rs.getInt("imageID"));
         image.setFormat(rs.getString("format"));
-        image.setImgFile(rs.getBytes("imageFile"));
+        image.setImgFile(rs.getString("imageFile"));
         image.setImgName(rs.getString("imageName"));
         return image;
     }

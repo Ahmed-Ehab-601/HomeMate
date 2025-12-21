@@ -46,7 +46,7 @@ public class ServiceTest {
     }
     @Test
     public void testCreationWithImageData() throws Exception {
-        byte[] imageData = new byte[]{1, 2, 3, 4, 5};
+        String imageData = "1234";
 
         ServiceEntity serviceEntity = ServiceEntity.builder()
                 .name("plumbing")

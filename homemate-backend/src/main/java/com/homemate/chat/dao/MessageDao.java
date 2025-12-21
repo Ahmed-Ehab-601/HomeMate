@@ -80,16 +80,13 @@ public MessageDto save(Long chatID, MessageDto messageDto) {
         // Insert image if provided
         if (messageDto.getImageDto() != null) {
             ImageDto imageDto = messageDto.getImageDto();
-            byte[] imageBytes = imageDto.getFileData() != null
-                    ? Base64.getDecoder().decode(imageDto.getFileData())
-                    : null;
 
             String imageSql = "INSERT INTO MessageImage (messageID, format, imageFile, imageName) " +
                     "VALUES (?, ?, ?, ?)";
             jdbcTemplate.update(imageSql,
                     messageId,
                     imageDto.getFileFormat(),
-                    imageBytes,
+                    imageDto.getFileData(),
                     imageDto.getFileName()
             );
         }

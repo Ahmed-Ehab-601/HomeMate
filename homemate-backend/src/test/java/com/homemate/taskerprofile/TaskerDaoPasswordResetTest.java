@@ -45,7 +45,7 @@ class TaskerDaoPasswordResetTest {
         testTaskerDto.setServiceID(1L); // Assuming service with ID 1 exists
         testTaskerDto.setHourRate(50.0);
         testTaskerDto.setCity("Cairo");
-        testTaskerDto.setProfileImage(new byte[]{1, 2, 3, 4, 5});
+        testTaskerDto.setProfileImage("www.hello.com");
 
         testTaskerId = taskerDao.saveTasker(testTaskerDto);
     }
@@ -95,7 +95,7 @@ class TaskerDaoPasswordResetTest {
         secondTaskerDto.setServiceID(1L);
         secondTaskerDto.setHourRate(60.0);
         secondTaskerDto.setCity("Alexandria");
-        secondTaskerDto.setProfileImage(new byte[]{5, 4, 3, 2, 1});
+        secondTaskerDto.setProfileImage("1234");
         Long taskerId2 = taskerDao.saveTasker(secondTaskerDto);
 
         String newPassword1 = "NewPass123!";
@@ -151,7 +151,7 @@ class TaskerDaoPasswordResetTest {
         secondTaskerDto.setServiceID(1L);
         secondTaskerDto.setHourRate(60.0);
         secondTaskerDto.setCity("Alexandria");
-        secondTaskerDto.setProfileImage(new byte[]{5, 4, 3, 2, 1});
+        secondTaskerDto.setProfileImage("1234");
         Long taskerId2 = taskerDao.saveTasker(secondTaskerDto);
 
         String newPassword = "NewPass123!";

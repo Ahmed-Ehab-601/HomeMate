@@ -46,7 +46,7 @@ class SignupTaskerControllerTest {
         taskerSignupDTO.setBio("This is a valid bio that is long enough");
         taskerSignupDTO.setHourRate(50.0);
         taskerSignupDTO.setCity("Cairo");
-        taskerSignupDTO.setProfileImage(new byte[1024]);
+        taskerSignupDTO.setProfileImage("");
     }
 
     @Test

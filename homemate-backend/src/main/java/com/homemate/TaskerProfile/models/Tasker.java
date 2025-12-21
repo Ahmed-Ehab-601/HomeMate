@@ -12,7 +12,7 @@ public class Tasker {
     private Timestamp birthDate;
     private String phone;
     private Character gender;
-    private byte[] image;
+    private String image;
     private String availability;
     private Double rating;
     private Double hourrate;
@@ -105,11 +105,11 @@ public class Tasker {
         this.gender = gender;
     }
 
-    public byte[] getImage() {
+    public String getImage() {
         return image;
     }
 
-    public void setImage(byte[] image) {
+    public void setImage(String image) {
         this.image = image;
     }
 

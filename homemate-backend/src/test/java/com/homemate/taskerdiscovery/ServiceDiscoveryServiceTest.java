@@ -38,9 +38,9 @@ class ServiceDiscoveryServiceTest {
     @BeforeEach
     void setUp() {
         testService1 = new Service(1, "Plumbing", "Plumbing services",
-                new byte[]{1, 2, 3}, "plumbing.jpg", "image/jpeg");
+                "1234", "plumbing.jpg", "image/jpeg");
         testService2 = new Service(2, "Cleaning", "Cleaning services",
-                new byte[]{4, 5, 6}, "cleaning.jpg", "image/jpeg");
+                "1234", "cleaning.jpg", "image/jpeg");
 
         testServiceDto1 = new ServiceDto();
         testServiceDto1.setServiceId(1);

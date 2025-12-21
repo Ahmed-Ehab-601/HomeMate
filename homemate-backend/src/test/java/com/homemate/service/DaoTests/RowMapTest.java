@@ -25,7 +25,7 @@ public class RowMapTest {
         when(rs.getLong("serviceID")).thenReturn(5L);
         when(rs.getString("name")).thenReturn("CLEANING");
         when(rs.getString("description")).thenReturn("GREAT");
-        when(rs.getBytes("imageData")).thenReturn(null);
+        when(rs.getString("imageData")).thenReturn(null);
         when(rs.getString("imageName")).thenReturn("img");
         when(rs.getString("imageType")).thenReturn("jpeg");
 
