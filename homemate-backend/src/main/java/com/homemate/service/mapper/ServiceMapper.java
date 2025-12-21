@@ -14,8 +14,7 @@ public class ServiceMapper {
         .id(serviceDto.getId())
         .name(serviceDto.getName())
         .description(serviceDto.getDescription())
-        .imageData(serviceDto.getImageData() != null ?
-                        Base64.getDecoder().decode(serviceDto.getImageData()) : null)
+        .imageData(serviceDto.getImageData())
         .imageName(serviceDto.getImageName())
         .imageType(serviceDto.getImageType())
         .build();
@@ -25,8 +24,7 @@ public class ServiceMapper {
         .id(service.getId())
         .name(service.getName())
         .description(service.getDescription())
-        .imageData(service.getImageData() != null ?
-                Base64.getEncoder().encodeToString(service.getImageData()) : null)
+        .imageData(service.getImageData())
         .imageName(service.getImageName())
         .imageType(service.getImageType())
         .build();

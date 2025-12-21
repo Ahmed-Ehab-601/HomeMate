@@ -4,7 +4,7 @@ public class Services {
     private Long serviceID;
     private String name;
     private String description;
-    private byte[] imagedata;
+    private String imagedata;
     private String imageName;
     private String imageType;
 
@@ -33,11 +33,11 @@ public class Services {
         this.description = description;
     }
 
-    public byte[] getImagedata() {
+    public String getImagedata() {
         return imagedata;
     }
 
-    public void setImagedata(byte[] imagedata) {
+    public void setImagedata(String imagedata) {
         this.imagedata = imagedata;
     }
 

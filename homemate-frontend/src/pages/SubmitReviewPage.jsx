@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { submitReview, updateReview, getReviewByTask, deleteReviewImage } from "../api/reviewsApi";
+import { uploadToCloudinary } from "../utils/cloudinary";
+import { useAuth } from "../contexts/AuthContext";
 import "../styles/SubmitReview.css";
 
 const MAX_IMAGES = 5;
@@ -10,6 +12,7 @@ const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 function SubmitReviewPage() {
     const { taskId } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     const [reviewId, setReviewId] = useState(null);
     const [text, setText] = useState("");
@@ -35,25 +38,12 @@ function SubmitReviewPage() {
 
                 if (review.reviewImages) {
                     const loadedImages = review.reviewImages.map(img => {
-                        let preview = "";
-                        if (img.imgFile) {
-                            if (typeof img.imgFile === 'string') {
-                                preview = img.imgFile.startsWith('data:')
-                                    ? img.imgFile
-                                    : `data:image/${img.format};base64,${img.imgFile}`;
-                            } else if (Array.isArray(img.imgFile)) {
-                                // Handle byte array
-                                const binary = String.fromCharCode(...img.imgFile);
-                                preview = `data:image/${img.format};base64,${btoa(binary)}`;
-                            }
-                        }
-
                         return {
                             id: img.imgId,
                             name: img.imgName,
                             type: `image/${img.format}`,
-                            preview: preview,
-                            file: null // No file object for existing images
+                            preview: img.imgFile,
+                            file: null
                         };
                     });
                     setImages(loadedImages);
@@ -133,33 +123,39 @@ function SubmitReviewPage() {
         setIsSubmitting(true);
         setError(null);
 
-        const reviewImages = images.map((img) => ({
-            imgId: img.id, // Include ID for existing images
-            imgName: img.name,
-            format: img.type.split("/")[1] || "jpeg",
-            imgFile: img.preview.split(",")[1], // Remove data URL prefix
-        }));
-
-        const payload = {
-            taskId: Number(taskId),
-            text: text,
-            rate: rate,
-            reviewImages: reviewImages,
-        };
-
-        if (reviewId) {
-            payload.reviewId = reviewId;
-        }
-
         try {
-            // Delete removed images first
             for (const imageId of deletedImageIds) {
                 try {
                     await deleteReviewImage(imageId);
                 } catch (deleteErr) {
                     console.error(`Failed to delete image ${imageId}:`, deleteErr);
-                    // Continue with other deletions even if one fails
                 }
+            }
+
+            const reviewImages = await Promise.all(
+                images.map(async (img) => {
+                    let imageUrl = img.preview;
+                    if (img.file) {
+                        imageUrl = await uploadToCloudinary(img.file, user?.username || user?.id);
+                    }
+                    return {
+                        imgId: img.id,
+                        imgName: img.name,
+                        format: img.type.split("/")[1] || "jpeg",
+                        imgFile: imageUrl,
+                    };
+                })
+            );
+
+            const payload = {
+                taskId: Number(taskId),
+                text: text,
+                rate: rate,
+                reviewImages: reviewImages,
+            };
+
+            if (reviewId) {
+                payload.reviewId = reviewId;
             }
 
             if (reviewId) {
@@ -167,27 +163,18 @@ function SubmitReviewPage() {
             } else {
                 await submitReview(payload);
             }
-            // Success - navigate to task details with success message
             navigate(`/tasks/${taskId}`, { state: { reviewSubmitted: true } });
         } catch (err) {
             console.error("Failed to submit review:", err);
 
-            // Extract error message from backend response
             let errorMessage = "Failed to submit review. Please try again.";
-
-            // Get status code (handle both custom apiClient and axios structures)
             const status = err.status || err.response?.status;
-
-            // Get error data/message
             const errorData = err.response?.data || err;
 
-            // Check for 403 Forbidden (Authorization error)
             if (status === 403) {
                 errorMessage = "⛔ Access Denied: You are not authorized to review this task. Only the task owner can submit a review.";
                 setIsForbidden(true);
-            }
-            // Check for 400 Bad Request (Validation errors)
-            else if (status === 400) {
+            } else if (status === 400) {
                 if (typeof errorData === 'string') {
                     errorMessage = errorData;
                 } else if (errorData.message) {
@@ -195,9 +182,7 @@ function SubmitReviewPage() {
                 } else if (errorData.error) {
                     errorMessage = errorData.error;
                 }
-            }
-            // General error message extraction
-            else if (errorData) {
+            } else if (errorData) {
                 if (typeof errorData === 'string') {
                     errorMessage = errorData;
                 } else if (errorData.message) {
@@ -205,9 +190,7 @@ function SubmitReviewPage() {
                 } else if (errorData.error) {
                     errorMessage = errorData.error;
                 }
-            }
-            // Fallback to error object message
-            else if (err.message) {
+            } else if (err.message) {
                 errorMessage = err.message;
             }
 

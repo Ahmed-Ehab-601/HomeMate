@@ -21,18 +21,7 @@ import "../styles/TaskDetails.css";
 const normalizeImage = (imageValue) => {
   if (!imageValue) return null;
   if (typeof imageValue === "string") {
-    if (imageValue.startsWith("data:")) return imageValue;
-    return `data:image/jpeg;base64,${imageValue}`;
-  }
-  if (Array.isArray(imageValue)) {
-    if (typeof window === "undefined" || typeof window.btoa !== "function") {
-      return null;
-    }
-    let binary = "";
-    for (let i = 0; i < imageValue.length; i += 1) {
-      binary += String.fromCharCode(imageValue[i] & 0xff);
-    }
-    return `data:image/jpeg;base64,${window.btoa(binary)}`;
+    return imageValue;
   }
   return null;
 };
@@ -742,23 +731,7 @@ function TaskDetailsPage() {
                         }}
                       >
                         {review.reviewImages.map((img, index) => {
-                          console.log("Review image:", img);
-                          let imgSrc;
-
-                          // Handle different image data formats
-                          if (img.imgFile) {
-                            if (img.imgFile.startsWith("data:")) {
-                              imgSrc = img.imgFile;
-                            } else if (Array.isArray(img.imgFile)) {
-                              // Convert byte array to base64
-                              imgSrc = normalizeImage(img.imgFile);
-                            } else {
-                              // Assume it's base64 string
-                              imgSrc = `data:image/${
-                                img.format || "jpeg"
-                              };base64,${img.imgFile}`;
-                            }
-                          }
+                          const imgSrc = img.imgFile || '';
 
                           if (!imgSrc) {
                             console.warn(

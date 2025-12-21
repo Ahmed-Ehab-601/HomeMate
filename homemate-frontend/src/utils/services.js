@@ -22,11 +22,7 @@ export const normalizeService = (service = {}) => {
     service.totalTasks ??
     service.numberOfTasks ??
     0;
-  const imageFromBinary =
-    service.imageData && service.imageType
-      ? `data:${service.imageType};base64,${service.imageData}`
-      : null;
-  const image = service.image ?? imageFromBinary ?? null;
+  const image = service.imageData ?? service.image ?? null;
 
   return {
     ...service,

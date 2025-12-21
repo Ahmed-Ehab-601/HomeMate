@@ -1,5 +1,6 @@
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { baseUrl } from '../utils/apiClient';
 
 class WebSocketService {
     constructor() {
@@ -15,7 +16,7 @@ class WebSocketService {
             }
 
             // Create SockJS instance - token will be sent in STOMP headers
-            const socket = new SockJS('http://localhost:8080/HomeMate');
+            const socket = new SockJS(baseUrl + '/HomeMate');
 
             this.client = new Client({
                 webSocketFactory: () => socket,

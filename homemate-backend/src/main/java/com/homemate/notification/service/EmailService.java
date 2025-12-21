@@ -8,7 +8,6 @@ import java.util.concurrent.CompletableFuture;
 
 @Service
 public interface EmailService {
-    CompletableFuture<TaskResponse> sendUserEmail(EmailRequest emailRequest);
-    CompletableFuture<TaskResponse> sendTaskerEmail(EmailRequest emailRequest);
+    CompletableFuture<TaskResponse> sendEmail(EmailRequest emailRequest);
 
 }

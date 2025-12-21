@@ -15,20 +15,7 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-// Helper function to convert byte array to base64
-const convertImageData = (service) => {
-  if (service?.imageData && Array.isArray(service.imageData)) {
-    try {
-      const base64 = btoa(
-        service.imageData.map(byte => String.fromCharCode(byte)).join('')
-      );
-      service.imageData = base64;
-    } catch (error) {
-      console.error('Error converting image data:', error);
-    }
-  }
-  return service;
-};
+
 
 export const setUserOffline = async (userId) => {
   const token = localStorage.getItem("token");
@@ -47,9 +34,17 @@ export const setUserOffline = async (userId) => {
 // Helper function to handle API errors
 const handleApiError = async (response) => {
   const contentType = response.headers.get('content-type');
+  
+  console.error('❌ API Error Response:', {
+    status: response.status,
+    statusText: response.statusText,
+    contentType,
+    url: response.url
+  });
 
   if (contentType && contentType.includes('application/json')) {
     const errorData = await response.json();
+    console.error('❌ Error data:', errorData);
 
     // Handle Spring Boot validation errors (from GlobalExceptionHandler)
     if (errorData.errors) {
@@ -68,6 +63,7 @@ const handleApiError = async (response) => {
     throw new Error(JSON.stringify(errorData));
   } else {
     const errorText = await response.text();
+    console.error('❌ Error text:', errorText);
     throw new Error(errorText || `Request failed with status ${response.status}`);
   }
 };
@@ -80,6 +76,7 @@ export const serviceAPI = {
       const user = JSON.parse(localStorage.getItem('homemate_user') || '{}');
       console.log('🔵 [SERVICE] API Request:', {
         url: `${API_BASE_URL}/getallservices`,
+        baseUrl: API_BASE_URL,
         method: 'GET',
         auth: {
           hasToken: !!token,
@@ -91,21 +88,21 @@ export const serviceAPI = {
       const response = await fetch(`${API_BASE_URL}/getallservices`, {
         method: 'GET',
         headers: getAuthHeaders(),
+        mode: 'cors',
+        credentials: 'omit',
       });
+
+      console.log('🔵 [SERVICE] Response status:', response.status);
 
       if (!response.ok) {
         await handleApiError(response);
       }
 
       const data = await response.json();
-
-      if (Array.isArray(data)) {
-        return data.map(service => convertImageData(service));
-      }
-
+      console.log('✅ [SERVICE] Response data:', data);
       return data;
     } catch (err) {
-      console.error('Fetch error:', err);
+      console.error('❌ [SERVICE] Fetch error:', err);
       throw err;
     }
   },
@@ -135,13 +132,7 @@ export const serviceAPI = {
         await handleApiError(response);
       }
 
-      const data = await response.json();
-
-      if (data?.service) {
-        data.service = convertImageData(data.service);
-      }
-
-      return data;
+      return await response.json();
     } catch (err) {
       console.error('Fetch error:', err);
       throw err;

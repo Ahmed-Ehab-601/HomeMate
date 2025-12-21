@@ -16,9 +16,8 @@ public class ServiceMapper {
         dto.setServiceName(service.getServiceName());
         dto.setDescription(service.getDescription());
 
-        if (service.getImageData() != null && service.getImageData().length > 0) {
-            String base64Image = Base64.getEncoder().encodeToString(service.getImageData());
-            dto.setImageData(base64Image);
+        if (service.getImageData() != null && !service.getImageData().isEmpty()) {
+            dto.setImageData(service.getImageData());
             dto.setImageName(service.getImageName());
             dto.setImageType(service.getImageType());
         } else {

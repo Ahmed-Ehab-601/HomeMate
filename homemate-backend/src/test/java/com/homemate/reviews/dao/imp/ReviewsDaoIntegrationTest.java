@@ -86,7 +86,7 @@ public class ReviewsDaoIntegrationTest {
         ReviewImagesDTO img = new ReviewImagesDTO();
         img.setImgName("test.jpg");
         img.setFormat("jpg");
-        img.setImgFile(new byte[]{1, 2, 3});
+        img.setImgFile("1234");
         
         newReview.setReviewImages(Collections.singletonList(img));
 

@@ -1,6 +1,7 @@
 package com.homemate.taskmanagementtests;
 
-import com.homemate.notification.service.imp.EmailServiceImp;
+
+import com.homemate.notification.service.impl.EmailServiceImpl;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.dto.TaskDto;
@@ -33,7 +34,7 @@ class TaskManagementServiceAcceptRejectTest {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     @Mock
-    private EmailServiceImp emailServiceImp;
+    private EmailServiceImpl emailServiceImp;
 
     @InjectMocks
     private TaskStatusService taskStatusService;
@@ -182,7 +183,7 @@ class TaskManagementServiceAcceptRejectTest {
                 .doesNotThrowAnyException();
 
         // Verify email was sent
-        verify(emailServiceImp).sendUserEmail(any());
+        verify(emailServiceImp).sendEmail(any());
     }
 
 
@@ -202,7 +203,7 @@ class TaskManagementServiceAcceptRejectTest {
         when(taskRequestDao.getTaskDetails(taskId)).thenReturn(Optional.of(taskDto));
 
         // Simulate email sending failure
-        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendUserEmail(any());
+        doThrow(new RuntimeException("Email failed")).when(emailServiceImp).sendEmail(any());
 
         // Act & Assert
         assertThatThrownBy(() -> taskStatusService.acceptOrReject(taskId, taskerId, newStatus))

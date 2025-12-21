@@ -18,7 +18,7 @@ public class TaskerProfileServiceRowMapper implements RowMapper<Services> {
         service.setServiceID(rs.getLong("serviceID"));
         service.setName(rs.getString("name"));
         service.setDescription(rs.getString("description"));
-        service.setImagedata(rs.getBytes("imagedata"));
+        service.setImagedata(rs.getString("imagedata"));
         service.setImageName(rs.getString("imageName"));
         service.setImageType(rs.getString("imageType"));
         return service;

@@ -56,7 +56,7 @@ public class CreationPart {
     @Test
     @Order(2)
     public void testCreateServiceWithImageAndVerifyInDatabase() throws Exception{
-        byte[] imageData = new byte[]{1, 2, 3, 4, 5, 6, 7, 8};
+        String imageData = "1234";
 
         ServiceEntity service = ServiceEntity.builder()
                 .name("Electrical")
@@ -67,13 +67,13 @@ public class CreationPart {
                 .build();
 
         serviceDao.save(service);
-        byte[] savedImageData = jdbcTemplate.queryForObject(
+        String savedImageData = jdbcTemplate.queryForObject(
                 "SELECT imageData FROM service WHERE name = ?",
-                byte[].class,
+                String.class,
                 "Electrical"
         );
         assertNotNull(savedImageData);
-        assertArrayEquals(imageData, savedImageData);
+        assertEquals(imageData, savedImageData);
 
         jdbcTemplate.execute("DELETE FROM service WHERE name = 'Electrical'");
 

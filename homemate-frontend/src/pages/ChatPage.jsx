@@ -3,6 +3,8 @@ import { Send, Phone, Image, X, ArrowLeft } from 'lucide-react';
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { uploadToCloudinary } from '../utils/cloudinary';
+import { baseUrl } from '../utils/apiClient';
 
 const ChatInterface = () => {
   const [inputMessage, setInputMessage] = useState('');
@@ -31,7 +33,7 @@ const ChatInterface = () => {
   const { chatId } = useParams();
 
   const MESSAGE_CHAR_LIMIT = 1000;
-  const API_BASE = 'http://localhost:8080/api';
+  const API_BASE = baseUrl + '/api';
 
   // Decode JWT
   function decodeJwtPayload(token) {
@@ -390,6 +392,18 @@ const ChatInterface = () => {
       return;
     }
 
+    let imageUrl = null;
+    if (selectedImage) {
+      try {
+        const blob = await fetch(imagePreview).then(r => r.blob());
+        const file = new File([blob], selectedImage.name, { type: `image/${selectedImage.format}` });
+        imageUrl = await uploadToCloudinary(file, currentUserId);
+      } catch (error) {
+        showErrorMessage('Failed to upload image');
+        return;
+      }
+    }
+
     const messageDto = {
       chatId: parseInt(chatId),
       content: inputMessage.trim(),
@@ -398,8 +412,8 @@ const ChatInterface = () => {
       senderId: isUserRole ? chatDetails.userId : chatDetails.taskerId,
       receiverId: isUserRole ? chatDetails.taskerId : chatDetails.userId,
       timestamp: new Date().toISOString(),
-      imageDto: selectedImage ? {
-        fileData: selectedImage.data,
+      imageDto: imageUrl ? {
+        fileData: imageUrl,
         fileName: selectedImage.name,
         fileFormat: selectedImage.format
       } : null
@@ -420,7 +434,7 @@ const ChatInterface = () => {
       });
 
       if (response.ok) {
-        const savedMessage = await response.json();  // Now expecting JSON
+        const savedMessage = await response.json();
         setInputMessage('');
         setAllMessages(prev => {
           const exists = prev.some(msg => String(msg.messageId) === String(savedMessage.messageId));
@@ -428,17 +442,7 @@ const ChatInterface = () => {
           return [...prev, savedMessage];
         });
 
-        // Broadcast via WebSocket
-        // CRITICAL: Strip the base64 data to prevent WebSocket crash on large payloads
-        const wsMessage = {
-          ...savedMessage,
-          imageDto: savedMessage.imageDto ? {
-            ...savedMessage.imageDto,
-            fileData: null // Send null data, receiver will fetch
-          } : null
-        };
-        sendMessage(wsMessage);
-
+        sendMessage(savedMessage);
         setSelectedImage(null);
         setImagePreview(null);
         sendTypingIndicator(false);
@@ -977,10 +981,10 @@ const ChatInterface = () => {
                   )}
                   {msg.imageDto && msg.imageDto.fileData && (
                     <img
-                      src={`data:image/${msg.imageDto.fileFormat || 'jpeg'};base64,${msg.imageDto.fileData}`}
+                      src={msg.imageDto.fileData}
                       alt={msg.imageDto.fileName || 'Image'}
                       style={styles.messageImage}
-                      onClick={() => setExpandedImage(`data:image/${msg.imageDto.fileFormat || 'jpeg'};base64,${msg.imageDto.fileData}`)}
+                      onClick={() => setExpandedImage(msg.imageDto.fileData)}
                     />
                   )}
                   <div style={{

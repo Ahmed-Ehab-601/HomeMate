@@ -3,7 +3,7 @@ package com.homemate.TaskerProfile.DTO;
 public class ReviewImageDTO {
     private int imgId;
     private String format;
-    private byte[] imgFile;
+    private String imgFile;
     private String imgName;
 
     public int getImgId() {
@@ -22,11 +22,11 @@ public class ReviewImageDTO {
         this.format = format;
     }
 
-    public byte[] getImgFile() {
+    public String getImgFile() {
         return imgFile;
     }
 
-    public void setImgFile(byte[] imgFile) {
+    public void setImgFile(String imgFile) {
         this.imgFile = imgFile;
     }
 

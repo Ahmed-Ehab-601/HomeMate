@@ -3,12 +3,7 @@ import './ServiceList.css';
 const ServiceReview = ({ formData, onConfirm, onBack, isEdit = false }) => {
   const getImageSrc = () => {
     if (formData.imageData) {
-      if (typeof formData.imageData === 'string') {
-        if (formData.imageData.startsWith('data:')) {
-          return formData.imageData;
-        }
-        return `data:${formData.imageType || 'image/jpeg'};base64,${formData.imageData}`;
-      }
+      return formData.imageData;
     }
     return null;
   };
@@ -41,31 +36,10 @@ const ServiceReview = ({ formData, onConfirm, onBack, isEdit = false }) => {
             {imageSrc ? (
               <div className="review-image-container">
                 <img src={imageSrc} alt="Service preview" className="review-image" />
-                {formData.imageName && (
-                  <p className="review-image-name">{formData.imageName}</p>
-                )}
               </div>
             ) : (
               <p className="review-no-image">No image provided</p>
             )}
-          </div>
-
-          <div className="review-section">
-            <h3>Technical Details</h3>
-            <div className="review-item">
-              <strong>Image Type:</strong>
-              <span>{formData.imageType || 'N/A'}</span>
-            </div>
-            {formData.imageName && (
-              <div className="review-item">
-                <strong>Image File Name:</strong>
-                <span>{formData.imageName}</span>
-              </div>
-            )}
-            <div className="review-item">
-              <strong>Image Data Size:</strong>
-              <span>{formData.imageData ? `${Math.round(formData.imageData.length / 1024)} KB` : 'N/A'}</span>
-            </div>
           </div>
         </div>
 

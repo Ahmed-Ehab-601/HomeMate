@@ -3,10 +3,8 @@
  */
 
 // Use backend URL directly or env variable for production
-//const DEFAULT_API_BASE_URL = "https://homemate-homemate.up.railway.app";
-const DEFAULT_API_BASE_URL = "http://localhost:8080";
-export const baseUrl = (import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
-
+export const baseUrl = (import.meta.env.VITE_API_URL).replace(/\/$/, "");
+//export const baseUrl = "https://homemate-homemate.up.railway.app"
 /**
  * Get authentication headers with JWT token
  * @returns {Object} Headers object with Authorization header if token exists

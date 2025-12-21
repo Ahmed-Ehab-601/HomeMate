@@ -1,5 +1,6 @@
 package com.homemate.notification.domains.dto;
 
+import com.homemate.notification.domains.model.EmailType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -11,5 +12,5 @@ public class OtpVerifyRequest {
     private String recipientEmail;
     @NotBlank
     private String code;
-    EmailRequest.EmailType emailType;
+    private EmailType emailType;
 }

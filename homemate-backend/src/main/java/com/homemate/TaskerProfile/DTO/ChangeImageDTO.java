@@ -2,7 +2,7 @@ package com.homemate.TaskerProfile.DTO;
 
 public class ChangeImageDTO {
     private Long taskerID;
-    private byte[] newImage;
+    private String newImage;
 
     public Long getTaskerID() {
         return taskerID;
@@ -12,11 +12,11 @@ public class ChangeImageDTO {
         this.taskerID = taskerID;
     }
 
-    public byte[] getNewImage() {
+    public String getNewImage() {
         return newImage;
     }
 
-    public void setNewImage(byte[] newImage) {
+    public void setNewImage(String newImage) {
         this.newImage = newImage;
     }
 }

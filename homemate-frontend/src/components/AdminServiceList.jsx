@@ -16,8 +16,9 @@ const AdminServiceList = ({ onServiceClick, onCreateNew }) => {
     try {
       setLoading(true);
       setError(null);
+      console.log('🔵 Loading services from API...');
       const data = await serviceAPI.getAllServices();
-      console.log('Loaded services raw data:', data);
+      console.log('✅ Loaded services raw data:', data);
       
       // Handle both array and object responses
       let servicesArray = [];
@@ -58,53 +59,26 @@ const AdminServiceList = ({ onServiceClick, onCreateNew }) => {
       
       setServices(servicesArray);
     } catch (err) {
-      console.error('Error loading services:', err);
-      setError(err.message || 'Failed to load services. Please check if the backend is running and CORS is configured.');
+      console.error('❌ Error loading services:', err);
+      console.error('Error details:', {
+        message: err.message,
+        stack: err.stack,
+        fullError: err
+      });
+      setError(err.message || 'Failed to load services');
     } finally {
       setLoading(false);
     }
   };
 
   const getImageSrc = (service) => {
-    // Debug: Log what we're trying to process
     const imageData = service?.imageData;
-    const imageType = service?.imageType || 'image/jpeg';
     
     if (!imageData) {
-      console.warn(`❌ No imageData for service: "${service?.name}"`, {
-        serviceId: service?.id || service?.serviceID,
-        availableFields: Object.keys(service || {})
-      });
       return 'https://via.placeholder.com/400x250?text=No+Image';
     }
     
-    if (typeof imageData !== 'string') {
-      console.warn(`❌ imageData is not a string for service: "${service?.name}"`, {
-        type: typeof imageData,
-        value: imageData
-      });
-      return 'https://via.placeholder.com/400x250?text=Invalid+Image+Data';
-    }
-    
-    // If it's already a data URL
-    if (imageData.startsWith('data:')) {
-      console.log(`✅ Using existing data URL for: "${service?.name}"`);
-      return imageData;
-    }
-    
-    // If it's a base64 string, add the data URL prefix
-    if (imageData.length > 0) {
-      const dataUrl = `data:${imageType};base64,${imageData}`;
-      console.log(`✅ Created data URL for: "${service?.name}"`, {
-        imageType,
-        dataLength: imageData.length,
-        preview: imageData.substring(0, 50) + '...'
-      });
-      return dataUrl;
-    }
-    
-    console.warn(`❌ Empty imageData string for service: "${service?.name}"`);
-    return 'https://via.placeholder.com/400x250?text=Empty+Image';
+    return imageData;
   };
 
   const filteredServices = services.filter((service) =>
@@ -128,9 +102,6 @@ const AdminServiceList = ({ onServiceClick, onCreateNew }) => {
           <div className="error">
             <h3>Error Loading Services</h3>
             <p>{error}</p>
-            <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#6c757d' }}>
-              Make sure your backend is running on http://localhost:8080 and CORS is configured.
-            </p>
             <button className="btn btn-primary" onClick={loadServices} style={{ marginTop: '1rem' }}>
               Retry
             </button>

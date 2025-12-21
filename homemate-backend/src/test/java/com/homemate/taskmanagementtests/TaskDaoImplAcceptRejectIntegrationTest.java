@@ -2,7 +2,6 @@ package com.homemate.taskmanagementtests;
 
 import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.model.Status;
-import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 

@@ -20,7 +20,7 @@ public class TaskerSignupDTO {
     private String phoneNumber;
     private Timestamp dateOfBirth;
     private String bio;
-    private byte[] profileImage;
+    private String profileImage;
     private Long serviceID;
     private Double hourRate;
     private String firstName;

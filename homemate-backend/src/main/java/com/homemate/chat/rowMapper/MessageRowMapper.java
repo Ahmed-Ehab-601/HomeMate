@@ -35,9 +35,7 @@ public class MessageRowMapper implements RowMapper<MessageDto> {
             image.setMessageId(rs.getLong("messageId"));
             image.setFileFormat(rs.getString("format"));
 
-            byte[] imageBytes = rs.getBytes("imageFile");
-            image.setFileData(imageBytes != null ?
-                    Base64.getEncoder().encodeToString(imageBytes) : null);
+            image.setFileData(rs.getString("imageFile"));
 
             image.setFileName(rs.getString("imageName"));
 

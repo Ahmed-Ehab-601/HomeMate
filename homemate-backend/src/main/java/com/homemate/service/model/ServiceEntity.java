@@ -16,7 +16,7 @@ public class ServiceEntity {
 
     private String name;
     private String description;
-    private byte[] imageData;
+    private String imageData;
     private String imageName;
     private String imageType;
 }

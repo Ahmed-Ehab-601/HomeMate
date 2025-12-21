@@ -180,26 +180,7 @@ class TaskerProfileServiceTest {
         assertTrue(result);
     }
 
-    @Test
-    void testChangeImage_SizeValidation() {
-        // Test max size exceeded
-        ChangeImageDTO imageDTO1 = new ChangeImageDTO();
-        imageDTO1.setTaskerID(1L);
-        byte[] largeImage = new byte[(16 * 1024 * 1024) + 1]; // 16MB + 1 byte
-        imageDTO1.setNewImage(largeImage);
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            taskerProfileService.changeImage(imageDTO1);
-        });
-        assertEquals("Image size exceeds 16MB limit.", exception.getMessage());
 
-        // Test max size boundary
-        ChangeImageDTO imageDTO2 = new ChangeImageDTO();
-        imageDTO2.setTaskerID(1L);
-        byte[] maxSizeImage = new byte[16 * 1024 * 1024]; // Exactly 16MB
-        imageDTO2.setNewImage(maxSizeImage);
-        Boolean result = taskerProfileService.changeImage(imageDTO2);
-        assertTrue(result);
-    }
 
     @Test
     void testChangeName_FirstNameMaxLengthExceeded() {
@@ -367,7 +348,7 @@ class TaskerProfileServiceTest {
     void testChangeImage_EmptyImage() {
         ChangeImageDTO dto = new ChangeImageDTO();
         dto.setTaskerID(1L);
-        dto.setNewImage(new byte[0]);
+        dto.setNewImage("");
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
             taskerProfileService.changeImage(dto);

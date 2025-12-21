@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -46,7 +47,7 @@ class ValidateSignupServiceTest {
         taskerSignupDTO.setBio("This is a valid bio that is long enough");
         taskerSignupDTO.setHourRate(50.0);
         taskerSignupDTO.setCity("Cairo");
-        taskerSignupDTO.setProfileImage(new byte[1024]);
+        taskerSignupDTO.setProfileImage("1234");
     }
 
     @Test
@@ -372,12 +373,12 @@ class ValidateSignupServiceTest {
 
     @Test
     void validateTaskerSignupShouldReturnErrorWithLargeProfileImage() {
-        taskerSignupDTO.setProfileImage(new byte[16 * 1024 * 1024 + 1]);
+        taskerSignupDTO.setProfileImage(Arrays.toString(new byte[505]));
 
         String result = validateSignupService.validateTaskerSignup(taskerSignupDTO);
 
         assertNotNull(result);
-        assertTrue(result.contains("Profile image must be less than 16MB"));
+        assertTrue(result.contains("Profile image must be less than 500"));
     }
 }
 

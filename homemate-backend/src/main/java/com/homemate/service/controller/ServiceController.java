@@ -2,6 +2,7 @@ package com.homemate.service.controller;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 
 import com.homemate.service.dto.ServiceDetailsDto;
 import jakarta.validation.Valid;
@@ -16,7 +17,6 @@ import javax.management.ServiceNotFoundException;
 
 @RestController
 @RequestMapping("/api/service")
-@CrossOrigin(origins = "*")
 public class ServiceController {
 
     private final ServiceManagService serviceManagService;
@@ -84,11 +84,7 @@ public class ServiceController {
     public ResponseEntity<List<ServiceDto>> getAllService() throws Exception {
         try {
             List<ServiceDto> serviceDtoList = serviceManagService.getAllService();
-            if (serviceDtoList != null && !serviceDtoList.isEmpty()) {
-                return ResponseEntity.ok(serviceDtoList);
-            } else {
-                return ResponseEntity.ok(List.of());
-            }
+            return ResponseEntity.ok(Objects.requireNonNullElseGet(serviceDtoList, List::of));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

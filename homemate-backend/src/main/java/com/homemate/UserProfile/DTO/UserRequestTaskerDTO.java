@@ -10,7 +10,7 @@ public class UserRequestTaskerDTO {
     private String email;
     private String phone;
     private String username;
-    private byte[] image;
+    private String image;
     private Double rating;
     private String bio;
     private String serviceName;
@@ -122,11 +122,11 @@ public class UserRequestTaskerDTO {
         this.username = username;
     }
 
-    public byte[] getImage() {
+    public String getImage() {
         return image;
     }
 
-    public void setImage(byte[] image) {
+    public void setImage(String image) {
         this.image = image;
     }
     }

@@ -25,7 +25,7 @@ public class TaskerRowMapper implements RowMapper<Tasker> {
         tasker.setPhone(rs.getString("phone"));
         String gender = rs.getString("gender");
         tasker.setGender(gender != null && !gender.isEmpty() ? gender.charAt(0) : null);
-        tasker.setImage(rs.getBytes("image"));
+        tasker.setImage(rs.getString("image"));
         tasker.setAvailability(rs.getString("availability"));
         tasker.setRating(rs.getObject("rating") != null ? rs.getDouble("rating") : null);
         tasker.setHourrate(rs.getObject("hourrate") != null ? rs.getDouble("hourrate") : null);

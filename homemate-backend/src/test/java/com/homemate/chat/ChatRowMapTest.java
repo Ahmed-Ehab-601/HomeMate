@@ -16,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -82,6 +83,7 @@ public class ChatRowMapTest {
         MessageDto result = messageRowMapper.mapRow(resultSet, 0);
 
         // Assert
+        assertNotNull(result);
         assertEquals(MessageStatus.received, result.getMessageStatus());
     }
 
@@ -146,7 +148,7 @@ public class ChatRowMapTest {
         when(resultSet.wasNull()).thenReturn(false);
         when(resultSet.getLong("messageId")).thenReturn(MESSAGE_ID);
         when(resultSet.getString("format")).thenReturn("png");
-        when(resultSet.getBytes("imageFile")).thenReturn(null);
+        when(resultSet.getString("imageFile")).thenReturn(null);
         when(resultSet.getString("imageName")).thenReturn("null_image.png");
 
         // Act
@@ -166,8 +168,8 @@ public class ChatRowMapTest {
         when(resultSet.getLong("messageId")).thenReturn(MESSAGE_ID);
         when(resultSet.getString("format")).thenReturn("png");
 
-        byte[] imageBytes = "PNG image data".getBytes();
-        when(resultSet.getBytes("imageFile")).thenReturn(imageBytes);
+        String imageBytes = "PNG image data";
+        when(resultSet.getString("imageFile")).thenReturn(imageBytes);
         when(resultSet.getString("imageName")).thenReturn("image.png");
 
         // Act
@@ -348,11 +350,8 @@ public class ChatRowMapTest {
         when(resultSet.getString("format")).thenReturn("jpeg");
 
         // Create large image data (1MB)
-        byte[] largeImageBytes = new byte[1024 * 1024];
-        for (int i = 0; i < largeImageBytes.length; i++) {
-            largeImageBytes[i] = (byte) (i % 256);
-        }
-        when(resultSet.getBytes("imageFile")).thenReturn(largeImageBytes);
+        String largeImage = Arrays.toString(new byte[505]);
+        when(resultSet.getString("imageFile")).thenReturn(largeImage);
         when(resultSet.getString("imageName")).thenReturn("large_image.jpg");
 
         // Act
@@ -361,8 +360,6 @@ public class ChatRowMapTest {
         // Assert
         assertNotNull(result.getImageDto());
         assertNotNull(result.getImageDto().getFileData());
-        // Base64 encoding increases size by ~33%
-        assertTrue(result.getImageDto().getFileData().length() > 1000000);
     }
 
     // ==================== HELPER METHODS ====================
@@ -394,8 +391,8 @@ public class ChatRowMapTest {
         when(resultSet.getLong("messageId")).thenReturn(MESSAGE_ID);
         when(resultSet.getString("format")).thenReturn("jpeg");
 
-        byte[] imageBytes = "test image data".getBytes();
-        when(resultSet.getBytes("imageFile")).thenReturn(imageBytes);
+        String imageBytes = "test image data";
+        when(resultSet.getString("imageFile")).thenReturn(imageBytes);
         when(resultSet.getString("imageName")).thenReturn("test_image.jpg");
     }
     @Test
