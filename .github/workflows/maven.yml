@@ -223,7 +223,7 @@ jobs:
         path: homemate-backend/target/*.jar
     
     - name: Submit Dependency Graph
-      uses: advanced-security/maven-dependency-submission-action@v4
+      uses: advanced-security/maven-dependency-submission-action@v5
       if: steps.maven-build.outcome == 'success'
       with:
         directory: homemate-backend
