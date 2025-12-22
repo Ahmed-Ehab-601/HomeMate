@@ -10,7 +10,13 @@ import { useAuth } from '../contexts/AuthContext';
  * Now matches TaskDetailsPage reschedule logic exactly
  */
 const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
-    const [viewMode, setViewMode] = useState('calendar'); // 'calendar' or 'list'
+    const [viewMode, setViewMode] = useState(() => {
+        return localStorage.getItem('taskCalendarViewMode') || 'calendar';
+    }); // 'calendar' or 'list'
+
+    useEffect(() => {
+        localStorage.setItem('taskCalendarViewMode', viewMode);
+    }, [viewMode]);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [tasks, setTasks] = useState([]);
     const [filteredStatus, setFilteredStatus] = useState('All');
@@ -590,12 +596,28 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
     };
 
     // ==================== NAVIGATION ====================
+    // Calendar navigation limits
+    const today = new Date();
+    const minMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const maxMonth = new Date(today.getFullYear(), today.getMonth() + 3, 1);
+
+    const isPrevDisabled =
+        currentDate.getFullYear() < minMonth.getFullYear() ||
+        (currentDate.getFullYear() === minMonth.getFullYear() && currentDate.getMonth() <= minMonth.getMonth());
+    const isNextDisabled =
+        currentDate.getFullYear() > maxMonth.getFullYear() ||
+        (currentDate.getFullYear() === maxMonth.getFullYear() && currentDate.getMonth() >= maxMonth.getMonth());
+
     const handlePreviousMonth = () => {
-        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+        if (!isPrevDisabled) {
+            setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+        }
     };
 
     const handleNextMonth = () => {
-        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+        if (!isNextDisabled) {
+            setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+        }
     };
 
     // ==================== RENDER HELPERS ====================
@@ -1158,9 +1180,11 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                                     cursor: viewMode === 'calendar' ? 'default' : 'pointer',
                                     fontWeight: '600',
                                     fontSize: '14px',
-                                    transition: 'all 0.2s ease',
+                                    transition: 'all 0.2s ease, transform 0.2s cubic-bezier(.4,2,.6,1)',
                                     marginRight: '4px',
                                     opacity: viewMode === 'calendar' ? 1 : 0.7,
+                                    boxShadow: viewMode === 'calendar' ? '0 4px 16px 0 #a7df2d55' : 'none',
+                                    transform: viewMode === 'calendar' ? 'scale(1.12)' : 'scale(1)',
                                 }}
                                 disabled={viewMode === 'calendar'}
                                 onMouseOver={e => { if (viewMode !== 'calendar') e.target.style.backgroundColor = '#a7df2d'; }}
@@ -1179,9 +1203,11 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                                     cursor: viewMode === 'list' ? 'default' : 'pointer',
                                     fontWeight: '600',
                                     fontSize: '14px',
-                                    transition: 'all 0.2s ease',
+                                    transition: 'all 0.2s ease, transform 0.2s cubic-bezier(.4,2,.6,1)',
                                     marginRight: '16px',
                                     opacity: viewMode === 'list' ? 1 : 0.7,
+                                    boxShadow: viewMode === 'list' ? '0 4px 16px 0 #a7df2d55' : 'none',
+                                    transform: viewMode === 'list' ? 'scale(1.12)' : 'scale(1)',
                                 }}
                                 disabled={viewMode === 'list'}
                                 onMouseOver={e => { if (viewMode !== 'list') e.target.style.backgroundColor = '#a7df2d'; }}
@@ -1195,16 +1221,18 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                                         onClick={handlePreviousMonth}
                                         style={{
                                             padding: '8px 12px',
-                                            backgroundColor: '#f3f4f6',
+                                            backgroundColor: isPrevDisabled ? '#e5e7eb' : '#f3f4f6',
                                             border: '1px solid #e5e7eb',
                                             borderRadius: '8px',
-                                            cursor: 'pointer',
+                                            cursor: isPrevDisabled ? 'not-allowed' : 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
                                             transition: 'all 0.2s ease',
+                                            opacity: isPrevDisabled ? 0.5 : 1,
                                         }}
-                                        onMouseOver={(e) => (e.target.style.backgroundColor = '#e5e7eb')}
-                                        onMouseOut={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
+                                        onMouseOver={e => { if (!isPrevDisabled) e.target.style.backgroundColor = '#e5e7eb'; }}
+                                        onMouseOut={e => { if (!isPrevDisabled) e.target.style.backgroundColor = '#f3f4f6'; }}
+                                        disabled={isPrevDisabled}
                                     >
                                         <ChevronLeft style={{ width: '20px', height: '20px' }} />
                                     </button>
@@ -1212,16 +1240,18 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                                         onClick={handleNextMonth}
                                         style={{
                                             padding: '8px 12px',
-                                            backgroundColor: '#f3f4f6',
+                                            backgroundColor: isNextDisabled ? '#e5e7eb' : '#f3f4f6',
                                             border: '1px solid #e5e7eb',
                                             borderRadius: '8px',
-                                            cursor: 'pointer',
+                                            cursor: isNextDisabled ? 'not-allowed' : 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
                                             transition: 'all 0.2s ease',
+                                            opacity: isNextDisabled ? 0.5 : 1,
                                         }}
-                                        onMouseOver={(e) => (e.target.style.backgroundColor = '#e5e7eb')}
-                                        onMouseOut={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
+                                        onMouseOver={e => { if (!isNextDisabled) e.target.style.backgroundColor = '#e5e7eb'; }}
+                                        onMouseOut={e => { if (!isNextDisabled) e.target.style.backgroundColor = '#f3f4f6'; }}
+                                        disabled={isNextDisabled}
                                     >
                                         <ChevronRight style={{ width: '20px', height: '20px' }} />
                                     </button>
