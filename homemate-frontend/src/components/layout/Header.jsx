@@ -119,12 +119,24 @@ function Header() {
             </>
           )}
 
-          <a className="nav-link" href="#how-it-works">
+          <NavLink
+            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+            to="/how-it-works"
+          >
             How It Works
-          </a>
-          <a className="nav-link" href="#about">
+          </NavLink>
+          <NavLink
+            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+            to="/about"
+          >
             About
-          </a>
+          </NavLink>
+          <NavLink
+            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+            to="/contact"
+          >
+            Contact
+          </NavLink>
         </nav>
 
         <div className="header-cta">

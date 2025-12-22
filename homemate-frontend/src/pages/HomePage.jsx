@@ -186,6 +186,30 @@ function HomePage() {
           </>
         )}
       </section> */}
+
+      {/* Info Links Section */}
+      <section className="info-links-section">
+        <div className="info-links-grid">
+          <div className="info-link-card" onClick={() => navigate("/how-it-works")}>
+            <div className="info-link-icon">📖</div>
+            <h3>How It Works</h3>
+            <p>Learn about our platform and how to get started</p>
+            <button type="button" className="btn btn-ghost">Learn More →</button>
+          </div>
+          <div className="info-link-card" onClick={() => navigate("/about")}>
+            <div className="info-link-icon">ℹ️</div>
+            <h3>About Us</h3>
+            <p>Discover our mission and what makes HomeMate special</p>
+            <button type="button" className="btn btn-ghost">Read More →</button>
+          </div>
+          <div className="info-link-card" onClick={() => navigate("/contact")}>
+            <div className="info-link-icon">📧</div>
+            <h3>Contact Us</h3>
+            <p>Get in touch with our support team</p>
+            <button type="button" className="btn btn-ghost">Get Help →</button>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

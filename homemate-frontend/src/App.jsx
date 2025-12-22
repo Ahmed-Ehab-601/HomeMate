@@ -29,6 +29,9 @@ import EnterEmailPage from "./pages/EnterEmailPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
 import SignupMethodChoicePage from "./pages/SignupMethodChoicePage";
 import GlobalPresence from "./components/GlobalPresence";
+import AboutPage from "./pages/AboutPage";
+import HowItWorksPage from "./pages/HowItWorksPage";
+import ContactPage from "./pages/ContactPage";
 
 // Protected route component - redirects to signin on 401
 function ProtectedRoute({ children, requiredRole }) {
@@ -72,6 +75,9 @@ function AppRoutes() {
       <Route path="/services/:slug/taskers" element={<TaskerDiscoveryPage />} />
       <Route path="/taskers/:taskerId" element={<TaskerProfilePage />} />
       <Route path="/taskers/:taskerId/request" element={<RequestTaskPage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/how-it-works" element={<HowItWorksPage />} />
+      <Route path="/contact" element={<ContactPage />} />
       <Route
         path="/submit-review/:taskId"
         element={

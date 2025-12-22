@@ -96,3 +96,67 @@ button {
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
+
+/* Info Links Section */
+.info-links-section {
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%);
+}
+
+.info-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.info-link-card {
+  background: white;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-align: center;
+  border: 2px solid transparent;
+}
+
+.info-link-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: var(--primary, #667eea);
+}
+
+.info-link-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.info-link-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+}
+
+.info-link-card p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0 0 20px 0;
+  line-height: 1.6;
+}
+
+.info-link-card .btn {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .info-links-section {
+    padding: 40px 20px;
+  }
+
+  .info-links-grid {
+    grid-template-columns: 1fr;
+  }
+}
