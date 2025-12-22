@@ -9,6 +9,7 @@ import com.homemate.reports.service.IReportService;
 import com.homemate.security.model.AppUserDetails;
 import com.homemate.util.PaginatedResponse;
 
+import com.homemate.notification.service.EmailService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,9 +20,11 @@ public class ReportServiceImp implements IReportService {
 
     private final int PAGE_SIZE_LIMIT = 100;
     private final ReportDao reportDao;
+    private final EmailService emailService;
 
-    public ReportServiceImp(ReportDao reportDao) {
+    public ReportServiceImp(ReportDao reportDao, EmailService emailService) {
         this.reportDao = reportDao;
+        this.emailService = emailService;
     }
 
     @Override
@@ -99,5 +102,29 @@ public class ReportServiceImp implements IReportService {
     public Optional<DetailedReport> completeReport(int reportID) {
         reportDao.updateReportStatus(reportID, "done");
         return reportDao.getDetailedReportById(reportID);
+    }
+
+    @Override
+    public void respondToReport(int reportID, String message) {
+        Optional<DetailedReport> reportOpt = reportDao.getDetailedReportById(reportID);
+        if (reportOpt.isEmpty()) {
+             throw new IllegalArgumentException("Report with ID " + reportID + " not found");
+        }
+
+        DetailedReport report = reportOpt.get();
+
+        // Only respond if the report is marked as done
+        if (report.getAdminStatus() == null || !"done".equalsIgnoreCase(report.getAdminStatus().name())) {
+            throw new IllegalStateException("Report is not in done status");
+        }
+        
+        String subject = "Admin Response: " + report.getHeader();
+        
+        if (report.getUserEmail() != null) {
+            emailService.sendDirectEmail(report.getUserEmail(), subject, message);
+        }
+        if (report.getTaskerEmail() != null) {
+            emailService.sendDirectEmail(report.getTaskerEmail(), subject, message);
+        }
     }
 }

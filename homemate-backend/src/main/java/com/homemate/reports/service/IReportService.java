@@ -13,4 +13,5 @@ public interface IReportService {
     PaginatedResponse<ShortReport> getAllShortReports(int pageNumber, int pageSize, ReportFilterDto filterDto);
     Optional<DetailedReport> getDetailedReportById(int reportID);
     Optional<DetailedReport> completeReport(int reportID);
+    void respondToReport(int reportID, String message);
 }
