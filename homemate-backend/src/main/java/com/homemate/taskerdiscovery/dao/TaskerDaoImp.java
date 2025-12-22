@@ -24,7 +24,7 @@ public class TaskerDaoImp implements TaskerDao {
     @Override
     public List<Tasker> findTaskersWithFilters(FindTaskerCriteriaDto filter, int page, int pageSize) {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT taskerID, firstName, lastName, image, rating, availability, bio, addressCity, hourRate " +
+        sql.append("SELECT taskerID, firstName, lastName, image, rating, availability, bio, addressCity, hourRate ,stripe_account_id " +
                 "FROM Tasker WHERE 1=1");
         List<Object> params = new ArrayList<>();
         try {
