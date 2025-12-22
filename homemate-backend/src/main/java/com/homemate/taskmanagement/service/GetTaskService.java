@@ -90,26 +90,24 @@ public class GetTaskService {
     public List<TaskCardDto> getTaskerTasksForNewView(
             Long taskerID, LocalDate startDate,
             LocalDate endDate, StatusDto statusDto) {
-        LocalDate endExclusive = endDate.plusDays(1);
         if(statusDto == StatusDto.All){
-            return getTasksDao.getTaskerTasksByDateRange(taskerID,startDate,endExclusive);
+            return getTasksDao.getTaskerTasksByDateRange(taskerID,startDate,endDate);
         }
 
-        return  getTasksDao.getTaskerTasksByDateRangeAndStatus(taskerID,startDate,endExclusive,statusDto);
+        return  getTasksDao.getTaskerTasksByDateRangeAndStatus(taskerID,startDate,endDate,statusDto);
 
 
 
     }
     public List<TaskCardDto> getUserTasksForNewView(
-            Long taskerID, LocalDate startDate,
+            Long userID, LocalDate startDate,
             LocalDate endDate, StatusDto statusDto) {
-        // Use endDate as exclusive upper bound to include all times on the endDate
-        LocalDate endExclusive = endDate.plusDays(1);
         if(statusDto == StatusDto.All){
-            return getTasksDao.getUserTasksByDateRange(taskerID,startDate,endExclusive);
+            return getTasksDao.getUserTasksByDateRange(userID,startDate,endDate);
         }
 
-        return  getTasksDao.getUserTasksByDateRangeAndStatus(taskerID,startDate,endExclusive,statusDto);
+        return  getTasksDao.getUserTasksByDateRangeAndStatus(userID
+                ,startDate,endDate,statusDto);
 
 
 

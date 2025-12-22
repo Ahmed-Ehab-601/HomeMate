@@ -152,7 +152,7 @@ public class GetTasksDao {
                     INNER JOIN Address a ON t.addressID = a.addressID
                 WHERE u.userID = ? 
                     AND t.startDate >= ? 
-                    AND t.startDate < ?
+                    AND t.startDate <= ?
                 ORDER BY startDate ASC
                 """;
         return jdbcTemplate.query(sql, taskCardRowMapper, userID, startDate, endDate);
@@ -176,7 +176,7 @@ public class GetTasksDao {
                     INNER JOIN Address a ON t.addressID = a.addressID
                 WHERE u.userID = ? 
                     AND t.startDate >= ? 
-                    AND t.startDate < ?
+                    AND t.startDate <= ?
                     AND t.status = ?
                 ORDER BY startDate ASC
                 """;
@@ -201,7 +201,7 @@ public class GetTasksDao {
                     INNER JOIN Address a ON t.addressID = a.addressID
                 WHERE tas.taskerID = ? 
                     AND t.startDate >= ? 
-                    AND t.startDate < ?
+                    AND t.startDate <= ?
                 ORDER BY startDate ASC
                 """;
         return jdbcTemplate.query(sql, taskCardRowMapper, taskerID, startDate, endDate);
@@ -225,7 +225,7 @@ public class GetTasksDao {
                     INNER JOIN Address a ON t.addressID = a.addressID
                 WHERE tas.taskerID = ? 
                     AND t.startDate >= ? 
-                    AND t.startDate < ?
+                    AND t.startDate <= ?
                     AND t.status = ?
                 ORDER BY startDate ASC
                 """;
