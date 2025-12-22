@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import TaskCard from './TaskCard';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import { rescheduleTask, getTaskerBusyTime, getTaskDetails } from '../api/taskManagementApi';
@@ -9,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
  * Now matches TaskDetailsPage reschedule logic exactly
  */
 const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
+    const [viewMode, setViewMode] = useState('calendar'); // 'calendar' or 'list'
     const [currentDate, setCurrentDate] = useState(new Date());
     const [tasks, setTasks] = useState([]);
     const [filteredStatus, setFilteredStatus] = useState('All');
@@ -1139,65 +1141,92 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                                 margin: 0,
                             }}
                         >
-                            {currentDate.toLocaleString('default', { month: 'long' })} {currentDate.getFullYear()}
+                            {viewMode === 'calendar'
+                                ? `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`
+                                : 'Task List'}
                         </h1>
 
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            {onBackToList && (
-                                <button
-                                    onClick={onBackToList}
-                                    style={{
-                                        padding: '8px 16px',
-                                        backgroundColor: '#c6ff4d',
-                                        color: '#111827',
-                                        border: '1px solid #a7df2d',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        fontWeight: '600',
-                                        fontSize: '14px',
-                                        transition: 'all 0.2s ease',
-                                        marginRight: '16px',
-                                    }}
-                                    onMouseOver={(e) => (e.target.style.backgroundColor = '#a7df2d')}
-                                    onMouseOut={(e) => (e.target.style.backgroundColor = '#c6ff4d')}
-                                >
-                                    ← Back to List
-                                </button>
+                            <button
+                                onClick={() => setViewMode('calendar')}
+                                style={{
+                                    padding: '8px 16px',
+                                    backgroundColor: viewMode === 'calendar' ? '#c6ff4d' : '#f3f4f6',
+                                    color: '#111827',
+                                    border: '1px solid #a7df2d',
+                                    borderRadius: '8px',
+                                    cursor: viewMode === 'calendar' ? 'default' : 'pointer',
+                                    fontWeight: '600',
+                                    fontSize: '14px',
+                                    transition: 'all 0.2s ease',
+                                    marginRight: '4px',
+                                    opacity: viewMode === 'calendar' ? 1 : 0.7,
+                                }}
+                                disabled={viewMode === 'calendar'}
+                                onMouseOver={e => { if (viewMode !== 'calendar') e.target.style.backgroundColor = '#a7df2d'; }}
+                                onMouseOut={e => { if (viewMode !== 'calendar') e.target.style.backgroundColor = '#f3f4f6'; }}
+                            >
+                                Calendar View
+                            </button>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                style={{
+                                    padding: '8px 16px',
+                                    backgroundColor: viewMode === 'list' ? '#c6ff4d' : '#f3f4f6',
+                                    color: '#111827',
+                                    border: '1px solid #a7df2d',
+                                    borderRadius: '8px',
+                                    cursor: viewMode === 'list' ? 'default' : 'pointer',
+                                    fontWeight: '600',
+                                    fontSize: '14px',
+                                    transition: 'all 0.2s ease',
+                                    marginRight: '16px',
+                                    opacity: viewMode === 'list' ? 1 : 0.7,
+                                }}
+                                disabled={viewMode === 'list'}
+                                onMouseOver={e => { if (viewMode !== 'list') e.target.style.backgroundColor = '#a7df2d'; }}
+                                onMouseOut={e => { if (viewMode !== 'list') e.target.style.backgroundColor = '#f3f4f6'; }}
+                            >
+                                List View
+                            </button>
+                            {viewMode === 'calendar' && (
+                                <>
+                                    <button
+                                        onClick={handlePreviousMonth}
+                                        style={{
+                                            padding: '8px 12px',
+                                            backgroundColor: '#f3f4f6',
+                                            border: '1px solid #e5e7eb',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            transition: 'all 0.2s ease',
+                                        }}
+                                        onMouseOver={(e) => (e.target.style.backgroundColor = '#e5e7eb')}
+                                        onMouseOut={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
+                                    >
+                                        <ChevronLeft style={{ width: '20px', height: '20px' }} />
+                                    </button>
+                                    <button
+                                        onClick={handleNextMonth}
+                                        style={{
+                                            padding: '8px 12px',
+                                            backgroundColor: '#f3f4f6',
+                                            border: '1px solid #e5e7eb',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            transition: 'all 0.2s ease',
+                                        }}
+                                        onMouseOver={(e) => (e.target.style.backgroundColor = '#e5e7eb')}
+                                        onMouseOut={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
+                                    >
+                                        <ChevronRight style={{ width: '20px', height: '20px' }} />
+                                    </button>
+                                </>
                             )}
-                            <button
-                                onClick={handlePreviousMonth}
-                                style={{
-                                    padding: '8px 12px',
-                                    backgroundColor: '#f3f4f6',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    transition: 'all 0.2s ease',
-                                }}
-                                onMouseOver={(e) => (e.target.style.backgroundColor = '#e5e7eb')}
-                                onMouseOut={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
-                            >
-                                <ChevronLeft style={{ width: '20px', height: '20px' }} />
-                            </button>
-                            <button
-                                onClick={handleNextMonth}
-                                style={{
-                                    padding: '8px 12px',
-                                    backgroundColor: '#f3f4f6',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    transition: 'all 0.2s ease',
-                                }}
-                                onMouseOver={(e) => (e.target.style.backgroundColor = '#e5e7eb')}
-                                onMouseOut={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
-                            >
-                                <ChevronRight style={{ width: '20px', height: '20px' }} />
-                            </button>
                         </div>
                     </div>
 
@@ -1234,9 +1263,23 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                         borderRadius: '12px',
                         overflow: 'hidden',
                         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                        minHeight: '300px',
+                        padding: viewMode === 'list' ? '24px' : undefined,
                     }}
                 >
-                    {renderCalendar()}
+                    {viewMode === 'calendar' ? (
+                        renderCalendar()
+                    ) : (
+                        tasks.length === 0 ? (
+                            <div style={{ textAlign: 'center', color: '#888', fontSize: '18px', padding: '40px 0' }}>No tasks found.</div>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                {tasks.map((task) => (
+                                    <TaskCard key={task.taskId || task.taskID} task={task} viewType={userRole === 'ROLE_TASKER' ? 'tasker' : 'user'} />
+                                ))}
+                            </div>
+                        )
+                    )}
                 </div>
             </div>
             {renderSnackbar()}
