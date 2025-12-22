@@ -2088,6 +2088,61 @@
   gap: 20px;
 }
 
+/* Payment form styles to match signup card */
+.card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.card-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+.card-number-box {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  padding: 14px;
+  border-radius: 12px;
+}
+.card-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+.card-small-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.small-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.small-input {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.payment-button {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 999px !important;
+  font-size: 16px;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.18);
+  display: inline-block;
+  text-align: center;
+}
+
+.payment-error {
+  color: #b91c1c;
+  font-size: 0.95rem;
+}
+
 .form-label {
   font-size: 0.9rem;
   font-weight: 600;

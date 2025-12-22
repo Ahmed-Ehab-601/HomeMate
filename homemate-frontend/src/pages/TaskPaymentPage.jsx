@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { Elements, CardElement, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { baseUrl, apiRequest } from "../utils/apiClient";
 import "../styles/TaskDetails.css";
@@ -36,11 +36,11 @@ function PaymentForm({ taskId, userId, taskerId, billAmount, onSuccess }) {
       if (!clientSecret) throw new Error("Missing client secret from server");
 
       // STEP 2: confirm card payment with Stripe
-      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement(CardElement),
-        },
-      });
+          const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
+              card: elements.getElement(CardNumberElement) || elements.getElement(CardElement),
+            },
+          });
 
       if (stripeError) {
         setError(stripeError.message || "Payment failed");
@@ -70,20 +70,27 @@ function PaymentForm({ taskId, userId, taskerId, billAmount, onSuccess }) {
     <form onSubmit={handlePayment} className="payment-form">
       <h2>Pay for Task</h2>
       <p>Total Amount: <strong>${Number(billAmount).toFixed(2)}</strong></p>
-      <div className="card-element-wrapper">
-        <CardElement
-          options={{
-            style: {
-              base: { fontSize: "16px", color: "#424770", "::placeholder": { color: "#aab7c4" } },
-              invalid: { color: "#9e2146" },
-            },
-          }}
-        />
+      <div className="card-field">
+        <label className="card-label">Credit Card</label>
+        <div className="card-number-box">
+          <CardNumberElement options={{ style: { base: { fontSize: '16px', color: '#111827' } } }} />
+        </div>
+
+        <div className="card-row">
+          <div className="card-small-box">
+            <label className="small-label">Expiry</label>
+            <div className="small-input"><CardExpiryElement options={{ style: { base: { fontSize: '14px', color: '#111827' } } }} /></div>
+          </div>
+          <div className="card-small-box">
+            <label className="small-label">CVV/CVC</label>
+            <div className="small-input"><CardCvcElement options={{ style: { base: { fontSize: '14px', color: '#111827' } } }} /></div>
+          </div>
+        </div>
       </div>
 
       {error && <div className="payment-error">{error}</div>}
 
-      <button type="submit" className="btn btn-primary" disabled={!stripe || loading}>
+      <button type="submit" className="btn btn-primary payment-button" disabled={!stripe || loading}>
         {loading ? "Processing..." : `Pay $${Number(billAmount).toFixed(2)}`}
       </button>
 
@@ -112,42 +119,55 @@ export default function TaskPaymentPage() {
 
   if (!taskId || !userId || !taskerId || !billAmount) {
     return (
-      <div style={{ padding: 24 }}>
-        <h2>Missing payment information</h2>
-        <p>Please open this page from the task details 'Pay Online' button.</p>
-      </div>
+      <main className="page page--signup">
+        <div className="signin-container">
+          <div className="signin-card" style={{ maxWidth: 540 }}>
+            <h2 className="signin-title">Missing payment information</h2>
+            <p>Please open this page from the task details 'Pay Online' button.</p>
+          </div>
+        </div>
+      </main>
     );
   }
 
   if (success) {
     return (
-      <div style={{ padding: 24 }}>
-        <div className="success-card">
-          <h1>✅ Payment Successful</h1>
-          <p>Amount: ${Number(billAmount).toFixed(2)}</p>
-          <p>Redirecting to your tasks...</p>
+      <main className="page page--signup">
+        <div className="signin-container">
+          <div className="signin-card" style={{ maxWidth: 540 }}>
+            <div className="success-card">
+              <h1 className="signin-title">✅ Payment Successful</h1>
+              <p>Amount: ${Number(billAmount).toFixed(2)}</p>
+              <p>Redirecting to your tasks...</p>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="task-payment-page">
-      <div className="task-payment-card">
-        <h1>Complete Payment</h1>
-        <Elements stripe={stripePromise}>
-          <PaymentForm
-            taskId={taskId}
-            userId={userId}
-            taskerId={taskerId}
-            billAmount={billAmount}
-            onSuccess={(pi) => {
-              setSuccess(true);
-              setTimeout(() => navigate(`/tasks/${taskId}`), 2000);
-            }}
-          />
-        </Elements>
+    <main className="page page--signup">
+      <div className="signin-container">
+        <div className="signin-card" style={{ maxWidth: 540 }}>
+          <h1 className="signin-title">Complete Payment</h1>
+          <p className="signin-subtitle">Task #{taskId} — Pay securely with card</p>
+          <Elements stripe={stripePromise}>
+            <div className="signin-form">
+              <PaymentForm
+                taskId={taskId}
+                userId={userId}
+                taskerId={taskerId}
+                billAmount={billAmount}
+                onSuccess={(pi) => {
+                  setSuccess(true);
+                  setTimeout(() => navigate(`/tasks/${taskId}`), 2000);
+                }}
+              />
+            </div>
+          </Elements>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
