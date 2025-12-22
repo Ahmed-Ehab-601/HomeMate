@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
+
+// Default estimation in minutes if not provided (e.g., 60 minutes = 1 hour)
+const DEFAULT_ESTIMATION_MINUTES = 0;
 import TaskCard from './TaskCard';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
@@ -31,7 +34,8 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
     const [selectedTime, setSelectedTime] = useState('');
     const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
     const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
-    const [rescheduleBusyTimes, setRescheduleBusyTimes] = useState({});
+    // Use array for busy times, like TaskDetailsPage.jsx
+    const [rescheduleBusyTimes, setRescheduleBusyTimes] = useState([]);
     const { user, getUserRole } = useAuth();
 
     // Status Colors
@@ -111,75 +115,51 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
         return true;
     };
 
-    // Check if a time slot is busy - EXACT SAME AS TASKDETAILSPAGE
+    // Check if a time slot is busy - now using busyTimes as array (like TaskDetailsPage.jsx)
     const isRescheduleTimeSlotBusy = (timeSlot, rescheduleDate, busyTimes, currentTask, estimationMinutes) => {
-        if (!rescheduleDate || Object.keys(busyTimes).length === 0) {
+        if (!rescheduleDate || !Array.isArray(busyTimes) || busyTimes.length === 0) {
             return false;
         }
 
         const [slotHours, slotMinutes] = timeSlot.split(":").map(Number);
         const [year, month, day] = rescheduleDate.split("-").map(Number);
-        
         const slotStartMinutes = slotHours * 60 + slotMinutes;
         const slotEndMinutes = slotStartMinutes + estimationMinutes;
 
-        for (const [busyStartStr, busyEstimationMinutes] of Object.entries(busyTimes)) {
-            let busyStart;
-            try {
-                busyStart = new Date(busyStartStr);
-            } catch (e) {
-                console.warn("Failed to parse busy start date:", busyStartStr);
+        for (const busyTime of busyTimes) {
+            // Skip if this is the current task being rescheduled
+            if (busyTime.taskID === currentTask?.taskID) {
                 continue;
             }
-            
-            const busyYear = busyStart.getFullYear();
-            const busyMonth = busyStart.getMonth();
-            const busyDay = busyStart.getDate();
-            const busyHours = busyStart.getHours();
-            const busyMins = busyStart.getMinutes();
-            
-            // Skip if this is the current task being rescheduled
-            if (currentTask?.startDate) {
-                const taskStart = new Date(currentTask.startDate);
-                const taskYear = taskStart.getFullYear();
-                const taskMonth = taskStart.getMonth();
-                const taskDay = taskStart.getDate();
-                const taskHours = taskStart.getHours();
-                const taskMins = taskStart.getMinutes();
-                
-                if (
-                    busyYear === taskYear &&
-                    busyMonth === taskMonth &&
-                    busyDay === taskDay &&
-                    busyHours === taskHours &&
-                    busyMins === taskMins
-                ) {
+            try {
+                const busyStart = new Date(busyTime.startDate);
+                const busyYear = busyStart.getFullYear();
+                const busyMonth = busyStart.getMonth();
+                const busyDay = busyStart.getDate();
+                const busyHours = busyStart.getHours();
+                const busyMins = busyStart.getMinutes();
+                // Only check if dates match
+                if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
                     continue;
                 }
-            }
-
-            // Only check if dates match
-            if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
+                const busyStartMinutes = busyHours * 60 + busyMins;
+                const busyEndMinutes = busyStartMinutes + busyTime.estimation;
+                // Check for ANY overlap - ALL 5 SCENARIOS
+                const hasOverlap = (
+                    (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
+                    (slotEndMinutes > busyStartMinutes && slotEndMinutes <= busyEndMinutes) ||
+                    (slotStartMinutes <= busyStartMinutes && slotEndMinutes >= busyEndMinutes) ||
+                    (busyStartMinutes <= slotStartMinutes && busyEndMinutes >= slotEndMinutes) ||
+                    (slotStartMinutes < busyStartMinutes && slotEndMinutes > busyStartMinutes)
+                );
+                if (hasOverlap) {
+                    return true;
+                }
+            } catch (e) {
+                console.warn("Failed to parse busy time:", busyTime, e);
                 continue;
             }
-
-            const busyStartMinutes = busyHours * 60 + busyMins;
-            const busyEndMinutes = busyStartMinutes + busyEstimationMinutes;
-
-            // Check for ANY overlap - ALL 5 SCENARIOS
-            const hasOverlap = (
-                (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
-                (slotEndMinutes > busyStartMinutes && slotEndMinutes <= busyEndMinutes) ||
-                (slotStartMinutes <= busyStartMinutes && slotEndMinutes >= busyEndMinutes) ||
-                (busyStartMinutes <= slotStartMinutes && busyEndMinutes >= slotEndMinutes) ||
-                (slotStartMinutes < busyStartMinutes && slotEndMinutes > busyStartMinutes)
-            );
-
-            if (hasOverlap) {
-                return true;
-            }
         }
-
         return false;
     };
 
@@ -272,110 +252,55 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
     };
 
     // Load available time slots - EXACT SAME LOGIC AS TASKDETAILSPAGE
+    // Now fetches busy times as array and uses array logic
     const loadAvailableTimeSlots = async (dateStr, task) => {
         setLoadingTimeSlots(true);
-
-        console.log('🔍 Loading slots for:', { 
-            dateStr, 
-            taskID: task.taskID, 
-            taskerID: task.taskerID,
-            taskerId: task.taskerId,
-        });
-
         try {
-            // Use taskerID if available, otherwise use taskerId (different API endpoints use different naming)
             let taskerID = task.taskerID || task.taskerId;
-            
-            // If taskerID still missing, fetch full task details
             if (!taskerID) {
-                console.log('📥 Fetching full task details to get taskerID...');
                 try {
                     const fullTaskData = await getTaskDetails(task.taskID);
                     taskerID = fullTaskData.taskerID;
-                    console.log('✅ Got taskerID from full task details:', taskerID);
                 } catch (err) {
-                    console.error('❌ Failed to fetch task details:', err);
-                    setSnackbar({ 
-                        show: true, 
-                        message: 'Error: Cannot reschedule - failed to load task information. Please refresh and try again.', 
-                        type: 'error' 
-                    });
+                    setSnackbar({ show: true, message: 'Error: Cannot reschedule - failed to load task information. Please refresh and try again.', type: 'error' });
                     setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 4000);
                     setAvailableTimeSlots([]);
                     setLoadingTimeSlots(false);
                     return;
                 }
             }
-            
             if (!taskerID) {
-                console.error('❌ Task missing taskerID even after fetching details. Task object:', task);
-                setSnackbar({ 
-                    show: true, 
-                    message: 'Error: Cannot reschedule - tasker information missing. Please refresh and try again.', 
-                    type: 'error' 
-                });
+                setSnackbar({ show: true, message: 'Error: Cannot reschedule - tasker information missing. Please refresh and try again.', type: 'error' });
                 setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 4000);
                 setAvailableTimeSlots([]);
                 setLoadingTimeSlots(false);
                 return;
             }
-
-            // Use the userRole prop directly - it's passed from parent component and is the source of truth
             const role = userRole;
-
-            // 1. Get task estimation from the task object (now included in getTasks response)
             let currentTaskEstMinutes = null;
             if (task.timeEstimated) {
                 currentTaskEstMinutes = Number(task.timeEstimated);
-                console.log('✅ Task estimation from getTasks response:', currentTaskEstMinutes, 'minutes');
             } else {
-                console.warn('⚠️ Task missing timeEstimated; using default 0:', task.taskID);
                 currentTaskEstMinutes = DEFAULT_ESTIMATION_MINUTES;
             }
-
-            // 2. Fetch busy times
-            let busyTimes = {};
+            let busyTimes = [];
             try {
                 busyTimes = await getTaskerBusyTime(taskerID, dateStr, role);
-                setRescheduleBusyTimes(busyTimes || {});
-                console.log('✅ Busy times loaded for date:', dateStr, busyTimes);
-                console.log('📊 Number of busy periods:', Object.keys(busyTimes || {}).length);
+                setRescheduleBusyTimes(busyTimes || []);
             } catch (err) {
-                console.error('❌ Failed to fetch busy time:', err);
-                console.error('Error details:', err.response?.data || err.message);
-                setRescheduleBusyTimes({});
-                busyTimes = {};
+                setRescheduleBusyTimes([]);
+                busyTimes = [];
             }
-
-            // 3. Filter available slots using EXACT TaskDetailsPage logic
             const [year, month, day] = dateStr.split('-').map(Number);
-            
-            // IMPORTANT: Create date using year, month-1, day to avoid timezone issues
             const selectedDate = new Date(year, month - 1, day);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             selectedDate.setHours(0, 0, 0, 0);
             const isToday = selectedDate.getTime() === today.getTime();
-
-            console.log('🗓️ Date info:', {
-                dateStr,
-                year,
-                month,
-                day,
-                isToday,
-                selectedDate: selectedDate.toISOString(),
-                today: today.toISOString(),
-                estimation: currentTaskEstMinutes,
-                timeSlots: timeSlots.length,
-                busyTimesCount: Object.keys(busyTimes).length
-            });
-
             const available = timeSlots.filter((slot) => {
                 const [hours, minutes] = slot.split(":").map(Number);
                 const slotStartMinutes = hours * 60 + minutes;
                 const slotEndMinutes = slotStartMinutes + currentTaskEstMinutes;
-
-                // 1. Check if date is today and time has passed
                 if (isToday) {
                     const [slotHours, slotMins] = slot.split(":").map(Number);
                     const slotTime = new Date();
@@ -385,39 +310,25 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                         return false;
                     }
                 }
-
-                // 2. Check if there's enough time to complete
                 if (slotEndMinutes > WORK_DAY_END_MINUTES) {
                     return false;
                 }
-
-                // 3. Check if slot conflicts with busy times
                 const isBusy = isRescheduleTimeSlotBusy(slot, dateStr, busyTimes, task, currentTaskEstMinutes);
                 return !isBusy;
             });
-
-            console.log('✅ Available slots:', available.length, 'out of', timeSlots.length);
-            console.log('📋 Available slots list:', available);
-
             setAvailableTimeSlots(available);
-            
-            // Auto-select current time if available
             if (task?.startDate) {
                 const currentTime = new Date(task.startDate);
                 const hours = String(currentTime.getHours()).padStart(2, '0');
                 const minutes = String(currentTime.getMinutes()).padStart(2, '0');
                 const timeSlot = `${hours}:${minutes}`;
-                
                 if (available.includes(timeSlot)) {
                     setSelectedTime(timeSlot);
-                    console.log('🎯 Auto-selected current time:', timeSlot);
                 } else {
                     setSelectedTime('');
-                    console.log('⚠️ Current time not available:', timeSlot);
                 }
             }
         } catch (err) {
-            console.error('❌ Error loading time slots:', err);
             setSnackbar({ show: true, message: err?.message || 'Failed to load time slots', type: 'error' });
             setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 4000);
             setAvailableTimeSlots([]);
@@ -502,57 +413,44 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
         }
 
         // 2. Check for conflicts with busy times
-        for (const [busyStartStr, busyEstimationMinutes] of Object.entries(rescheduleBusyTimes || {})) {
-            const busyStart = new Date(busyStartStr);
-            const busyYear = busyStart.getFullYear();
-            const busyMonth = busyStart.getMonth();
-            const busyDay = busyStart.getDate();
-            const busyHours = busyStart.getHours();
-            const busyMins = busyStart.getMinutes();
-
-            if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
+        for (const busyTime of rescheduleBusyTimes || []) {
+            if (busyTime.taskID === targetTask?.taskID) {
                 continue;
             }
-
-            const busyStartMinutes = busyHours * 60 + busyMins;
-            const busyEndMinutes = busyStartMinutes + busyEstimationMinutes;
-
-            // Skip current task's busy period
-            if (targetTask?.startDate) {
-                const taskStart = new Date(targetTask.startDate);
-                const taskYear = taskStart.getFullYear();
-                const taskMonth = taskStart.getMonth();
-                const taskDay = taskStart.getDate();
-                const taskHours = taskStart.getHours();
-                const taskMins = taskStart.getMinutes();
-
-                if (busyYear === taskYear && busyMonth === taskMonth && busyDay === taskDay &&
-                    busyHours === taskHours && busyMins === taskMins) {
+            try {
+                const busyStart = new Date(busyTime.startDate);
+                const busyYear = busyStart.getFullYear();
+                const busyMonth = busyStart.getMonth();
+                const busyDay = busyStart.getDate();
+                const busyHours = busyStart.getHours();
+                const busyMins = busyStart.getMinutes();
+                if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
                     continue;
                 }
-            }
-
-            // Check for overlap
-            const hasOverlap = (
-                (newStartMinutes >= busyStartMinutes && newStartMinutes < busyEndMinutes) ||
-                (newEndMinutes > busyStartMinutes && newEndMinutes <= busyEndMinutes) ||
-                (newStartMinutes <= busyStartMinutes && newEndMinutes >= busyEndMinutes) ||
-                (busyStartMinutes <= newStartMinutes && busyEndMinutes >= newEndMinutes) ||
-                (newStartMinutes < busyStartMinutes && newEndMinutes > busyStartMinutes)
-            );
-
-            if (hasOverlap) {
-                const busyTimeStr = `${String(busyHours).padStart(2, '0')}:${String(busyMins).padStart(2, '0')}`;
-                const busyDurationHours = (busyEstimationMinutes / 60).toFixed(1);
-                const taskEndTime = `${String(Math.floor(newEndMinutes/60)).padStart(2, '0')}:${String(newEndMinutes%60).padStart(2, '0')}`;
-                
-                setSnackbar({
-                    show: true,
-                    message: `⏰ Cannot reschedule: Your task (${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} - ${taskEndTime}, ${(currentTaskEstMinutes/60).toFixed(1)}h) would overlap with another scheduled period starting at ${busyTimeStr} (${busyDurationHours}h duration). Please choose a different time slot.`,
-                    type: 'error'
-                });
-                setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 5000);
-                return;
+                const busyStartMinutes = busyHours * 60 + busyMins;
+                const busyEndMinutes = busyStartMinutes + busyTime.estimation;
+                const hasOverlap = (
+                    (newStartMinutes >= busyStartMinutes && newStartMinutes < busyEndMinutes) ||
+                    (newEndMinutes > busyStartMinutes && newEndMinutes <= busyEndMinutes) ||
+                    (newStartMinutes <= busyStartMinutes && newEndMinutes >= busyEndMinutes) ||
+                    (busyStartMinutes <= newStartMinutes && busyEndMinutes >= newEndMinutes) ||
+                    (newStartMinutes < busyStartMinutes && newEndMinutes > busyStartMinutes)
+                );
+                if (hasOverlap) {
+                    const busyTimeStr = `${String(busyHours).padStart(2, '0')}:${String(busyMins).padStart(2, '0')}`;
+                    const busyDurationHours = (busyTime.estimation / 60).toFixed(1);
+                    const taskEndTime = `${String(Math.floor(newEndMinutes/60)).padStart(2, '0')}:${String(newEndMinutes%60).padStart(2, '0')}`;
+                    setSnackbar({
+                        show: true,
+                        message: `⏰ Cannot reschedule: Your task (${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} - ${taskEndTime}, ${(currentTaskEstMinutes/60).toFixed(1)}h) would overlap with another scheduled period starting at ${busyTimeStr} (${busyDurationHours}h duration). Please choose a different time slot.`,
+                        type: 'error'
+                    });
+                    setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 5000);
+                    return;
+                }
+            } catch (e) {
+                console.warn("Failed to parse busy time:", busyTime, e);
+                continue;
             }
         }
 
