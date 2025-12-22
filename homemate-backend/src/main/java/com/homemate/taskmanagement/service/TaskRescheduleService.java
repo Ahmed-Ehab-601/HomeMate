@@ -96,9 +96,11 @@ public class TaskRescheduleService {
                 (status.get() != Status.InReview && status.get() != Status.Accepted)) {
             throw new BadRescheduleException("Task must be InReview or Accepted");
         }
+
         if(checkValidEstimation(taskID,rescheduleRequestDto.getNewStartDate())==false) {
-            throw new BadRescheduleException("Task must be Rescheduled to valid Time ,The Tasks for this tasker is overlapping");
+            throw new BadRescheduleException("Cannot reschedule: This time slot conflicts with another scheduled task");
         }
+
         LocalDateTime newStart = rescheduleRequestDto.getNewStartDate();
         if (newStart.isBefore(LocalDateTime.now())) {
             throw new BadRescheduleException("New date cannot be in the past");
@@ -120,7 +122,9 @@ public class TaskRescheduleService {
         for (Map.Entry<LocalDateTime, Integer> entry : mp.entrySet()) {
             LocalDateTime busyStart = entry.getKey();
             LocalDateTime busyEnd = busyStart.plusMinutes(entry.getValue());
-
+            if (busyStart.equals(taskDto.get().getStartDate())) {
+                continue;
+            }
             if (newStartDateTime.isBefore(busyEnd) && endDateTime.isAfter(busyStart)) {
                 return false;
             }

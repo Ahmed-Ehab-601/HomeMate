@@ -68,7 +68,7 @@ class TaskRequestServiceEstimationAndBusyTimeTest {
                 () -> taskRequestService.addEstimation(1L, 30, userDetails)
         );
 
-        assertEquals("invalid estimation", ex.getMessage());
+        assertEquals("Invalid estimation: This time slot conflicts with another scheduled task", ex.getMessage());
     }
 
     @Test
@@ -216,7 +216,7 @@ class TaskRequestServiceEstimationAndBusyTimeTest {
 
         assertThatThrownBy(() -> taskRequestService.getAllBusyTime(taskerId, day))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("This Tasker is UNAVAILABLE Now");
+                .hasMessage("UNAVAILABLE: This Tasker is UNAVAILABLE Now");
         verify(taskRequestDao).CheckAvailability(taskerId);
         verify(taskRequestDao, never()).getBusytime(anyLong(), any(LocalDate.class));
     }
