@@ -90,7 +90,6 @@ public class GetTaskService {
     public List<TaskCardDto> getTaskerTasksForNewView(
             Long taskerID, LocalDate startDate,
             LocalDate endDate, StatusDto statusDto) {
-        // Use endDate as exclusive upper bound to include all times on the endDate
         LocalDate endExclusive = endDate.plusDays(1);
         if(statusDto == StatusDto.All){
             return getTasksDao.getTaskerTasksByDateRange(taskerID,startDate,endExclusive);

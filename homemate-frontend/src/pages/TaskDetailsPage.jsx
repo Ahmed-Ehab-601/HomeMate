@@ -347,7 +347,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
   const [year, month, day] = rescheduleDate.split("-").map(Number);
   
   // Current task's estimation (in minutes)
-  const currentTaskEstMinutes = taskEstimation || 60;
+  const currentTaskEstMinutes = taskEstimation ?? 0;
   
   // Calculate slot start and end times in minutes from midnight
   const slotStartMinutes = slotHours * 60 + slotMinutes;
@@ -420,7 +420,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
   }
 
   // 2. Check if there's enough time in the day to complete the task
-  const currentTaskEstMinutes = taskEstimation || 60;
+  const currentTaskEstMinutes = taskEstimation ?? 0;
   if (!hasEnoughTimeToComplete(slot, currentTaskEstMinutes)) {
     return false; // Not enough time before end of work day
   }
@@ -557,7 +557,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
   const [year, month, day] = rescheduleDate.split("-").map(Number);
   
   // Current task estimation in minutes
-  const currentTaskEstMinutes = taskEstimation || 60;
+  const currentTaskEstMinutes = taskEstimation ?? 0;
   const newStartMinutes = hours * 60 + minutes;
   const newEndMinutes = newStartMinutes + currentTaskEstMinutes;
 
@@ -891,6 +891,26 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
                 </div>
               </div>
             </div>
+
+            {/* Estimated Time */}
+            {task.timeEstimated !== undefined && task.timeEstimated !== null && (
+              <div className="task-detail-row">
+                <div className="task-detail-icon">⏳</div>
+                <div className="task-detail-content">
+                  <div className="task-detail-label">Estimated Time</div>
+                  <div className="task-detail-value">
+                    {(() => {
+                      const mins = Number(task.timeEstimated);
+                      const h = Math.floor(mins / 60);
+                      const m = mins % 60;
+                      if (h > 0 && m > 0) return `${h}h ${m}m`;
+                      if (h > 0) return `${h}h`;
+                      return `${m}m`;
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {task.endDate && normalizedStatus === "DONE" && (
               <div className="task-detail-row">

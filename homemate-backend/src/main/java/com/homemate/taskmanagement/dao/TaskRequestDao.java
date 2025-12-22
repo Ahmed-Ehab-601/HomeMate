@@ -118,6 +118,7 @@ public class TaskRequestDao {
                 t.startInProgress,
                 t.bill,
                 t.chatID,
+                t.estimation,
                 CONCAT(u.firstName, ' ', u.lastName) AS userName,
                 CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                 s.name AS serviceName,
@@ -126,7 +127,7 @@ public class TaskRequestDao {
                 a.city,
                 a.country,
                 u.email AS userMail,
-                tas.email AS taskerMail,tas.hourRate
+                tas.email AS taskerMail, tas.hourRate
             FROM Task t
                 INNER JOIN Users u ON t.userID = u.userID
                 INNER JOIN Tasker tas ON t.taskerID = tas.taskerID

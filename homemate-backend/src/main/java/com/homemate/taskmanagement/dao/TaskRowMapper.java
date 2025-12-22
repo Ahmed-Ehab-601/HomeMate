@@ -24,6 +24,7 @@ public class TaskRowMapper implements RowMapper<TaskDto> {
                 workedHours(rs.getDouble("workedHours")).
                 startInProgress(toLocalDateTime(rs.getTimestamp("startInProgress"))).
                 bill(rs.getDouble("bill")).
+                timeEstimated(rs.getInt("estimation")).
                 userName(rs.getString("userName")).
                 taskerName(rs.getString("taskerName")).
                 serviceName(rs.getString("serviceName")).
