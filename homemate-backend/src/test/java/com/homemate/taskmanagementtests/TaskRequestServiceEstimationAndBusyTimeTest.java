@@ -12,6 +12,7 @@ import com.homemate.TaskerProfile.models.TaskerAvailability;
 import com.homemate.security.model.AppUserDetails;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dto.TaskDto;
+import com.homemate.taskmanagement.dto.TaskTimeDto;
 import com.homemate.taskmanagement.service.TaskRequestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,20 +49,24 @@ class TaskRequestServiceEstimationAndBusyTimeTest {
         when(userDetails.getId()).thenReturn(10L);
         when(taskRequestDao.getTaskDetails(1L)).thenReturn(Optional.of(taskDto));
         when(taskRequestDao.getBusytime(anyLong(), any()))
-                .thenReturn(Collections.emptyMap());
+                .thenReturn(Collections.emptyList());
 
         taskRequestService.addEstimation(1L, 30, userDetails);
 
-        verify(taskRequestDao).add(1L, 30);
+        verify(taskRequestDao).addEstimation(1L, 30);
     }
 
     @Test
     void addEstimation_invalidEstimationOverlap() {
-        Map<LocalDateTime, Integer> busy = new HashMap<>();
-        busy.put(LocalDateTime.of(2025, 1, 1, 10, 15), 30);
+        List<TaskTimeDto> busyList = new ArrayList<>();
+        busyList.add(TaskTimeDto.builder()
+                .taskID(2L)
+                .startDate(LocalDateTime.of(2025, 1, 1, 10, 15))
+                .estimation(30)
+                .build());
 
         when(taskRequestDao.getTaskDetails(1L)).thenReturn(Optional.of(taskDto));
-        when(taskRequestDao.getBusytime(anyLong(), any())).thenReturn(busy);
+        when(taskRequestDao.getBusytime(anyLong(), any())).thenReturn(busyList);
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
@@ -100,7 +105,7 @@ class TaskRequestServiceEstimationAndBusyTimeTest {
     void checkValidEstimation_noConflict_returnsTrue() {
         when(taskRequestDao.getTaskDetails(1L)).thenReturn(Optional.of(taskDto));
         when(taskRequestDao.getBusytime(anyLong(), any()))
-                .thenReturn(Collections.emptyMap());
+                .thenReturn(Collections.emptyList());
 
         boolean result = taskRequestService.checkValidEstimation(30, 1L);
 
@@ -109,11 +114,15 @@ class TaskRequestServiceEstimationAndBusyTimeTest {
 
     @Test
     void checkValidEstimation_withConflict_returnsFalse() {
-        Map<LocalDateTime, Integer> busy = new HashMap<>();
-        busy.put(LocalDateTime.of(2025, 1, 1, 10, 10), 30);
+        List<TaskTimeDto> busyList = new ArrayList<>();
+        busyList.add(TaskTimeDto.builder()
+                .taskID(2L)
+                .startDate(LocalDateTime.of(2025, 1, 1, 10, 10))
+                .estimation(30)
+                .build());
 
         when(taskRequestDao.getTaskDetails(1L)).thenReturn(Optional.of(taskDto));
-        when(taskRequestDao.getBusytime(anyLong(), any())).thenReturn(busy);
+        when(taskRequestDao.getBusytime(anyLong(), any())).thenReturn(busyList);
 
         boolean result = taskRequestService.checkValidEstimation(30, 1L);
 
@@ -129,6 +138,27 @@ class TaskRequestServiceEstimationAndBusyTimeTest {
         assertFalse(result);
     }
 
+    @Test
+    void checkValidEstimation_skipsSameTask_returnsTrue() {
+        // Task with ID 1 at 10:00 with 30 min estimation
+        taskDto.setTaskID(1L);
+
+        List<TaskTimeDto> busyList = new ArrayList<>();
+        // Same task should be skipped
+        busyList.add(TaskTimeDto.builder()
+                .taskID(1L)
+                .startDate(LocalDateTime.of(2025, 1, 1, 10, 0))
+                .estimation(30)
+                .build());
+
+        when(taskRequestDao.getTaskDetails(1L)).thenReturn(Optional.of(taskDto));
+        when(taskRequestDao.getBusytime(anyLong(), any())).thenReturn(busyList);
+
+        boolean result = taskRequestService.checkValidEstimation(30, 1L);
+
+        assertTrue(result);
+    }
+
     /* ==================== getTaskDetails ==================== */
 
     @Test
@@ -139,6 +169,7 @@ class TaskRequestServiceEstimationAndBusyTimeTest {
 
         assertEquals(45, estimation);
     }
+
     /* ==================== getAllBusyTime ==================== */
 
     @Test
@@ -157,48 +188,60 @@ class TaskRequestServiceEstimationAndBusyTimeTest {
 
     @Test
     void getAllBusyTime_taskerAvailable_returnsBusyTime() {
-        Map<LocalDateTime, Integer> busyTime = new HashMap<>();
-        busyTime.put(LocalDateTime.of(2025, 1, 1, 10, 0), 30);
+        List<TaskTimeDto> busyList = new ArrayList<>();
+        busyList.add(TaskTimeDto.builder()
+                .taskID(1L)
+                .startDate(LocalDateTime.of(2025, 1, 1, 10, 0))
+                .estimation(30)
+                .build());
 
         when(taskRequestDao.CheckAvailability(5L))
                 .thenReturn(TaskerAvailability.AVAILABLE);
         when(taskRequestDao.getBusytime(5L, LocalDate.of(2025, 1, 1)))
-                .thenReturn(busyTime);
+                .thenReturn(busyList);
 
-        Map<LocalDateTime, Integer> result =
+        List<TaskTimeDto> result =
                 taskRequestService.getAllBusyTime(5L, LocalDate.of(2025, 1, 1));
 
         assertEquals(1, result.size());
-        assertEquals(30, result.get(LocalDateTime.of(2025, 1, 1, 10, 0)));
+        assertEquals(30, result.get(0).getEstimation());
+        assertEquals(LocalDateTime.of(2025, 1, 1, 10, 0), result.get(0).getStartDate());
     }
 
     @Test
     void testGetAllBusyTime_WithDifferentDays() {
-        // Arrange
         Long taskerId = 2L;
         LocalDate day1 = LocalDate.of(2025, 11, 20);
         LocalDate day2 = LocalDate.of(2025, 11, 21);
 
-        Map<LocalDateTime, Integer> busyTimesDay1 = new HashMap<>();
-        busyTimesDay1.put(LocalDateTime.of(2025, 11, 20, 10, 0), 120);
+        List<TaskTimeDto> busyTimesDay1 = new ArrayList<>();
+        busyTimesDay1.add(TaskTimeDto.builder()
+                .taskID(1L)
+                .startDate(LocalDateTime.of(2025, 11, 20, 10, 0))
+                .estimation(120)
+                .build());
 
-        Map<LocalDateTime, Integer> busyTimesDay2 = new HashMap<>();
-        busyTimesDay2.put(LocalDateTime.of(2025, 11, 21, 14, 0), 60);
+        List<TaskTimeDto> busyTimesDay2 = new ArrayList<>();
+        busyTimesDay2.add(TaskTimeDto.builder()
+                .taskID(2L)
+                .startDate(LocalDateTime.of(2025, 11, 21, 14, 0))
+                .estimation(60)
+                .build());
 
         when(taskRequestDao.CheckAvailability(taskerId)).thenReturn(TaskerAvailability.AVAILABLE);
         when(taskRequestDao.getBusytime(taskerId, day1)).thenReturn(busyTimesDay1);
         when(taskRequestDao.getBusytime(taskerId, day2)).thenReturn(busyTimesDay2);
 
-        // Act
-        Map<LocalDateTime, Integer> result1 = taskRequestService.getAllBusyTime(taskerId, day1);
-        Map<LocalDateTime, Integer> result2 = taskRequestService.getAllBusyTime(taskerId, day2);
+        List<TaskTimeDto> result1 = taskRequestService.getAllBusyTime(taskerId, day1);
+        List<TaskTimeDto> result2 = taskRequestService.getAllBusyTime(taskerId, day2);
 
-        // Assert
         assertThat(result1).hasSize(1);
-        assertThat(result1).containsEntry(LocalDateTime.of(2025, 11, 20, 10, 0), 120);
+        assertThat(result1.get(0).getStartDate()).isEqualTo(LocalDateTime.of(2025, 11, 20, 10, 0));
+        assertThat(result1.get(0).getEstimation()).isEqualTo(120);
 
         assertThat(result2).hasSize(1);
-        assertThat(result2).containsEntry(LocalDateTime.of(2025, 11, 21, 14, 0), 60);
+        assertThat(result2.get(0).getStartDate()).isEqualTo(LocalDateTime.of(2025, 11, 21, 14, 0));
+        assertThat(result2.get(0).getEstimation()).isEqualTo(60);
 
         verify(taskRequestDao, times(2)).CheckAvailability(taskerId);
         verify(taskRequestDao).getBusytime(taskerId, day1);
@@ -207,7 +250,6 @@ class TaskRequestServiceEstimationAndBusyTimeTest {
 
     @Test
     void testGetAllBusyTime_WithNullAvailability_ThrowsException() {
-        // Arrange
         Long taskerId = 2L;
         LocalDate day = LocalDate.of(2025, 11, 20);
 

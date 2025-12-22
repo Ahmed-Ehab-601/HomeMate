@@ -8,6 +8,7 @@ import com.homemate.security.model.AppUserDetails;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.dto.TaskRequestDto;
+import com.homemate.taskmanagement.dto.TaskTimeDto;
 import com.homemate.taskmanagement.exceptions.*;
 import com.homemate.taskmanagement.mappers.TaskMapper;
 import com.homemate.taskmanagement.model.TaskEntity;
@@ -82,9 +83,8 @@ public class TaskRequestService {
         }
     }
 
-    public Map<LocalDateTime, Integer> getAllBusyTime(Long taskerId, LocalDate day) {
+    public List<TaskTimeDto> getAllBusyTime(Long taskerId, LocalDate day) {
         if(TaskerAvailability.UNAVAILABLE.equals(taskRequestDao.CheckAvailability(taskerId))){
-           System.out.println("This Tasker is UNAVAILABLE Now");
             throw new BadEstimationException("UNAVAILABLE: This Tasker is UNAVAILABLE Now");
         }
 
@@ -98,7 +98,7 @@ public class TaskRequestService {
 
         Optional<TaskDto> taskDto= taskRequestDao.getTaskDetails(taskId);
         if(taskDto.isPresent() &&( taskDto.get().getTaskerID() == userDetails.getId())) {
-         taskRequestDao.add(taskId,estimation);
+         taskRequestDao.addEstimation(taskId,estimation);
         }
         else
             throw new BadEstimationException("This Tasker has no Access to that task");
@@ -107,7 +107,7 @@ public class TaskRequestService {
         Optional<TaskDto> taskDto = taskRequestDao.getTaskDetails(taskId);
         if (taskDto.isEmpty()) return false;
 
-        Map<LocalDateTime, Integer> mp = taskRequestDao.getBusytime(
+        List<TaskTimeDto> busyTimes = taskRequestDao.getBusytime(
                 taskDto.get().getTaskerID(),
                 taskDto.get().getStartDate().toLocalDate()
         );
@@ -115,10 +115,12 @@ public class TaskRequestService {
         LocalDateTime startDateTime = taskDto.get().getStartDate();
         LocalDateTime endDateTime = startDateTime.plusMinutes(estimation);
 
-        for (Map.Entry<LocalDateTime, Integer> entry : mp.entrySet()) {
-            LocalDateTime busyStart = entry.getKey();
-            LocalDateTime busyEnd = busyStart.plusMinutes(entry.getValue());
-
+        for (TaskTimeDto busyTime : busyTimes) {
+            LocalDateTime busyStart = busyTime.getStartDate();
+            LocalDateTime busyEnd = busyStart.plusMinutes(busyTime.getEstimation());
+            if (busyTime.getTaskID().equals(taskId)) {
+                continue;
+            }
             if (startDateTime.isBefore(busyEnd) && endDateTime.isAfter(busyStart)) {
                 return false;
             }

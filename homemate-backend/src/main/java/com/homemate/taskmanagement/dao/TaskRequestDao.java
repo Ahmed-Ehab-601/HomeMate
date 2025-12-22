@@ -2,6 +2,7 @@ package com.homemate.taskmanagement.dao;
 
 import com.homemate.TaskerProfile.models.TaskerAvailability;
 import com.homemate.taskmanagement.dto.TaskDto;
+import com.homemate.taskmanagement.dto.TaskTimeDto;
 import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
 import com.homemate.taskmanagement.exceptions.DuplicateChatException;
 import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
@@ -33,8 +34,8 @@ public class TaskRequestDao {
 
     private final JdbcTemplate jdbcTemplate;
     private final TaskRowMapper taskRowMapper;
-
     private final TaskerBusyTimeMapper taskerBusyTimeMapper;
+
     public Optional<Long> insertTask(TaskEntity task) {
         String sql = "INSERT INTO Task (userID, taskerID, serviceID, addressId, startDate, description, chatID)" +
                 " VALUES(?, ?, ?, ?, ?, ?, ?) ";
@@ -152,19 +153,19 @@ public class TaskRequestDao {
         return count !=null && count >= limit;
     }
 
-    public Map<LocalDateTime, Integer> getBusytime(Long taskerId, LocalDate day) {
+    public List<TaskTimeDto> getBusytime(Long taskerId, LocalDate day) {
         LocalDateTime startOfDay = day.atStartOfDay();
         LocalDateTime endOfDay = day.plusDays(1).atStartOfDay();
-        String sql = "SELECT  startDate , estimation FROM Task" +
+        String sql = "SELECT  taskID ,startDate , estimation FROM Task" +
                 " WHERE taskerID = ? AND startDate >= ? AND startDate < ? " +
                 "AND status NOT IN ('Rejected', 'Done')";
-        return jdbcTemplate.query(sql,taskerBusyTimeMapper,
+        return jdbcTemplate.query(sql, taskerBusyTimeMapper,
                 taskerId,
                 Timestamp.valueOf(startOfDay),
                 Timestamp.valueOf(endOfDay));
     }
 
-    public void add(Long taskId, int estimation) {
+    public void addEstimation(Long taskId, int estimation) {
         String sql = "UPDATE Task " +
                 "SET estimation = ? " +
                 "WHERE taskID = ?";

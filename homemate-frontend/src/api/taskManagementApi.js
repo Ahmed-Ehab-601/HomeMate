@@ -277,7 +277,7 @@ export async function completeTask(taskId) {
  * @param {number} taskerId - ID of the tasker
  * @param {string} day - Date in YYYY-MM-DD format
  * @param {string} userRole - User role ("ROLE_TASKER" or "ROLE_USER")
- * @returns {Promise<Object>} Map of LocalDateTime to estimation minutes
+ * @returns {Promise<Array>} Array of TaskTimeDto objects: [{taskID, startDate, estimation}, ...]
  */
 export async function getTaskerBusyTime(taskerId, day, userRole) {
     // Choose endpoint based on user role
@@ -319,9 +319,10 @@ export async function getTaskerBusyTime(taskerId, day, userRole) {
 
     const data = await response.json();
     
-    // If empty response, return empty object
-    if (!data || Object.keys(data).length === 0) {
-        return {};
+    // Backend now returns List<TaskTimeDto>
+    // If empty response, return empty array
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        return [];
     }
     
     return data;
