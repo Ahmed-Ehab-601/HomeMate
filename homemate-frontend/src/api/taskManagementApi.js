@@ -1,3 +1,32 @@
+/**
+ * Get estimation only
+ * @param {number} taskId - ID of the task
+ * @param {string} userRole - User role ("ROLE_TASKER" or "ROLE_USER")
+ * @returns {Promise<number>} Estimation in minutes
+ */
+export async function getTaskEstimation(taskId, userRole) {
+    const endpoint = userRole === 'ROLE_TASKER'
+        ? `/task/get-taskDetails-estimation/${taskId}`
+        : `/task/get-taskDetails-estimation-user/${taskId}`;
+    const response = await apiFetch(`${baseUrl}/api${endpoint}`, {
+        method: "GET",
+    }).catch((error) => {
+        throw {
+            status: 0,
+            error: "NETWORK_ERROR",
+            message: "Network error. Please check your connection.",
+        };
+    });
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw {
+            status: response.status,
+            error: data.error || "SERVER_ERROR",
+            message: data.message || "Failed to load estimation",
+        };
+    }
+    return response.json(); // integer in minutes
+}
 import { baseUrl, apiFetch } from "../utils/apiClient";
 
 /**

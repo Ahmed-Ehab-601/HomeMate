@@ -21,7 +21,8 @@ public class TaskCardRowMapper implements RowMapper<TaskCardDto> {
                 .taskerName(rs.getString("taskerName"))
                 .serviceName(rs.getString("serviceName"))
                 .addressCity(rs.getString("city"))
-                .timeEstimated(getNullableInt(rs, "estimation"))
+                .timeEstimated(rs.getInt("estimation"))
+
                 .build();
         }
 

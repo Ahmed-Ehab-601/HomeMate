@@ -21,7 +21,7 @@ public class TaskDto {
     private Double workedHours;
     private LocalDateTime startInProgress;
     private Double bill;
-    private Integer timeEstimated;
+    private int timeEstimated;
     private String userName;
     private String taskerName;
     private String serviceName;
