@@ -271,3 +271,140 @@ export async function completeTask(taskId) {
 
     return response.json();
 }
+
+/**
+ * Get tasker busy time for a specific day
+ * @param {number} taskerId - ID of the tasker
+ * @param {string} day - Date in YYYY-MM-DD format
+ * @param {string} userRole - User role ("ROLE_TASKER" or "ROLE_USER")
+ * @returns {Promise<Array>} Array of TaskTimeDto objects: [{taskID, startDate, estimation}, ...]
+ */
+export async function getTaskerBusyTime(taskerId, day, userRole) {
+    // Choose endpoint based on user role
+    const endpoint = userRole === "ROLE_TASKER" 
+        ? `${baseUrl}/api/task/get-tasker-tasks-tasker-only/${taskerId}?day=${day}`
+        : `${baseUrl}/api/task/get-tasker-tasks/${taskerId}?day=${day}`;
+    
+    const response = await apiFetch(endpoint, {
+        method: "GET",
+    }).catch((error) => {
+        throw {
+            status: 0,
+            error: "NETWORK_ERROR",
+            message: "Network error. Please check your connection.",
+        };
+    });
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        
+        // Check if error indicates tasker is unavailable
+        const errorMessage = data.message || data.error || "";
+        if (response.status === 503 || 
+            data.error === "TASKER_UNAVAILABLE" || 
+            errorMessage.toLowerCase().includes("unavailable")) {
+            throw {
+                status: response.status === 503 ? 503 : response.status,
+                error: "TASKER_UNAVAILABLE",
+                message: errorMessage || "This Tasker is UNAVAILABLE Now",
+            };
+        }
+        
+        throw {
+            status: response.status,
+            error: data.error || "SERVER_ERROR",
+            message: errorMessage || "Failed to load tasker busy time",
+        };
+    }
+
+    const data = await response.json();
+    
+    // Backend now returns List<TaskTimeDto>
+    // If empty response, return empty array
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        return [];
+    }
+    
+    return data;
+}
+
+/**
+ * Add estimation time to a task
+ * @param {number} taskId - ID of the task
+ * @param {number} estimation - Estimation in MINUTES (not hours)
+ * @returns {Promise<void>}
+ */
+export async function addTaskEstimation(taskId, estimation) {
+    const response = await apiFetch(`${baseUrl}/api/task/add-estimation/${taskId}?estimation=${estimation}`, {
+        method: "POST",
+    }).catch((error) => {
+        throw {
+            status: 0,
+            error: "NETWORK_ERROR",
+            message: "Network error. Please check your connection.",
+        };
+    });
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw {
+            status: response.status,
+            error: data.error || "SERVER_ERROR",
+            message: data.message || "Failed to add estimation",
+        };
+    }
+
+    // No content expected, just return success
+    return;
+}
+
+/**
+ * Get estimation for a task
+ * @param {number} taskId - ID of the task
+ * @param {string} userRole - User role ("ROLE_TASKER" or "ROLE_USER")
+ * @returns {Promise<number>} Estimation in MINUTES
+ */
+export async function getTaskEstimation(taskId, userRole) {
+    const endpoint = userRole === 'ROLE_TASKER' 
+        ? `${baseUrl}/api/task/get-taskDetails-estimation/${taskId}`
+        : `${baseUrl}/api/task/get-taskDetails-estimation-user/${taskId}`;
+    
+    const response = await apiFetch(endpoint, {
+        method: "GET",
+    }).catch((error) => {
+        throw {
+            status: 0,
+            error: "NETWORK_ERROR",
+            message: "Network error. Please check your connection.",
+        };
+    });
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        
+        if (response.status === 404) {
+            throw {
+                status: 404,
+                error: data.error || "NOT_FOUND",
+                message: data.message || "Task not found",
+            };
+        }
+
+        if (response.status === 400) {
+            throw {
+                status: 400,
+                error: data.error || "BAD_REQUEST",
+                message: data.message || "Invalid task or no estimation available",
+            };
+        }
+
+        throw {
+            status: response.status,
+            error: data.error || "SERVER_ERROR",
+            message: data.message || "Failed to load estimation",
+        };
+    }
+
+    // Backend returns integer (minutes)
+    return response.json();
+}

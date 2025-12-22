@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Modal from "./Modal";
-import { useEffect, useCallback } from "react";
 import { acceptTask, rejectTask } from "../api/taskActionsApi";
-import { getReviewByTask } from "../api/reviewsApi";
+import { addTaskEstimation } from "../api/taskManagementApi";
 import "../styles/TaskCard.css";
+import { useAuth } from "../contexts/AuthContext";
 
 const STATUS_STYLES = {
   INREVIEW: {
@@ -43,12 +43,17 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   const navigate = useNavigate();
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showEstimationModal, setShowEstimationModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successBanner, setSuccessBanner] = useState(null);
   const [errorBanner, setErrorBanner] = useState(null);
   const [localStatus, setLocalStatus] = useState(task.status);
-  const [hasReviewed, setHasReviewed] = useState(false);
-  const [checkingReview, setCheckingReview] = useState(false);
+  const [estimation, setEstimation] = useState("");
+  const [estimationError, setEstimationError] = useState("");
+  const { user, getUserRole } = useAuth(); 
+
+  const taskerId = user?.taskerId || user?.id;
+  const userRole = getUserRole();
 
   // Normalize status: remove spaces and convert to uppercase to match STATUS_STYLES keys
   const normalizedStatus =
@@ -81,31 +86,66 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   };
 
   const handleViewDetails = () => {
-    // Navigate to task details page (to be implemented in another story)
     navigate(`/tasks/${task.taskID}`);
   };
 
-  const handleAccept = async () => {
+  const handleAccept = () => {
+    // Show estimation modal first
+    setShowAcceptModal(false);
+    setShowEstimationModal(true);
+    setEstimation("");
+    setEstimationError("");
+  };
+
+  const handleEstimationSubmit = async () => {
+    // Validate estimation (in hours)
+    const estValueHours = parseFloat(estimation);
+    if (!estimation || isNaN(estValueHours) || estValueHours <= 0) {
+      setEstimationError("Please enter a valid estimation (hours greater than 0)");
+      return;
+    }
+
+    if (estValueHours > 24) {
+      setEstimationError("Estimation cannot exceed 24 hours");
+      return;
+    }
+
+    // Convert hours to minutes for storage
+    const estValueMinutes = Math.round(estValueHours * 60);
+
     setIsSubmitting(true);
+    setEstimationError("");
     setErrorBanner(null);
 
     try {
+      // First add estimation (send as minutes)
+      // Backend will validate against busy times and schedule conflicts
+      await addTaskEstimation(task.taskID, estValueMinutes);
+      
+      // Then accept the task
       await acceptTask(task.taskID);
 
       // Instantly update local status
       setLocalStatus("Accepted");
 
       // Show success banner
-      setSuccessBanner("✓ Task accepted successfully!");
-      setShowAcceptModal(false);
+      setSuccessBanner("✅ Task accepted successfully with estimation!");
+      setShowEstimationModal(false);
+      setEstimation("");
 
       // Auto-dismiss success after 3 seconds
       setTimeout(() => {
         setSuccessBanner(null);
       }, 3000);
+
+      // Call onTaskUpdated if provided
+      if (onTaskUpdated) {
+        onTaskUpdated();
+      }
     } catch (error) {
-      setShowAcceptModal(false);
-      setErrorBanner(`✗ Failed to accept task. ${error.message}`);
+      // Display the specific error message from backend
+      setEstimationError(`❌ ${error.message}`);
+      setErrorBanner(`❌ ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -122,7 +162,7 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
       setLocalStatus("Rejected");
 
       // Show success banner
-      setSuccessBanner("✓ Task rejected successfully.");
+      setSuccessBanner("✅ Task rejected successfully.");
       setShowRejectModal(false);
 
       // Auto-dismiss success after 3 seconds
@@ -131,12 +171,11 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
       }, 3000);
     } catch (error) {
       setShowRejectModal(false);
-      setErrorBanner(`✗ Failed to reject task. ${error.message}`);
+      setErrorBanner(`❌ Failed to reject task. ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
-
 
   return (
     <>
@@ -239,7 +278,6 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
               View Details
             </button>
           )}
-
         </div>
       </article>
 
@@ -264,7 +302,7 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
                 onClick={handleAccept}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Accepting task..." : "Yes, Accept"}
+                Next: Add Estimation
               </button>
             </>
           }
@@ -285,7 +323,7 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
               <strong>Location:</strong> {task.addressCity}
             </li>
           </ul>
-          <p>Are you sure you want to accept?</p>
+          <p>You will need to provide an estimation before accepting.</p>
         </Modal>
       )}
 
@@ -310,7 +348,7 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
                 onClick={handleReject}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Rejecting task..." : "Yes, Reject"}
+                {isSubmitting ? "Rejecting..." : "Yes, Reject"}
               </button>
             </>
           }
@@ -331,6 +369,100 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
           <p className="modal-warning">
             The customer will be notified. Are you sure you want to reject?
           </p>
+        </Modal>
+      )}
+
+      {showEstimationModal && (
+        <Modal
+          title="Add Estimation & Accept Task"
+          onClose={() => {
+            if (!isSubmitting) {
+              setShowEstimationModal(false);
+              setEstimation("");
+              setEstimationError("");
+            }
+          }}
+          width={500}
+          actions={
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  if (!isSubmitting) {
+                    setShowEstimationModal(false);
+                    setEstimation("");
+                    setEstimationError("");
+                  }
+                }}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-accept"
+                onClick={handleEstimationSubmit}
+                disabled={isSubmitting || !estimation}
+              >
+                {isSubmitting ? "Accepting..." : "Add & Accept"}
+              </button>
+            </>
+          }
+        >
+          <p>Please provide an estimation for this task before accepting:</p>
+          <ul className="modal-task-details">
+            <li>
+              <strong>Customer:</strong>{" "}
+              {task.username || task.userName || "N/A"}
+            </li>
+            <li>
+              <strong>Service:</strong> {task.serviceName}
+            </li>
+            <li>
+              <strong>Date & Time:</strong> {formatDate(task.startDate)}
+            </li>
+            <li>
+              <strong>Location:</strong> {task.addressCity}
+            </li>
+          </ul>
+          <div style={{ marginTop: "16px" }}>
+            <label
+              htmlFor="estimation-input"
+              style={{ display: "block", marginBottom: "8px", fontWeight: 600 }}
+            >
+              Estimation (hours)*:
+            </label>
+            <input
+              id="estimation-input"
+              type="number"
+              min="0.5"
+              max="24"
+              step="0.5"
+              value={estimation}
+              onChange={(e) => {
+                setEstimation(e.target.value);
+                setEstimationError("");
+              }}
+              placeholder="e.g., 2.5"
+              disabled={isSubmitting}
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "6px",
+                border: estimationError ? "1px solid #dc2626" : "1px solid #e5e7eb",
+                fontSize: "14px",
+              }}
+            />
+            {estimationError && (
+              <p style={{ marginTop: "8px", color: "#dc2626", fontSize: "14px" }}>
+                {estimationError}
+              </p>
+            )}
+            <p style={{ marginTop: "8px", color: "#6b7280", fontSize: "12px" }}>
+              Enter the estimated number of hours needed to complete this task (0.5 - 24 hours)
+            </p>
+          </div>
         </Modal>
       )}
     </>
