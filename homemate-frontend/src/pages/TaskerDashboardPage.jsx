@@ -77,6 +77,7 @@ function TaskerDashboardPage() {
   const [submitting, setSubmitting] = useState(null);
   const [imageStatus, setImageStatus] = useState("idle");
   const [imagePreview, setImagePreview] = useState(null);
+  const [isConnectingStripe, setIsConnectingStripe] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -155,6 +156,54 @@ function TaskerDashboardPage() {
   }, [profile]);
 
   const dismissFeedback = () => setFeedback(null);
+
+  const handleCreateStripeConnectedAccount = () => {
+    if (!profile) return;
+    const taskerId = profile.id || profile.taskerId || profile.taskerID || profile.tasker_id;
+    if (!taskerId) {
+      setFeedback({ type: "error", message: "Unable to determine tasker id." });
+      return;
+    }
+    setIsConnectingStripe(true);
+    import("../api/paymentApi")
+      .then(({ createStripeConnectedAccount }) =>
+        createStripeConnectedAccount(taskerId)
+          .then((res) => {
+            // backend may return a raw URL string or a JSON with url field
+            const possibleUrl =
+              (typeof res === "string" && /^https?:\/\//.test(res) && res) ||
+              res?.onboardingUrl || res?.onboarding_url || res?.url || res?.redirectUrl || res?.redirect_url || null;
+            if (possibleUrl) {
+              // open Stripe onboarding in a new tab (noopener for security)
+              const newWin = window.open(possibleUrl, "_blank", "noopener,noreferrer");
+              try {
+                if (newWin) newWin.opener = null;
+              } catch (e) {
+                // ignore
+              }
+              if (!newWin) {
+                // popup blocked — show user the URL as a fallback in feedback
+                setFeedback({
+                  type: "success",
+                  message: `Onboarding opened in a new tab. If nothing happened, open this link: ${possibleUrl}`,
+                });
+              }
+              return;
+            }
+            setFeedback({ type: "success", message: res?.message ?? "Stripe connected account created successfully." });
+            loadProfile();
+          })
+          .catch((err) =>
+            setFeedback({ type: "error", message: err?.message ?? "Failed to create Stripe account." }),
+          )
+          .finally(() => setIsConnectingStripe(false)),
+      )
+      .catch((err) => {
+        console.error(err);
+        setIsConnectingStripe(false);
+        setFeedback({ type: "error", message: "Failed to create Stripe account." });
+      });
+  };
 
   const handleChange = (field, value) => {
     setForms((prev) => ({
@@ -553,6 +602,18 @@ function TaskerDashboardPage() {
             >
               Sign out
             </button>
+            {/* Visible CTA in header so taskers can enable payouts from Tasker Hub */}
+            {profile && !(profile.stripeAccountId || profile.stripe_account_id) && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ marginLeft: 12 }}
+                onClick={handleCreateStripeConnectedAccount}
+                disabled={isConnectingStripe}
+              >
+                {isConnectingStripe ? "Connecting…" : "Enable payouts"}
+              </button>
+            )}
           </div>
         </header>
 
@@ -615,6 +676,19 @@ function TaskerDashboardPage() {
                   <p className="tasker-card__meta">
                     Username: {profile.username}
                   </p>
+                    {/* Stripe connect button: visible only if tasker has no stripe account id */}
+                    {!(profile.stripeAccountId || profile.stripe_account_id) && (
+                      <div style={{ marginTop: 8 }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={handleCreateStripeConnectedAccount}
+                          disabled={isConnectingStripe}
+                        >
+                          {isConnectingStripe ? "Connecting…" : "Enable payouts (Stripe)"}
+                        </button>
+                      </div>
+                    )}
                 </div>
               </div>
               <dl className="profile-summary__grid">

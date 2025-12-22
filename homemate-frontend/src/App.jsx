@@ -17,10 +17,12 @@ import RequestTaskPage from "./pages/RequestTaskPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import SignInPage from "./pages/SignInPage";
 import TaskerDashboardPage from "./pages/TaskerDashboardPage";
+import StripeOnboardingCallback from "./pages/StripeOnboardingCallback";
 import SignUpPage from "./pages/SignUpPage";
 import UserTasksPage from "./pages/UserTasksPage";
 import TaskerTasksPage from "./pages/TaskerTasksPage";
 import SubmitReviewPage from "./pages/SubmitReviewPage";
+import TaskPaymentPage from "./pages/TaskPaymentPage";
 import AdminRoutes from "./admin/routing/AdminRoutes";
 import SubmitReportPage from "./pages/SubmitReportPage";
 import ChatPage from "./pages/ChatPage";
@@ -28,7 +30,7 @@ import TaskDetailsPage from "./pages/TaskDetailsPage";
 import EnterEmailPage from "./pages/EnterEmailPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
 import SignupMethodChoicePage from "./pages/SignupMethodChoicePage";
-// import GlobalPresence from "./components/GlobalPresence";
+
 
 // Protected route component - redirects to signin on 401
 function ProtectedRoute({ children, requiredRole }) {
@@ -80,6 +82,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+            <Route
+              path="/task/payment"
+              element={
+                <ProtectedRoute>
+                  <TaskPaymentPage />
+                </ProtectedRoute>
+              }
+            />
       <Route
         path="/report/submit/:taskId"
         element={
@@ -119,6 +129,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/stripe/onboarding/callback" element={<StripeOnboardingCallback />} />
       <Route path="/my-tasks" element={<UserTasksPage />} />
       <Route path="/tasker/my-tasks" element={<TaskerTasksPage />} />
       <Route
