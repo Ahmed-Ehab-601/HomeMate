@@ -8,10 +8,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TaskStatusCountsResponse {
-    private long inReview;
-    private long accepted;
-    private long inProgress;
-    private long suspended;
-    private long done;
-    private long rejected;
+    private Long inReview;
+    private Long accepted;
+    private Long inProgress;
+    private Long suspended;
+    private Long done;
+    private Long rejected;
 }

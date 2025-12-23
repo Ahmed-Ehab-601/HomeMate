@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class TaskerStatusCountsResponse {
-    private long suspended;
-    private long active;
+    private Long suspended;
+    private Long active;
 }
