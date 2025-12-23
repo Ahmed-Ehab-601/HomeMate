@@ -15,6 +15,37 @@ import java.util.Map;
 public class TaskerAnalysisDao {
     private final JdbcTemplate jdbcTemplate;
 
+    private String generateAgeBucketsSQL(String tableName, String ageCalculation) {
+        return "SELECT " +
+                "SUM(CASE WHEN age BETWEEN 0 AND 9 THEN 1 ELSE 0 END) AS b_0_10, " +
+                "SUM(CASE WHEN age BETWEEN 10 AND 19 THEN 1 ELSE 0 END) AS b_10_20, " +
+                "SUM(CASE WHEN age BETWEEN 20 AND 29 THEN 1 ELSE 0 END) AS b_20_30, " +
+                "SUM(CASE WHEN age BETWEEN 30 AND 39 THEN 1 ELSE 0 END) AS b_30_40, " +
+                "SUM(CASE WHEN age BETWEEN 40 AND 49 THEN 1 ELSE 0 END) AS b_40_50, " +
+                "SUM(CASE WHEN age BETWEEN 50 AND 59 THEN 1 ELSE 0 END) AS b_50_60, " +
+                "SUM(CASE WHEN age >= 60 THEN 1 ELSE 0 END) AS b_60_plus " +
+                "FROM (" + ageCalculation + ") " + tableName;
+    }
+
+    private String generateRangeSQL(String tableName, String columnName, int[][] ranges, String[] labels) {
+        StringBuilder sql = new StringBuilder("SELECT ");
+        for (int i = 0; i < ranges.length; i++) {
+            if (i > 0) sql.append(", ");
+            int start = ranges[i][0];
+            int end = ranges[i][1];
+            if (end == -1) {
+                sql.append("SUM(CASE WHEN ").append(columnName).append(" >= ").append(start)
+                   .append(" THEN 1 ELSE 0 END) AS ").append(labels[i]);
+            } else {
+                sql.append("SUM(CASE WHEN ").append(columnName).append(" >= ").append(start)
+                   .append(" AND ").append(columnName).append(" < ").append(end)
+                   .append(" THEN 1 ELSE 0 END) AS ").append(labels[i]);
+            }
+        }
+        sql.append(" FROM ").append(tableName);
+        return sql.toString();
+    }
+
     public GenderCountResponse fetchGenderCounts() {
         String sql = "SELECT " +
                 "SUM(CASE WHEN gender = 'M' THEN 1 ELSE 0 END) AS male, " +
@@ -29,15 +60,8 @@ public class TaskerAnalysisDao {
     }
 
     public AgeBucketsResponse fetchAgeBuckets() {
-        String sql = "SELECT " +
-                "SUM(CASE WHEN age BETWEEN 0 AND 9 THEN 1 ELSE 0 END) AS b_0_10, " +
-                "SUM(CASE WHEN age BETWEEN 10 AND 19 THEN 1 ELSE 0 END) AS b_10_20, " +
-                "SUM(CASE WHEN age BETWEEN 20 AND 29 THEN 1 ELSE 0 END) AS b_20_30, " +
-                "SUM(CASE WHEN age BETWEEN 30 AND 39 THEN 1 ELSE 0 END) AS b_30_40, " +
-                "SUM(CASE WHEN age BETWEEN 40 AND 49 THEN 1 ELSE 0 END) AS b_40_50, " +
-                "SUM(CASE WHEN age BETWEEN 50 AND 59 THEN 1 ELSE 0 END) AS b_50_60, " +
-                "SUM(CASE WHEN age >= 60 THEN 1 ELSE 0 END) AS b_60_plus " +
-                "FROM (SELECT TIMESTAMPDIFF(YEAR, birthDate, CURDATE()) AS age FROM Tasker WHERE birthDate IS NOT NULL) t";
+        String sql = generateAgeBucketsSQL("t", 
+            "SELECT TIMESTAMPDIFF(YEAR, birthDate, CURDATE()) AS age FROM Tasker WHERE birthDate IS NOT NULL");
 
         return jdbcTemplate.query(sql, rs -> {
             Map<String, Long> buckets = new HashMap<>();
@@ -67,108 +91,92 @@ public class TaskerAnalysisDao {
     }
 
     public RatingRangesResponse fetchRatingRanges() {
-        String sql = "SELECT " +
-                "SUM(CASE WHEN rating >= 0 AND rating < 1 THEN 1 ELSE 0 END) AS r_0_1, " +
-                "SUM(CASE WHEN rating >= 1 AND rating < 2 THEN 1 ELSE 0 END) AS r_1_2, " +
-                "SUM(CASE WHEN rating >= 2 AND rating < 3 THEN 1 ELSE 0 END) AS r_2_3, " +
-                "SUM(CASE WHEN rating >= 3 AND rating < 4 THEN 1 ELSE 0 END) AS r_3_4, " +
-                "SUM(CASE WHEN rating >= 4 AND rating <= 5 THEN 1 ELSE 0 END) AS r_4_5 " +
-                "FROM Tasker";
+        int[][] ranges = {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 6}};
+        String[] labels = {"r_0_1", "r_1_2", "r_2_3", "r_3_4", "r_4_5"};
+        String sql = generateRangeSQL("Tasker", "rating", ranges, labels);
 
         return jdbcTemplate.query(sql, rs -> {
-            Map<String, Long> ranges = new HashMap<>();
+            Map<String, Long> _ranges = new HashMap<>();
             if (rs.next()) {
-                ranges.put("0-1", rs.getLong("r_0_1"));
-                ranges.put("1-2", rs.getLong("r_1_2"));
-                ranges.put("2-3", rs.getLong("r_2_3"));
-                ranges.put("3-4", rs.getLong("r_3_4"));
-                ranges.put("4-5", rs.getLong("r_4_5"));
+                _ranges.put("0-1", rs.getLong("r_0_1"));
+                _ranges.put("1-2", rs.getLong("r_1_2"));
+                _ranges.put("2-3", rs.getLong("r_2_3"));
+                _ranges.put("3-4", rs.getLong("r_3_4"));
+                _ranges.put("4-5", rs.getLong("r_4_5"));
             }
-            return new RatingRangesResponse(ranges);
+            return new RatingRangesResponse(_ranges);
         });
     }
 
     public HourRateRangesResponse fetchHourRateRanges() {
-        String sql = "SELECT " +
-                "SUM(CASE WHEN hourRate >= 0 AND hourRate < 10 THEN 1 ELSE 0 END) AS hr_0_10, " +
-                "SUM(CASE WHEN hourRate >= 10 AND hourRate < 20 THEN 1 ELSE 0 END) AS hr_10_20, " +
-                "SUM(CASE WHEN hourRate >= 20 AND hourRate < 30 THEN 1 ELSE 0 END) AS hr_20_30, " +
-                "SUM(CASE WHEN hourRate >= 30 AND hourRate < 40 THEN 1 ELSE 0 END) AS hr_30_40, " +
-                "SUM(CASE WHEN hourRate >= 40 AND hourRate < 50 THEN 1 ELSE 0 END) AS hr_40_50, " +
-                "SUM(CASE WHEN hourRate >= 50 AND hourRate < 60 THEN 1 ELSE 0 END) AS hr_50_60, " +
-                "SUM(CASE WHEN hourRate >= 60 AND hourRate < 70 THEN 1 ELSE 0 END) AS hr_60_70, " +
-                "SUM(CASE WHEN hourRate >= 70 AND hourRate < 80 THEN 1 ELSE 0 END) AS hr_70_80, " +
-                "SUM(CASE WHEN hourRate >= 80 THEN 1 ELSE 0 END) AS hr_80_plus " +
-                "FROM Tasker";
+        int step = 10;
+        int maxValue = 80;
+        int numRanges = (maxValue / step) + 1;
+        
+        int[][] ranges = new int[numRanges][2];
+        String[] labels = new String[numRanges];
+        
+        for (int i = 0; i < numRanges - 1; i++) {
+            int start = i * step;
+            int end = start + step;
+            ranges[i][0] = start;
+            ranges[i][1] = end;
+            labels[i] = "hr_" + start + "_" + end;
+        }
+        
+        ranges[numRanges - 1][0] = maxValue;
+        ranges[numRanges - 1][1] = -1;
+        labels[numRanges - 1] = "hr_" + maxValue + "_plus";
+        
+        String sql = generateRangeSQL("Tasker", "hourRate", ranges, labels);
 
         return jdbcTemplate.query(sql, rs -> {
-            Map<String, Long> ranges = new HashMap<>();
+            Map<String, Long> _ranges = new HashMap<>();
             if (rs.next()) {
-                ranges.put("0-10", rs.getLong("hr_0_10"));
-                ranges.put("10-20", rs.getLong("hr_10_20"));
-                ranges.put("20-30", rs.getLong("hr_20_30"));
-                ranges.put("30-40", rs.getLong("hr_30_40"));
-                ranges.put("40-50", rs.getLong("hr_40_50"));
-                ranges.put("50-60", rs.getLong("hr_50_60"));
-                ranges.put("60-70", rs.getLong("hr_60_70"));
-                ranges.put("70-80", rs.getLong("hr_70_80"));
-                ranges.put("80+", rs.getLong("hr_80_plus"));
+                for (int i = 0; i < numRanges - 1; i++) {
+                    int start = i * step;
+                    int end = start + step;
+                    _ranges.put(start + "-" + end, rs.getLong(labels[i]));
+                }
+                _ranges.put(maxValue + "+", rs.getLong(labels[numRanges - 1]));
             }
-            return new HourRateRangesResponse(ranges);
+            return new HourRateRangesResponse(_ranges);
         });
     }
 
     public WorkedHoursRangesResponse fetchWorkedHoursRanges() {
-        String sql = "SELECT " +
-                "SUM(CASE WHEN WorkedHours >= 0 AND WorkedHours < 10 THEN 1 ELSE 0 END) AS wh_0_10, " +
-                "SUM(CASE WHEN WorkedHours >= 10 AND WorkedHours < 20 THEN 1 ELSE 0 END) AS wh_10_20, " +
-                "SUM(CASE WHEN WorkedHours >= 20 AND WorkedHours < 30 THEN 1 ELSE 0 END) AS wh_20_30, " +
-                "SUM(CASE WHEN WorkedHours >= 30 AND WorkedHours < 40 THEN 1 ELSE 0 END) AS wh_30_40, " +
-                "SUM(CASE WHEN WorkedHours >= 40 AND WorkedHours < 50 THEN 1 ELSE 0 END) AS wh_40_50, " +
-                "SUM(CASE WHEN WorkedHours >= 50 AND WorkedHours < 60 THEN 1 ELSE 0 END) AS wh_50_60, " +
-                "SUM(CASE WHEN WorkedHours >= 60 AND WorkedHours < 70 THEN 1 ELSE 0 END) AS wh_60_70, " +
-                "SUM(CASE WHEN WorkedHours >= 70 AND WorkedHours < 80 THEN 1 ELSE 0 END) AS wh_70_80, " +
-                "SUM(CASE WHEN WorkedHours >= 80 AND WorkedHours < 90 THEN 1 ELSE 0 END) AS wh_80_90, " +
-                "SUM(CASE WHEN WorkedHours >= 90 AND WorkedHours < 100 THEN 1 ELSE 0 END) AS wh_90_100, " +
-                "SUM(CASE WHEN WorkedHours >= 100 AND WorkedHours < 110 THEN 1 ELSE 0 END) AS wh_100_110, " +
-                "SUM(CASE WHEN WorkedHours >= 110 AND WorkedHours < 120 THEN 1 ELSE 0 END) AS wh_110_120, " +
-                "SUM(CASE WHEN WorkedHours >= 120 AND WorkedHours < 130 THEN 1 ELSE 0 END) AS wh_120_130, " +
-                "SUM(CASE WHEN WorkedHours >= 130 AND WorkedHours < 140 THEN 1 ELSE 0 END) AS wh_130_140, " +
-                "SUM(CASE WHEN WorkedHours >= 140 AND WorkedHours < 150 THEN 1 ELSE 0 END) AS wh_140_150, " +
-                "SUM(CASE WHEN WorkedHours >= 150 AND WorkedHours < 160 THEN 1 ELSE 0 END) AS wh_150_160, " +
-                "SUM(CASE WHEN WorkedHours >= 160 AND WorkedHours < 170 THEN 1 ELSE 0 END) AS wh_160_170, " +
-                "SUM(CASE WHEN WorkedHours >= 170 AND WorkedHours < 180 THEN 1 ELSE 0 END) AS wh_170_180, " +
-                "SUM(CASE WHEN WorkedHours >= 180 AND WorkedHours < 190 THEN 1 ELSE 0 END) AS wh_180_190, " +
-                "SUM(CASE WHEN WorkedHours >= 190 AND WorkedHours < 200 THEN 1 ELSE 0 END) AS wh_190_200, " +
-                "SUM(CASE WHEN WorkedHours >= 200 THEN 1 ELSE 0 END) AS wh_200_plus " +
-                "FROM Tasker";
+        int step = 10;
+        int maxValue = 200;
+        int numRanges = (maxValue / step) + 1;
+        
+        int[][] ranges = new int[numRanges][2];
+        String[] labels = new String[numRanges];
+        
+        for (int i = 0; i < numRanges - 1; i++) {
+            int start = i * step;
+            int end = start + step;
+            ranges[i][0] = start;
+            ranges[i][1] = end;
+            labels[i] = "wh_" + start + "_" + end;
+        }
+        
+        ranges[numRanges - 1][0] = maxValue;
+        ranges[numRanges - 1][1] = -1;
+        labels[numRanges - 1] = "wh_" + maxValue + "_plus";
+        
+        String sql = generateRangeSQL("Tasker", "WorkedHours", ranges, labels);
 
         return jdbcTemplate.query(sql, rs -> {
-            Map<String, Long> ranges = new HashMap<>();
+            Map<String, Long> _ranges = new HashMap<>();
             if (rs.next()) {
-                ranges.put("0-10", rs.getLong("wh_0_10"));
-                ranges.put("10-20", rs.getLong("wh_10_20"));
-                ranges.put("20-30", rs.getLong("wh_20_30"));
-                ranges.put("30-40", rs.getLong("wh_30_40"));
-                ranges.put("40-50", rs.getLong("wh_40_50"));
-                ranges.put("50-60", rs.getLong("wh_50_60"));
-                ranges.put("60-70", rs.getLong("wh_60_70"));
-                ranges.put("70-80", rs.getLong("wh_70_80"));
-                ranges.put("80-90", rs.getLong("wh_80_90"));
-                ranges.put("90-100", rs.getLong("wh_90_100"));
-                ranges.put("100-110", rs.getLong("wh_100_110"));
-                ranges.put("110-120", rs.getLong("wh_110_120"));
-                ranges.put("120-130", rs.getLong("wh_120_130"));
-                ranges.put("130-140", rs.getLong("wh_130_140"));
-                ranges.put("140-150", rs.getLong("wh_140_150"));
-                ranges.put("150-160", rs.getLong("wh_150_160"));
-                ranges.put("160-170", rs.getLong("wh_160_170"));
-                ranges.put("170-180", rs.getLong("wh_170_180"));
-                ranges.put("180-190", rs.getLong("wh_180_190"));
-                ranges.put("190-200", rs.getLong("wh_190_200"));
-                ranges.put("200+", rs.getLong("wh_200_plus"));
+                for (int i = 0; i < numRanges - 1; i++) {
+                    int start = i * step;
+                    int end = start + step;
+                    _ranges.put(start + "-" + end, rs.getLong(labels[i]));
+                }
+                _ranges.put(maxValue + "+", rs.getLong(labels[numRanges - 1]));
             }
-            return new WorkedHoursRangesResponse(ranges);
+            return new WorkedHoursRangesResponse(_ranges);
         });
     }
 
