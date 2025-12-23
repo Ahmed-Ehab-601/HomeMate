@@ -44,9 +44,7 @@ import {
     getTaskBillRanges,
     getTaskStatusCounts,
 } from '../services/adminService';
-import { generateTimeRanges as generateUserTimeRanges, formatRangeLabel as formatUserRangeLabel } from '../utility/userAnalysisUtility';
-import { generateTimeRanges as generateTaskerTimeRanges, formatRangeLabel as formatTaskerRangeLabel } from '../utility/taskerAnalysisUtility';
-import { generateTimeRanges as generateTaskTimeRanges, formatRangeLabel as formatTaskRangeLabel } from '../utility/taskAnalysisUtility';
+import { generateTimeRanges, formatRangeLabel} from '../utility/userAnalysisUtility';
 
 const AnalysisPage = () => {
     const [analysisType, setAnalysisType] = useState('');
@@ -181,10 +179,10 @@ const AnalysisPage = () => {
                         value: count,
                     }));
                 } else if (metric === 'newAccounts') {
-                    const ranges = generateUserTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
+                    const ranges = generateTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
                     data = await getUserNewAccounts(ranges);
                     formattedData = data.counts.map((count, index) => {
-                        const label = formatUserRangeLabel(ranges[index], groupBy);
+                        const label = formatRangeLabel(ranges[index], groupBy);
                         return {
                             name: label,
                             value: count,
@@ -206,10 +204,10 @@ const AnalysisPage = () => {
                         value: count,
                     }));
                 } else if (metric === 'newAccounts') {
-                    const ranges = generateTaskerTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
+                    const ranges = generateTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
                     data = await getTaskerNewAccounts(ranges);
                     formattedData = data.counts.map((count, index) => {
-                        const label = formatTaskerRangeLabel(ranges[index], groupBy);
+                        const label = formatRangeLabel(ranges[index], groupBy);
                         return {
                             name: label,
                             value: count,
@@ -245,20 +243,20 @@ const AnalysisPage = () => {
                 }
             } else if (analysisType === 'task') {
                 if (metric === 'startDate') {
-                    const ranges = generateTaskTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
+                    const ranges = generateTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
                     data = await getTaskStartDateRanges(ranges);
                     formattedData = data.counts.map((count, index) => {
-                        const label = formatTaskRangeLabel(ranges[index], groupBy);
+                        const label = formatRangeLabel(ranges[index], groupBy);
                         return {
                             name: label,
                             value: count,
                         };
                     });
                 } else if (metric === 'endDate') {
-                    const ranges = generateTaskTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
+                    const ranges = generateTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
                     data = await getTaskEndDateRanges(ranges);
                     formattedData = data.counts.map((count, index) => {
-                        const label = formatTaskRangeLabel(ranges[index], groupBy);
+                        const label = formatRangeLabel(ranges[index], groupBy);
                         return {
                             name: label,
                             value: count,
