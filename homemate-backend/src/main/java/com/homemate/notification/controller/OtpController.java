@@ -12,6 +12,7 @@ import com.homemate.UserProfile.Models.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -51,10 +52,21 @@ public class OtpController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
         }
 
-        User user = userDao.getByEmail(emailRequest.getRecipientEmail());
+        User user = null;
+        try {
+            user = userDao.getByEmail(emailRequest.getRecipientEmail());
+        } catch (EmptyResultDataAccessException e) {
+            user = null;
+        }
+
         Tasker tasker = null;
-        if (user == null)
-            tasker = taskerDao.getByEmail(emailRequest.getRecipientEmail());
+        if (user == null) {
+            try {
+                tasker = taskerDao.getByEmail(emailRequest.getRecipientEmail());
+            } catch (EmptyResultDataAccessException e) {
+                tasker = null;
+            }
+        }
         
         if (SIGNUP.equalsIgnoreCase(type) && (user != null || tasker != null)) {
             OtpVerificationResult errorResult = OtpVerificationResult.builder()

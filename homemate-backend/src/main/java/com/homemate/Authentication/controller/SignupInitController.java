@@ -12,6 +12,7 @@ import com.homemate.security.service.JwtService;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,10 +46,21 @@ public class SignupInitController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(EMAIL_NOT_VERIFIED);
         }
 
-        User user = userDao.getByEmail(googleUser.getEmail());
+        User user = null;
+        try {
+            user = userDao.getByEmail(googleUser.getEmail());
+        } catch (EmptyResultDataAccessException e) {
+            user = null;
+        }
+
         Tasker tasker = null;
-        if (user == null)
-            tasker = taskerDao.getByEmail(googleUser.getEmail());
+        if (user == null) {
+            try {
+                tasker = taskerDao.getByEmail(googleUser.getEmail());
+            } catch (EmptyResultDataAccessException e) {
+                tasker = null;
+            }
+        }
 
         if (user != null || tasker != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(EMAIL_ALREADY_EXISTS);
