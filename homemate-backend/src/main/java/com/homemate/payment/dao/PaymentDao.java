@@ -32,13 +32,12 @@ public class PaymentDao {
 
             jdbcTemplate.update(con -> {
                 PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-                // ✅ FIXED: Correct parameter order
-                ps.setLong(1, payment.getTaskId());        // taskId
-                ps.setLong(2, payment.getUserId());        // userId
-                ps.setLong(3, payment.getTaskerId());      // taskerId
-                ps.setDouble(4, payment.getTotalAmount()); // totalAmount
-                ps.setDouble(5, payment.getPlatformFee()); // platformFee
-                ps.setDouble(6, payment.getTaskerAmount()); // taskerAmount
+                ps.setLong(1, payment.getTaskId());
+                ps.setLong(2, payment.getUserId());
+                ps.setLong(3, payment.getTaskerId());
+                ps.setDouble(4, payment.getTotalAmount());
+                ps.setDouble(5, payment.getPlatformFee());
+                ps.setDouble(6, payment.getTaskerAmount());
                 return ps;
             }, keyHolder);
 
@@ -59,7 +58,6 @@ public class PaymentDao {
     }
 
       public void markPaid(Long paymentId) {
-        // ✅ FIXED: Using paymentID instead of id
         jdbcTemplate.update("""
             UPDATE payments
             SET status = 'PAID', paid_at = NOW()
@@ -68,7 +66,6 @@ public class PaymentDao {
     }
 
     public void updateStatus(Long paymentId, String status) {
-        // ✅ FIXED: Using paymentID instead of id
         jdbcTemplate.update("""
             UPDATE payments
             SET status = ?
@@ -76,7 +73,6 @@ public class PaymentDao {
         """, status, paymentId);
     }
     public void setPaidAt(Long paymentId) {
-        // ✅ FIXED: Using paymentID instead of id
         jdbcTemplate.update("""
             UPDATE payments
             SET paid_at = NOW()

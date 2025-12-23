@@ -14,7 +14,6 @@ public class PaymentRequestDTO {
     @NotNull
     private Long userId;
 
-
     @NotNull
     private double bill;
 }

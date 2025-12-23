@@ -19,7 +19,7 @@ public class StripePaymentController {
 
     private final StripePaymentService stripePaymentService;
 
-    // ==================== TASKER ACCOUNT ====================
+
 
     @PostMapping("/create-connected-account/{taskerId}")
     public ResponseEntity<String> createConnectedAccount(@PathVariable Long taskerId) {
@@ -28,7 +28,7 @@ public class StripePaymentController {
         );
     }
 
-    // ==================== CREATE PAYMENT ====================
+
 
     @PostMapping("/payments/create")
     public ResponseEntity<PaymentResponseDTO> createPayment(
@@ -39,7 +39,7 @@ public class StripePaymentController {
         );
     }
 
-    // ==================== CONFIRM PAYMENT ====================
+
 
     @PostMapping("/payments/confirm")
     public ResponseEntity<String> confirmPayment(
@@ -58,7 +58,6 @@ public class StripePaymentController {
         );
     }
 
-    // ==================== CASH PAYMENT ====================
 
     @PostMapping("/payments/mark-paid-cash/{taskId}")
     @PreAuthorize("hasRole('TASKER')")

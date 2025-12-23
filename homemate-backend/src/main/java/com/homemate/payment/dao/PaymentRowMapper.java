@@ -25,7 +25,6 @@ public class PaymentRowMapper implements RowMapper<Payment> {
         payment.setStripePaymentIntentId(rs.getString("stripePaymentIntentId"));
         payment.setStatus(rs.getString("status"));
 
-        // Handle timestamps (may be null)
         Timestamp createdAt = rs.getTimestamp("created_at");
         if (createdAt != null) {
             payment.setCreatedAt(createdAt.toLocalDateTime());
