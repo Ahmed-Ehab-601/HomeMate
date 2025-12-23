@@ -1,136 +1,123 @@
 import React, { useState, useEffect, useMemo } from 'react';
-
-// Default estimation in minutes if not provided (e.g., 60 minutes = 1 hour)
-const DEFAULT_ESTIMATION_MINUTES = 0;
 import TaskCard from './TaskCard';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import { rescheduleTask, getTaskerBusyTime, getTaskDetails } from '../api/taskManagementApi';
+import { fetchUserTasks, fetchTaskerTasks } from '../api/tasksApi';
 import { useAuth } from '../contexts/AuthContext';
 
-/**
- * TaskCalendar Component - Fixed Drag & Drop
- * Now matches TaskDetailsPage reschedule logic exactly
- */
-const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
-    const [viewMode, setViewMode] = useState(() => {
-        return localStorage.getItem('taskCalendarViewMode') || 'calendar';
-    }); // 'calendar' or 'list'
+// Work hours constants (same as TaskDetailsPage)
+const WORK_DAY_START_MINUTES = 8 * 60; // 08:00 = 480 minutes
+const WORK_DAY_END_MINUTES = 20 * 60 + 30; // 20:30 = 1230 minutes
 
-    useEffect(() => {
-        localStorage.setItem('taskCalendarViewMode', viewMode);
-    }, [viewMode]);
+// Status configuration
+const statusConfig = {
+    InReview: { bg: '#FEF3C7', text: '#92400E', display: 'In Review' },
+    Accepted: { bg: '#DBEAFE', text: '#1E40AF', display: 'Accepted' },
+    InProgress: { bg: '#D1FAE5', text: '#065F46', display: 'In Progress' },
+    Suspended: { bg: '#FEE2E2', text: '#991B1B', display: 'Suspended' },
+    Done: { bg: '#E0E7FF', text: '#3730A3', display: 'Done' },
+    Rejected: { bg: '#F3F4F6', text: '#4B5563', display: 'Rejected' },
+};
+
+// Day colors for calendar header (system colors)
+const dayColors = {
+    Monday: '#c6ff4d',      // Primary green
+    Tuesday: '#e5e7eb',    // Neutral gray
+    Wednesday: '#f3f4f6',  // Lighter gray
+    Thursday: '#e5e7eb',   // Neutral gray
+    Friday: '#c6ff4d',     // Primary green
+    Saturday: '#a7df2d',   // Accent green (for Saturday)
+    Sunday: '#f87171',      // Accent red (for Sunday)
+};
+
+function TaskCalendar() {
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const userRole = user?.role || 'user';
+
+    // ==================== STATE MANAGEMENT ====================
     const [currentDate, setCurrentDate] = useState(new Date());
     const [tasks, setTasks] = useState([]);
-    const [filteredStatus, setFilteredStatus] = useState('All');
-    const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [filteredStatus, setFilteredStatus] = useState('All');
     const [draggedTask, setDraggedTask] = useState(null);
-    const [snackbar, setSnackbar] = useState({ show: false, message: '', type: 'error' });
+    const [snackbar, setSnackbar] = useState({ show: false, message: '', type: 'success' });
     const [showTimeModal, setShowTimeModal] = useState(false);
-    const [targetDate, setTargetDate] = useState(null);
-    const [targetTask, setTargetTask] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState('');
-    const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
-    const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
-    // Use array for busy times, like TaskDetailsPage.jsx
-    const [rescheduleBusyTimes, setRescheduleBusyTimes] = useState([]);
-    const { user, getUserRole } = useAuth();
+    const [busyTimes, setBusyTimes] = useState([]);
+    const [loadingBusyTimes, setLoadingBusyTimes] = useState(false);
+    const [taskEstimation, setTaskEstimation] = useState(0);
 
-    // Status Colors
-    const statusConfig = {
-        InReview: { bg: '#FFFBEB', text: '#92400E', display: 'In Review' },
-        Accepted: { bg: '#DCFCE7', text: '#166534', display: 'Accepted' },
-        InProgress: { bg: '#E0F2FE', text: '#075985', display: 'In Progress' },
-        Suspended: { bg: '#F3F4F6', text: '#374151', display: 'Suspended' },
-        Done: { bg: '#F0FDF4', text: '#166534', display: 'Done' },
-        Rejected: { bg: '#FEF2F2', text: '#991B1B', display: 'Rejected' },
+    // ==================== HELPER FUNCTIONS ====================
+    const isStatusDraggable = (status) => {
+        return ['InReview', 'Accepted'].includes(status);
     };
 
-    const dayColors = {
-        Monday: '#c6ff4d',
-        Tuesday: '#b8f03d',
-        Wednesday: '#aae02d',
-        Thursday: '#9cd01d',
-        Friday: '#8ec00d',
-        Saturday: '#4b5563',
-        Sunday: '#a7df2d',
-    };
-
-    // EXACT SAME CONSTANTS AS TASKDETAILSPAGE
-    const WORK_DAY_START_MINUTES = 8 * 60;          // 08:00 = 480 minutes
-    const WORK_DAY_END_MINUTES = 24 * 60 + 30;      // 20:30 = 1230 minutes
-    const DRAGGABLE_STATUSES = ['InReview', 'Accepted'];
-
-    const isStatusDraggable = (status) => DRAGGABLE_STATUSES.includes(status);
-
-    // Generate time slots - EXACT SAME AS TASKDETAILSPAGE
-    const timeSlots = Array.from({ length: 25 }, (_, index) => {
-        const minutes = index * 30;
-        const hours = 8 + Math.floor(minutes / 60);
+    const formatEstimation = (minutes) => {
+        if (!minutes || minutes === 0) return '';
+        const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
-        if (hours > 20 || (hours === 20 && mins > 0)) {
-            return null;
-        }
-        return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-    }).filter(Boolean);
+        if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
+        if (hours > 0) return `${hours}h`;
+        return `${mins}m`;
+    };
 
     const getDaysInMonth = (date) => {
         const year = date.getFullYear();
         const month = date.getMonth();
         const days = new Date(year, month + 1, 0).getDate();
-        const firstDay = new Date(year, month, 1).getDay();
-        const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
-        return { days, firstDay: adjustedFirstDay };
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const firstDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+        return { days, firstDay };
     };
 
-    // Format estimation minutes (e.g., 90 -> "1h 30m")
-    const formatEstimation = (minutes) => {
-        const mins = Number(minutes);
-        if (!minutes || !Number.isFinite(mins) || mins <= 0) return null; // Return null for 0 or undefined
-        const h = Math.floor(mins / 60);
-        const m = mins % 60;
-        if (h && m) return `${h}h ${m}m`;
-        if (h) return `${h}h`;
-        return `${m}m`;
-    };
+    // Generate time slots (08:00 - 20:30, 30-minute intervals)
+    const timeSlots = Array.from({ length: 25 }, (_, index) => {
+        const minutes = index * 30;
+        const hours = 8 + Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        if (hours > 20 || (hours === 20 && mins > 30)) {
+            return null;
+        }
+        return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+    }).filter(Boolean);
 
-    // Local fetch for estimation minutes to avoid issues in API helper
-    // Now handled automatically by getTasks API - timeEstimated field is already included in TaskCardDto
-
-    // ==================== EXACT LOGIC FROM TASKDETAILSPAGE ====================
-    
-    // Check if task would extend beyond working hours
+    // ==================== BUSY TIME VALIDATION (Same as TaskDetailsPage) ====================
     const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
         const [hours, minutes] = timeSlot.split(":").map(Number);
         const slotStartMinutes = hours * 60 + minutes;
         const slotEndMinutes = slotStartMinutes + estimationMinutes;
         
         if (slotEndMinutes > WORK_DAY_END_MINUTES) {
-            console.log(`❌ Slot ${timeSlot}: Task would end at ${Math.floor(slotEndMinutes/60)}:${String(slotEndMinutes%60).padStart(2, '0')}, beyond 20:30`);
             return false;
         }
         
         return true;
     };
 
-    // Check if a time slot is busy - now using busyTimes as array (like TaskDetailsPage.jsx)
-    const isRescheduleTimeSlotBusy = (timeSlot, rescheduleDate, busyTimes, currentTask, estimationMinutes) => {
-        if (!rescheduleDate || !Array.isArray(busyTimes) || busyTimes.length === 0) {
+    const isTimeSlotBusy = (timeSlot) => {
+        if (!selectedDate || busyTimes.length === 0) {
             return false;
         }
 
         const [slotHours, slotMinutes] = timeSlot.split(":").map(Number);
-        const [year, month, day] = rescheduleDate.split("-").map(Number);
+        const year = selectedDate.getFullYear();
+        const month = selectedDate.getMonth() + 1;
+        const day = selectedDate.getDate();
+        
+        const currentTaskEstMinutes = taskEstimation ?? 0;
         const slotStartMinutes = slotHours * 60 + slotMinutes;
-        const slotEndMinutes = slotStartMinutes + estimationMinutes;
+        const slotEndMinutes = slotStartMinutes + currentTaskEstMinutes;
 
         for (const busyTime of busyTimes) {
-            // Skip if this is the current task being rescheduled
-            if (busyTime.taskID === currentTask?.taskID) {
+            // Skip the current task being rescheduled
+            if (busyTime.taskID === draggedTask?.taskID) {
                 continue;
             }
+
             try {
                 const busyStart = new Date(busyTime.startDate);
                 const busyYear = busyStart.getFullYear();
@@ -138,17 +125,21 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                 const busyDay = busyStart.getDate();
                 const busyHours = busyStart.getHours();
                 const busyMins = busyStart.getMinutes();
+                
                 // Only check if dates match
                 if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
                     continue;
                 }
+
                 const busyStartMinutes = busyHours * 60 + busyMins;
                 const busyEndMinutes = busyStartMinutes + busyTime.estimation;
+
                 // Allow multiple 0-duration tasks at the same time slot
-                if (estimationMinutes === 0 && busyTime.estimation === 0 && slotStartMinutes === busyStartMinutes) {
+                if (currentTaskEstMinutes === 0 && busyTime.estimation === 0 && slotStartMinutes === busyStartMinutes) {
                     continue;
                 }
-                // Check for ANY overlap - ALL 5 SCENARIOS
+
+                // Check for ANY overlap
                 const hasOverlap = (
                     (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
                     (slotEndMinutes > busyStartMinutes && slotEndMinutes <= busyEndMinutes) ||
@@ -156,6 +147,7 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                     (busyStartMinutes <= slotStartMinutes && busyEndMinutes >= slotEndMinutes) ||
                     (slotStartMinutes < busyStartMinutes && slotEndMinutes > busyStartMinutes)
                 );
+
                 if (hasOverlap) {
                     return true;
                 }
@@ -164,78 +156,99 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                 continue;
             }
         }
+
         return false;
     };
 
-    // ==================== API FETCHING ====================
+    // Filter available time slots
+    const availableTimeSlots = useMemo(() => {
+        if (!selectedDate) return timeSlots;
+
+        return timeSlots.filter((slot) => {
+            // Check if date is today and time has passed
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const checkDate = new Date(selectedDate);
+            checkDate.setHours(0, 0, 0, 0);
+            const isToday = checkDate.getTime() === today.getTime();
+
+            if (isToday) {
+                const [hours, minutes] = slot.split(":").map(Number);
+                const slotTime = new Date();
+                slotTime.setHours(hours, minutes, 0, 0);
+                const now = new Date();
+                if (slotTime <= now) {
+                    return false;
+                }
+            }
+
+            // Check if there's enough time in the day
+            if (!hasEnoughTimeToComplete(slot, taskEstimation)) {
+                return false;
+            }
+
+            // Check if slot conflicts with busy times
+            return !isTimeSlotBusy(slot);
+        });
+    }, [selectedDate, busyTimes, taskEstimation, draggedTask]);
+
+    // ==================== FETCH TASKS ====================
     const fetchTasks = async () => {
-        // Don't fetch if userRole is not set
-        if (!userRole) {
-            console.log('⏸️ Skipping fetch - userRole not set yet');
-            return;
-        }
-        
-        setLoading(true);
-        setError(null);
         try {
-            const token = localStorage.getItem('homemate_token');
-            if (!token) throw new Error('No authentication token found');
-
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-            const lastDay = new Date(year, month + 1, 0).getDate();
-            const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-            // Use the userRole prop directly - it's passed from parent component and is the source of truth
-            const role = userRole;
-            
-            console.log('📋 Fetching tasks with role:', role, { propRole: userRole });
-
-            const endpoint = role === 'ROLE_TASKER' ? '/api/tasker/getTasks' : '/api/user/getTasks';
-            const url = `http://localhost:8080${endpoint}?startDate=${startDate}&endDate=${endDate}&status=${filteredStatus}`;
-            
-            console.log('🔗 Task fetch URL:', url);
-
-            const response = await fetch(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.status === 204) {
-                setTasks([]);
-                return;
+            setLoading(true);
+            setError(null);
+            let data;
+            if (userRole === 'ROLE_TASKER') {
+                data = await fetchTaskerTasks(user?.id, filteredStatus, 0, 100);
+                setTasks(data.tasks || []);
+            } else {
+                data = await fetchUserTasks(user?.id, filteredStatus, 0, 100);
+                setTasks(data.tasks || []);
             }
-            if (response.status === 401) throw new Error('Unauthorized. Please login again.');
-            if (response.status === 403) {
-                console.error('❌ 403 Forbidden - likely wrong endpoint for user role. Role:', userRole, 'Endpoint:', endpoint);
-                throw new Error('Access forbidden.');
-            }
-            if (!response.ok) {
-                const errorText = await response.text().catch(() => response.statusText);
-                throw new Error(`Failed to fetch tasks: ${errorText}`);
-            }
-
-            const data = await response.json();
-            setTasks(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error('❌ Fetch error:', err);
-            setError(err.message || 'Failed to load tasks');
+            setError(err.message);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchTasks();
-    }, [currentDate, filteredStatus, userRole]);
+    // ==================== ORGANIZE TASKS BY DAY ====================
+    const tasksByDay = useMemo(() => {
+        const map = new Map();
+        let filteredTasks = tasks;
+
+        if (filteredStatus !== 'All') {
+            filteredTasks = tasks.filter((task) => task.status === filteredStatus);
+        }
+
+        filteredTasks = filteredTasks.filter((task) => {
+            if (!task.startDate) return false;
+            const taskDate = new Date(task.startDate);
+            return (
+                taskDate.getMonth() === currentDate.getMonth() &&
+                taskDate.getFullYear() === currentDate.getFullYear()
+            );
+        });
+
+        filteredTasks.forEach((task) => {
+            const day = new Date(task.startDate).getDate();
+            if (!map.has(day)) {
+                map.set(day, []);
+            }
+            map.get(day).push(task);
+        });
+
+        return map;
+    }, [tasks, currentDate, filteredStatus]);
 
     // ==================== DRAG AND DROP HANDLERS ====================
     const handleDragStart = (e, task) => {
         if (!isStatusDraggable(task?.status)) {
-            setSnackbar({ show: true, message: 'This task cannot be rescheduled in its current status.', type: 'error' });
+            setSnackbar({
+                show: true,
+                message: 'Only tasks in "In Review" or "Accepted" status can be rescheduled.',
+                type: 'error',
+            });
             setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 3000);
             e.preventDefault();
             return;
@@ -255,172 +268,82 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
         e.dataTransfer.dropEffect = 'move';
     };
 
-    // Load available time slots - EXACT SAME LOGIC AS TASKDETAILSPAGE
-    // Now fetches busy times as array and uses array logic
-    const loadAvailableTimeSlots = async (dateStr, task) => {
-        setLoadingTimeSlots(true);
-        try {
-            let taskerID = task.taskerID || task.taskerId;
-            if (!taskerID) {
-                try {
-                    const fullTaskData = await getTaskDetails(task.taskID);
-                    taskerID = fullTaskData.taskerID;
-                } catch (err) {
-                    setSnackbar({ show: true, message: 'Error: Cannot reschedule - failed to load task information. Please refresh and try again.', type: 'error' });
-                    setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 4000);
-                    setAvailableTimeSlots([]);
-                    setLoadingTimeSlots(false);
-                    return;
-                }
-            }
-            if (!taskerID) {
-                setSnackbar({ show: true, message: 'Error: Cannot reschedule - tasker information missing. Please refresh and try again.', type: 'error' });
-                setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 4000);
-                setAvailableTimeSlots([]);
-                setLoadingTimeSlots(false);
-                return;
-            }
-            const role = userRole;
-            let currentTaskEstMinutes = null;
-            if (task.timeEstimated) {
-                currentTaskEstMinutes = Number(task.timeEstimated);
-            } else {
-                currentTaskEstMinutes = DEFAULT_ESTIMATION_MINUTES;
-            }
-            let busyTimes = [];
-            try {
-                busyTimes = await getTaskerBusyTime(taskerID, dateStr, role);
-                setRescheduleBusyTimes(busyTimes || []);
-            } catch (err) {
-                setRescheduleBusyTimes([]);
-                busyTimes = [];
-            }
-            const [year, month, day] = dateStr.split('-').map(Number);
-            const selectedDate = new Date(year, month - 1, day);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            selectedDate.setHours(0, 0, 0, 0);
-            const isToday = selectedDate.getTime() === today.getTime();
-            const available = timeSlots.filter((slot) => {
-                const [hours, minutes] = slot.split(":").map(Number);
-                const slotStartMinutes = hours * 60 + minutes;
-                const slotEndMinutes = slotStartMinutes + currentTaskEstMinutes;
-                if (isToday) {
-                    const [slotHours, slotMins] = slot.split(":").map(Number);
-                    const slotTime = new Date();
-                    slotTime.setHours(slotHours, slotMins, 0, 0);
-                    const now = new Date();
-                    if (slotTime <= now) {
-                        return false;
-                    }
-                }
-                if (slotEndMinutes > WORK_DAY_END_MINUTES) {
-                    return false;
-                }
-                const isBusy = isRescheduleTimeSlotBusy(slot, dateStr, busyTimes, task, currentTaskEstMinutes);
-                return !isBusy;
-            });
-            setAvailableTimeSlots(available);
-            if (task?.startDate) {
-                const currentTime = new Date(task.startDate);
-                const hours = String(currentTime.getHours()).padStart(2, '0');
-                const minutes = String(currentTime.getMinutes()).padStart(2, '0');
-                const timeSlot = `${hours}:${minutes}`;
-                if (available.includes(timeSlot)) {
-                    setSelectedTime(timeSlot);
-                } else {
-                    setSelectedTime('');
-                }
-            }
-        } catch (err) {
-            setSnackbar({ show: true, message: err?.message || 'Failed to load time slots', type: 'error' });
-            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 4000);
-            setAvailableTimeSlots([]);
-        } finally {
-            setLoadingTimeSlots(false);
-        }
-    };
-
     const handleDrop = async (e, day) => {
         e.preventDefault();
         if (!draggedTask) return;
 
-        // Create date in local timezone to avoid timezone issues
-        const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        newDate.setHours(0, 0, 0, 0);
+        const dropDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        dropDate.setHours(0, 0, 0, 0);
 
-        if (newDate < now) {
+        if (dropDate < today) {
             setSnackbar({
                 show: true,
-                message: 'Cannot reschedule to a past date. Please select a future date.',
+                message: 'Cannot schedule tasks in the past.',
                 type: 'error',
             });
+            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 3000);
             setDraggedTask(null);
-            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 5000);
             return;
         }
 
-        // Format date consistently - CRITICAL: Use the day parameter directly
-        const year = currentDate.getFullYear();
-        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-        const dayStr = String(day).padStart(2, '0');
-        const dateStr = `${year}-${month}-${dayStr}`;
-
-        console.log('📅 Drop detected:', {
-            day,
-            dateStr,
-            draggedTask: draggedTask.taskID,
-            taskerID: draggedTask.taskerID
-        });
-
-        setTargetDate(dateStr);
-        setTargetTask(draggedTask);
-        setDraggedTask(null);
-        
-        await loadAvailableTimeSlots(dateStr, draggedTask);
-        setShowTimeModal(true);
+        // Fetch task details to get estimation
+        try {
+            const taskDetails = await getTaskDetails(draggedTask.taskID);
+            setTaskEstimation(taskDetails.timeEstimated || 0);
+            
+            // Fetch busy times for the selected date
+            setLoadingBusyTimes(true);
+            const dateStr = `${dropDate.getFullYear()}-${String(dropDate.getMonth() + 1).padStart(2, '0')}-${String(dropDate.getDate()).padStart(2, '0')}`;
+            const busyTimeData = await getTaskerBusyTime(taskDetails.taskerID, dateStr, userRole);
+            setBusyTimes(busyTimeData || []);
+            
+            setSelectedDate(dropDate);
+            setSelectedTime('');
+            setShowTimeModal(true);
+        } catch (err) {
+            setSnackbar({
+                show: true,
+                message: `Failed to load scheduling data: ${err.message}`,
+                type: 'error',
+            });
+            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 3000);
+            setDraggedTask(null);
+        } finally {
+            setLoadingBusyTimes(false);
+        }
     };
 
-    // EXACT VALIDATION LOGIC FROM TASKDETAILSPAGE handleReschedule
-    const handleTimeSelection = async () => {
-        if (!selectedTime || !targetDate || !targetTask) return;
+    const handleTimeConfirm = async () => {
+        if (!draggedTask || !selectedDate || !selectedTime) return;
 
-        const [hours, minutes] = selectedTime.split(":").map(Number);
-        const [year, month, day] = targetDate.split("-").map(Number);
+        const [hours, minutes] = selectedTime.split(':').map(Number);
+        const [year, month, day] = [selectedDate.getFullYear(), selectedDate.getMonth() + 1, selectedDate.getDate()];
         
-        // Get estimation from targetTask (now included in getTasks response)
-        const currentTaskEstMinutes = targetTask.timeEstimated ? Number(targetTask.timeEstimated) : DEFAULT_ESTIMATION_MINUTES;
+        const currentTaskEstMinutes = taskEstimation ?? 0;
         const newStartMinutes = hours * 60 + minutes;
         const newEndMinutes = newStartMinutes + currentTaskEstMinutes;
 
-        console.log("Validating reschedule:", {
-            newTime: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
-            newStartMinutes,
-            newEndMinutes,
-            currentTaskEstMinutes,
-            workDayEnd: WORK_DAY_END_MINUTES
-        });
-
-        // 1. Check if task would extend beyond working hours
+        // Validate working hours
         if (newEndMinutes > WORK_DAY_END_MINUTES) {
             const endHour = Math.floor(newEndMinutes / 60);
             const endMin = newEndMinutes % 60;
             setSnackbar({
                 show: true,
-                message: `⏰ Cannot reschedule: This task would end at ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}, which is beyond working hours (08:00 - 20:30). Please choose an earlier time.`,
-                type: 'error'
+                message: `⏰ Cannot reschedule: This task would end at ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}, which is beyond working hours (08:00 - 20:30).`,
+                type: 'error',
             });
-            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 5000);
+            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 3000);
             return;
         }
 
-        // 2. Check for conflicts with busy times
-        for (const busyTime of rescheduleBusyTimes || []) {
-            if (busyTime.taskID === targetTask?.taskID) {
+        // Check for overlaps with busy times
+        for (const busyTime of busyTimes || []) {
+            if (busyTime.taskID === draggedTask?.taskID) {
                 continue;
             }
+
             try {
                 const busyStart = new Date(busyTime.startDate);
                 const busyYear = busyStart.getFullYear();
@@ -428,15 +351,18 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                 const busyDay = busyStart.getDate();
                 const busyHours = busyStart.getHours();
                 const busyMins = busyStart.getMinutes();
+
                 if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
                     continue;
                 }
+
                 const busyStartMinutes = busyHours * 60 + busyMins;
                 const busyEndMinutes = busyStartMinutes + busyTime.estimation;
-                // Allow multiple 0-duration tasks at the same time slot
+
                 if (currentTaskEstMinutes === 0 && busyTime.estimation === 0 && newStartMinutes === busyStartMinutes) {
                     continue;
                 }
+
                 const hasOverlap = (
                     (newStartMinutes >= busyStartMinutes && newStartMinutes < busyEndMinutes) ||
                     (newEndMinutes > busyStartMinutes && newEndMinutes <= busyEndMinutes) ||
@@ -444,16 +370,18 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                     (busyStartMinutes <= newStartMinutes && busyEndMinutes >= newEndMinutes) ||
                     (newStartMinutes < busyStartMinutes && newEndMinutes > busyStartMinutes)
                 );
+
                 if (hasOverlap) {
                     const busyTimeStr = `${String(busyHours).padStart(2, '0')}:${String(busyMins).padStart(2, '0')}`;
                     const busyDurationHours = (busyTime.estimation / 60).toFixed(1);
                     const taskEndTime = `${String(Math.floor(newEndMinutes/60)).padStart(2, '0')}:${String(newEndMinutes%60).padStart(2, '0')}`;
+                    
                     setSnackbar({
                         show: true,
-                        message: `⏰ Cannot reschedule: Your task (${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} - ${taskEndTime}, ${(currentTaskEstMinutes/60).toFixed(1)}h) would overlap with another scheduled period starting at ${busyTimeStr} (${busyDurationHours}h duration). Please choose a different time slot.`,
-                        type: 'error'
+                        message: `⏰ Cannot reschedule: Your task (${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} - ${taskEndTime}) would overlap with another scheduled period at ${busyTimeStr} (${busyDurationHours}h).`,
+                        type: 'error',
                     });
-                    setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 5000);
+                    setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 3000);
                     return;
                 }
             } catch (e) {
@@ -462,57 +390,50 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
             }
         }
 
-        // No conflicts, proceed
-        const newDateTime = `${targetDate}T${selectedTime}:00`;
-        setShowTimeModal(false);
-
-        const previousTasks = [...tasks];
-        const updatedTasks = tasks.map((t) => 
-            t.taskID === targetTask.taskID ? { ...t, startDate: newDateTime } : t
-        );
-        setTasks(updatedTasks);
+        // Proceed with reschedule
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const newDateTime = `${dateStr}T${selectedTime}:00`;
 
         try {
-            await rescheduleTask(targetTask.taskID, newDateTime);
-            setSnackbar({ show: true, message: '✅ Task rescheduled successfully!', type: 'success' });
+            await rescheduleTask(draggedTask.taskID, newDateTime);
+            setSnackbar({
+                show: true,
+                message: '✅ Task rescheduled successfully!',
+                type: 'success',
+            });
             setTimeout(() => setSnackbar({ show: false, message: '', type: 'success' }), 3000);
-            if (typeof onTasksUpdated === 'function') {
-                onTasksUpdated();
-            }
+            fetchTasks();
         } catch (err) {
-            setTasks(previousTasks);
-            
-            let errorMessage = 'Failed to reschedule task';
-            if (err?.response?.data) {
-                if (typeof err.response.data === 'string') errorMessage = err.response.data;
-                else if (err.response.data.message) errorMessage = err.response.data.message;
-                else if (err.response.data.error) errorMessage = err.response.data.error;
-            } else if (err?.message) {
-                errorMessage = err.message;
-            }
-
-            console.error('❌ Reschedule failed:', errorMessage);
-            setSnackbar({ show: true, message: errorMessage, type: 'error' });
-            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 5000);
+            setSnackbar({
+                show: true,
+                message: `Failed to reschedule: ${err.message}`,
+                type: 'error',
+            });
+            setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 3000);
         } finally {
+            setShowTimeModal(false);
+            setDraggedTask(null);
+            setSelectedDate(null);
             setSelectedTime('');
-            setTargetDate(null);
-            setTargetTask(null);
+            setBusyTimes([]);
+            setTaskEstimation(0);
         }
     };
 
     // ==================== NAVIGATION ====================
-    // Calendar navigation limits
     const today = new Date();
     const minMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const maxMonth = new Date(today.getFullYear(), today.getMonth() + 3, 1);
 
     const isPrevDisabled =
         currentDate.getFullYear() < minMonth.getFullYear() ||
-        (currentDate.getFullYear() === minMonth.getFullYear() && currentDate.getMonth() <= minMonth.getMonth());
+        (currentDate.getFullYear() === minMonth.getFullYear() &&
+            currentDate.getMonth() <= minMonth.getMonth());
+
     const isNextDisabled =
         currentDate.getFullYear() > maxMonth.getFullYear() ||
-        (currentDate.getFullYear() === maxMonth.getFullYear() && currentDate.getMonth() >= maxMonth.getMonth());
+        (currentDate.getFullYear() === maxMonth.getFullYear() &&
+            currentDate.getMonth() >= maxMonth.getMonth());
 
     const handlePreviousMonth = () => {
         if (!isPrevDisabled) {
@@ -526,231 +447,7 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
         }
     };
 
-    // ==================== RENDER HELPERS ====================
-    const tasksByDay = useMemo(() => {
-        const map = new Map();
-        tasks.forEach((task) => {
-            if (!task.startDate) return;
-            const date = new Date(task.startDate);
-            const day = date.getDate();
-            const taskMonth = date.getMonth();
-            const taskYear = date.getFullYear();
-            const currentMonth = currentDate.getMonth();
-            const currentYear = currentDate.getFullYear();
-
-            if (taskMonth === currentMonth && taskYear === currentYear) {
-                if (!map.has(day)) map.set(day, []);
-                map.get(day).push(task);
-            }
-        });
-        return map;
-    }, [tasks, currentDate]);
-
-    const renderSnackbar = () => {
-        if (!snackbar.show) return null;
-
-        const isError = snackbar.type === 'error';
-        const isSuccess = snackbar.type === 'success';
-        const backgroundColor = isError ? '#991b1b' : (isSuccess ? '#166534' : '#991b1b');
-        const textColor = '#ffffff';
-
-        return (
-            <div
-                style={{
-                    position: 'fixed',
-                    bottom: '20px',
-                    right: '20px',
-                    backgroundColor,
-                    color: textColor,
-                    padding: '16px 20px',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    zIndex: 9999,
-                    animation: 'slideIn 0.3s ease-out',
-                    border: `1px solid ${isError ? '#FECACA' : '#A7F3D0'}`,
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    maxWidth: '500px',
-                }}
-            >
-                <span style={{ fontSize: '18px' }}>{isError ? '❌' : '✅'}</span>
-                <span style={{ flex: 1 }}>{snackbar.message}</span>
-                <button
-                    onClick={() => setSnackbar({ show: false, message: '', type: 'error' })}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'inherit',
-                        cursor: 'pointer',
-                        fontSize: '18px',
-                        padding: '0',
-                    }}
-                >
-                    ×
-                </button>
-            </div>
-        );
-    };
-
-    const renderTimeModal = () => {
-        if (!showTimeModal) return null;
-
-        return (
-            <div
-                style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000,
-                }}
-            >
-                <div
-                    style={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '12px',
-                        padding: '32px',
-                        maxWidth: '500px',
-                        width: '90%',
-                        maxHeight: '80vh',
-                        overflow: 'auto',
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-                    }}
-                >
-                    <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827', marginBottom: '6px' }}>
-                        Select Time
-                    </h2>
-                    <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '16px', fontWeight: '500' }}>
-                        {targetDate &&
-                            (() => {
-                                const [year, month, day] = targetDate.split('-').map(Number);
-                                const dateObj = new Date(year, month - 1, day);
-                                return `Rescheduling to ${dateObj.toLocaleDateString('en-US', {
-                                    weekday: 'long',
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                })}`;
-                            })()}
-                    </p>
-
-                    {loadingTimeSlots ? (
-                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                            <Loader style={{ animation: 'spin 1s linear infinite', margin: '0 auto' }} />
-                            <p style={{ marginTop: '16px', color: '#6b7280' }}>Loading available time slots...</p>
-                        </div>
-                    ) : availableTimeSlots.length === 0 ? (
-                        <div style={{ padding: '24px', backgroundColor: '#fef2f2', borderRadius: '8px', marginBottom: '24px', textAlign: 'center' }}>
-                            <p style={{ color: '#991b1b', fontWeight: '600' }}>No available time slots for this date.</p>
-                            <p style={{ color: '#991b1b', fontSize: '14px', marginTop: '8px' }}>
-                                The tasker is fully booked or there isn't enough time before end of day (20:30). Please choose a different date.
-                            </p>
-                        </div>
-                    ) : (
-                        <div style={{ marginBottom: '24px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                <span style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>
-                                    Available Time Slots ({availableTimeSlots.length} slots)
-                                </span>
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', maxHeight: '340px', overflowY: 'auto', padding: '8px' }}>
-                                {availableTimeSlots.map((slot) => (
-                                    <button
-                                        key={slot}
-                                        onClick={() => setSelectedTime(slot)}
-                                        style={{
-                                            padding: '10px 12px',
-                                            backgroundColor: selectedTime === slot ? '#c6ff4d' : '#ffffff',
-                                            border: selectedTime === slot ? '2px solid #a7df2d' : '1px solid #e5e7eb',
-                                            borderRadius: '8px',
-                                            fontSize: '14px',
-                                            fontWeight: selectedTime === slot ? '700' : '500',
-                                            color: '#111827',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s ease',
-                                            textAlign: 'center',
-                                        }}
-                                        onMouseOver={(e) => {
-                                            if (selectedTime !== slot) {
-                                                e.target.style.backgroundColor = '#f3f4f6';
-                                                e.target.style.borderColor = '#d1d5db';
-                                            }
-                                        }}
-                                        onMouseOut={(e) => {
-                                            if (selectedTime !== slot) {
-                                                e.target.style.backgroundColor = '#ffffff';
-                                                e.target.style.borderColor = '#e5e7eb';
-                                            }
-                                        }}
-                                    >
-                                        {slot}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                        <button
-                            onClick={() => {
-                                setShowTimeModal(false);
-                                setSelectedTime('');
-                                setTargetDate(null);
-                                setTargetTask(null);
-                            }}
-                            style={{
-                                padding: '10px 20px',
-                                backgroundColor: '#ffffff',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                color: '#374151',
-                                transition: 'all 0.2s ease',
-                            }}
-                            onMouseOver={(e) => (e.target.style.backgroundColor = '#f9fafb')}
-                            onMouseOut={(e) => (e.target.style.backgroundColor = '#ffffff')}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleTimeSelection}
-                            disabled={!selectedTime || loadingTimeSlots}
-                            style={{
-                                padding: '10px 20px',
-                                backgroundColor: selectedTime && !loadingTimeSlots ? '#c6ff4d' : '#e5e7eb',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: selectedTime && !loadingTimeSlots ? 'pointer' : 'not-allowed',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                color: '#111827',
-                                transition: 'all 0.2s ease',
-                            }}
-                            onMouseOver={(e) => {
-                                if (selectedTime && !loadingTimeSlots) e.target.style.backgroundColor = '#a7df2d';
-                            }}
-                            onMouseOut={(e) => {
-                                if (selectedTime && !loadingTimeSlots) e.target.style.backgroundColor = '#c6ff4d';
-                            }}
-                        >
-                            Confirm Reschedule
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
+    // ==================== RENDER CALENDAR ====================
     const renderCalendar = () => {
         const { days: totalDays, firstDay } = getDaysInMonth(currentDate);
         const days = [];
@@ -844,7 +541,7 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
                         {dayTasks.slice(0, 2).map((task) => {
-                                                        const config = statusConfig[task.status] || statusConfig.InReview;
+                            const config = statusConfig[task.status] || statusConfig.InReview;
                             const taskTime = task.startDate
                                 ? new Date(task.startDate).toLocaleTimeString('en-US', {
                                       hour: '2-digit',
@@ -852,8 +549,8 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                                       hour12: false,
                                   })
                                 : 'N/A';
-                                                        const estMinutes = task.timeEstimated;
-                                                        const estLabel = formatEstimation(estMinutes);
+                            const estMinutes = task.timeEstimated;
+                            const estLabel = formatEstimation(estMinutes);
 
                             return (
                                 <div
@@ -865,7 +562,11 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                                         e.stopPropagation();
                                         navigate(`/tasks/${task.taskID}`);
                                     }}
-                                    title={`Time: ${taskTime}\n${estLabel ? `Estimation: ${estLabel}\n` : ''}Status: ${task.status}\nService: ${task.serviceName}\nCustomer: ${task.userName || 'N/A'}\nTasker: ${task.taskerName || 'N/A'}`}
+                                    title={`Time: ${taskTime}\n${estLabel ? `Estimation: ${estLabel}\n` : ''}Status: ${
+                                        task.status
+                                    }\nService: ${task.serviceName}\nCustomer: ${task.userName || 'N/A'}\nTasker: ${
+                                        task.taskerName || 'N/A'
+                                    }`}
                                     style={{
                                         backgroundColor: config.bg,
                                         color: config.text,
@@ -876,18 +577,34 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',
-                                        cursor: isStatusDraggable(task.status) ? 'move' : 'not-allowed',
+                                        cursor: isStatusDraggable(task.status) ? 'move' : 'pointer',
                                         transition: 'opacity 0.2s ease',
                                     }}
                                 >
-                                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            gap: '6px',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                        }}
+                                    >
                                         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {task.serviceName || config.display}
                                         </span>
                                         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '9px', opacity: 0.8, whiteSpace: 'nowrap' }}>{taskTime}</span>
+                                            <span style={{ fontSize: '9px', opacity: 0.8, whiteSpace: 'nowrap' }}>
+                                                {taskTime}
+                                            </span>
                                             {estLabel && (
-                                                <span style={{ fontSize: '9px', opacity: 0.8, whiteSpace: 'nowrap', color: '#374151' }}>
+                                                <span
+                                                    style={{
+                                                        fontSize: '9px',
+                                                        opacity: 0.8,
+                                                        whiteSpace: 'nowrap',
+                                                        color: '#374151',
+                                                    }}
+                                                >
                                                     • {estLabel}
                                                 </span>
                                             )}
@@ -933,8 +650,189 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
         );
     };
 
+    // ==================== RENDER SNACKBAR ====================
+    const renderSnackbar = () => {
+        if (!snackbar.show) return null;
+
+        return (
+            <div
+                style={{
+                    position: 'fixed',
+                    bottom: '24px',
+                    right: '24px',
+                    backgroundColor: snackbar.type === 'error' ? '#991B1B' : '#065F46',
+                    color: '#ffffff',
+                    padding: '16px 24px',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+                    zIndex: 1000,
+                    maxWidth: '500px',
+                    animation: 'slideIn 0.3s ease-out',
+                }}
+            >
+                {snackbar.message}
+            </div>
+        );
+    };
+
+    // ==================== RENDER TIME MODAL ====================
+    const renderTimeModal = () => {
+        if (!showTimeModal) return null;
+
+        return (
+            <div
+                style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                }}
+                onClick={() => {
+                    setShowTimeModal(false);
+                    setDraggedTask(null);
+                    setBusyTimes([]);
+                    setTaskEstimation(0);
+                }}
+            >
+                <div
+                    style={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        maxWidth: '450px',
+                        width: '90%',
+                        maxHeight: '80vh',
+                        overflowY: 'auto',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <h2 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: '700' }}>
+                        Select Time for Reschedule
+                    </h2>
+                    <p style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px' }}>
+                        Choose a time for: {selectedDate?.toLocaleDateString()}
+                    </p>
+                    
+                    {draggedTask && (
+                        <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+                            <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '4px' }}>
+                                Task Details:
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#111827' }}>
+                                {draggedTask.serviceName}
+                            </div>
+                            {taskEstimation > 0 && (
+                                <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                                    Estimation: {formatEstimation(taskEstimation)}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {loadingBusyTimes ? (
+                        <div style={{ textAlign: 'center', padding: '24px' }}>
+                            <Loader style={{ width: '32px', height: '32px', color: '#a7df2d', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
+                            <p style={{ marginTop: '12px', color: '#666' }}>Loading available times...</p>
+                        </div>
+                    ) : (
+                        <>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px' }}>
+                                New Time*:
+                            </label>
+                            <select
+                                value={selectedTime}
+                                onChange={(e) => setSelectedTime(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '8px',
+                                    fontSize: '16px',
+                                    marginBottom: '16px',
+                                    backgroundColor: '#ffffff',
+                                }}
+                            >
+                                <option value="">
+                                    {availableTimeSlots.length === 0 ? 'No available times' : 'Select time'}
+                                </option>
+                                {availableTimeSlots.map((slot) => (
+                                    <option key={slot} value={slot}>
+                                        {slot}
+                                    </option>
+                                ))}
+                            </select>
+
+                            {selectedDate && availableTimeSlots.length === 0 && (
+                                <p style={{ marginBottom: '16px', color: '#dc2626', fontSize: '14px' }}>
+                                    No available time slots on this day. All slots are either in the past or conflict with existing schedules.
+                                </p>
+                            )}
+
+                            {availableTimeSlots.length > 0 && (
+                                <p style={{ marginBottom: '16px', color: '#6b7280', fontSize: '12px' }}>
+                                    Available time slots are shown. Busy slots and times that would extend beyond working hours (20:30) are filtered out.
+                                </p>
+                            )}
+                        </>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button
+                            onClick={() => {
+                                setShowTimeModal(false);
+                                setDraggedTask(null);
+                                setBusyTimes([]);
+                                setTaskEstimation(0);
+                            }}
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: '#f3f4f6',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                fontSize: '14px',
+                            }}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleTimeConfirm}
+                            disabled={!selectedTime || loadingBusyTimes}
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: !selectedTime || loadingBusyTimes ? '#e5e7eb' : '#c6ff4d',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: !selectedTime || loadingBusyTimes ? 'not-allowed' : 'pointer',
+                                fontWeight: '600',
+                                fontSize: '14px',
+                                opacity: !selectedTime || loadingBusyTimes ? 0.5 : 1,
+                            }}
+                        >
+                            Confirm Reschedule
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // ==================== EFFECTS ====================
+    useEffect(() => {
+        fetchTasks();
+        // eslint-disable-next-line
+    }, [currentDate, filteredStatus, userRole]);
+
     // Add CSS animation
-    React.useEffect(() => {
+    useEffect(() => {
         const style = document.createElement('style');
         style.textContent = `
             @keyframes slideIn {
@@ -976,8 +874,12 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                 }}
             >
                 <div style={{ textAlign: 'center' }}>
-                    <Loader style={{ width: '48px', height: '48px', color: '#a7df2d', animation: 'spin 1s linear infinite' }} />
-                    <p style={{ marginTop: '24px', fontSize: '18px', fontWeight: '600', color: '#4b5563' }}>Loading your tasks...</p>
+                    <Loader
+                        style={{ width: '48px', height: '48px', color: '#a7df2d', animation: 'spin 1s linear infinite' }}
+                    />
+                    <p style={{ marginTop: '24px', fontSize: '18px', fontWeight: '600', color: '#4b5563' }}>
+                        Loading your tasks...
+                    </p>
                 </div>
             </div>
         );
@@ -1009,7 +911,9 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                     }}
                 >
                     <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
-                    <div style={{ fontSize: '24px', fontWeight: '700', color: '#991B1B', marginBottom: '12px' }}>Error Loading Tasks</div>
+                    <div style={{ fontSize: '24px', fontWeight: '700', color: '#991B1B', marginBottom: '12px' }}>
+                        Error Loading Tasks
+                    </div>
                     <p style={{ color: '#4b5563', marginBottom: '24px' }}>{error}</p>
                     <button
                         onClick={fetchTasks}
@@ -1069,100 +973,56 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                                 margin: 0,
                             }}
                         >
-                            {viewMode === 'calendar'
-                                ? `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`
-                                : 'Task List'}
+                            {`${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`}
                         </h1>
 
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             <button
-                                onClick={() => setViewMode('calendar')}
+                                onClick={handlePreviousMonth}
                                 style={{
-                                    padding: '8px 16px',
-                                    backgroundColor: viewMode === 'calendar' ? '#c6ff4d' : '#f3f4f6',
-                                    color: '#111827',
-                                    border: '1px solid #a7df2d',
+                                    padding: '8px 12px',
+                                    backgroundColor: isPrevDisabled ? '#e5e7eb' : '#f3f4f6',
+                                    border: '1px solid #e5e7eb',
                                     borderRadius: '8px',
-                                    cursor: viewMode === 'calendar' ? 'default' : 'pointer',
-                                    fontWeight: '600',
-                                    fontSize: '14px',
-                                    transition: 'all 0.2s ease, transform 0.2s cubic-bezier(.4,2,.6,1)',
-                                    marginRight: '4px',
-                                    opacity: viewMode === 'calendar' ? 1 : 0.7,
-                                    boxShadow: viewMode === 'calendar' ? '0 4px 16px 0 #a7df2d55' : 'none',
-                                    transform: viewMode === 'calendar' ? 'scale(1.12)' : 'scale(1)',
+                                    cursor: isPrevDisabled ? 'not-allowed' : 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    transition: 'all 0.2s ease',
+                                    opacity: isPrevDisabled ? 0.5 : 1,
                                 }}
-                                disabled={viewMode === 'calendar'}
-                                onMouseOver={e => { if (viewMode !== 'calendar') e.target.style.backgroundColor = '#a7df2d'; }}
-                                onMouseOut={e => { if (viewMode !== 'calendar') e.target.style.backgroundColor = '#f3f4f6'; }}
+                                onMouseOver={(e) => {
+                                    if (!isPrevDisabled) e.target.style.backgroundColor = '#e5e7eb';
+                                }}
+                                onMouseOut={(e) => {
+                                    if (!isPrevDisabled) e.target.style.backgroundColor = '#f3f4f6';
+                                }}
+                                disabled={isPrevDisabled}
                             >
-                                Calendar View
+                                <ChevronLeft style={{ width: '20px', height: '20px' }} />
                             </button>
                             <button
-                                onClick={() => setViewMode('list')}
+                                onClick={handleNextMonth}
                                 style={{
-                                    padding: '8px 16px',
-                                    backgroundColor: viewMode === 'list' ? '#c6ff4d' : '#f3f4f6',
-                                    color: '#111827',
-                                    border: '1px solid #a7df2d',
+                                    padding: '8px 12px',
+                                    backgroundColor: isNextDisabled ? '#e5e7eb' : '#f3f4f6',
+                                    border: '1px solid #e5e7eb',
                                     borderRadius: '8px',
-                                    cursor: viewMode === 'list' ? 'default' : 'pointer',
-                                    fontWeight: '600',
-                                    fontSize: '14px',
-                                    transition: 'all 0.2s ease, transform 0.2s cubic-bezier(.4,2,.6,1)',
-                                    marginRight: '16px',
-                                    opacity: viewMode === 'list' ? 1 : 0.7,
-                                    boxShadow: viewMode === 'list' ? '0 4px 16px 0 #a7df2d55' : 'none',
-                                    transform: viewMode === 'list' ? 'scale(1.12)' : 'scale(1)',
+                                    cursor: isNextDisabled ? 'not-allowed' : 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    transition: 'all 0.2s ease',
+                                    opacity: isNextDisabled ? 0.5 : 1,
                                 }}
-                                disabled={viewMode === 'list'}
-                                onMouseOver={e => { if (viewMode !== 'list') e.target.style.backgroundColor = '#a7df2d'; }}
-                                onMouseOut={e => { if (viewMode !== 'list') e.target.style.backgroundColor = '#f3f4f6'; }}
+                                onMouseOver={(e) => {
+                                    if (!isNextDisabled) e.target.style.backgroundColor = '#e5e7eb';
+                                }}
+                                onMouseOut={(e) => {
+                                    if (!isNextDisabled) e.target.style.backgroundColor = '#f3f4f6';
+                                }}
+                                disabled={isNextDisabled}
                             >
-                                List View
+                                <ChevronRight style={{ width: '20px', height: '20px' }} />
                             </button>
-                            {viewMode === 'calendar' && (
-                                <>
-                                    <button
-                                        onClick={handlePreviousMonth}
-                                        style={{
-                                            padding: '8px 12px',
-                                            backgroundColor: isPrevDisabled ? '#e5e7eb' : '#f3f4f6',
-                                            border: '1px solid #e5e7eb',
-                                            borderRadius: '8px',
-                                            cursor: isPrevDisabled ? 'not-allowed' : 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            transition: 'all 0.2s ease',
-                                            opacity: isPrevDisabled ? 0.5 : 1,
-                                        }}
-                                        onMouseOver={e => { if (!isPrevDisabled) e.target.style.backgroundColor = '#e5e7eb'; }}
-                                        onMouseOut={e => { if (!isPrevDisabled) e.target.style.backgroundColor = '#f3f4f6'; }}
-                                        disabled={isPrevDisabled}
-                                    >
-                                        <ChevronLeft style={{ width: '20px', height: '20px' }} />
-                                    </button>
-                                    <button
-                                        onClick={handleNextMonth}
-                                        style={{
-                                            padding: '8px 12px',
-                                            backgroundColor: isNextDisabled ? '#e5e7eb' : '#f3f4f6',
-                                            border: '1px solid #e5e7eb',
-                                            borderRadius: '8px',
-                                            cursor: isNextDisabled ? 'not-allowed' : 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            transition: 'all 0.2s ease',
-                                            opacity: isNextDisabled ? 0.5 : 1,
-                                        }}
-                                        onMouseOver={e => { if (!isNextDisabled) e.target.style.backgroundColor = '#e5e7eb'; }}
-                                        onMouseOut={e => { if (!isNextDisabled) e.target.style.backgroundColor = '#f3f4f6'; }}
-                                        disabled={isNextDisabled}
-                                    >
-                                        <ChevronRight style={{ width: '20px', height: '20px' }} />
-                                    </button>
-                                </>
-                            )}
                         </div>
                     </div>
 
@@ -1200,28 +1060,15 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                         overflow: 'hidden',
                         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                         minHeight: '300px',
-                        padding: viewMode === 'list' ? '24px' : undefined,
                     }}
                 >
-                    {viewMode === 'calendar' ? (
-                        renderCalendar()
-                    ) : (
-                        tasks.length === 0 ? (
-                            <div style={{ textAlign: 'center', color: '#888', fontSize: '18px', padding: '40px 0' }}>No tasks found.</div>
-                        ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                {tasks.map((task) => (
-                                    <TaskCard key={task.taskId || task.taskID} task={task} viewType={userRole === 'ROLE_TASKER' ? 'tasker' : 'user'} />
-                                ))}
-                            </div>
-                        )
-                    )}
+                    {renderCalendar()}
                 </div>
             </div>
             {renderSnackbar()}
             {renderTimeModal()}
         </div>
     );
-};
+}
 
 export default TaskCalendar;
