@@ -107,4 +107,42 @@ public class EmailServiceImpl implements EmailService {
                         .build()
         );
     }
+    @Async("taskExecutor")
+    @Override
+    public CompletableFuture<TaskResponse> sendDirectEmail(String to, String subject, String body) {
+        try {
+            SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
+            simpleMailMessage.setSubject(subject);
+            simpleMailMessage.setText(body);
+            simpleMailMessage.setTo(to);
+            simpleMailMessage.setFrom(fromEmail);
+            javaMailSender.send(simpleMailMessage);
+
+            log.info("Direct email sent successfully to: {}", to);
+
+            return CompletableFuture.completedFuture(
+                    TaskResponse.builder()
+                            .success(true)
+                            .message("Email sent successfully")
+                            .build()
+            );
+
+        } catch (MailException e) {
+            log.error("Failed to send direct email to: {}, Error: {}", to, e.getMessage(), e);
+            return CompletableFuture.completedFuture(
+                    TaskResponse.builder()
+                            .success(false)
+                            .message("Failed to send email: " + e.getMessage())
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("Unexpected error sending direct email to: {}, Error: {}", to, e.getMessage(), e);
+            return CompletableFuture.completedFuture(
+                    TaskResponse.builder()
+                            .success(false)
+                            .message("An unexpected error occurred")
+                            .build()
+            );
+        }
+    }
 }

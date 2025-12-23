@@ -1,8 +1,12 @@
 package com.homemate.taskmanagement.dao;
 
+import com.homemate.TaskerProfile.models.TaskerAvailability;
 import com.homemate.taskmanagement.dto.TaskDto;
+import com.homemate.taskmanagement.dto.TaskTimeDto;
 import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
 import com.homemate.taskmanagement.exceptions.DuplicateChatException;
+import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
+import com.homemate.taskmanagement.mappers.TaskerBusyTimeMapper;
 import com.homemate.taskmanagement.model.TaskEntity;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
@@ -15,6 +19,12 @@ import org.springframework.stereotype.Component;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -24,7 +34,7 @@ public class TaskRequestDao {
 
     private final JdbcTemplate jdbcTemplate;
     private final TaskRowMapper taskRowMapper;
-
+    private final TaskerBusyTimeMapper taskerBusyTimeMapper;
 
     public Optional<Long> insertTask(TaskEntity task) {
         String sql = "INSERT INTO Task (userID, taskerID, serviceID, addressId, startDate, description, chatID)" +
@@ -142,4 +152,72 @@ public class TaskRequestDao {
         Long count = jdbcTemplate.queryForObject(sql,Long.class,userID);
         return count !=null && count >= limit;
     }
+
+    public List<TaskTimeDto> getBusytime(Long taskerId, LocalDate day) {
+        LocalDateTime startOfDay = day.atStartOfDay();
+        LocalDateTime endOfDay = day.plusDays(1).atStartOfDay();
+        String sql = "SELECT  taskID ,startDate , estimation FROM Task" +
+                " WHERE taskerID = ? AND startDate >= ? AND startDate < ? " +
+                "AND status NOT IN ('Rejected', 'Done')";
+        return jdbcTemplate.query(sql, taskerBusyTimeMapper,
+                taskerId,
+                Timestamp.valueOf(startOfDay),
+                Timestamp.valueOf(endOfDay));
+    }
+
+    public void addEstimation(Long taskId, int estimation) {
+        String sql = "UPDATE Task " +
+                "SET estimation = ? " +
+                "WHERE taskID = ?";
+        int rowsAffected = jdbcTemplate.update(sql,estimation,taskId);
+        if (rowsAffected == 0) {
+            throw new TaskNotFoundException("Task not found with ID: " + taskId);
+        }
+    }
+
+    public TaskerAvailability CheckAvailability(Long taskerId) {
+        String sql = "SELECT availability FROM Tasker WHERE taskerID = ?";
+        String availabilityStr = jdbcTemplate.queryForObject(sql, String.class, taskerId);
+
+        if (availabilityStr == null) {
+            return TaskerAvailability.UNAVAILABLE;
+        }
+        return TaskerAvailability.valueOf(availabilityStr.toUpperCase());
+    }
+    public int getEstimation(Long taskId) {
+        String sql = "SELECT estimation FROM Task WHERE taskID = ?";
+        try {
+            Integer estimation = jdbcTemplate.queryForObject(sql, Integer.class, taskId);
+            return estimation != null ? estimation : 0;
+        } catch (EmptyResultDataAccessException e) {
+            return 0;
+        }
+    }
+    //CREATE TABLE Task (
+    //    taskID INT AUTO_INCREMENT PRIMARY KEY,
+    //    startDate TIMESTAMP NOT NULL,
+    //    workedHours FLOAT DEFAULT 0,
+    //    userID INT NOT NULL,
+    //    taskerID INT NOT NULL,
+    //    serviceID INT NOT NULL,
+    //    endDate TIMESTAMP NULL,
+    //    chatID INT,
+    //    bill FLOAT DEFAULT 0,
+    //    status ENUM('InReview','Accepted','InProgress','Suspended','Done','Rejected') DEFAULT 'InReview' NOT NULL,
+    //    startInProgress TIMESTAMP NULL,
+    //    addressID INT NOT NULL,
+    //    description VARCHAR(500),
+    //    FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE RESTRICT ON UPDATE CASCADE,
+    //    FOREIGN KEY (taskerID) REFERENCES Tasker(taskerID) ON DELETE RESTRICT ON UPDATE CASCADE,
+    //    FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE,
+    //    FOREIGN KEY (chatID) REFERENCES Chat(chatID) ON DELETE SET NULL ON UPDATE CASCADE,
+    //    FOREIGN KEY (addressID) REFERENCES Address(addressID) ON DELETE RESTRICT ON UPDATE CASCADE,
+    //    INDEX idx_task_user (userID),
+    //    INDEX idx_task_tasker (taskerID),
+    //    INDEX idx_task_service (serviceID),
+    //    INDEX idx_task_status (status),
+    //    INDEX idx_task_start_date (startDate),
+    //    INDEX idx_task_finish_date (endDate),
+    //    INDEX idx_task_chat (chatID)
+    //);
 }

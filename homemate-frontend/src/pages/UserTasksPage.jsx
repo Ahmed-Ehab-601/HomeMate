@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchUserTasks } from "../api/tasksApi";
 import TaskCard from "../components/TaskCard";
+import TaskCalendar from "../components/TaskCalendar";
 
 const STATUS_OPTIONS = [
   { value: "All", label: "All" },
@@ -29,10 +30,19 @@ function UserTasksPage() {
   const [selectedStatus, setSelectedStatus] = useState(initialStatus);
   const [loading, setLoading] = useState(true); // Start with loading true for initial fetch
   const [error, setError] = useState(null);
+  const [viewMode, setViewMode] = useState(() => {
+    // Load view mode from localStorage, default to 'list'
+    return localStorage.getItem('taskViewMode') || 'list';
+  });
 
   // TODO: Replace with actual user ID from authentication
   const userId = 1;
   const isFirstLoad = tasks.length === 0 && !loading;
+
+  // Save viewMode to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('taskViewMode', viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     loadTasks();
@@ -132,54 +142,87 @@ function UserTasksPage() {
 
   return (
     <main className="page">
-      {error && (
-        <div className="error-banner-fixed">
-          <span className="error-banner__icon">⚠️</span>
-          <div className="error-banner__content">
-            <p className="error-banner__message">{error}</p>
-            <div className="error-banner__actions">
+      {viewMode === "calendar" ? (
+        <TaskCalendar
+          onBackToList={() => {
+            // Return to list and refresh tasks so reschedules appear without full reload
+            setViewMode("list");
+            loadTasks();
+          }}
+          onTasksUpdated={loadTasks}
+          userRole="ROLE_USER"
+        />
+      ) : (
+        <>
+          {error && (
+            <div className="error-banner-fixed">
+              <span className="error-banner__icon">⚠️</span>
+              <div className="error-banner__content">
+                <p className="error-banner__message">{error}</p>
+                <div className="error-banner__actions">
+                  <button
+                    type="button"
+                    className="error-banner__retry"
+                    onClick={handleRetry}
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
               <button
                 type="button"
-                className="error-banner__retry"
-                onClick={handleRetry}
+                className="error-banner__close"
+                onClick={handleDismissError}
+                aria-label="Dismiss error"
               >
-                Retry
+                ×
               </button>
             </div>
-          </div>
-          <button
-            type="button"
-            className="error-banner__close"
-            onClick={handleDismissError}
-            aria-label="Dismiss error"
-          >
-            ×
-          </button>
-        </div>
-      )}
+          )}
 
-      <section>
-        <div className="filter-section">
-          <div>
-            <p className="section-kicker">Task Management</p>
-            <h1 className="section-heading">My Tasks</h1>
-          </div>
-          <div className="filter-dropdown">
-            <label htmlFor="status-filter">Filter by Status:</label>
-            <select
-              id="status-filter"
-              value={selectedStatus}
-              onChange={handleStatusChange}
-              disabled={loading}
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+          <section>
+            <div className="filter-section">
+              <div>
+                <p className="section-kicker">Task Management</p>
+                <h1 className="section-heading">My Tasks</h1>
+              </div>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <div className="filter-dropdown">
+                  <label htmlFor="status-filter">Filter by Status:</label>
+                  <select
+                    id="status-filter"
+                    value={selectedStatus}
+                    onChange={handleStatusChange}
+                    disabled={loading}
+                  >
+                    {STATUS_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setViewMode("calendar")}
+                  style={{
+                    padding: '8px 20px',
+                    backgroundColor: '#c6ff4d',
+                    color: '#111827',
+                    border: '1px solid #a7df2d',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#a7df2d'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#c6ff4d'}
+                >
+                  📅 Calendar View
+                </button>
+              </div>
+            </div>
 
         {loading && <div className="load-indicator">Loading tasks…</div>}
 
@@ -246,8 +289,10 @@ function UserTasksPage() {
           </>
         )}
       </section>
-    </main>
-  );
+    </>
+  )}
+</main>
+);
 }
 
 export default UserTasksPage;

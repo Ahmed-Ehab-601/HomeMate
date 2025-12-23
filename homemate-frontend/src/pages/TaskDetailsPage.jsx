@@ -7,6 +7,9 @@ import {
   startTask,
   suspendTask,
   completeTask,
+  getTaskerBusyTime,
+  addTaskEstimation,
+  getTaskEstimation,
 } from "../api/taskManagementApi";
 import { acceptTask, rejectTask } from "../api/taskActionsApi";
 import { getTaskReview } from "../api/taskManagementApi";
@@ -88,6 +91,7 @@ function TaskDetailsPage() {
 
   // Modal states
   const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [showEstimationModal, setShowEstimationModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [showStartModal, setShowStartModal] = useState(false);
@@ -96,12 +100,21 @@ function TaskDetailsPage() {
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showDeleteReviewModal, setShowDeleteReviewModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [estimation, setEstimation] = useState("");
+  const [estimationError, setEstimationError] = useState("");
 
   const [newStartDate, setNewStartDate] = useState("");
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
+  const [rescheduleBusyTimes, setRescheduleBusyTimes] = useState({});
+  const [loadingRescheduleBusyTime, setLoadingRescheduleBusyTime] = useState(false);
+  const [taskEstimation, setTaskEstimation] = useState(null);
 
   const userRole = getUserRole();
   const isTasker = userRole === "ROLE_TASKER";
-
+const WORK_DAY_START_MINUTES = 8 * 60; // 08:00 = 480 minutes
+const WORK_DAY_END_MINUTES = 24 * 60 + 30; // 20:30 = 1230 minutes
+  
   // Check for review submitted or request submitted success message
   useEffect(() => {
     if (location.state?.reviewSubmitted) {
@@ -194,78 +207,235 @@ function TaskDetailsPage() {
   }, [taskId, getToken, task?.status, task?.startDate]);
 
   const loadTaskDetails = async () => {
-    setLoading(true);
-    setError(null);
+  setLoading(true);
+  setError(null);
+
+  try {
+    const taskData = await getTaskDetails(taskId);
+    console.log("Task data loaded:", taskData);
+    setTask(taskData);
+
+    // Load review if task is done
+    if (taskData.status === "Done") {
+      try {
+        const reviewData = await getTaskReview(taskId);
+        setReview(reviewData);
+      } catch (err) {
+        console.log("No review found:", err);
+      }
+    }
+
+    // Load tasker profile if user is viewing
+    if (!isTasker && taskData.taskerID) {
+      try {
+        console.log("Loading tasker with ID:", taskData.taskerID);
+        const taskerData = await getTaskerById(taskData.taskerID);
+        console.log("Tasker data received:", taskerData);
+
+        if (!taskData.hourRate && !taskData.rate && taskerData.hourRate) {
+          taskData.hourRate = taskerData.hourRate;
+          setTask({ ...taskData });
+        }
+
+        setTasker({
+          id: taskerData.taskerId,
+          name: `${taskerData.firstName} ${taskerData.lastName}`,
+          photo: normalizeImage(taskerData.imageBase64),
+          rating: taskerData.rating,
+          location: taskerData.addressCity,
+          availability: taskerData.availability,
+          hourRate: taskerData.hourRate,
+        });
+      } catch (err) {
+        console.error("Failed to load tasker:", err);
+      }
+    }
+
+    if (isTasker && taskData.taskerID) {
+      try {
+        const taskerData = await getTaskerById(taskData.taskerID);
+        console.log("Tasker viewing own task, data:", taskerData);
+
+        if (!taskData.hourRate && !taskData.rate && taskerData.hourRate) {
+          taskData.hourRate = taskerData.hourRate;
+          setTask({ ...taskData });
+        }
+      } catch (err) {
+        console.error("Failed to load tasker data for hourRate:", err);
+      }
+    }
+  } catch (err) {
+    setError(err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // Generate time slots
+  const timeSlots = Array.from({ length: 25 }, (_, index) => {
+    const minutes = index * 30;
+    const hours = 8 + Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 20 || (hours === 20 && mins > 0)) {
+      return null;
+    }
+    return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+  }).filter(Boolean);
+
+  // Fetch busy time when reschedule date is selected
+ useEffect(() => {
+  if (!rescheduleDate || !task?.taskerID || !showRescheduleModal) {
+    setRescheduleBusyTimes([]);
+    setRescheduleTime("");
+    return;
+  }
+
+  setRescheduleTime("");
+  setLoadingRescheduleBusyTime(true);
+
+  const fetchBusyTimeAndEstimation = async () => {
+    try {
+      // Fetch busy times - now returns List<TaskTimeDto>
+      const busyTimeData = await getTaskerBusyTime(task.taskerID, rescheduleDate, userRole);
+      setRescheduleBusyTimes(busyTimeData || []);
+      console.log("Busy times loaded for date:", rescheduleDate, busyTimeData);
+
+      // Fetch task estimation separately (only if not already loaded)
+      if (!taskEstimation && task.taskID) {
+        try {
+          const estimationMinutes = await getTaskEstimation(task.taskID, userRole);
+          setTaskEstimation(estimationMinutes);
+          console.log("Task estimation loaded:", estimationMinutes, "minutes");
+        } catch (err) {
+          console.error("Failed to load estimation:", err);
+          setTaskEstimation(60); // Default to 60 minutes if fails
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch busy time:", error);
+      setRescheduleBusyTimes([]);
+    } finally {
+      setLoadingRescheduleBusyTime(false);
+    }
+  };
+
+  fetchBusyTimeAndEstimation();
+}, [rescheduleDate, task?.taskerID, task?.taskID, showRescheduleModal, userRole, taskEstimation]);
+
+const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
+  const [hours, minutes] = timeSlot.split(":").map(Number);
+  const slotStartMinutes = hours * 60 + minutes;
+  const slotEndMinutes = slotStartMinutes + estimationMinutes;
+  
+  // Check if task would extend beyond working hours (20:30)
+  if (slotEndMinutes > WORK_DAY_END_MINUTES) {
+    console.log(`❌ Slot ${timeSlot}: Task would end at ${Math.floor(slotEndMinutes/60)}:${String(slotEndMinutes%60).padStart(2, '0')}, beyond 24:30`);
+    return false;
+  }
+  
+  return true;
+};
+
+// Check if a time slot is busy for reschedule
+  // Uses local date/time components to avoid timezone conversion issues
+  const isRescheduleTimeSlotBusy = (timeSlot) => {
+  if (!rescheduleDate || rescheduleBusyTimes.length === 0) {
+    return false;
+  }
+
+  const [slotHours, slotMinutes] = timeSlot.split(":").map(Number);
+  const [year, month, day] = rescheduleDate.split("-").map(Number);
+  
+  // Current task's estimation (in minutes)
+  const currentTaskEstMinutes = taskEstimation || 60;
+  
+  // Calculate slot start and end times in minutes from midnight
+  const slotStartMinutes = slotHours * 60 + slotMinutes;
+  const slotEndMinutes = slotStartMinutes + currentTaskEstMinutes;
+
+  // Check each busy time period (array of TaskTimeDto)
+  for (const busyTime of rescheduleBusyTimes) {
+    // ✅ SKIP THE CURRENT TASK BEING RESCHEDULED
+    if (busyTime.taskID === task?.taskID) {
+      continue;
+    }
 
     try {
-      const taskData = await getTaskDetails(taskId);
-      console.log("Task data loaded:", taskData);
-      console.log(
-        "Task hourRate:",
-        taskData.hourRate,
-        "Task rate:",
-        taskData.rate
+      const busyStart = new Date(busyTime.startDate);
+      const busyYear = busyStart.getFullYear();
+      const busyMonth = busyStart.getMonth();
+      const busyDay = busyStart.getDate();
+      const busyHours = busyStart.getHours();
+      const busyMins = busyStart.getMinutes();
+      
+      // Only check if dates match
+      if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
+        continue;
+      }
+
+      // Calculate busy period start and end in minutes from midnight
+      const busyStartMinutes = busyHours * 60 + busyMins;
+      const busyEndMinutes = busyStartMinutes + busyTime.estimation;
+
+      // Check for ANY overlap between slot and busy period
+      const hasOverlap = (
+        (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
+        (slotEndMinutes > busyStartMinutes && slotEndMinutes <= busyEndMinutes) ||
+        (slotStartMinutes <= busyStartMinutes && slotEndMinutes >= busyEndMinutes) ||
+        (busyStartMinutes <= slotStartMinutes && busyEndMinutes >= slotEndMinutes) ||
+        (slotStartMinutes < busyStartMinutes && slotEndMinutes > busyStartMinutes)
       );
-      setTask(taskData);
 
-      // Load review if task is done
-      if (taskData.status === "Done") {
-        try {
-          const reviewData = await getTaskReview(taskId);
-          setReview(reviewData);
-        } catch (err) {
-          console.log("No review found:", err);
-        }
+      if (hasOverlap) {
+        return true;
       }
-
-      // Load tasker profile if user is viewing
-      if (!isTasker && taskData.taskerID) {
-        try {
-          console.log("Loading tasker with ID:", taskData.taskerID);
-          const taskerData = await getTaskerById(taskData.taskerID);
-          console.log("Tasker data received:", taskerData);
-
-          // If task doesn't have hourRate, add it from tasker data
-          if (!taskData.hourRate && !taskData.rate && taskerData.hourRate) {
-            taskData.hourRate = taskerData.hourRate;
-            setTask({ ...taskData });
-          }
-
-          // Transform backend DTO to match TaskerCard props
-          setTasker({
-            id: taskerData.taskerId,
-            name: `${taskerData.firstName} ${taskerData.lastName}`,
-            photo: normalizeImage(taskerData.imageBase64),
-            rating: taskerData.rating,
-            location: taskerData.addressCity,
-            availability: taskerData.availability,
-            hourRate: taskerData.hourRate,
-          });
-        } catch (err) {
-          console.error("Failed to load tasker:", err);
-        }
-      }
-
-      // Load tasker profile if tasker is viewing their own task
-      if (isTasker && taskData.taskerID) {
-        try {
-          const taskerData = await getTaskerById(taskData.taskerID);
-          console.log("Tasker viewing own task, data:", taskerData);
-
-          // Add hourRate to task from tasker data
-          if (!taskData.hourRate && !taskData.rate && taskerData.hourRate) {
-            taskData.hourRate = taskerData.hourRate;
-            setTask({ ...taskData });
-          }
-        } catch (err) {
-          console.error("Failed to load tasker data for hourRate:", err);
-        }
-      }
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      console.warn("Failed to parse busy time:", busyTime, e);
+      continue;
     }
+  }
+
+  return false;
+};
+
+  // Filter available time slots for reschedule
+  const availableRescheduleTimeSlots = timeSlots.filter((slot) => {
+  if (!rescheduleDate) return true;
+
+  // 1. Check if date is today and time has passed
+  const selectedDate = new Date(rescheduleDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  selectedDate.setHours(0, 0, 0, 0);
+  const isToday = selectedDate.getTime() === today.getTime();
+
+  if (isToday) {
+    const [hours, minutes] = slot.split(":").map(Number);
+    const slotTime = new Date();
+    slotTime.setHours(hours, minutes, 0, 0);
+    const now = new Date();
+    if (slotTime <= now) {
+      return false; // Past time slots
+    }
+  }
+
+  // 2. Check if there's enough time in the day to complete the task
+  const currentTaskEstMinutes = taskEstimation || 60;
+  if (!hasEnoughTimeToComplete(slot, currentTaskEstMinutes)) {
+    return false; // Not enough time before end of work day
+  }
+
+  // 3. Check if slot conflicts with busy times (from both Task and Busy tables)
+  return !isRescheduleTimeSlotBusy(slot);
+});
+
+  const formatDateForInput = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   const formatDate = (dateString) => {
@@ -313,17 +483,46 @@ function TaskDetailsPage() {
   const statusStyle = STATUS_STYLES[normalizedStatus] || STATUS_STYLES.INREVIEW;
 
   // Accept/Reject handlers
-  const handleAccept = async () => {
+  const handleAccept = () => {
+    // Show estimation modal first
+    setShowAcceptModal(false);
+    setShowEstimationModal(true);
+    setEstimation("");
+    setEstimationError("");
+  };
+
+  const handleEstimationSubmit = async () => {
+    // Validate estimation (in hours)
+    const estValueHours = parseFloat(estimation);
+    if (!estimation || isNaN(estValueHours) || estValueHours <= 0) {
+      setEstimationError("Please enter a valid estimation (hours greater than 0)");
+      return;
+    }
+
+    if (estValueHours > 24) {
+      setEstimationError("Estimation cannot exceed 24 hours");
+      return;
+    }
+
+    // Convert hours to minutes for storage
+    const estValueMinutes = Math.round(estValueHours * 60);
+
     setIsSubmitting(true);
+    setEstimationError("");
     setErrorBanner(null);
 
     try {
+      // First add estimation (send as minutes)
+      await addTaskEstimation(task.taskID, estValueMinutes);
+      
+      // Then accept the task
       await acceptTask(task.taskID);
-      showSuccessBanner("✓ Task accepted successfully!");
-      setShowAcceptModal(false);
+      showSuccessBanner("✓ Task accepted successfully with estimation!");
+      setShowEstimationModal(false);
+      setEstimation("");
       await loadTaskDetails();
     } catch (error) {
-      setShowAcceptModal(false);
+      setEstimationError(`✗ Failed to accept task. ${error.message}`);
       showErrorBanner(`✗ Failed to accept task. ${error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -349,29 +548,107 @@ function TaskDetailsPage() {
 
   // Reschedule handler
   const handleReschedule = async () => {
-    if (!newStartDate) {
-      showErrorBanner("Please select a new date and time");
-      return;
-    }
+  if (!rescheduleDate || !rescheduleTime) {
+    showErrorBanner("Please select a new date and time");
+    return;
+  }
 
-    setIsSubmitting(true);
-    setErrorBanner(null);
+  const [hours, minutes] = rescheduleTime.split(":").map(Number);
+  const [year, month, day] = rescheduleDate.split("-").map(Number);
+  
+  // Current task estimation in minutes
+  const currentTaskEstMinutes = taskEstimation || 60;
+  const newStartMinutes = hours * 60 + minutes;
+  const newEndMinutes = newStartMinutes + currentTaskEstMinutes;
+
+  console.log("Validating reschedule:", {
+    newTime: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
+    newStartMinutes,
+    newEndMinutes,
+    currentTaskEstMinutes,
+    workDayEnd: WORK_DAY_END_MINUTES
+  });
+
+  // 1. Check if task would extend beyond working hours
+  if (newEndMinutes > WORK_DAY_END_MINUTES) {
+    const endHour = Math.floor(newEndMinutes / 60);
+    const endMin = newEndMinutes % 60;
+    showErrorBanner(
+      `⏰ Cannot reschedule: This task would end at ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}, ` +
+      `which is beyond working hours (08:00 - 20:30). Please choose an earlier time.`
+    );
+    return;
+  }
+
+  // 2. Check if the ENTIRE task duration fits without conflicts
+  for (const busyTime of rescheduleBusyTimes || []) {
+    // ✅ SKIP THE CURRENT TASK BEING RESCHEDULED
+    if (busyTime.taskID === task?.taskID) {
+      continue;
+    }
 
     try {
-      await rescheduleTask(task.taskID, newStartDate);
-      showSuccessBanner("✓ Task rescheduled successfully!");
-      setShowRescheduleModal(false);
-      setNewStartDate("");
-      await loadTaskDetails();
-    } catch (error) {
-      setShowRescheduleModal(false);
-      showErrorBanner(`✗ Failed to reschedule task. ${error.message}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      const busyStart = new Date(busyTime.startDate);
+      const busyYear = busyStart.getFullYear();
+      const busyMonth = busyStart.getMonth();
+      const busyDay = busyStart.getDate();
+      const busyHours = busyStart.getHours();
+      const busyMins = busyStart.getMinutes();
 
-  // Status update handlers
+      // Only check same date
+      if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
+        continue;
+      }
+
+      const busyStartMinutes = busyHours * 60 + busyMins;
+      const busyEndMinutes = busyStartMinutes + busyTime.estimation;
+
+      // Check for ANY overlap (all 5 scenarios)
+      const hasOverlap = (
+        (newStartMinutes >= busyStartMinutes && newStartMinutes < busyEndMinutes) ||
+        (newEndMinutes > busyStartMinutes && newEndMinutes <= busyEndMinutes) ||
+        (newStartMinutes <= busyStartMinutes && newEndMinutes >= busyEndMinutes) ||
+        (busyStartMinutes <= newStartMinutes && busyEndMinutes >= newEndMinutes) ||
+        (newStartMinutes < busyStartMinutes && newEndMinutes > busyStartMinutes)
+      );
+
+      if (hasOverlap) {
+        const busyTimeStr = `${String(busyHours).padStart(2, '0')}:${String(busyMins).padStart(2, '0')}`;
+        const busyDurationHours = (busyTime.estimation / 60).toFixed(1);
+        const taskEndTime = `${String(Math.floor(newEndMinutes/60)).padStart(2, '0')}:${String(newEndMinutes%60).padStart(2, '0')}`;
+        
+        showErrorBanner(
+          `⏰ Cannot reschedule: Your task (${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} - ${taskEndTime}, ${(currentTaskEstMinutes/60).toFixed(1)}h) ` +
+          `would overlap with another scheduled period starting at ${busyTimeStr} (${busyDurationHours}h duration). ` +
+          `Please choose a different time slot that can accommodate the full ${(currentTaskEstMinutes/60).toFixed(1)} hour(s) needed.`
+        );
+        return;
+      }
+    } catch (e) {
+      console.warn("Failed to parse busy time:", busyTime, e);
+      continue;
+    }
+  }
+
+  // No conflicts, proceed with reschedule
+  const newDateTime = `${rescheduleDate}T${rescheduleTime}:00`;
+  setIsSubmitting(true);
+  setErrorBanner(null);
+
+  try {
+    await rescheduleTask(task.taskID, newDateTime);
+    showSuccessBanner("✅ Task rescheduled successfully!");
+    setShowRescheduleModal(false);
+    setRescheduleDate("");
+    setRescheduleTime("");
+    await loadTaskDetails();
+  } catch (error) {
+    setShowRescheduleModal(false);
+    showErrorBanner(`⏰ Failed to reschedule task. ${error.message}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   const handleStart = async () => {
     setIsSubmitting(true);
     setErrorBanner(null);
@@ -920,7 +1197,11 @@ function TaskDetailsPage() {
               {canReschedule && (
                 <button
                   className="btn btn-reschedule"
-                  onClick={() => setShowRescheduleModal(true)}
+                  onClick={() => {
+                    setRescheduleDate("");
+                    setRescheduleTime("");
+                    setShowRescheduleModal(true);
+                  }}
                   disabled={isSubmitting}
                 >
                   <span className="btn-icon">📅</span> Reschedule
@@ -973,7 +1254,7 @@ function TaskDetailsPage() {
                 onClick={handleAccept}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Accepting..." : "Yes, Accept"}
+                Next: Add Estimation
               </button>
             </>
           }
@@ -993,7 +1274,99 @@ function TaskDetailsPage() {
               <strong>Location:</strong> {task.addressDetails}
             </li>
           </ul>
-          <p>Are you sure you want to accept?</p>
+          <p>You will need to provide an estimation before accepting.</p>
+        </Modal>
+      )}
+
+      {/* Estimation Modal */}
+      {showEstimationModal && (
+        <Modal
+          title="Add Estimation & Accept Task"
+          onClose={() => {
+            if (!isSubmitting) {
+              setShowEstimationModal(false);
+              setEstimation("");
+              setEstimationError("");
+            }
+          }}
+          width={500}
+          actions={
+            <>
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  if (!isSubmitting) {
+                    setShowEstimationModal(false);
+                    setEstimation("");
+                    setEstimationError("");
+                  }
+                }}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleEstimationSubmit}
+                disabled={isSubmitting || !estimation}
+              >
+                {isSubmitting ? "Accepting..." : "Add & Accept"}
+              </button>
+            </>
+          }
+        >
+          <p>Please provide an estimation for this task before accepting:</p>
+          <ul className="modal-task-details">
+            <li>
+              <strong>Customer:</strong> {task.userName}
+            </li>
+            <li>
+              <strong>Service:</strong> {task.serviceName}
+            </li>
+            <li>
+              <strong>Date & Time:</strong> {formatDate(task.startDate)}
+            </li>
+            <li>
+              <strong>Location:</strong> {task.addressDetails}
+            </li>
+          </ul>
+          <div style={{ marginTop: "16px" }}>
+            <label
+              htmlFor="estimation-input-details"
+              style={{ display: "block", marginBottom: "8px", fontWeight: 600 }}
+            >
+              Estimation (hours)*:
+            </label>
+            <input
+              id="estimation-input-details"
+              type="number"
+              min="0.5"
+              max="24"
+              step="0.5"
+              value={estimation}
+              onChange={(e) => {
+                setEstimation(e.target.value);
+                setEstimationError("");
+              }}
+              placeholder="e.g., 2.5"
+              disabled={isSubmitting}
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "6px",
+                border: estimationError ? "1px solid #dc2626" : "1px solid #e5e7eb",
+                fontSize: "14px",
+              }}
+            />
+            {estimationError && (
+              <p style={{ marginTop: "8px", color: "#dc2626", fontSize: "14px" }}>
+                {estimationError}
+              </p>
+            )}
+            <p style={{ marginTop: "8px", color: "#6b7280", fontSize: "12px" }}>
+              Enter the estimated number of hours needed to complete this task (0.5 - 24 hours)
+            </p>
+          </div>
         </Modal>
       )}
 
@@ -1043,13 +1416,25 @@ function TaskDetailsPage() {
       {showRescheduleModal && (
         <Modal
           title="Reschedule Task"
-          onClose={() => !isSubmitting && setShowRescheduleModal(false)}
+          onClose={() => {
+            if (!isSubmitting) {
+              setShowRescheduleModal(false);
+              setRescheduleDate("");
+              setRescheduleTime("");
+              setNewStartDate("");
+            }
+          }}
           width={500}
           actions={
             <>
               <button
                 className="btn btn-secondary"
-                onClick={() => setShowRescheduleModal(false)}
+                onClick={() => {
+                  setShowRescheduleModal(false);
+                  setRescheduleDate("");
+                  setRescheduleTime("");
+                  setNewStartDate("");
+                }}
                 disabled={isSubmitting}
               >
                 Cancel
@@ -1057,7 +1442,7 @@ function TaskDetailsPage() {
               <button
                 className="btn btn-primary"
                 onClick={handleReschedule}
-                disabled={isSubmitting || !newStartDate}
+                disabled={isSubmitting || !rescheduleDate || !rescheduleTime}
               >
                 {isSubmitting ? "Rescheduling..." : "Confirm"}
               </button>
@@ -1073,18 +1458,23 @@ function TaskDetailsPage() {
             <div style={{ color: "#6b7280" }}>{formatDate(task.startDate)}</div>
           </div>
 
-          <div>
+          <div style={{ marginBottom: "16px" }}>
             <label
+              htmlFor="reschedule-date"
               style={{ display: "block", marginBottom: "8px", fontWeight: 600 }}
             >
-              New Date & Time:
+              New Date*:
             </label>
             <input
-              type="datetime-local"
-              value={newStartDate}
-              onChange={(e) => setNewStartDate(e.target.value)}
+              id="reschedule-date"
+              type="date"
+              value={rescheduleDate}
+              onChange={(e) => {
+                setRescheduleDate(e.target.value);
+                setRescheduleTime("");
+              }}
               onClick={(e) => e.stopPropagation()}
-              min={new Date().toISOString().slice(0, 16)}
+              min={formatDateForInput(new Date())}
               style={{
                 width: "100%",
                 padding: "10px",
@@ -1093,6 +1483,54 @@ function TaskDetailsPage() {
                 fontSize: "14px",
               }}
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="reschedule-time"
+              style={{ display: "block", marginBottom: "8px", fontWeight: 600 }}
+            >
+              New Time*:
+            </label>
+            {loadingRescheduleBusyTime && rescheduleDate && (
+              <p style={{ marginBottom: "8px", color: "#6b7280", fontSize: "14px" }}>
+                Loading available times...
+              </p>
+            )}
+            <select
+              id="reschedule-time"
+              value={rescheduleTime}
+              onChange={(e) => setRescheduleTime(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              disabled={!rescheduleDate || loadingRescheduleBusyTime}
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "6px",
+                border: "1px solid #e5e7eb",
+                fontSize: "14px",
+              }}
+            >
+              <option value="">
+                {!rescheduleDate
+                  ? "Select date first"
+                  : loadingRescheduleBusyTime
+                  ? "Loading..."
+                  : availableRescheduleTimeSlots.length === 0
+                  ? "No available times"
+                  : "Select time"}
+              </option>
+              {availableRescheduleTimeSlots.map((slot) => (
+                <option key={slot} value={slot}>
+                  {slot}
+                </option>
+              ))}
+            </select>
+            {rescheduleDate && !loadingRescheduleBusyTime && availableRescheduleTimeSlots.length === 0 && (
+              <p style={{ marginTop: "8px", color: "#dc2626", fontSize: "14px" }}>
+                No available time slots on this day. Please select another date.
+              </p>
+            )}
           </div>
         </Modal>
       )}

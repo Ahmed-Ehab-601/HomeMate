@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -129,7 +130,99 @@ public class GetTasksDao {
 
         return jdbcTemplate.query(sql, taskCardRowMapper, taskerID, status.toString(), pageSize, page * pageSize);
     }
+    public List<TaskCardDto> getUserTasksByDateRange(Long userID, LocalDate startDate, LocalDate endDate) {
+        String sql = """
+                SELECT
+                    t.taskID,
+                    t.startDate,
+                    t.status,
+                    CONCAT(u.firstName, ' ', u.lastName) AS userName,
+                    CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
+                    s.name AS serviceName,
+                    a.city
+                FROM Task t
+                    INNER JOIN Users u ON t.userID = u.userID
+                    INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
+                    INNER JOIN Service s ON t.serviceID = s.serviceID
+                    INNER JOIN Address a ON t.addressID = a.addressID
+                WHERE u.userID = ? 
+                    AND t.startDate >= ? 
+                    AND t.startDate < ?
+                ORDER BY startDate ASC
+                """;
+        return jdbcTemplate.query(sql, taskCardRowMapper, userID, startDate, endDate);
+    }
+    public List<TaskCardDto> getUserTasksByDateRangeAndStatus(Long userID, LocalDate startDate,
+                                                              LocalDate endDate, StatusDto status) {
+        String sql = """
+                SELECT
+                    t.taskID,
+                    t.startDate,
+                    t.status,
+                    CONCAT(u.firstName, ' ', u.lastName) AS userName,
+                    CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
+                    s.name AS serviceName,
+                    a.city
+                FROM Task t
+                    INNER JOIN Users u ON t.userID = u.userID
+                    INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
+                    INNER JOIN Service s ON t.serviceID = s.serviceID
+                    INNER JOIN Address a ON t.addressID = a.addressID
+                WHERE u.userID = ? 
+                    AND t.startDate >= ? 
+                    AND t.startDate < ?
+                    AND t.status = ?
+                ORDER BY startDate ASC
+                """;
+        return jdbcTemplate.query(sql, taskCardRowMapper, userID, startDate, endDate, status.toString());
+    }
 
+    public List<TaskCardDto> getTaskerTasksByDateRange(Long taskerID, LocalDate startDate, LocalDate endDate) {
+        String sql = """
+                SELECT
+                    t.taskID,
+                    t.startDate,
+                    t.status,
+                    CONCAT(u.firstName, ' ', u.lastName) AS userName,
+                    CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
+                    s.name AS serviceName,
+                    a.city
+                FROM Task t
+                    INNER JOIN Users u ON t.userID = u.userID
+                    INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
+                    INNER JOIN Service s ON t.serviceID = s.serviceID
+                    INNER JOIN Address a ON t.addressID = a.addressID
+                WHERE tas.taskerID = ? 
+                    AND t.startDate >= ? 
+                    AND t.startDate < ?
+                ORDER BY startDate ASC
+                """;
+        return jdbcTemplate.query(sql, taskCardRowMapper, taskerID, startDate, endDate);
+    }
+    public List<TaskCardDto> getTaskerTasksByDateRangeAndStatus(Long taskerID, LocalDate startDate,
+                                                                LocalDate endDate, StatusDto status) {
+        String sql = """
+                SELECT
+                    t.taskID,
+                    t.startDate,
+                    t.status,
+                    CONCAT(u.firstName, ' ', u.lastName) AS userName,
+                    CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
+                    s.name AS serviceName,
+                    a.city
+                FROM Task t
+                    INNER JOIN Users u ON t.userID = u.userID
+                    INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
+                    INNER JOIN Service s ON t.serviceID = s.serviceID
+                    INNER JOIN Address a ON t.addressID = a.addressID
+                WHERE tas.taskerID = ? 
+                    AND t.startDate >= ? 
+                    AND t.startDate < ?
+                    AND t.status = ?
+                ORDER BY startDate ASC
+                """;
+        return jdbcTemplate.query(sql, taskCardRowMapper, taskerID, startDate, endDate, status.toString());
+    }
 
     public Optional<Long> countTasksByTaskerID(Long taskerID) {
         String sql = "SELECT COUNT(*) FROM Task WHERE taskerID = ? ";
@@ -143,5 +236,6 @@ public class GetTasksDao {
         Long count = jdbcTemplate.queryForObject(sql, Long.class, taskerID, status.toString());
         return Optional.ofNullable(count);
     }
+
 
 }

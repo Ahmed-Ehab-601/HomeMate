@@ -1,7 +1,10 @@
 package com.homemate.chat.controller;
 
+import com.homemate.chat.Enum.OnlineStatus;
 import com.homemate.chat.Service.MessageService;
+import com.homemate.chat.Service.PresenceService;
 import com.homemate.chat.dto.MessageDto;
+import com.homemate.chat.dto.PresenceUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +23,14 @@ import java.util.Map;
  */
 @Controller
 public class WebSocketMessageController {
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(WebSocketMessageController.class);
+
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private PresenceService presenceService;
 
     @Autowired
     private MessageService messageService;
@@ -30,17 +38,20 @@ public class WebSocketMessageController {
     /**
      * Handle incoming messages from clients
      * Route: /app/chat/{chatId}/send
-     * Clients subscribe to: /topic/chat/{chatId}
+     * Clients subscribe to: /send/chat/{chatId}
      */
     @MessageMapping("/chat/{chatId}/send")
     public void sendMessage(
             @DestinationVariable Long chatId,
             @Payload MessageDto messageDto) {
-     try {
+        try {
+            logger.debug("📨 Sending message to chat {}", chatId);
+
             messagingTemplate.convertAndSend(
                     "/send/chat/" + chatId,
                     messageDto
             );
+
             Long recipientId = messageDto.getReceiverId();
             String recipientRole = messageDto.isIsUserSender() ? "TASKER" : "USER";
 
@@ -57,8 +68,12 @@ public class WebSocketMessageController {
                     notification
             );
 
+            logger.info("✅ Message sent successfully to chat {}", chatId);
+
         } catch (Exception e) {
-         Map<String, Object> error = new HashMap<>();
+            logger.error("❌ Failed to send message to chat {}: {}", chatId, e.getMessage(), e);
+
+            Map<String, Object> error = new HashMap<>();
             error.put("type", "ERROR");
             error.put("message", "Failed to send message");
             error.put("chatId", chatId);
@@ -78,6 +93,7 @@ public class WebSocketMessageController {
         try {
             String status = (String) statusUpdate.get("status");
             Long messageId = Long.valueOf(statusUpdate.get("messageId").toString());
+
             Map<String, Object> statusBroadcast = new HashMap<>();
             statusBroadcast.put("messageId", messageId);
             statusBroadcast.put("status", status);
@@ -88,7 +104,10 @@ public class WebSocketMessageController {
                     statusBroadcast
             );
 
+            logger.debug("📊 Message {} status updated to {} in chat {}", messageId, status, chatId);
+
         } catch (Exception e) {
+            logger.error("❌ Failed to update message status in chat {}: {}", chatId, e.getMessage(), e);
         }
     }
 
@@ -107,12 +126,14 @@ public class WebSocketMessageController {
             typingIndicator.put("role", role);
             typingIndicator.put("isTyping", isTyping);
             typingIndicator.put("timestamp", System.currentTimeMillis());
+
             messagingTemplate.convertAndSend(
                     "/send/chat/" + chatId + "/typing",
                     typingIndicator
             );
 
         } catch (Exception e) {
+            logger.error("❌ Failed to handle typing indicator in chat {}: {}", chatId, e.getMessage(), e);
         }
     }
 
@@ -123,6 +144,7 @@ public class WebSocketMessageController {
 
         try {
             String role = (String) data.get("role");
+
             Map<String, Object> readReceipt = new HashMap<>();
             readReceipt.put("chatId", chatId);
             readReceipt.put("readBy", data.get("userId"));
@@ -134,8 +156,71 @@ public class WebSocketMessageController {
                     readReceipt
             );
 
-
         } catch (Exception e) {
+            logger.error("❌ Failed to mark messages as read in chat {}: {}", chatId, e.getMessage(), e);
         }
     }
+
+    /**
+     * Handle presence updates
+     * Route: /app/presence/update
+     * Clients subscribe to: /send/presence
+     */
+    // WebSocketMessageController.java - Update these two methods
+
+    /**
+     * Handle presence updates (EXPLICIT login/logout)
+     * Route: /app/presence/update
+     * Clients subscribe to: /send/presence
+     * This ALWAYS broadcasts to all clients
+     */
+    @MessageMapping("/presence/update")
+    public void updatePresence(@Payload PresenceUpdate presenceUpdate) {
+        try {
+            logger.info("🔥 Received EXPLICIT presence update: {} {} -> {}",
+                    presenceUpdate.getUserType(),
+                    presenceUpdate.getId(),
+                    presenceUpdate.getOnlineStatus());
+
+            // This will ALWAYS broadcast (unless throttled)
+            presenceService.updatePresence(presenceUpdate);
+
+        } catch (Exception e) {
+            logger.error("❌ Failed to update presence for {} {}: {}",
+                    presenceUpdate.getUserType(),
+                    presenceUpdate.getId(),
+                    e.getMessage(), e);
+            throw new RuntimeException("Failed to update presence", e);
+        }
+    }
+
+    /**
+     * Heartbeat endpoint to keep user online
+     * Route: /app/presence/heartbeat
+     * Clients should send this every 20-30 seconds
+     * This only updates timestamp, doesn't broadcast
+     */
+    @MessageMapping("/presence/heartbeat")
+    public void heartbeat(@Payload Map<String, Object> heartbeatData) {
+        try {
+            Long userId = Long.valueOf(heartbeatData.get("userId").toString());
+            String userType = (String) heartbeatData.get("userType");
+
+            logger.debug("💓 Heartbeat received for {} {}", userType, userId);
+
+            PresenceUpdate presenceUpdate = PresenceUpdate.builder()
+                    .Id(userId)
+                    .UserType(userType)
+                    .onlineStatus(OnlineStatus.ONLINE)
+                    .time(java.time.LocalDateTime.now())
+                    .build();
+
+            // Use heartbeat method (doesn't broadcast, just updates timestamp)
+            presenceService.updatePresenceFromHeartbeat(presenceUpdate);
+
+        } catch (Exception e) {
+            logger.error("❌ Failed to process heartbeat: {}", e.getMessage(), e);
+        }
+    }
+
 }

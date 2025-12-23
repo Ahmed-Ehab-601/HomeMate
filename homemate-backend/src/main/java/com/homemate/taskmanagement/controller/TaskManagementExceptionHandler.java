@@ -72,6 +72,13 @@ public class TaskManagementExceptionHandler {
                 "message", ex.getMessage()
         ));
     }
+    @ExceptionHandler(BadEstimationException.class)
+    public  ResponseEntity<?> handleBadEstimation(BadEstimationException ex){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error", Error.BadEstimation,
+                "message", ex.getMessage()
+        ));
+    }
 
 
 

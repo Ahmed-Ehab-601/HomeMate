@@ -7,6 +7,7 @@ import com.homemate.reports.dto.ReportFilterDto;
 import com.homemate.reports.service.IReportService;
 import com.homemate.security.model.AppUserDetails;
 import com.homemate.util.PaginatedResponse;
+import com.homemate.reports.dto.ReportResponseRequest;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -74,5 +75,23 @@ public class ReportController {
         return completedReport
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+    @PostMapping("/{reportID}/response")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> respondToReport(
+            @PathVariable int reportID,
+            @RequestBody @jakarta.validation.Valid ReportResponseRequest request) {
+        
+        try {
+            reportService.respondToReport(reportID, request.getMessage());
+            return ResponseEntity.ok("Response sent successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+        }
     }
 }
