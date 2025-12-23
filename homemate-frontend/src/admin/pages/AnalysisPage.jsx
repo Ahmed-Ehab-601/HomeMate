@@ -29,9 +29,19 @@ import {
     getUserGenderCount, 
     getUserStatusCounts, 
     getUserAgeBuckets, 
-    getUserNewAccounts 
+    getUserNewAccounts,
+    getTaskerGenderCount,
+    getTaskerAgeBuckets,
+    getTaskerNewAccounts,
+    getTaskerRatingRanges,
+    getTaskerHourRateRanges,
+    getTaskerWorkedHoursRanges,
+    getTaskerServiceCounts,
+    getTaskerCityCounts,
+    getTaskerStatusCounts,
 } from '../services/adminService';
-import { generateTimeRanges, formatRangeLabel } from '../utility/userAnalysisUtility';
+import { generateTimeRanges as generateUserTimeRanges, formatRangeLabel as formatUserRangeLabel } from '../utility/userAnalysisUtility';
+import { generateTimeRanges as generateTaskerTimeRanges, formatRangeLabel as formatTaskerRangeLabel } from '../utility/taskerAnalysisUtility';
 
 const AnalysisPage = () => {
     const [analysisType, setAnalysisType] = useState('');
@@ -44,6 +54,16 @@ const AnalysisPage = () => {
     const [error, setError] = useState('');
     const [chartData, setChartData] = useState(null);
 
+    // Helper function to sort range strings numerically
+    const sortRanges = (entries) => {
+        return entries.sort(([rangeA], [rangeB]) => {
+            // Extract the starting number from each range (e.g., "10-20" -> 10)
+            const startA = parseFloat(rangeA.split('-')[0]);
+            const startB = parseFloat(rangeB.split('-')[0]);
+            return startA - startB;
+        });
+    };
+
     const metricOptions = {
         user: [
             { value: 'age', label: 'Age Distribution' },
@@ -52,8 +72,13 @@ const AnalysisPage = () => {
             { value: 'newAccounts', label: 'New Accounts' },
         ],
         tasker: [
-            { value: 'placeholder1', label: 'Placeholder 1' },
-            { value: 'placeholder2', label: 'Placeholder 2' },
+            { value: 'age', label: 'Age Distribution' },
+            { value: 'gender', label: 'Gender Distribution' },
+            { value: 'newAccounts', label: 'New Accounts' },
+            { value: 'rating', label: 'Rating Ranges' },
+            { value: 'hourRate', label: 'Hour Rate Ranges' },
+            { value: 'workedHours', label: 'Worked Hours Ranges' },
+            { value: 'status', label: 'Status Distribution' },
         ],
         task: [
             { value: 'placeholder1', label: 'Placeholder 1' },
@@ -142,23 +167,76 @@ const AnalysisPage = () => {
                     ];
                 } else if (metric === 'age') {
                     data = await getUserAgeBuckets();
-                    formattedData = Object.entries(data.buckets).map(([range, count]) => ({
+                    const sortedEntries = sortRanges(Object.entries(data.buckets));
+                    formattedData = sortedEntries.map(([range, count]) => ({
                         name: range,
                         value: count,
                     }));
                 } else if (metric === 'newAccounts') {
-                    const ranges = generateTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
+                    const ranges = generateUserTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
                     data = await getUserNewAccounts(ranges);
                     formattedData = data.counts.map((count, index) => {
-                        const label = formatRangeLabel(ranges[index], groupBy);
+                        const label = formatUserRangeLabel(ranges[index], groupBy);
                         return {
                             name: label,
                             value: count,
                         };
                     });
                 }
+            } else if (analysisType === 'tasker') {
+                if (metric === 'gender') {
+                    data = await getTaskerGenderCount();
+                    formattedData = [
+                        { name: 'Male', value: data.male },
+                        { name: 'Female', value: data.female },
+                    ];
+                } else if (metric === 'age') {
+                    data = await getTaskerAgeBuckets();
+                    const sortedEntries = sortRanges(Object.entries(data.buckets));
+                    formattedData = sortedEntries.map(([range, count]) => ({
+                        name: range,
+                        value: count,
+                    }));
+                } else if (metric === 'newAccounts') {
+                    const ranges = generateTaskerTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
+                    data = await getTaskerNewAccounts(ranges);
+                    formattedData = data.counts.map((count, index) => {
+                        const label = formatTaskerRangeLabel(ranges[index], groupBy);
+                        return {
+                            name: label,
+                            value: count,
+                        };
+                    });
+                } else if (metric === 'rating') {
+                    data = await getTaskerRatingRanges();
+                    const sortedEntries = sortRanges(Object.entries(data.ranges));
+                    formattedData = sortedEntries.map(([range, count]) => ({
+                        name: range,
+                        value: count,
+                    }));
+                } else if (metric === 'hourRate') {
+                    data = await getTaskerHourRateRanges();
+                    const sortedEntries = sortRanges(Object.entries(data.ranges));
+                    formattedData = sortedEntries.map(([range, count]) => ({
+                        name: range,
+                        value: count,
+                    }));
+                } else if (metric === 'workedHours') {
+                    data = await getTaskerWorkedHoursRanges();
+                    const sortedEntries = sortRanges(Object.entries(data.ranges));
+                    formattedData = sortedEntries.map(([range, count]) => ({
+                        name: range,
+                        value: count,
+                    }));
+                } else if (metric === 'status') {
+                    data = await getTaskerStatusCounts();
+                    formattedData = [
+                        { name: 'Suspended', value: data.suspended },
+                        { name: 'Active', value: data.active },
+                    ];
+                }
             } else {
-                // Placeholder for tasker and task analysis
+                // Placeholder for task analysis
                 setError('This analysis type is not yet implemented');
                 return;
             }
@@ -174,9 +252,7 @@ const AnalysisPage = () => {
 
     return (
         <Box sx={{ p: 3 }}>
-            <PageHeader title="Platform Analysis" subtitle="Comprehensive insights and metrics" />
-
-            <Card elevation={2} sx={{ mt: 3, mb: 3 }}>
+            <Card elevation={2} sx={{ mb: 3 }}>
                 <CardContent>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {/* Analysis Type Dropdown */}

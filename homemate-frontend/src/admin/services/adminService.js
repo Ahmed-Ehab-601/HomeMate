@@ -25,6 +25,16 @@ export {
   getUserStatusCounts,
   getUserAgeBuckets,
   getUserNewAccounts,
+  getTaskerGenderCount,
+  getTaskerAgeBuckets,
+  getTaskerNewAccounts,
+  getTaskerRatingRanges,
+  getTaskerHourRateRanges,
+  getTaskerWorkedHoursRanges,
+  getTaskerServiceCounts,
+  getTaskerCityCounts,
+  getTaskerStatusCounts,
   default,
 } from '../api/adminApi';
+
 

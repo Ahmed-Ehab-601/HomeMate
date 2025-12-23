@@ -317,6 +317,160 @@ export const getUserNewAccounts = async (ranges) => {
     return data;
 };
 
+// Tasker Analysis APIs
+export const getTaskerGenderCount = async () => {
+    const response = await apiFetch('/api/analysis/tasker/gender-count');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker gender count',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerAgeBuckets = async () => {
+    const response = await apiFetch('/api/analysis/tasker/age-buckets');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker age buckets',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerNewAccounts = async (ranges) => {
+    const response = await apiFetch('/api/analysis/tasker/new-accounts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ranges }),
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker new accounts',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerRatingRanges = async () => {
+    const response = await apiFetch('/api/analysis/tasker/rating-ranges');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker rating ranges',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerHourRateRanges = async () => {
+    const response = await apiFetch('/api/analysis/tasker/hour-rate-ranges');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker hour rate ranges',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerWorkedHoursRanges = async () => {
+    const response = await apiFetch('/api/analysis/tasker/worked-hours-ranges');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker worked hours ranges',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerServiceCounts = async (serviceIds) => {
+    const response = await apiFetch('/api/analysis/tasker/service-counts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ serviceIds }),
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker service counts',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerCityCounts = async (cities) => {
+    const response = await apiFetch('/api/analysis/tasker/city-counts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cities }),
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker city counts',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerStatusCounts = async () => {
+    const response = await apiFetch('/api/analysis/tasker/status-counts');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker status counts',
+            data,
+        };
+    }
+
+    return data;
+};
+
 export default {
     getUsers,
     getTaskers,
@@ -343,4 +497,13 @@ export default {
     getUserStatusCounts,
     getUserAgeBuckets,
     getUserNewAccounts,
+    getTaskerGenderCount,
+    getTaskerAgeBuckets,
+    getTaskerNewAccounts,
+    getTaskerRatingRanges,
+    getTaskerHourRateRanges,
+    getTaskerWorkedHoursRanges,
+    getTaskerServiceCounts,
+    getTaskerCityCounts,
+    getTaskerStatusCounts,
 };
