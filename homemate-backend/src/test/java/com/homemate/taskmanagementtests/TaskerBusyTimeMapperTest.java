@@ -1,5 +1,6 @@
 package com.homemate.taskmanagementtests;
 
+import com.homemate.taskmanagement.dto.TaskTimeDto;
 import com.homemate.taskmanagement.mappers.TaskerBusyTimeMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -32,22 +33,27 @@ class TaskerBusyTimeMapperTest {
     @Test
     void testExtractData_Success_WithSingleRow() throws SQLException {
         // Arrange
+        Long taskId = 1L;
         LocalDateTime startDate = LocalDateTime.of(2025, 11, 20, 10, 0);
         int estimation = 120;
 
         when(resultSet.next()).thenReturn(true, false);
+        when(resultSet.getLong("taskID")).thenReturn(taskId);
         when(resultSet.getTimestamp("startDate")).thenReturn(Timestamp.valueOf(startDate));
         when(resultSet.getInt("estimation")).thenReturn(estimation);
 
         // Act
-        Map<LocalDateTime, Integer> result = mapper.extractData(resultSet);
+        List<TaskTimeDto> result = mapper.extractData(resultSet);
 
         // Assert
         assertThat(result).isNotNull();
         assertThat(result).hasSize(1);
-        assertThat(result).containsEntry(startDate, estimation);
+        assertThat(result.get(0).getTaskID()).isEqualTo(taskId);
+        assertThat(result.get(0).getStartDate()).isEqualTo(startDate);
+        assertThat(result.get(0).getEstimation()).isEqualTo(estimation);
 
         verify(resultSet, times(2)).next();
+        verify(resultSet).getLong("taskID");
         verify(resultSet).getTimestamp("startDate");
         verify(resultSet).getInt("estimation");
     }
@@ -60,6 +66,7 @@ class TaskerBusyTimeMapperTest {
         LocalDateTime startDate3 = LocalDateTime.of(2025, 11, 20, 16, 30);
 
         when(resultSet.next()).thenReturn(true, true, true, false);
+        when(resultSet.getLong("taskID")).thenReturn(1L, 2L, 3L);
         when(resultSet.getTimestamp("startDate"))
                 .thenReturn(Timestamp.valueOf(startDate1))
                 .thenReturn(Timestamp.valueOf(startDate2))
@@ -70,33 +77,44 @@ class TaskerBusyTimeMapperTest {
                 .thenReturn(90);
 
         // Act
-        Map<LocalDateTime, Integer> result = mapper.extractData(resultSet);
+        List<TaskTimeDto> result = mapper.extractData(resultSet);
 
         // Assert
         assertThat(result).isNotNull();
         assertThat(result).hasSize(3);
-        assertThat(result).containsEntry(startDate1, 120);
-        assertThat(result).containsEntry(startDate2, 60);
-        assertThat(result).containsEntry(startDate3, 90);
+
+        assertThat(result.get(0).getTaskID()).isEqualTo(1L);
+        assertThat(result.get(0).getStartDate()).isEqualTo(startDate1);
+        assertThat(result.get(0).getEstimation()).isEqualTo(120);
+
+        assertThat(result.get(1).getTaskID()).isEqualTo(2L);
+        assertThat(result.get(1).getStartDate()).isEqualTo(startDate2);
+        assertThat(result.get(1).getEstimation()).isEqualTo(60);
+
+        assertThat(result.get(2).getTaskID()).isEqualTo(3L);
+        assertThat(result.get(2).getStartDate()).isEqualTo(startDate3);
+        assertThat(result.get(2).getEstimation()).isEqualTo(90);
 
         verify(resultSet, times(4)).next();
+        verify(resultSet, times(3)).getLong("taskID");
         verify(resultSet, times(3)).getTimestamp("startDate");
         verify(resultSet, times(3)).getInt("estimation");
     }
 
     @Test
-    void testExtractData_ReturnsEmptyMap_WhenNoRows() throws SQLException {
+    void testExtractData_ReturnsEmptyList_WhenNoRows() throws SQLException {
         // Arrange
         when(resultSet.next()).thenReturn(false);
 
         // Act
-        Map<LocalDateTime, Integer> result = mapper.extractData(resultSet);
+        List<TaskTimeDto> result = mapper.extractData(resultSet);
 
         // Assert
         assertThat(result).isNotNull();
         assertThat(result).isEmpty();
 
         verify(resultSet).next();
+        verify(resultSet, never()).getLong(anyString());
         verify(resultSet, never()).getTimestamp(anyString());
         verify(resultSet, never()).getInt(anyString());
     }
@@ -104,19 +122,23 @@ class TaskerBusyTimeMapperTest {
     @Test
     void testExtractData_WithZeroEstimation() throws SQLException {
         // Arrange
+        Long taskId = 5L;
         LocalDateTime startDate = LocalDateTime.of(2025, 11, 20, 10, 0);
 
         when(resultSet.next()).thenReturn(true, false);
+        when(resultSet.getLong("taskID")).thenReturn(taskId);
         when(resultSet.getTimestamp("startDate")).thenReturn(Timestamp.valueOf(startDate));
         when(resultSet.getInt("estimation")).thenReturn(0);
 
         // Act
-        Map<LocalDateTime, Integer> result = mapper.extractData(resultSet);
+        List<TaskTimeDto> result = mapper.extractData(resultSet);
 
         // Assert
         assertThat(result).isNotNull();
         assertThat(result).hasSize(1);
-        assertThat(result).containsEntry(startDate, 0);
+        assertThat(result.get(0).getTaskID()).isEqualTo(taskId);
+        assertThat(result.get(0).getStartDate()).isEqualTo(startDate);
+        assertThat(result.get(0).getEstimation()).isEqualTo(0);
     }
 
     @Test
@@ -128,6 +150,7 @@ class TaskerBusyTimeMapperTest {
         LocalDateTime evening = LocalDateTime.of(2025, 11, 20, 18, 45);
 
         when(resultSet.next()).thenReturn(true, true, true, true, false);
+        when(resultSet.getLong("taskID")).thenReturn(10L, 11L, 12L, 13L);
         when(resultSet.getTimestamp("startDate"))
                 .thenReturn(Timestamp.valueOf(morning))
                 .thenReturn(Timestamp.valueOf(noon))
@@ -140,22 +163,34 @@ class TaskerBusyTimeMapperTest {
                 .thenReturn(30);
 
         // Act
-        Map<LocalDateTime, Integer> result = mapper.extractData(resultSet);
+        List<TaskTimeDto> result = mapper.extractData(resultSet);
 
         // Assert
         assertThat(result).isNotNull();
         assertThat(result).hasSize(4);
-        assertThat(result).containsEntry(morning, 60);
-        assertThat(result).containsEntry(noon, 120);
-        assertThat(result).containsEntry(afternoon, 90);
-        assertThat(result).containsEntry(evening, 30);
+
+        assertThat(result.get(0).getTaskID()).isEqualTo(10L);
+        assertThat(result.get(0).getStartDate()).isEqualTo(morning);
+        assertThat(result.get(0).getEstimation()).isEqualTo(60);
+
+        assertThat(result.get(1).getTaskID()).isEqualTo(11L);
+        assertThat(result.get(1).getStartDate()).isEqualTo(noon);
+        assertThat(result.get(1).getEstimation()).isEqualTo(120);
+
+        assertThat(result.get(2).getTaskID()).isEqualTo(12L);
+        assertThat(result.get(2).getStartDate()).isEqualTo(afternoon);
+        assertThat(result.get(2).getEstimation()).isEqualTo(90);
+
+        assertThat(result.get(3).getTaskID()).isEqualTo(13L);
+        assertThat(result.get(3).getStartDate()).isEqualTo(evening);
+        assertThat(result.get(3).getEstimation()).isEqualTo(30);
     }
 
     @Test
     void testExtractData_ThrowsSQLException_WhenColumnNotFound() throws SQLException {
         // Arrange
         when(resultSet.next()).thenReturn(true);
-        when(resultSet.getTimestamp("startDate")).thenThrow(new SQLException("Column not found"));
+        when(resultSet.getLong("taskID")).thenThrow(new SQLException("Column not found"));
 
         // Act & Assert
         assertThatThrownBy(() -> mapper.extractData(resultSet))
@@ -163,10 +198,51 @@ class TaskerBusyTimeMapperTest {
                 .hasMessage("Column not found");
 
         verify(resultSet).next();
-        verify(resultSet).getTimestamp("startDate");
+        verify(resultSet).getLong("taskID");
     }
 
+    @Test
+    void testExtractData_WithNullEstimation() throws SQLException {
+        // Arrange
+        Long taskId = 7L;
+        LocalDateTime startDate = LocalDateTime.of(2025, 11, 20, 10, 0);
 
+        when(resultSet.next()).thenReturn(true, false);
+        when(resultSet.getLong("taskID")).thenReturn(taskId);
+        when(resultSet.getTimestamp("startDate")).thenReturn(Timestamp.valueOf(startDate));
+        when(resultSet.getInt("estimation")).thenReturn(0); // SQL NULL returns 0 for getInt
 
+        // Act
+        List<TaskTimeDto> result = mapper.extractData(resultSet);
 
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getTaskID()).isEqualTo(taskId);
+        assertThat(result.get(0).getStartDate()).isEqualTo(startDate);
+        assertThat(result.get(0).getEstimation()).isEqualTo(0);
+    }
+
+    @Test
+    void testExtractData_WithLargeEstimation() throws SQLException {
+        // Arrange
+        Long taskId = 8L;
+        LocalDateTime startDate = LocalDateTime.of(2025, 11, 20, 10, 0);
+        int largeEstimation = 2880; // 48 hours
+
+        when(resultSet.next()).thenReturn(true, false);
+        when(resultSet.getLong("taskID")).thenReturn(taskId);
+        when(resultSet.getTimestamp("startDate")).thenReturn(Timestamp.valueOf(startDate));
+        when(resultSet.getInt("estimation")).thenReturn(largeEstimation);
+
+        // Act
+        List<TaskTimeDto> result = mapper.extractData(resultSet);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getTaskID()).isEqualTo(taskId);
+        assertThat(result.get(0).getStartDate()).isEqualTo(startDate);
+        assertThat(result.get(0).getEstimation()).isEqualTo(largeEstimation);
+    }
 }

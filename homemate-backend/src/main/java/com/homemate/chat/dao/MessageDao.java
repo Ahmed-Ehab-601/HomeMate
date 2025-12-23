@@ -144,4 +144,28 @@ public void markasReceivedTasker(Long taskerID) {
         String sql="SELECT taskerIsActive FROM Chat WHERE chatID = ?";
         return jdbcTemplate.queryForObject(sql,Boolean.class,chatID);
     }
+
+    public List<MessageDto> listMessagesRecievedTasker(Long id, Boolean isUser) {
+        String sql;
+        if(isUser){
+            sql = "SELECT * FROM Message m " +
+                    "LEFT JOIN MessageImage mi ON m.messageId = mi.messageID " +
+                    "WHERE m.status = 'received' " +
+                    "AND m.receiverID = ? " +
+                    "AND m.isUserSender = FALSE " +
+                    "ORDER BY m.timestamp DESC";
+        }
+        else{
+            sql = "SELECT * FROM Message m " +
+                    "LEFT JOIN MessageImage mi ON m.messageId = mi.messageID " +
+                    "WHERE m.status = 'received' " +
+                    "AND m.receiverID = ? " +
+                    "AND m.isUserSender = TRUE " +
+                    "ORDER BY m.timestamp DESC";
+        }
+
+        return jdbcTemplate.query(sql,
+                new Object[]{id},
+                new MessageRowMapper());
+    }
 }

@@ -2,6 +2,7 @@ package com.homemate.taskmanagementtests;
 
 import com.homemate.TaskerProfile.models.TaskerAvailability;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
+import com.homemate.taskmanagement.dto.TaskTimeDto;
 import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
 import com.homemate.taskmanagement.mappers.TaskerBusyTimeMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,8 +18,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -50,20 +51,17 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
         testDay = LocalDate.of(2025, 11, 20);
     }
 
-    // ========== add (Estimation) Tests ==========
+    // ========== addEstimation Tests ==========
 
     @Test
     void testAddEstimation_Success() {
-        // Arrange
-        int estimationMinutes = 120; // 2 hours in minutes
+        int estimationMinutes = 120;
 
         when(jdbcTemplate.update(anyString(), eq(estimationMinutes), eq(taskId))).thenReturn(1);
 
-        // Act
-        assertThatCode(() -> taskRequestDao.add(taskId, estimationMinutes))
+        assertThatCode(() -> taskRequestDao.addEstimation(taskId, estimationMinutes))
                 .doesNotThrowAnyException();
 
-        // Assert
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
         verify(jdbcTemplate).update(
                 sqlCaptor.capture(),
@@ -79,14 +77,12 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
 
     @Test
     void testAddEstimation_WithDifferentEstimationValues() {
-        // Arrange
-        int[] estimations = {30, 60, 120, 240, 480, 1440}; // Various minutes
+        int[] estimations = {30, 60, 120, 240, 480, 1440};
 
         when(jdbcTemplate.update(anyString(), anyInt(), eq(taskId))).thenReturn(1);
 
-        // Act & Assert
         for (int estimation : estimations) {
-            assertThatCode(() -> taskRequestDao.add(taskId, estimation))
+            assertThatCode(() -> taskRequestDao.addEstimation(taskId, estimation))
                     .doesNotThrowAnyException();
         }
 
@@ -95,31 +91,25 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
 
     @Test
     void testAddEstimation_WithZeroEstimation() {
-        // Arrange
         int estimationMinutes = 0;
 
         when(jdbcTemplate.update(anyString(), eq(estimationMinutes), eq(taskId))).thenReturn(1);
 
-        // Act
-        assertThatCode(() -> taskRequestDao.add(taskId, estimationMinutes))
+        assertThatCode(() -> taskRequestDao.addEstimation(taskId, estimationMinutes))
                 .doesNotThrowAnyException();
 
-        // Assert
         verify(jdbcTemplate).update(anyString(), eq(0), eq(taskId));
     }
 
     @Test
     void testAddEstimation_WithLargeEstimation() {
-        // Arrange
-        int estimationMinutes = 2880; // 48 hours
+        int estimationMinutes = 2880;
 
         when(jdbcTemplate.update(anyString(), eq(estimationMinutes), eq(taskId))).thenReturn(1);
 
-        // Act
-        assertThatCode(() -> taskRequestDao.add(taskId, estimationMinutes))
+        assertThatCode(() -> taskRequestDao.addEstimation(taskId, estimationMinutes))
                 .doesNotThrowAnyException();
 
-        // Assert
         verify(jdbcTemplate).update(anyString(), eq(2880), eq(taskId));
     }
 
@@ -127,10 +117,17 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
 
     @Test
     void testGetBusytime_Success_WithTasks() {
-        // Arrange
-        Map<LocalDateTime, Integer> expectedBusyTimes = new HashMap<>();
-        expectedBusyTimes.put(LocalDateTime.of(2025, 11, 20, 10, 0), 120);
-        expectedBusyTimes.put(LocalDateTime.of(2025, 11, 20, 14, 0), 60);
+        List<TaskTimeDto> expectedBusyTimes = new ArrayList<>();
+        expectedBusyTimes.add(TaskTimeDto.builder()
+                .taskID(1L)
+                .startDate(LocalDateTime.of(2025, 11, 20, 10, 0))
+                .estimation(120)
+                .build());
+        expectedBusyTimes.add(TaskTimeDto.builder()
+                .taskID(2L)
+                .startDate(LocalDateTime.of(2025, 11, 20, 14, 0))
+                .estimation(60)
+                .build());
 
         LocalDateTime startOfDay = testDay.atStartOfDay();
         LocalDateTime endOfDay = testDay.plusDays(1).atStartOfDay();
@@ -143,14 +140,16 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
                 eq(Timestamp.valueOf(endOfDay))
         )).thenReturn(expectedBusyTimes);
 
-        // Act
-        Map<LocalDateTime, Integer> result = taskRequestDao.getBusytime(taskerId, testDay);
+        List<TaskTimeDto> result = taskRequestDao.getBusytime(taskerId, testDay);
 
-        // Assert
         assertThat(result).isNotNull();
         assertThat(result).hasSize(2);
-        assertThat(result).containsEntry(LocalDateTime.of(2025, 11, 20, 10, 0), 120);
-        assertThat(result).containsEntry(LocalDateTime.of(2025, 11, 20, 14, 0), 60);
+        assertThat(result.get(0).getTaskID()).isEqualTo(1L);
+        assertThat(result.get(0).getStartDate()).isEqualTo(LocalDateTime.of(2025, 11, 20, 10, 0));
+        assertThat(result.get(0).getEstimation()).isEqualTo(120);
+        assertThat(result.get(1).getTaskID()).isEqualTo(2L);
+        assertThat(result.get(1).getStartDate()).isEqualTo(LocalDateTime.of(2025, 11, 20, 14, 0));
+        assertThat(result.get(1).getEstimation()).isEqualTo(60);
 
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
         verify(jdbcTemplate).query(
@@ -172,9 +171,8 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
     }
 
     @Test
-    void testGetBusytime_ReturnsEmptyMap_WhenNoTasks() {
-        // Arrange
-        Map<LocalDateTime, Integer> emptyBusyTimes = new HashMap<>();
+    void testGetBusytime_ReturnsEmptyList_WhenNoTasks() {
+        List<TaskTimeDto> emptyBusyTimes = new ArrayList<>();
         LocalDateTime startOfDay = testDay.atStartOfDay();
         LocalDateTime endOfDay = testDay.plusDays(1).atStartOfDay();
 
@@ -186,10 +184,8 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
                 eq(Timestamp.valueOf(endOfDay))
         )).thenReturn(emptyBusyTimes);
 
-        // Act
-        Map<LocalDateTime, Integer> result = taskRequestDao.getBusytime(taskerId, testDay);
+        List<TaskTimeDto> result = taskRequestDao.getBusytime(taskerId, testDay);
 
-        // Assert
         assertThat(result).isNotNull();
         assertThat(result).isEmpty();
 
@@ -204,15 +200,22 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
 
     @Test
     void testGetBusytime_WithDifferentDays() {
-        // Arrange
         LocalDate day1 = LocalDate.of(2025, 11, 20);
         LocalDate day2 = LocalDate.of(2025, 11, 21);
 
-        Map<LocalDateTime, Integer> busyTimesDay1 = new HashMap<>();
-        busyTimesDay1.put(LocalDateTime.of(2025, 11, 20, 10, 0), 120);
+        List<TaskTimeDto> busyTimesDay1 = new ArrayList<>();
+        busyTimesDay1.add(TaskTimeDto.builder()
+                .taskID(1L)
+                .startDate(LocalDateTime.of(2025, 11, 20, 10, 0))
+                .estimation(120)
+                .build());
 
-        Map<LocalDateTime, Integer> busyTimesDay2 = new HashMap<>();
-        busyTimesDay2.put(LocalDateTime.of(2025, 11, 21, 14, 0), 60);
+        List<TaskTimeDto> busyTimesDay2 = new ArrayList<>();
+        busyTimesDay2.add(TaskTimeDto.builder()
+                .taskID(2L)
+                .startDate(LocalDateTime.of(2025, 11, 21, 14, 0))
+                .estimation(60)
+                .build());
 
         when(jdbcTemplate.query(
                 anyString(),
@@ -222,16 +225,16 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
                 any(Timestamp.class)
         )).thenReturn(busyTimesDay1, busyTimesDay2);
 
-        // Act
-        Map<LocalDateTime, Integer> result1 = taskRequestDao.getBusytime(taskerId, day1);
-        Map<LocalDateTime, Integer> result2 = taskRequestDao.getBusytime(taskerId, day2);
+        List<TaskTimeDto> result1 = taskRequestDao.getBusytime(taskerId, day1);
+        List<TaskTimeDto> result2 = taskRequestDao.getBusytime(taskerId, day2);
 
-        // Assert
         assertThat(result1).hasSize(1);
-        assertThat(result1).containsEntry(LocalDateTime.of(2025, 11, 20, 10, 0), 120);
+        assertThat(result1.get(0).getStartDate()).isEqualTo(LocalDateTime.of(2025, 11, 20, 10, 0));
+        assertThat(result1.get(0).getEstimation()).isEqualTo(120);
 
         assertThat(result2).hasSize(1);
-        assertThat(result2).containsEntry(LocalDateTime.of(2025, 11, 21, 14, 0), 60);
+        assertThat(result2.get(0).getStartDate()).isEqualTo(LocalDateTime.of(2025, 11, 21, 14, 0));
+        assertThat(result2.get(0).getEstimation()).isEqualTo(60);
 
         verify(jdbcTemplate, times(2)).query(
                 anyString(),
@@ -244,12 +247,27 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
 
     @Test
     void testGetBusytime_WithMultipleTasksOnSameDay() {
-        // Arrange
-        Map<LocalDateTime, Integer> expectedBusyTimes = new HashMap<>();
-        expectedBusyTimes.put(LocalDateTime.of(2025, 11, 20, 8, 0), 60);
-        expectedBusyTimes.put(LocalDateTime.of(2025, 11, 20, 10, 0), 120);
-        expectedBusyTimes.put(LocalDateTime.of(2025, 11, 20, 14, 0), 90);
-        expectedBusyTimes.put(LocalDateTime.of(2025, 11, 20, 16, 0), 30);
+        List<TaskTimeDto> expectedBusyTimes = new ArrayList<>();
+        expectedBusyTimes.add(TaskTimeDto.builder()
+                .taskID(1L)
+                .startDate(LocalDateTime.of(2025, 11, 20, 8, 0))
+                .estimation(60)
+                .build());
+        expectedBusyTimes.add(TaskTimeDto.builder()
+                .taskID(2L)
+                .startDate(LocalDateTime.of(2025, 11, 20, 10, 0))
+                .estimation(120)
+                .build());
+        expectedBusyTimes.add(TaskTimeDto.builder()
+                .taskID(3L)
+                .startDate(LocalDateTime.of(2025, 11, 20, 14, 0))
+                .estimation(90)
+                .build());
+        expectedBusyTimes.add(TaskTimeDto.builder()
+                .taskID(4L)
+                .startDate(LocalDateTime.of(2025, 11, 20, 16, 0))
+                .estimation(30)
+                .build());
 
         LocalDateTime startOfDay = testDay.atStartOfDay();
         LocalDateTime endOfDay = testDay.plusDays(1).atStartOfDay();
@@ -262,22 +280,19 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
                 eq(Timestamp.valueOf(endOfDay))
         )).thenReturn(expectedBusyTimes);
 
-        // Act
-        Map<LocalDateTime, Integer> result = taskRequestDao.getBusytime(taskerId, testDay);
+        List<TaskTimeDto> result = taskRequestDao.getBusytime(taskerId, testDay);
 
-        // Assert
         assertThat(result).hasSize(4);
-        assertThat(result).containsAllEntriesOf(expectedBusyTimes);
+        assertThat(result).isEqualTo(expectedBusyTimes);
     }
 
     @Test
     void testGetBusytime_VerifiesCorrectDateRange() {
-        // Arrange
         LocalDate day = LocalDate.of(2025, 11, 20);
-        LocalDateTime expectedStartOfDay = day.atStartOfDay(); // 2025-11-20 00:00:00
-        LocalDateTime expectedEndOfDay = day.plusDays(1).atStartOfDay(); // 2025-11-21 00:00:00
+        LocalDateTime expectedStartOfDay = day.atStartOfDay();
+        LocalDateTime expectedEndOfDay = day.plusDays(1).atStartOfDay();
 
-        Map<LocalDateTime, Integer> emptyBusyTimes = new HashMap<>();
+        List<TaskTimeDto> emptyBusyTimes = new ArrayList<>();
         when(jdbcTemplate.query(
                 anyString(),
                 eq(taskerBusyTimeMapper),
@@ -286,10 +301,8 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
                 any(Timestamp.class)
         )).thenReturn(emptyBusyTimes);
 
-        // Act
         taskRequestDao.getBusytime(taskerId, day);
 
-        // Assert
         verify(jdbcTemplate).query(
                 anyString(),
                 eq(taskerBusyTimeMapper),
@@ -301,15 +314,22 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
 
     @Test
     void testGetBusytime_WithDifferentTaskerIds() {
-        // Arrange
         Long taskerId1 = 1L;
         Long taskerId2 = 2L;
 
-        Map<LocalDateTime, Integer> busyTimes1 = new HashMap<>();
-        busyTimes1.put(LocalDateTime.of(2025, 11, 20, 10, 0), 120);
+        List<TaskTimeDto> busyTimes1 = new ArrayList<>();
+        busyTimes1.add(TaskTimeDto.builder()
+                .taskID(1L)
+                .startDate(LocalDateTime.of(2025, 11, 20, 10, 0))
+                .estimation(120)
+                .build());
 
-        Map<LocalDateTime, Integer> busyTimes2 = new HashMap<>();
-        busyTimes2.put(LocalDateTime.of(2025, 11, 20, 14, 0), 60);
+        List<TaskTimeDto> busyTimes2 = new ArrayList<>();
+        busyTimes2.add(TaskTimeDto.builder()
+                .taskID(2L)
+                .startDate(LocalDateTime.of(2025, 11, 20, 14, 0))
+                .estimation(60)
+                .build());
 
         when(jdbcTemplate.query(
                 anyString(),
@@ -319,11 +339,9 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
                 any(Timestamp.class)
         )).thenReturn(busyTimes1, busyTimes2);
 
-        // Act
-        Map<LocalDateTime, Integer> result1 = taskRequestDao.getBusytime(taskerId1, testDay);
-        Map<LocalDateTime, Integer> result2 = taskRequestDao.getBusytime(taskerId2, testDay);
+        List<TaskTimeDto> result1 = taskRequestDao.getBusytime(taskerId1, testDay);
+        List<TaskTimeDto> result2 = taskRequestDao.getBusytime(taskerId2, testDay);
 
-        // Assert
         assertThat(result1).hasSize(1);
         assertThat(result2).hasSize(1);
 
@@ -342,16 +360,14 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
                 any(Timestamp.class)
         );
     }
+
     @Test
     void testCheckAvailability_ReturnsAvailable() {
-        // Arrange
         when(jdbcTemplate.queryForObject(anyString(), eq(String.class), eq(taskerId)))
                 .thenReturn("AVAILABLE");
 
-        // Act
         TaskerAvailability result = taskRequestDao.CheckAvailability(taskerId);
 
-        // Assert
         assertThat(result).isEqualTo(TaskerAvailability.AVAILABLE);
 
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
@@ -365,42 +381,35 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
 
     @Test
     void testCheckAvailability_ReturnsUnavailable() {
-        // Arrange
         when(jdbcTemplate.queryForObject(anyString(), eq(String.class), eq(taskerId)))
                 .thenReturn("UNAVAILABLE");
 
-        // Act
         TaskerAvailability result = taskRequestDao.CheckAvailability(taskerId);
 
-        // Assert
         assertThat(result).isEqualTo(TaskerAvailability.UNAVAILABLE);
         verify(jdbcTemplate).queryForObject(anyString(), eq(String.class), eq(taskerId));
     }
+
     @Test
     void testCheckAvailability_ReturnsUnavailable_WhenNull() {
-        // Arrange
         when(jdbcTemplate.queryForObject(anyString(), eq(String.class), eq(taskerId)))
                 .thenReturn(null);
 
-        // Act
         TaskerAvailability result = taskRequestDao.CheckAvailability(taskerId);
 
-        // Assert
         assertThat(result).isEqualTo(TaskerAvailability.UNAVAILABLE);
         verify(jdbcTemplate).queryForObject(anyString(), eq(String.class), eq(taskerId));
     }
+
     @Test
     void testGetEstimation_ReturnsEstimation_WhenTaskExists() {
-        // Arrange
         int expectedEstimation = 120;
 
         when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(taskId)))
                 .thenReturn(expectedEstimation);
 
-        // Act
         int result = taskRequestDao.getEstimation(taskId);
 
-        // Assert
         assertThat(result).isEqualTo(expectedEstimation);
 
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
@@ -414,50 +423,40 @@ class TaskRequestDaoEstimationAndBusyTimeTest {
 
     @Test
     void testGetEstimation_ReturnsZero_WhenEstimationIsNull() {
-        // Arrange
         when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(taskId)))
                 .thenReturn(null);
 
-        // Act
         int result = taskRequestDao.getEstimation(taskId);
 
-        // Assert
         assertThat(result).isEqualTo(0);
         verify(jdbcTemplate).queryForObject(anyString(), eq(Integer.class), eq(taskId));
     }
 
     @Test
     void testGetEstimation_ReturnsZero_WhenTaskNotFound() {
-        // Arrange
         Long nonExistentTaskId = 999L;
 
         when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(nonExistentTaskId)))
                 .thenThrow(new EmptyResultDataAccessException(1));
 
-        // Act
         int result = taskRequestDao.getEstimation(nonExistentTaskId);
 
-        // Assert
         assertThat(result).isEqualTo(0);
         verify(jdbcTemplate).queryForObject(anyString(), eq(Integer.class), eq(nonExistentTaskId));
     }
+
     @Test
     void testAddEstimation_ThrowsException_WhenTaskNotFound() {
-        // Arrange
         int estimationMinutes = 120;
         Long nonExistentTaskId = 999L;
 
-        // Mock 0 rows affected (task doesn't exist)
         when(jdbcTemplate.update(anyString(), eq(estimationMinutes), eq(nonExistentTaskId)))
                 .thenReturn(0);
 
-        // Act & Assert
-        assertThatThrownBy(() -> taskRequestDao.add(nonExistentTaskId, estimationMinutes))
+        assertThatThrownBy(() -> taskRequestDao.addEstimation(nonExistentTaskId, estimationMinutes))
                 .isInstanceOf(TaskNotFoundException.class)
                 .hasMessageContaining("Task not found with ID: " + nonExistentTaskId);
 
         verify(jdbcTemplate).update(anyString(), eq(estimationMinutes), eq(nonExistentTaskId));
     }
-
 }
-

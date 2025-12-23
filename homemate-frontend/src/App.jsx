@@ -83,10 +83,10 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="ROLE_USER">
             <SubmitReviewPage />
-            </ProtectedRoute>
-            }
-            />
-      <Route      
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/report/submit/:taskId"
         element={
           <ProtectedRoute>
@@ -152,12 +152,15 @@ function App() {
   );
 }
 
+import { WebSocketProvider } from "./contexts/WebSocketContext";
+
 function AppWrapper() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <GlobalPresence />
-        <App />
+        <WebSocketProvider>
+          <App />
+        </WebSocketProvider>
       </AuthProvider>
     </BrowserRouter>
   );

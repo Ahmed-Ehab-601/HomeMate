@@ -11,7 +11,10 @@ import {
   TablePagination,
   Chip,
   LinearProgress,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
+import { Email } from '@mui/icons-material';
 
 const ReportTable = ({
   rows = [],
@@ -20,6 +23,7 @@ const ReportTable = ({
   onPageChange,
   onRowsPerPageChange,
   onViewDetails,
+  onRespond,
 }) => {
   const getStatusStyle = (status) => {
     switch (status?.toLowerCase()) {
@@ -133,17 +137,18 @@ const ReportTable = ({
             >
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: '12%' }}>Report ID</TableCell>
-                  <TableCell sx={{ width: '36%' }}>Header</TableCell>
-                  <TableCell sx={{ width: '12%' }}>Task ID</TableCell>
-                  <TableCell sx={{ width: '20%' }}>Reporter</TableCell>
-                  <TableCell sx={{ width: '20%' }}>Status</TableCell>
+                  <TableCell sx={{ width: '10%' }}>Report ID</TableCell>
+                  <TableCell sx={{ width: '30%' }}>Header</TableCell>
+                  <TableCell sx={{ width: '10%' }}>Task ID</TableCell>
+                  <TableCell sx={{ width: '15%' }}>Reporter</TableCell>
+                  <TableCell sx={{ width: '15%' }}>Status</TableCell>
+                  <TableCell sx={{ width: '20%' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {rows.length === 0 && !loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                       No reports found
                     </TableCell>
                   </TableRow>
@@ -152,7 +157,7 @@ const ReportTable = ({
                     <TableRow
                       key={row.reportID}
                       hover
-                      sx={{ 
+                      sx={{
                         '&:last-child td, &:last-child th': { border: 0 },
                         cursor: 'pointer'
                       }}
@@ -177,11 +182,24 @@ const ReportTable = ({
                         />
                       </TableCell>
                       <TableCell>
-                        <Chip 
-                          label={row.adminStatus || 'Pending'} 
+                        <Chip
+                          label={row.adminStatus || 'Pending'}
                           size="small"
                           sx={getStatusStyle(row.adminStatus)}
                         />
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        {row.adminStatus?.toLowerCase() === 'done' && (
+                          <Tooltip title="Respond via Email">
+                            <IconButton
+                              size="small"
+                              onClick={() => onRespond && onRespond(row.reportID)}
+                              color="primary"
+                            >
+                              <Email />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))

@@ -7,10 +7,7 @@ import com.homemate.notification.service.EmailService;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dao.TaskRescheduleDao;
 import com.homemate.taskmanagement.dao.TaskStatusDao;
-import com.homemate.taskmanagement.dto.RescheduleRequestDto;
-import com.homemate.taskmanagement.dto.RescheduleResponseDto;
-import com.homemate.taskmanagement.dto.StatusDto;
-import com.homemate.taskmanagement.dto.TaskDto;
+import com.homemate.taskmanagement.dto.*;
 import com.homemate.taskmanagement.exceptions.BadRescheduleException;
 import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
 import com.homemate.taskmanagement.model.Status;
@@ -19,6 +16,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -96,31 +94,40 @@ public class TaskRescheduleService {
                 (status.get() != Status.InReview && status.get() != Status.Accepted)) {
             throw new BadRescheduleException("Task must be InReview or Accepted");
         }
-        if(checkValidEstimation(taskID)==false) {
-            throw new BadRescheduleException("Task must be Rescheduled to valid Time");
+
+        if(checkValidEstimation(taskID,rescheduleRequestDto.getNewStartDate())==false) {
+            throw new BadRescheduleException("Cannot reschedule: This time slot conflicts with another scheduled task");
         }
+
         LocalDateTime newStart = rescheduleRequestDto.getNewStartDate();
         if (newStart.isBefore(LocalDateTime.now())) {
             throw new BadRescheduleException("New date cannot be in the past");
         }
     }
-    public Boolean checkValidEstimation(Long taskId) {
+    public Boolean checkValidEstimation(Long taskId, LocalDateTime newStartDateTime) {
         Optional<TaskDto> taskDto = taskRequestDao.getTaskDetails(taskId);
         if (taskDto.isEmpty()) return false;
-        int estimation=taskRequestDao.getEstimation(taskId);
-        Map<LocalDateTime, Integer> mp = taskRequestDao.getBusytime(
+
+        int estimation = taskRequestDao.getEstimation(taskId);
+
+        List<TaskTimeDto> busyTimes = taskRequestDao.getBusytime(
                 taskDto.get().getTaskerID(),
-                taskDto.get().getStartDate().toLocalDate()
+                newStartDateTime.toLocalDate()
         );
 
-        LocalDateTime startDateTime = taskDto.get().getStartDate();
-        LocalDateTime endDateTime = startDateTime.plusMinutes(estimation);
+        LocalDateTime endDateTime = newStartDateTime.plusMinutes(estimation);
 
-        for (Map.Entry<LocalDateTime, Integer> entry : mp.entrySet()) {
-            LocalDateTime busyStart = entry.getKey();
-            LocalDateTime busyEnd = busyStart.plusMinutes(entry.getValue());
+        for (TaskTimeDto busyTime : busyTimes) {
+            // Skip the current task being rescheduled
+            if (busyTime.getTaskID().equals(taskId)) {
+                continue;
+            }
 
-            if (startDateTime.isBefore(busyEnd) && endDateTime.isAfter(busyStart)) {
+            LocalDateTime busyStart = busyTime.getStartDate();
+            LocalDateTime busyEnd = busyStart.plusMinutes(busyTime.getEstimation());
+
+            // Check for overlap
+            if (newStartDateTime.isBefore(busyEnd) && endDateTime.isAfter(busyStart)) {
                 return false;
             }
         }

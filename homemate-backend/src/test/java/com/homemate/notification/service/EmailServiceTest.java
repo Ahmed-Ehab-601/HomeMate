@@ -1033,5 +1033,39 @@ class EmailServiceTest {
             assertFalse(response.isSuccess());
             assertNotNull(response.getMessage());
         }
+    
+
+    @Test
+    void testSendDirectEmail_Success() throws ExecutionException, InterruptedException {
+        String to = "test@example.com";
+        String subject = "Test Subject";
+        String body = "Test Body";
+
+        TaskResponse response = underTest.sendDirectEmail(to, subject, body).get();
+
+        assertTrue(response.isSuccess());
+        verify(javaMailSender).send(any(SimpleMailMessage.class));
+        ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(javaMailSender).send(captor.capture());
+        
+        SimpleMailMessage sentMessage = captor.getValue();
+        assertEquals(to, sentMessage.getTo()[0]);
+        assertEquals(subject, sentMessage.getSubject());
+        assertEquals(body, sentMessage.getText());
+        assertEquals(HOMEMATE_EMAIL, sentMessage.getFrom());
     }
 
+    @Test
+    void testSendDirectEmail_Failure() throws ExecutionException, InterruptedException {
+        String to = "test@example.com"; 
+        String subject = "Test Subject";
+        String body = "Test Body";
+
+        doThrow(new MailSendException("Failed")).when(javaMailSender).send(any(SimpleMailMessage.class));
+
+        TaskResponse response = underTest.sendDirectEmail(to, subject, body).get();
+
+        assertFalse(response.isSuccess());
+        assertTrue(response.getMessage().contains("Failed to send email"));
+    }
+}

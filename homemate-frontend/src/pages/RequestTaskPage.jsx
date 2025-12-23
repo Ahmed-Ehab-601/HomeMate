@@ -73,7 +73,7 @@ function RequestTaskPage() {
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
   const [duplicateMessage, setDuplicateMessage] = useState("");
   const [limitError, setLimitError] = useState("");
-  const [busyTimes, setBusyTimes] = useState({});
+  const [busyTimes, setBusyTimes] = useState([]);
   const [loadingBusyTime, setLoadingBusyTime] = useState(false);
   const [taskerUnavailable, setTaskerUnavailable] = useState(false);
 
@@ -147,7 +147,7 @@ function RequestTaskPage() {
   // Fetch busy time when date is selected
   useEffect(() => {
     if (!dateValue || !tasker?.id) {
-      setBusyTimes({});
+      setBusyTimes([]);
       setTimeValue(""); // Clear time when date changes
       setTaskerUnavailable(false);
       return;
@@ -155,7 +155,7 @@ function RequestTaskPage() {
 
     // Reset time when date changes
     setTimeValue("");
-    setBusyTimes({});
+    setBusyTimes([]);
     setTaskerUnavailable(false);
     // Clear error banner if it was about unavailability
     if (errorBanner?.message?.includes("unavailable")) {
@@ -167,7 +167,7 @@ function RequestTaskPage() {
       setTaskerUnavailable(false);
       try {
         const busyTimeData = await getTaskerBusyTime(tasker.id, dateValue);
-        setBusyTimes(busyTimeData || {});
+        setBusyTimes(busyTimeData || []);
         setTaskerUnavailable(false);
         // Clear error banner on successful fetch
         if (errorBanner?.message?.includes("unavailable")) {
@@ -184,7 +184,7 @@ function RequestTaskPage() {
           errorMessage.toLowerCase().includes("unavailable")
         ) {
           setTaskerUnavailable(true);
-          setBusyTimes({});
+          setBusyTimes([]);
           setTimeValue(""); // Clear selected time
           // Show notification banner
           setErrorBanner({
@@ -192,7 +192,7 @@ function RequestTaskPage() {
           });
         } else {
           setTaskerUnavailable(false);
-          setBusyTimes({});
+          setBusyTimes([]);
         }
       } finally {
         setLoadingBusyTime(false);
@@ -223,67 +223,47 @@ function RequestTaskPage() {
     })();
 
   // Check if a time slot is busy
-  // Uses local date/time components to avoid timezone conversion issues
+  // busyTimes is now an array of TaskTimeDto: [{taskID, startDate, estimation}, ...]
   const isTimeSlotBusy = (timeSlot) => {
-    if (!dateValue || Object.keys(busyTimes).length === 0) return false;
+    if (!dateValue || busyTimes.length === 0) return false;
 
     const [slotHours, slotMinutes] = timeSlot.split(":").map(Number);
-    
-    // Parse the selected date (YYYY-MM-DD format)
     const [year, month, day] = dateValue.split("-").map(Number);
     
-    // Create slot time as a Date object in local timezone (no timezone conversion)
-    const slotDateTime = new Date(year, month - 1, day, slotHours, slotMinutes, 0, 0);
-    const slotDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    // Slot start and end in minutes from midnight
+    const slotStartMinutes = slotHours * 60 + slotMinutes;
+    const slotEndMinutes = slotStartMinutes + 30; // 30 minutes slot duration
 
     // Check each busy time interval
-    // estimation comes from backend as minutes
-    for (const [busyStartStr, estimationMinutes] of Object.entries(busyTimes)) {
-      // Parse the busy start date string from backend
-      // Backend returns LocalDateTime which serializes to ISO format
-      // We need to extract the local time components, not rely on timezone conversion
-      let busyStart;
+    for (const busyTime of busyTimes) {
       try {
-        busyStart = new Date(busyStartStr);
+        const busyStart = new Date(busyTime.startDate);
+        const busyYear = busyStart.getFullYear();
+        const busyMonth = busyStart.getMonth();
+        const busyDay = busyStart.getDate();
+        const busyHours = busyStart.getHours();
+        const busyMins = busyStart.getMinutes();
+        
+        // Only check if dates match
+        if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
+          continue;
+        }
+        
+        // Calculate busy period in minutes
+        const busyStartMinutes = busyHours * 60 + busyMins;
+        const busyEndMinutes = busyStartMinutes + busyTime.estimation;
+        
+        // Check for overlap
+        if (
+          (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
+          (slotEndMinutes > busyStartMinutes && slotEndMinutes <= busyEndMinutes) ||
+          (slotStartMinutes <= busyStartMinutes && slotEndMinutes >= busyEndMinutes)
+        ) {
+          return true;
+        }
       } catch (e) {
-        console.warn("Failed to parse busy start date:", busyStartStr);
+        console.warn("Failed to parse busy time:", busyTime, e);
         continue;
-      }
-      
-      // Extract date components in local timezone
-      const busyYear = busyStart.getFullYear();
-      const busyMonth = busyStart.getMonth();
-      const busyDay = busyStart.getDate();
-      const busyHours = busyStart.getHours();
-      const busyMins = busyStart.getMinutes();
-      
-      // Reconstruct busy start in local timezone (no timezone conversion)
-      const busyStartLocal = new Date(busyYear, busyMonth, busyDay, busyHours, busyMins, 0, 0);
-      const busyEndLocal = new Date(busyStartLocal.getTime() + estimationMinutes * 60 * 1000);
-      
-      // Compare dates first to ensure we're on the same day
-      // Compare date components directly to avoid timezone issues
-      const slotDate = `${slotDateTime.getFullYear()}-${String(slotDateTime.getMonth() + 1).padStart(2, '0')}-${String(slotDateTime.getDate()).padStart(2, '0')}`;
-      const busyDate = `${busyYear}-${String(busyMonth + 1).padStart(2, '0')}-${String(busyDay).padStart(2, '0')}`;
-      
-      // Only check if dates match
-      if (slotDate !== busyDate) {
-        continue;
-      }
-      
-      // Now compare times using minute-based calculations (more reliable)
-      const slotStartMinutes = slotHours * 60 + slotMinutes;
-      const slotEndMinutes = slotStartMinutes + 30; // 30 minutes slot duration
-      const busyStartMinutes = busyHours * 60 + busyMins;
-      const busyEndMinutes = busyStartMinutes + estimationMinutes;
-      
-      // Check if slot overlaps with busy period
-      if (
-        (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
-        (slotEndMinutes > busyStartMinutes && slotEndMinutes <= busyEndMinutes) ||
-        (slotStartMinutes <= busyStartMinutes && slotEndMinutes >= busyEndMinutes)
-      ) {
-        return true;
       }
     }
 

@@ -225,6 +225,16 @@ export const getReports = async ({
     return data;
 };
 
+export const respondToReport = async (reportId, message) => {
+    return apiFetch(`/api/reports/${reportId}/response`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+    });
+};
+
 export default {
     getUsers,
     getTaskers,
@@ -245,4 +255,5 @@ export default {
     suspendUsers,
     reactiveUsers,
     getReports,
+    respondToReport,
 };

@@ -277,7 +277,7 @@ export async function completeTask(taskId) {
  * @param {number} taskerId - ID of the tasker
  * @param {string} day - Date in YYYY-MM-DD format
  * @param {string} userRole - User role ("ROLE_TASKER" or "ROLE_USER")
- * @returns {Promise<Object>} Map of LocalDateTime to estimation hours
+ * @returns {Promise<Array>} Array of TaskTimeDto objects: [{taskID, startDate, estimation}, ...]
  */
 export async function getTaskerBusyTime(taskerId, day, userRole) {
     // Choose endpoint based on user role
@@ -319,9 +319,10 @@ export async function getTaskerBusyTime(taskerId, day, userRole) {
 
     const data = await response.json();
     
-    // If empty response, return empty object
-    if (!data || Object.keys(data).length === 0) {
-        return {};
+    // Backend now returns List<TaskTimeDto>
+    // If empty response, return empty array
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        return [];
     }
     
     return data;
@@ -330,7 +331,7 @@ export async function getTaskerBusyTime(taskerId, day, userRole) {
 /**
  * Add estimation time to a task
  * @param {number} taskId - ID of the task
- * @param {number} estimation - Estimation in hours
+ * @param {number} estimation - Estimation in MINUTES (not hours)
  * @returns {Promise<void>}
  */
 export async function addTaskEstimation(taskId, estimation) {
@@ -353,18 +354,57 @@ export async function addTaskEstimation(taskId, estimation) {
         };
     }
 
+    // No content expected, just return success
     return;
 }
-// Get estimation only
-export const getTaskEstimation = async (taskId, userRole) => {
-  const endpoint = userRole === 'ROLE_TASKER' 
-    ? `/task/get-taskDetails-estimation/${taskId}`
-    : `/task/get-taskDetails-estimation-user/${taskId}`;
-  
-  const response = await axios.get(`${API_BASE_URL}${endpoint}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  
-  return response.data; // integer in minutes
-};
 
+/**
+ * Get estimation for a task
+ * @param {number} taskId - ID of the task
+ * @param {string} userRole - User role ("ROLE_TASKER" or "ROLE_USER")
+ * @returns {Promise<number>} Estimation in MINUTES
+ */
+export async function getTaskEstimation(taskId, userRole) {
+    const endpoint = userRole === 'ROLE_TASKER' 
+        ? `${baseUrl}/api/task/get-taskDetails-estimation/${taskId}`
+        : `${baseUrl}/api/task/get-taskDetails-estimation-user/${taskId}`;
+    
+    const response = await apiFetch(endpoint, {
+        method: "GET",
+    }).catch((error) => {
+        throw {
+            status: 0,
+            error: "NETWORK_ERROR",
+            message: "Network error. Please check your connection.",
+        };
+    });
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        
+        if (response.status === 404) {
+            throw {
+                status: 404,
+                error: data.error || "NOT_FOUND",
+                message: data.message || "Task not found",
+            };
+        }
+
+        if (response.status === 400) {
+            throw {
+                status: 400,
+                error: data.error || "BAD_REQUEST",
+                message: data.message || "Invalid task or no estimation available",
+            };
+        }
+
+        throw {
+            status: response.status,
+            error: data.error || "SERVER_ERROR",
+            message: data.message || "Failed to load estimation",
+        };
+    }
+
+    // Backend returns integer (minutes)
+    return response.json();
+}

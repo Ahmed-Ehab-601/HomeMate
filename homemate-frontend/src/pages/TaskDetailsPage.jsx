@@ -113,7 +113,7 @@ function TaskDetailsPage() {
   const userRole = getUserRole();
   const isTasker = userRole === "ROLE_TASKER";
 const WORK_DAY_START_MINUTES = 8 * 60; // 08:00 = 480 minutes
-const WORK_DAY_END_MINUTES = 20 * 60 + 30; // 20:30 = 1230 minutes
+const WORK_DAY_END_MINUTES = 24 * 60 + 30; // 20:30 = 1230 minutes
   
   // Check for review submitted or request submitted success message
   useEffect(() => {
@@ -285,7 +285,7 @@ const WORK_DAY_END_MINUTES = 20 * 60 + 30; // 20:30 = 1230 minutes
   // Fetch busy time when reschedule date is selected
  useEffect(() => {
   if (!rescheduleDate || !task?.taskerID || !showRescheduleModal) {
-    setRescheduleBusyTimes({});
+    setRescheduleBusyTimes([]);
     setRescheduleTime("");
     return;
   }
@@ -295,9 +295,9 @@ const WORK_DAY_END_MINUTES = 20 * 60 + 30; // 20:30 = 1230 minutes
 
   const fetchBusyTimeAndEstimation = async () => {
     try {
-      // Fetch busy times (from both Task and Busy tables)
+      // Fetch busy times - now returns List<TaskTimeDto>
       const busyTimeData = await getTaskerBusyTime(task.taskerID, rescheduleDate, userRole);
-      setRescheduleBusyTimes(busyTimeData || {});
+      setRescheduleBusyTimes(busyTimeData || []);
       console.log("Busy times loaded for date:", rescheduleDate, busyTimeData);
 
       // Fetch task estimation separately (only if not already loaded)
@@ -313,86 +313,9 @@ const WORK_DAY_END_MINUTES = 20 * 60 + 30; // 20:30 = 1230 minutes
       }
     } catch (error) {
       console.error("Failed to fetch busy time:", error);
-      setRescheduleBusyTimes({});
+      setRescheduleBusyTimes([]);
     } finally {
       setLoadingRescheduleBusyTime(false);
-    }
-  };
-
-  fetchBusyTimeAndEstimation();
-}, [rescheduleDate, task?.taskerID, task?.taskID, showRescheduleModal, userRole, taskEstimation]);
-
-const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
-  const [hours, minutes] = timeSlot.split(":").map(Number);
-  const slotStartMinutes = hours * 60 + minutes;
-  const slotEndMinutes = slotStartMinutes + estimationMinutes;
-  
-  // Check if task would extend beyond working hours (20:30)
-  if (slotEndMinutes > WORK_DAY_END_MINUTES) {
-    console.log(`❌ Slot ${timeSlot}: Task would end at ${Math.floor(slotEndMinutes/60)}:${String(slotEndMinutes%60).padStart(2, '0')}, beyond 20:30`);
-    return false;
-  }
-  
-  return true;
-};
-
-// Check if a time slot is busy for reschedule
-  // Uses local date/time components to avoid timezone conversion issues
-  const isRescheduleTimeSlotBusy = (timeSlot) => {
-  if (!rescheduleDate || Object.keys(rescheduleBusyTimes).length === 0) {
-    return false;
-  }
-
-  const [slotHours, slotMinutes] = timeSlot.split(":").map(Number);
-  const [year, month, day] = rescheduleDate.split("-").map(Number);
-  
-  // Current task's estimation (in minutes)
-  const currentTaskEstMinutes = taskEstimation || 60;
-  
-  // Calculate slot start and end times in minutes from midnight
-  const slotStartMinutes = slotHours * 60 + slotMinutes;
-  const slotEndMinutes = slotStartMinutes + currentTaskEstMinutes;
-
-  // Check each busy time period (from BOTH Task table AND Busy table)
-  for (const [busyStartStr, busyEstimationMinutes] of Object.entries(rescheduleBusyTimes)) {
-    let busyStart;
-    try {
-      busyStart = new Date(busyStartStr);
-    } catch (e) {
-      console.warn("Failed to parse busy start date:", busyStartStr);
-      continue;
-    }
-    
-    // Extract date/time components in local timezone
-    const busyYear = busyStart.getFullYear();
-    const busyMonth = busyStart.getMonth();
-    const busyDay = busyStart.getDate();
-    const busyHours = busyStart.getHours();
-    const busyMins = busyStart.getMinutes();
-    
-    // Skip if this is the current task being rescheduled
-    if (task?.startDate) {
-      const taskStart = new Date(task.startDate);
-      const taskYear = taskStart.getFullYear();
-      const taskMonth = taskStart.getMonth();
-      const taskDay = taskStart.getDate();
-      const taskHours = taskStart.getHours();
-      const taskMins = taskStart.getMinutes();
-      
-      if (
-        busyYear === taskYear &&
-        busyMonth === taskMonth &&
-        busyDay === taskDay &&
-        busyHours === taskHours &&
-        busyMins === taskMins
-      ) {
-        continue; // Skip current task's busy period
-      }
-    }
-
-    // Only check if dates match
-    if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
-      continue;
     }
 
     // Calculate busy period start and end in minutes from midnight
@@ -416,6 +339,125 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
 
     if (hasOverlap) {
       return true;
+    }
+  }
+
+  return false;
+};
+
+  // Filter available time slots for reschedule
+  const availableRescheduleTimeSlots = timeSlots.filter((slot) => {
+  if (!rescheduleDate) return true;
+
+  // 1. Check if date is today and time has passed
+  const selectedDate = new Date(rescheduleDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  selectedDate.setHours(0, 0, 0, 0);
+  const isToday = selectedDate.getTime() === today.getTime();
+
+  if (isToday) {
+    const [hours, minutes] = slot.split(":").map(Number);
+    const slotTime = new Date();
+    slotTime.setHours(hours, minutes, 0, 0);
+    const now = new Date();
+    if (slotTime <= now) {
+      return false; // Past time slots
+    }
+  }
+
+  // 2. Check if there's enough time in the day to complete the task
+  const currentTaskEstMinutes = taskEstimation || 60;
+  if (!hasEnoughTimeToComplete(slot, currentTaskEstMinutes)) {
+    return false; // Not enough time before end of work day
+  }
+
+  // 3. Check if slot conflicts with busy times (from both Task and Busy tables)
+  return !isRescheduleTimeSlotBusy(slot);
+});
+
+  const formatDateForInput = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  fetchBusyTimeAndEstimation();
+}, [rescheduleDate, task?.taskerID, task?.taskID, showRescheduleModal, userRole, taskEstimation]);
+
+const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
+  const [hours, minutes] = timeSlot.split(":").map(Number);
+  const slotStartMinutes = hours * 60 + minutes;
+  const slotEndMinutes = slotStartMinutes + estimationMinutes;
+  
+  // Check if task would extend beyond working hours (20:30)
+  if (slotEndMinutes > WORK_DAY_END_MINUTES) {
+    console.log(`❌ Slot ${timeSlot}: Task would end at ${Math.floor(slotEndMinutes/60)}:${String(slotEndMinutes%60).padStart(2, '0')}, beyond 24:30`);
+    return false;
+  }
+  
+  return true;
+};
+
+// Check if a time slot is busy for reschedule
+  // Uses local date/time components to avoid timezone conversion issues
+  const isRescheduleTimeSlotBusy = (timeSlot) => {
+  if (!rescheduleDate || rescheduleBusyTimes.length === 0) {
+    return false;
+  }
+
+  const [slotHours, slotMinutes] = timeSlot.split(":").map(Number);
+  const [year, month, day] = rescheduleDate.split("-").map(Number);
+  
+  // Current task's estimation (in minutes)
+  const currentTaskEstMinutes = taskEstimation || 60;
+  
+  // Calculate slot start and end times in minutes from midnight
+  const slotStartMinutes = slotHours * 60 + slotMinutes;
+  const slotEndMinutes = slotStartMinutes + currentTaskEstMinutes;
+
+  // Check each busy time period (array of TaskTimeDto)
+  for (const busyTime of rescheduleBusyTimes) {
+    // ✅ SKIP THE CURRENT TASK BEING RESCHEDULED
+    if (busyTime.taskID === task?.taskID) {
+      continue;
+    }
+
+    try {
+      const busyStart = new Date(busyTime.startDate);
+      const busyYear = busyStart.getFullYear();
+      const busyMonth = busyStart.getMonth();
+      const busyDay = busyStart.getDate();
+      const busyHours = busyStart.getHours();
+      const busyMins = busyStart.getMinutes();
+      
+      // Only check if dates match
+      if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
+        continue;
+      }
+
+      // Calculate busy period start and end in minutes from midnight
+      const busyStartMinutes = busyHours * 60 + busyMins;
+      const busyEndMinutes = busyStartMinutes + busyTime.estimation;
+
+      // Check for ANY overlap between slot and busy period
+      const hasOverlap = (
+        (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
+        (slotEndMinutes > busyStartMinutes && slotEndMinutes <= busyEndMinutes) ||
+        (slotStartMinutes <= busyStartMinutes && slotEndMinutes >= busyEndMinutes) ||
+        (busyStartMinutes <= slotStartMinutes && busyEndMinutes >= slotEndMinutes) ||
+        (slotStartMinutes < busyStartMinutes && slotEndMinutes > busyStartMinutes)
+      );
+
+      if (hasOverlap) {
+        return true;
+      }
+    } catch (e) {
+      console.warn("Failed to parse busy time:", busyTime, e);
+      continue;
     }
   }
 
@@ -598,70 +640,59 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
     const endHour = Math.floor(newEndMinutes / 60);
     const endMin = newEndMinutes % 60;
     showErrorBanner(
-      `⌚ Cannot reschedule: This task would end at ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}, ` +
+      `⏰ Cannot reschedule: This task would end at ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}, ` +
       `which is beyond working hours (08:00 - 20:30). Please choose an earlier time.`
     );
     return;
   }
 
   // 2. Check if the ENTIRE task duration fits without conflicts
-  // The task needs continuous availability from start to end
-  for (const [busyStartStr, busyEstimationMinutes] of Object.entries(rescheduleBusyTimes || {})) {
-    const busyStart = new Date(busyStartStr);
-    const busyYear = busyStart.getFullYear();
-    const busyMonth = busyStart.getMonth();
-    const busyDay = busyStart.getDate();
-    const busyHours = busyStart.getHours();
-    const busyMins = busyStart.getMinutes();
-
-    // Only check same date
-    if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
+  for (const busyTime of rescheduleBusyTimes || []) {
+    // ✅ SKIP THE CURRENT TASK BEING RESCHEDULED
+    if (busyTime.taskID === task?.taskID) {
       continue;
     }
 
-    const busyStartMinutes = busyHours * 60 + busyMins;
-    const busyEndMinutes = busyStartMinutes + busyEstimationMinutes;
+    try {
+      const busyStart = new Date(busyTime.startDate);
+      const busyYear = busyStart.getFullYear();
+      const busyMonth = busyStart.getMonth();
+      const busyDay = busyStart.getDate();
+      const busyHours = busyStart.getHours();
+      const busyMins = busyStart.getMinutes();
 
-    // Skip current task's busy period
-    if (task?.startDate) {
-      const taskStart = new Date(task.startDate);
-      const taskYear = taskStart.getFullYear();
-      const taskMonth = taskStart.getMonth();
-      const taskDay = taskStart.getDate();
-      const taskHours = taskStart.getHours();
-      const taskMins = taskStart.getMinutes();
-
-      if (
-        busyYear === taskYear &&
-        busyMonth === taskMonth &&
-        busyDay === taskDay &&
-        busyHours === taskHours &&
-        busyMins === taskMins
-      ) {
+      // Only check same date
+      if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
         continue;
       }
-    }
 
-    // Check for ANY overlap (all 5 scenarios)
-    const hasOverlap = (
-      (newStartMinutes >= busyStartMinutes && newStartMinutes < busyEndMinutes) ||
-      (newEndMinutes > busyStartMinutes && newEndMinutes <= busyEndMinutes) ||
-      (newStartMinutes <= busyStartMinutes && newEndMinutes >= busyEndMinutes) ||
-      (busyStartMinutes <= newStartMinutes && busyEndMinutes >= newEndMinutes) ||
-      (newStartMinutes < busyStartMinutes && newEndMinutes > busyStartMinutes)
-    );
+      const busyStartMinutes = busyHours * 60 + busyMins;
+      const busyEndMinutes = busyStartMinutes + busyTime.estimation;
 
-    if (hasOverlap) {
-      const busyTimeStr = `${String(busyHours).padStart(2, '0')}:${String(busyMins).padStart(2, '0')}`;
-      const busyDurationHours = (busyEstimationMinutes / 60).toFixed(1);
-      const taskEndTime = `${String(Math.floor(newEndMinutes/60)).padStart(2, '0')}:${String(newEndMinutes%60).padStart(2, '0')}`;
-      
-      showErrorBanner(
-        `⌚ Cannot reschedule: Your task (${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} - ${taskEndTime}, ${(currentTaskEstMinutes/60).toFixed(1)}h) ` +
-        `would overlap with another scheduled period starting at ${busyTimeStr} (${busyDurationHours}h duration). ` +
-        `Please choose a different time slot that can accommodate the full ${(currentTaskEstMinutes/60).toFixed(1)} hour(s) needed.`
+      // Check for ANY overlap (all 5 scenarios)
+      const hasOverlap = (
+        (newStartMinutes >= busyStartMinutes && newStartMinutes < busyEndMinutes) ||
+        (newEndMinutes > busyStartMinutes && newEndMinutes <= busyEndMinutes) ||
+        (newStartMinutes <= busyStartMinutes && newEndMinutes >= busyEndMinutes) ||
+        (busyStartMinutes <= newStartMinutes && busyEndMinutes >= newEndMinutes) ||
+        (newStartMinutes < busyStartMinutes && newEndMinutes > busyStartMinutes)
       );
-      return;
+
+      if (hasOverlap) {
+        const busyTimeStr = `${String(busyHours).padStart(2, '0')}:${String(busyMins).padStart(2, '0')}`;
+        const busyDurationHours = (busyTime.estimation / 60).toFixed(1);
+        const taskEndTime = `${String(Math.floor(newEndMinutes/60)).padStart(2, '0')}:${String(newEndMinutes%60).padStart(2, '0')}`;
+        
+        showErrorBanner(
+          `⏰ Cannot reschedule: Your task (${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} - ${taskEndTime}, ${(currentTaskEstMinutes/60).toFixed(1)}h) ` +
+          `would overlap with another scheduled period starting at ${busyTimeStr} (${busyDurationHours}h duration). ` +
+          `Please choose a different time slot that can accommodate the full ${(currentTaskEstMinutes/60).toFixed(1)} hour(s) needed.`
+        );
+        return;
+      }
+    } catch (e) {
+      console.warn("Failed to parse busy time:", busyTime, e);
+      continue;
     }
   }
 
@@ -679,7 +710,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
     await loadTaskDetails();
   } catch (error) {
     setShowRescheduleModal(false);
-    showErrorBanner(`⌚ Failed to reschedule task. ${error.message}`);
+    showErrorBanner(`⏰ Failed to reschedule task. ${error.message}`);
   } finally {
     setIsSubmitting(false);
   }

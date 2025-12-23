@@ -31,5 +31,5 @@ public class TaskDto {
     private String userMail;
     @Email
     private String taskerMail;
-
+    private Integer estimation;
 }

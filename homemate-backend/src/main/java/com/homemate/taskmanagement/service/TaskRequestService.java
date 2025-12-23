@@ -8,6 +8,7 @@ import com.homemate.security.model.AppUserDetails;
 import com.homemate.taskmanagement.dao.TaskRequestDao;
 import com.homemate.taskmanagement.dto.TaskDto;
 import com.homemate.taskmanagement.dto.TaskRequestDto;
+import com.homemate.taskmanagement.dto.TaskTimeDto;
 import com.homemate.taskmanagement.exceptions.*;
 import com.homemate.taskmanagement.mappers.TaskMapper;
 import com.homemate.taskmanagement.model.TaskEntity;
@@ -82,30 +83,31 @@ public class TaskRequestService {
         }
     }
 
-    public Map<LocalDateTime, Integer> getAllBusyTime(Long taskerId, LocalDate day) {
+    public List<TaskTimeDto> getAllBusyTime(Long taskerId, LocalDate day) {
         if(TaskerAvailability.UNAVAILABLE.equals(taskRequestDao.CheckAvailability(taskerId))){
-           System.out.println("This Tasker is UNAVAILABLE Now");
-            throw new RuntimeException("This Tasker is UNAVAILABLE Now");
+            throw new BadEstimationException("UNAVAILABLE: This Tasker is UNAVAILABLE Now");
         }
 
         return taskRequestDao.getBusytime(taskerId,day);
     }
 
     public void addEstimation(Long taskId, int estimation, AppUserDetails userDetails) {
-        if (estimation<=0) throw new RuntimeException("estimation need to be > 0");
-        if(checkValidEstimation(estimation,taskId)==false) throw new RuntimeException("invalid estimation");;
+        if (estimation<=0) throw new BadEstimationException("estimation need to be > 0");
+
+        if(checkValidEstimation(estimation,taskId)==false) throw new BadEstimationException("Invalid estimation: This time slot conflicts with another scheduled task");
+
         Optional<TaskDto> taskDto= taskRequestDao.getTaskDetails(taskId);
         if(taskDto.isPresent() &&( taskDto.get().getTaskerID() == userDetails.getId())) {
-         taskRequestDao.add(taskId,estimation);
+         taskRequestDao.addEstimation(taskId,estimation);
         }
         else
-            throw new RuntimeException("This Tasker has no Access to that task");
+            throw new BadEstimationException("This Tasker has no Access to that task");
     }
     public Boolean checkValidEstimation(int estimation, Long taskId) {
         Optional<TaskDto> taskDto = taskRequestDao.getTaskDetails(taskId);
         if (taskDto.isEmpty()) return false;
 
-        Map<LocalDateTime, Integer> mp = taskRequestDao.getBusytime(
+        List<TaskTimeDto> busyTimes = taskRequestDao.getBusytime(
                 taskDto.get().getTaskerID(),
                 taskDto.get().getStartDate().toLocalDate()
         );
@@ -113,10 +115,12 @@ public class TaskRequestService {
         LocalDateTime startDateTime = taskDto.get().getStartDate();
         LocalDateTime endDateTime = startDateTime.plusMinutes(estimation);
 
-        for (Map.Entry<LocalDateTime, Integer> entry : mp.entrySet()) {
-            LocalDateTime busyStart = entry.getKey();
-            LocalDateTime busyEnd = busyStart.plusMinutes(entry.getValue());
-
+        for (TaskTimeDto busyTime : busyTimes) {
+            LocalDateTime busyStart = busyTime.getStartDate();
+            LocalDateTime busyEnd = busyStart.plusMinutes(busyTime.getEstimation());
+            if (busyTime.getTaskID().equals(taskId)) {
+                continue;
+            }
             if (startDateTime.isBefore(busyEnd) && endDateTime.isAfter(busyStart)) {
                 return false;
             }
