@@ -38,7 +38,7 @@ public class SignupTaskerController {
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody TaskerSignupDTO dto) {
 
-        if (dto.getVerifyToken() == null || dto.getVerifyToken().isEmpty()) {
+        if (dto.getVerifyToken() == null || dto.getVerifyToken().trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(NO_TOKEN);
         }
 

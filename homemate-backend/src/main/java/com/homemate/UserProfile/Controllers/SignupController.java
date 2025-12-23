@@ -37,7 +37,7 @@ public class SignupController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signupUser(@RequestBody SignupUserDTO signupUserDTO) {
-        if (signupUserDTO.getVerifyToken() == null || signupUserDTO.getVerifyToken().isEmpty()) {
+        if (signupUserDTO.getVerifyToken() == null || signupUserDTO.getVerifyToken().trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(NO_TOKEN);
         }
 
