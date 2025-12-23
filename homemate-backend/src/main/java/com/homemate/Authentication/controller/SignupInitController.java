@@ -30,7 +30,6 @@ public class SignupInitController {
     
     @PostMapping("/google/init")
     public ResponseEntity<?> initGoogleSignup(@RequestBody GoogleTokenDto googleTokenDto) {
-        // Verify Google token
         GoogleUserDto googleUser = googleTokenVerifierService.verify(googleTokenDto.getIdToken());
         
         if (googleUser == null) {
@@ -41,13 +40,9 @@ public class SignupInitController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email not verified by Google");
         }
 
-        // Generate verify token for this email
         String verifyToken = jwtService.generateVerifyToken(googleUser.getEmail());
-
-        // Generate username from email
         String username = googleUser.getEmail().split("@")[0];
 
-        // Create response with user details and verify token
         GoogleSignupResponseDTO response = new GoogleSignupResponseDTO(
             googleUser.getEmail(),
             googleUser.getGivenName(),

@@ -20,6 +20,11 @@ public class SignupTaskerController {
     private ValidateSignupService validateSignup;
     private JwtService jwtService;
 
+    private final String NO_TOKEN = "No verification token found";
+    private final String INVALID_TOKEN = "Invalid or expired verification token";
+    private final String EMAIL_MISMATCH = "Email does not match verified email";
+    private final String USER_ALREADY_EXISTS = "user with the same username or email already exists";
+
     SignupTaskerController(
         TaskerSignupService taskerSignupService, 
         ValidateSignupService validateSignup,
@@ -32,25 +37,27 @@ public class SignupTaskerController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody TaskerSignupDTO dto) {
-        // Validate verification token if provided
-        if (dto.getVerifyToken() != null && !dto.getVerifyToken().isEmpty()) {
-            String verifiedEmail = jwtService.validateVerifyToken(dto.getVerifyToken());
-            if (verifiedEmail == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired verification token");
-            }
-            // Ensure the email in the DTO matches the verified email
-            if (!verifiedEmail.equalsIgnoreCase(dto.getEmail())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email does not match verified email");
-            }
+
+        if (dto.getVerifyToken() == null || dto.getVerifyToken().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(NO_TOKEN);
         }
 
-        String error = validateSignup.validateTaskerSignup(dto);
-        if (error != null) 
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        String verifiedEmail = jwtService.validateVerifyToken(dto.getVerifyToken());
+        if (verifiedEmail == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(INVALID_TOKEN);
+        }
+
+        if (!verifiedEmail.equalsIgnoreCase(dto.getEmail())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(EMAIL_MISMATCH);
+        }
+
+        String errorMsg = validateSignup.validateTaskerSignup(dto);
+        if (errorMsg != null) 
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
 
         String jwt = taskerSignupService.registerTasker(dto);
         if (jwt == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("user with the same username or email already exists");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(USER_ALREADY_EXISTS);
         }
         return ResponseEntity.ok(jwt);
     }
