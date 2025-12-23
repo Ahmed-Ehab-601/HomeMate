@@ -130,7 +130,17 @@ public class TaskerAnalysisDao {
                 "SUM(CASE WHEN WorkedHours >= 70 AND WorkedHours < 80 THEN 1 ELSE 0 END) AS wh_70_80, " +
                 "SUM(CASE WHEN WorkedHours >= 80 AND WorkedHours < 90 THEN 1 ELSE 0 END) AS wh_80_90, " +
                 "SUM(CASE WHEN WorkedHours >= 90 AND WorkedHours < 100 THEN 1 ELSE 0 END) AS wh_90_100, " +
-                "SUM(CASE WHEN WorkedHours >= 100 THEN 1 ELSE 0 END) AS wh_100_plus " +
+                "SUM(CASE WHEN WorkedHours >= 100 AND WorkedHours < 110 THEN 1 ELSE 0 END) AS wh_100_110, " +
+                "SUM(CASE WHEN WorkedHours >= 110 AND WorkedHours < 120 THEN 1 ELSE 0 END) AS wh_110_120, " +
+                "SUM(CASE WHEN WorkedHours >= 120 AND WorkedHours < 130 THEN 1 ELSE 0 END) AS wh_120_130, " +
+                "SUM(CASE WHEN WorkedHours >= 130 AND WorkedHours < 140 THEN 1 ELSE 0 END) AS wh_130_140, " +
+                "SUM(CASE WHEN WorkedHours >= 140 AND WorkedHours < 150 THEN 1 ELSE 0 END) AS wh_140_150, " +
+                "SUM(CASE WHEN WorkedHours >= 150 AND WorkedHours < 160 THEN 1 ELSE 0 END) AS wh_150_160, " +
+                "SUM(CASE WHEN WorkedHours >= 160 AND WorkedHours < 170 THEN 1 ELSE 0 END) AS wh_160_170, " +
+                "SUM(CASE WHEN WorkedHours >= 170 AND WorkedHours < 180 THEN 1 ELSE 0 END) AS wh_170_180, " +
+                "SUM(CASE WHEN WorkedHours >= 180 AND WorkedHours < 190 THEN 1 ELSE 0 END) AS wh_180_190, " +
+                "SUM(CASE WHEN WorkedHours >= 190 AND WorkedHours < 200 THEN 1 ELSE 0 END) AS wh_190_200, " +
+                "SUM(CASE WHEN WorkedHours >= 200 THEN 1 ELSE 0 END) AS wh_200_plus " +
                 "FROM Tasker";
 
         return jdbcTemplate.query(sql, rs -> {
@@ -146,7 +156,17 @@ public class TaskerAnalysisDao {
                 ranges.put("70-80", rs.getLong("wh_70_80"));
                 ranges.put("80-90", rs.getLong("wh_80_90"));
                 ranges.put("90-100", rs.getLong("wh_90_100"));
-                ranges.put("100+", rs.getLong("wh_100_plus"));
+                ranges.put("100-110", rs.getLong("wh_100_110"));
+                ranges.put("110-120", rs.getLong("wh_110_120"));
+                ranges.put("120-130", rs.getLong("wh_120_130"));
+                ranges.put("130-140", rs.getLong("wh_130_140"));
+                ranges.put("140-150", rs.getLong("wh_140_150"));
+                ranges.put("150-160", rs.getLong("wh_150_160"));
+                ranges.put("160-170", rs.getLong("wh_160_170"));
+                ranges.put("170-180", rs.getLong("wh_170_180"));
+                ranges.put("180-190", rs.getLong("wh_180_190"));
+                ranges.put("190-200", rs.getLong("wh_190_200"));
+                ranges.put("200+", rs.getLong("wh_200_plus"));
             }
             return new WorkedHoursRangesResponse(ranges);
         });
