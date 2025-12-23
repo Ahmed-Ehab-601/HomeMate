@@ -36,7 +36,7 @@ public class OtpController {
     private String FORGOT_PASSWORD = "forgetpassword";
     private String INVALID_TYPE = "Invalid otp request type";
     private String USER_ALREADY_EXISTS = "User already exists with this email address";
-    private String NO_USER_EXISTS = "User not found with this email address";
+    private String NO_USER_EXISTS = "No user found with this email address";
     
     @PostMapping("/send/{type}")
     public ResponseEntity<OtpVerificationResult> sendOtp(
