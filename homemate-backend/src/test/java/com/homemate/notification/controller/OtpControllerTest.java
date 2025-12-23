@@ -152,7 +152,7 @@ class OtpControllerTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertFalse(response.getBody().isSuccess());
-        assertEquals("User not found with this email address", response.getBody().getMessage());
+        assertEquals("No user found with this email address", response.getBody().getMessage());
         verify(otpService, never()).sendOtp(any(EmailRequest.class));
     }
 
@@ -186,8 +186,6 @@ class OtpControllerTest {
         assertFalse(response.getBody().isSuccess());
         assertEquals("Invalid otp request type", response.getBody().getMessage());
     }
-
-    // ============ CASE INSENSITIVITY TESTS ============
 
     @Test
     void testSendOtpSignupCaseInsensitivity() throws ExecutionException, InterruptedException {
