@@ -54,8 +54,7 @@ public class ReportController {
             @AuthenticationPrincipal AppUserDetails userDetails) {
 
         boolean ok = reportService.submitReport(submitReport, userDetails);
-        if (ok)
-            return ResponseEntity.ok("Report Submitted");
+        if (ok) return ResponseEntity.ok("Report Submitted");
         return ResponseEntity.badRequest().body("Invalid report data or task not accessible");
     }
   
@@ -86,12 +85,16 @@ public class ReportController {
         try {
             reportService.respondToReport(reportID, request.getMessage());
             return ResponseEntity.ok("Response sent successfully");
+
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+
         }
     }
 }

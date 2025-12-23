@@ -213,11 +213,11 @@ const ReportTable = ({
           count={pagination.totalItems || 0}
           page={pagination.page || 0}
           onPageChange={(_, newPage) => onPageChange && onPageChange(newPage)}
-          rowsPerPage={pagination.size || 20}
+          rowsPerPage={pagination.size || 10}
           onRowsPerPageChange={(e) =>
             onRowsPerPageChange && onRowsPerPageChange(parseInt(e.target.value, 10))
           }
-          rowsPerPageOptions={[10, 20, 50, 100]}
+          rowsPerPageOptions={[10, 20, 30]}
           sx={{
             borderTop: '1px solid',
             borderColor: 'divider',

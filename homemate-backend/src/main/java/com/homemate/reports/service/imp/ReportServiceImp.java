@@ -18,7 +18,7 @@ import java.util.Optional;
 @Service
 public class ReportServiceImp implements IReportService {
 
-    private final int PAGE_SIZE_LIMIT = 100;
+    private final int PAGE_SIZE_LIMIT = 30;
     private final ReportDao reportDao;
     private final EmailService emailService;
 
@@ -30,22 +30,12 @@ public class ReportServiceImp implements IReportService {
     @Override
     public PaginatedResponse<ShortReport> getAllShortReports(int pageNumber, int pageSize, ReportFilterDto filterDto) {
         
-        // Validate limit
-        pageNumber = Math.min(pageNumber, PAGE_SIZE_LIMIT);
-
-        // Calculate offset
+        pageSize = Math.min(pageSize, PAGE_SIZE_LIMIT);
         long offset = (long) pageNumber * pageSize;
-
-        // Fetch reports for the current page with filters
         List<ShortReport> reports = reportDao.getAllShortReports((long) pageSize, offset, filterDto);
-
-        // Get total count of all reports with filters
         Long totalElements = reportDao.countAllReports(filterDto);
-
-        // Calculate total pages
         int totalPages = (int) Math.ceil((double) totalElements / pageSize);
 
-        // Build and return the paginated response
         return PaginatedResponse.<ShortReport>builder()
                 .data(reports)
                 .currentPage(pageNumber)
