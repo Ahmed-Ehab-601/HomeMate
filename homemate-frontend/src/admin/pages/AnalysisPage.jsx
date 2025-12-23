@@ -24,7 +24,6 @@ import {
     Legend,
     ResponsiveContainer,
 } from 'recharts';
-import PageHeader from '../components/common/PageHeader';
 import { 
     getUserGenderCount, 
     getUserStatusCounts, 
@@ -292,7 +291,7 @@ const AnalysisPage = () => {
     };
 
     return (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ px: 3 }}>
             <Card elevation={2} sx={{ mb: 3 }}>
                 <CardContent>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
