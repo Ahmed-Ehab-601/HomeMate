@@ -36,8 +36,8 @@ class UserAnalysisDaoTest {
         GenderCountResponse response = dao.fetchGenderCounts();
 
         assertThat(response).isNotNull();
-        assertThat(response.getMale()).isEqualTo(3L); // John, Bob, Charlie
-        assertThat(response.getFemale()).isEqualTo(3L); // Jane, Alice, Diana
+        assertThat(response.getMale()).isEqualTo(3L);
+        assertThat(response.getFemale()).isEqualTo(3L);
     }
 
     @Test
@@ -46,9 +46,9 @@ class UserAnalysisDaoTest {
         StatusCountsResponse response = dao.fetchStatusCounts();
 
         assertThat(response).isNotNull();
-        assertThat(response.getSuspended()).isEqualTo(2L); // Bob and Diana
-        assertThat(response.getAdminActive()).isEqualTo(0L); // No admins in test data
-        assertThat(response.getNonAdminActive()).isEqualTo(4L); // John, Jane, Alice, Charlie
+        assertThat(response.getSuspended()).isEqualTo(2L);
+        assertThat(response.getAdminActive()).isEqualTo(0L);
+        assertThat(response.getNonAdminActive()).isEqualTo(4L);
     }
 
     @Test
@@ -60,15 +60,13 @@ class UserAnalysisDaoTest {
         assertThat(response.getBuckets()).isNotNull();
         Map<String, Long> buckets = response.getBuckets();
 
-        // Verify some age ranges have data (based on birthdates in test data)
         Long total = buckets.values().stream().mapToLong(Long::longValue).sum();
-        assertThat(total).isEqualTo(6L); // Total users with birthdate
+        assertThat(total).isEqualTo(6L);
     }
 
     @Test
     @DisplayName("Should fetch new accounts within time ranges")
     void fetchNewAccountsCounts_mapsRanges() {
-        // Test data has users created from Jan to June 2023
         TimeRange range1 = new TimeRange(
                 LocalDateTime.of(2023, 1, 1, 0, 0),
                 LocalDateTime.of(2023, 4, 1, 0, 0)
@@ -83,8 +81,8 @@ class UserAnalysisDaoTest {
 
         assertThat(response).isNotNull();
         assertThat(response.getCounts()).hasSize(2);
-        assertThat(response.getCounts().get(0)).isEqualTo(3L); // John, Jane, Bob
-        assertThat(response.getCounts().get(1)).isEqualTo(3L); // Alice, Charlie, Diana
+        assertThat(response.getCounts().get(0)).isEqualTo(3L);
+        assertThat(response.getCounts().get(1)).isEqualTo(3L);
     }
 
     @Test
@@ -121,7 +119,6 @@ class UserAnalysisDaoTest {
         assertThat(response).isNotNull();
         Map<String, Long> buckets = response.getBuckets();
 
-        // Verify all expected age ranges are present
         assertThat(buckets).containsKeys("0-10", "10-20", "20-30", "30-40", "40-50", "50-60", "60+");
     }
 
@@ -134,6 +131,6 @@ class UserAnalysisDaoTest {
         long totalActive = response.getAdminActive() + response.getNonAdminActive();
         long totalSuspended = response.getSuspended();
 
-        assertThat(totalActive + totalSuspended).isEqualTo(6L); // Total users in test data
+        assertThat(totalActive + totalSuspended).isEqualTo(6L);
     }
 }

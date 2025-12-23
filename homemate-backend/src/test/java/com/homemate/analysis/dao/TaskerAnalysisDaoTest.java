@@ -31,8 +31,8 @@ class TaskerAnalysisDaoTest {
         GenderCountResponse response = dao.fetchGenderCounts();
 
         assertThat(response).isNotNull();
-        assertThat(response.getMale()).isEqualTo(3L); // Mike, Tom, James
-        assertThat(response.getFemale()).isEqualTo(2L); // Sarah, Emma
+        assertThat(response.getMale()).isEqualTo(3L);
+        assertThat(response.getFemale()).isEqualTo(2L);
     }
 
     @Test
@@ -41,8 +41,8 @@ class TaskerAnalysisDaoTest {
         TaskerStatusCountsResponse response = dao.fetchStatusCounts();
 
         assertThat(response).isNotNull();
-        assertThat(response.getSuspended()).isEqualTo(1L); // Tom
-        assertThat(response.getActive()).isEqualTo(4L); // Mike, Sarah, Emma, James
+        assertThat(response.getSuspended()).isEqualTo(1L);
+        assertThat(response.getActive()).isEqualTo(4L);
     }
 
     @Test
@@ -54,12 +54,10 @@ class TaskerAnalysisDaoTest {
         assertThat(response.getBuckets()).isNotNull();
         Map<String, Long> buckets = response.getBuckets();
 
-        // Verify all age ranges are present
         assertThat(buckets).containsKeys("0-10", "10-20", "20-30", "30-40", "40-50", "50-60", "60+");
         
-        // Verify total count
         Long total = buckets.values().stream().mapToLong(Long::longValue).sum();
-        assertThat(total).isEqualTo(5L); // Total taskers with birthdate
+        assertThat(total).isEqualTo(5L);
     }
 
     @Test
@@ -71,12 +69,10 @@ class TaskerAnalysisDaoTest {
         assertThat(response.getRanges()).isNotNull();
         Map<String, Long> ranges = response.getRanges();
 
-        // Verify all rating ranges are present
         assertThat(ranges).containsKeys("0-1", "1-2", "2-3", "3-4", "4-5");
         
-        // Verify data: ratings are 4.5, 4.8, 3.5, 4.2, 4.0
-        assertThat(ranges.get("3-4")).isEqualTo(1L); // 3.5
-        assertThat(ranges.get("4-5")).isEqualTo(4L); // 4.0, 4.2, 4.5, 4.8
+        assertThat(ranges.get("3-4")).isEqualTo(1L);
+        assertThat(ranges.get("4-5")).isEqualTo(4L);
     }
 
     @Test
@@ -88,12 +84,10 @@ class TaskerAnalysisDaoTest {
         assertThat(response.getRanges()).isNotNull();
         Map<String, Long> ranges = response.getRanges();
 
-        // Verify some ranges exist
         assertThat(ranges).isNotEmpty();
         
-        // Hour rates: 25.50, 30.00, 20.00, 28.00, 22.00
-        assertThat(ranges.get("20-30")).isEqualTo(4L); // 20.00, 22.00, 25.50, 28.00
-        assertThat(ranges.get("30-40")).isEqualTo(1L); // 30.00
+        assertThat(ranges.get("20-30")).isEqualTo(4L);
+        assertThat(ranges.get("30-40")).isEqualTo(1L);
     }
 
     @Test
@@ -105,19 +99,16 @@ class TaskerAnalysisDaoTest {
         assertThat(response.getRanges()).isNotNull();
         Map<String, Long> ranges = response.getRanges();
 
-        // Verify some ranges exist
         assertThat(ranges).isNotEmpty();
         
-        // WorkedHours: 20.00, 30.00, 15.00, 25.00, 18.00
-        assertThat(ranges.get("10-20")).isEqualTo(2L); // 15.00, 18.00
-        assertThat(ranges.get("20-30")).isEqualTo(2L); // 20.00, 25.00
-        assertThat(ranges.get("30-40")).isEqualTo(1L); // 30.00
+        assertThat(ranges.get("10-20")).isEqualTo(2L);
+        assertThat(ranges.get("20-30")).isEqualTo(2L);
+        assertThat(ranges.get("30-40")).isEqualTo(1L);
     }
 
     @Test
     @DisplayName("Should fetch new accounts within time ranges")
     void fetchNewAccountsCounts_mapsRanges() {
-        // Test data has taskers created from Jan to May 2023
         TimeRange range1 = new TimeRange(
                 LocalDateTime.of(2023, 1, 1, 0, 0),
                 LocalDateTime.of(2023, 3, 31, 23, 59)
@@ -132,8 +123,8 @@ class TaskerAnalysisDaoTest {
 
         assertThat(response).isNotNull();
         assertThat(response.getCounts()).hasSize(2);
-        assertThat(response.getCounts().get(0)).isEqualTo(3L); // Mike, Sarah, Tom
-        assertThat(response.getCounts().get(1)).isEqualTo(2L); // Emma, James
+        assertThat(response.getCounts().get(0)).isEqualTo(3L);
+        assertThat(response.getCounts().get(1)).isEqualTo(2L);
     }
 
     @Test
@@ -146,11 +137,10 @@ class TaskerAnalysisDaoTest {
         assertThat(response).isNotNull();
         assertThat(response.getCounts()).isNotNull();
         
-        // Service distribution: Mike(1), Sarah(2), Tom(3), Emma(4), James(1)
-        assertThat(response.getCounts().get(1L)).isEqualTo(2L); // Plumbing
-        assertThat(response.getCounts().get(2L)).isEqualTo(1L); // Electrical
-        assertThat(response.getCounts().get(3L)).isEqualTo(1L); // Cleaning
-        assertThat(response.getCounts().get(4L)).isEqualTo(1L); // Painting
+        assertThat(response.getCounts().get(1L)).isEqualTo(2L);
+        assertThat(response.getCounts().get(2L)).isEqualTo(1L);
+        assertThat(response.getCounts().get(3L)).isEqualTo(1L);
+        assertThat(response.getCounts().get(4L)).isEqualTo(1L);
     }
 
     @Test
@@ -173,7 +163,6 @@ class TaskerAnalysisDaoTest {
         assertThat(response).isNotNull();
         assertThat(response.getCounts()).isNotNull();
         
-        // City distribution: Cairo(3), Alexandria(1), Giza(1)
         assertThat(response.getCounts().get("Cairo")).isEqualTo(3L);
         assertThat(response.getCounts().get("Alexandria")).isEqualTo(1L);
         assertThat(response.getCounts().get("Giza")).isEqualTo(1L);
@@ -218,6 +207,6 @@ class TaskerAnalysisDaoTest {
 
         assertThat(response).isNotNull();
         long total = response.getActive() + response.getSuspended();
-        assertThat(total).isEqualTo(5L); // Total taskers in test data
+        assertThat(total).isEqualTo(5L);
     }
 }
