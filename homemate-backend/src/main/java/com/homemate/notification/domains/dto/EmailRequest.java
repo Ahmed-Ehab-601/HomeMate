@@ -16,8 +16,4 @@ public class EmailRequest {
     private EmailType emailType;
     private String recipientEmail;
     private RecipientType recipientType;
-  
-  
-    
-    
 }

@@ -67,7 +67,6 @@ public class UserDao {
      * @param email The email of the user to get
      * @return The user with the given email
      */
-    @SuppressWarnings("null")
     public User getByEmail(String email) {
         return jdbcTemplate.queryForObject(
             GET_BY_EMAIL_SQL,
