@@ -1,6 +1,5 @@
 use HomeMate;
 
--- Drop tables in correct order (optional)
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS MessageImage;
@@ -17,9 +16,6 @@ DROP TABLE IF EXISTS Users;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
--- ======================================================
--- USER
--- ======================================================
 CREATE TABLE Users (
     userID INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(50) NOT NULL,
@@ -37,9 +33,6 @@ CREATE TABLE Users (
     INDEX idx_suspended (suspended)
 );
 
--- ======================================================
--- ADDRESS
--- ======================================================
 CREATE TABLE Address (
     addressID INT AUTO_INCREMENT PRIMARY KEY,
     userID INT NOT NULL,
@@ -52,9 +45,6 @@ CREATE TABLE Address (
     INDEX idx_city (city)
 );
 
--- ======================================================
--- SERVICE
--- ======================================================
 CREATE TABLE Service (
     serviceID INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
@@ -65,9 +55,6 @@ CREATE TABLE Service (
     INDEX idx_service_name (name)
 );
 
--- ======================================================
--- TASKER
--- ======================================================
 CREATE TABLE Tasker (
     taskerID INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(50) NOT NULL,
@@ -97,9 +84,6 @@ CREATE TABLE Tasker (
     INDEX idx_tasker_city (addressCity)
 );
 
--- ======================================================
--- CHAT
--- ======================================================
 CREATE TABLE Chat (
     chatID INT AUTO_INCREMENT PRIMARY KEY,
     userID INT NOT NULL,
@@ -113,9 +97,6 @@ CREATE TABLE Chat (
     INDEX idx_chat_tasker (taskerID)
 );
 
--- ======================================================
--- TASK
--- ======================================================
 CREATE TABLE Task (
     taskID INT AUTO_INCREMENT PRIMARY KEY,
     startDate TIMESTAMP NOT NULL,
@@ -144,9 +125,6 @@ CREATE TABLE Task (
     INDEX idx_task_chat (chatID)
 );
 
--- ======================================================
--- REPORT
--- ======================================================
 CREATE TABLE Report (
     reportID INT AUTO_INCREMENT PRIMARY KEY,
     header VARCHAR(100) NOT NULL,
@@ -159,9 +137,6 @@ CREATE TABLE Report (
     INDEX idx_report_admin_status (adminStatus)
 );
 
--- ======================================================
--- REVIEWS
--- ======================================================
 CREATE TABLE Reviews (
     reviewID INT AUTO_INCREMENT PRIMARY KEY,
     text VARCHAR(50),
@@ -174,9 +149,6 @@ CREATE TABLE Reviews (
     INDEX idx_review_time (time)
 );
 
--- ======================================================
--- REVIEW IMAGE
--- ======================================================
 CREATE TABLE ReviewImage (
     imageID INT AUTO_INCREMENT PRIMARY KEY,
     format VARCHAR(50) NOT NULL,
@@ -187,9 +159,6 @@ CREATE TABLE ReviewImage (
     INDEX idx_review_img_review (reviewID)
 );
 
--- ======================================================
--- MESSAGE
--- ======================================================
 CREATE TABLE Message (
     messageId INT AUTO_INCREMENT PRIMARY KEY,
     chatID INT NOT NULL,
@@ -207,9 +176,6 @@ CREATE TABLE Message (
     INDEX idx_message_status (status)
 );
 
--- ======================================================
--- MESSAGE IMAGE
--- ======================================================
 CREATE TABLE MessageImage (
     imageID INT AUTO_INCREMENT PRIMARY KEY,
     messageID INT NOT NULL,
@@ -219,37 +185,3 @@ CREATE TABLE MessageImage (
     FOREIGN KEY (messageID) REFERENCES Message(messageID) ON DELETE CASCADE ON UPDATE CASCADE,
     INDEX idx_msg_img_message (messageID)
 );
-
--- ======================================================
--- SUMMARY OF CHANGES
--- ======================================================
--- NOT NULL Constraints:
---   - Added to all critical fields (names, emails, usernames, passwords)
---   - Foreign keys marked as NOT NULL where relationships are required
---   - Status fields with defaults marked as NOT NULL
---
--- UNIQUE Constraints:
---   - User: username, email
---   - Tasker: username, email
---   - Service: name
---   - Chat: unique_chat (user_id, tasker_id) - prevents duplicate chats
---   - Reviews: taskID - ensures one review per task
---
--- CASCADE Rules:
---   - ON DELETE CASCADE: Address, Chat, Task (children), Report, Reviews, Review_Image, Message, message_img
---   - ON DELETE RESTRICT: Task (prevents deletion of users/taskers with active tasks)
---   - ON DELETE SET NULL: Task.chatID (preserves task if chat is deleted)
---   - ON UPDATE CASCADE: All foreign keys for data consistency
---
--- Indexes:
---   - Primary keys (automatic)
---   - Foreign keys (for join performance)
---   - Frequently queried fields (username, email, status, dates)
---   - Fields used in WHERE clauses and ORDER BY
---   - Composite unique index on Chat for business logic
---
--- Other Improvements:
---   - Password fields increased to VARCHAR(255) for hashed passwords
---   - CHECK constraint on Reviews.rate (0-5 range)
---   - DEFAULT values for timestamps, numeric fields, and status enums
--- ======================================================
