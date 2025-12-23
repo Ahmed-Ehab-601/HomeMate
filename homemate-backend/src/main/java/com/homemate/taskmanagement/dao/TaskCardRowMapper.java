@@ -9,22 +9,24 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+
 @Component
 public class TaskCardRowMapper implements RowMapper<TaskCardDto> {
     @Override
     public TaskCardDto mapRow(ResultSet rs, int rowNum) throws SQLException {
-        return TaskCardDto.builder().
-                taskID(rs.getLong("taskID")).
-                startDate(toLocalDateTime(rs.getTimestamp("startDate"))).
-                status(StatusDto.valueOf(rs.getString("status"))).
-                userName(rs.getString("userName")).
-                taskerName(rs.getString("taskerName")).
-                serviceName(rs.getString("serviceName")).
-                addressCity(rs.getString("city"))
+        return TaskCardDto.builder()
+                .taskID(rs.getLong("taskID"))
+                .startDate(toLocalDateTime(rs.getTimestamp("startDate")))
+                .status(StatusDto.valueOf(rs.getString("status")))
+                .userName(rs.getString("userName"))
+                .taskerName(rs.getString("taskerName"))
+                .serviceName(rs.getString("serviceName"))
+                .addressCity(rs.getString("city"))
+                .estimation(rs.getInt("estimation"))
                 .build();
-        }
+    }
 
-    private LocalDateTime toLocalDateTime(Timestamp timestamp){
+    private LocalDateTime toLocalDateTime(Timestamp timestamp) {
         return timestamp != null ? timestamp.toLocalDateTime() : null;
     }
 }

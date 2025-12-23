@@ -86,7 +86,7 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   };
 
   const handleViewDetails = () => {
-    navigate(`/tasks/${task.taskID}`);
+    navigate(`/tasks/${task.taskID}`, { state: { estimation: task.estimation } });
   };
 
   const handleAccept = () => {

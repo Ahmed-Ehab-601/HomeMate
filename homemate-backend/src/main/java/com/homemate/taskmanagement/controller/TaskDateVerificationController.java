@@ -50,18 +50,4 @@ public class TaskDateVerificationController {
         List<TaskTimeDto> response = taskRequestService.getAllBusyTime(taskerId, day);
         return ResponseEntity.ok(response);
     }
-
-    @GetMapping("/get-taskDetails-estimation/{taskId}")
-    @PreAuthorize("hasRole('TASKER')")
-    public ResponseEntity<Integer> getEstimation(@PathVariable Long taskId) {
-        int response = taskRequestService.getTaskDetails(taskId);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/get-taskDetails-estimation-user/{taskId}")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Integer> getEstimationUser(@PathVariable Long taskId) {
-        int response = taskRequestService.getTaskDetails(taskId);
-        return ResponseEntity.ok(response);
-    }
 }

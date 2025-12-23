@@ -159,17 +159,6 @@ class TaskRequestServiceEstimationAndBusyTimeTest {
         assertTrue(result);
     }
 
-    /* ==================== getTaskDetails ==================== */
-
-    @Test
-    void getTaskDetails_returnsEstimation() {
-        when(taskRequestDao.getEstimation(1L)).thenReturn(45);
-
-        int estimation = taskRequestService.getTaskDetails(1L);
-
-        assertEquals(45, estimation);
-    }
-
     /* ==================== getAllBusyTime ==================== */
 
     @Test

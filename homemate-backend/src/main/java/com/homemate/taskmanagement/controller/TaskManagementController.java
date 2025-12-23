@@ -10,7 +10,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
@@ -94,14 +93,8 @@ public class TaskManagementController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "All") StatusDto status) {
-
         List<TaskCardDto> tasks = getTaskService.getTaskerTasksForNewView(userDetails.getId(), startDate, endDate, status);
-
-        if (tasks.isEmpty()) {
-            return new ResponseEntity <> (HttpEntity.EMPTY,HttpStatus.OK);
-        }
-
-          return new ResponseEntity <> (tasks,HttpStatus.OK);
+        return new ResponseEntity <> (tasks,HttpStatus.OK);
 
     }
     @GetMapping("/user/getTasks")
@@ -113,11 +106,6 @@ public class TaskManagementController {
             @RequestParam(defaultValue = "All") StatusDto status) {
 
         List<TaskCardDto> tasks = getTaskService.getUserTasksForNewView(userDetails.getId(), startDate, endDate, status);
-
-        if (tasks.isEmpty()) {
-            return new ResponseEntity <> (HttpEntity.EMPTY,HttpStatus.OK);
-        }
-
         return new ResponseEntity <> (tasks,HttpStatus.OK);
     }
 

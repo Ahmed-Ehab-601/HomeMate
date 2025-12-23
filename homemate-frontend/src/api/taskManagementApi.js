@@ -1,3 +1,4 @@
+
 import { baseUrl, apiFetch } from "../utils/apiClient";
 
 /**
@@ -358,53 +359,4 @@ export async function addTaskEstimation(taskId, estimation) {
     return;
 }
 
-/**
- * Get estimation for a task
- * @param {number} taskId - ID of the task
- * @param {string} userRole - User role ("ROLE_TASKER" or "ROLE_USER")
- * @returns {Promise<number>} Estimation in MINUTES
- */
-export async function getTaskEstimation(taskId, userRole) {
-    const endpoint = userRole === 'ROLE_TASKER' 
-        ? `${baseUrl}/api/task/get-taskDetails-estimation/${taskId}`
-        : `${baseUrl}/api/task/get-taskDetails-estimation-user/${taskId}`;
-    
-    const response = await apiFetch(endpoint, {
-        method: "GET",
-    }).catch((error) => {
-        throw {
-            status: 0,
-            error: "NETWORK_ERROR",
-            message: "Network error. Please check your connection.",
-        };
-    });
 
-    if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        
-        if (response.status === 404) {
-            throw {
-                status: 404,
-                error: data.error || "NOT_FOUND",
-                message: data.message || "Task not found",
-            };
-        }
-
-        if (response.status === 400) {
-            throw {
-                status: 400,
-                error: data.error || "BAD_REQUEST",
-                message: data.message || "Invalid task or no estimation available",
-            };
-        }
-
-        throw {
-            status: response.status,
-            error: data.error || "SERVER_ERROR",
-            message: data.message || "Failed to load estimation",
-        };
-    }
-
-    // Backend returns integer (minutes)
-    return response.json();
-}
