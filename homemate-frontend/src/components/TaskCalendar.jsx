@@ -134,11 +134,10 @@ function TaskCalendar() {
                 const busyStartMinutes = busyHours * 60 + busyMins;
                 const busyEndMinutes = busyStartMinutes + busyTime.estimation;
 
-                // Allow multiple 0-duration tasks at the same time slot
-                if (currentTaskEstMinutes === 0 && busyTime.estimation === 0 && slotStartMinutes === busyStartMinutes) {
-                    continue;
-                }
-
+                if (currentTaskEstMinutes === 0 && slotStartMinutes === busyEndMinutes) {
+                                     return false;
+                     }
+                
                 // Check for ANY overlap
                 const hasOverlap = (
                     (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
@@ -359,9 +358,9 @@ function TaskCalendar() {
                 const busyStartMinutes = busyHours * 60 + busyMins;
                 const busyEndMinutes = busyStartMinutes + busyTime.estimation;
 
-                if (currentTaskEstMinutes === 0 && busyTime.estimation === 0 && newStartMinutes === busyStartMinutes) {
-                    continue;
-                }
+          if (currentTaskEstMinutes === 0 && slotStartMinutes === busyEndMinutes) {
+                   continue;
+               }
 
                 const hasOverlap = (
                     (newStartMinutes >= busyStartMinutes && newStartMinutes < busyEndMinutes) ||
