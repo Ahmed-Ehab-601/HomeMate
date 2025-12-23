@@ -50,25 +50,6 @@ public class PaymentDao {
         }
     }
 
-//    CREATE TABLE payments (
-//            paymentID INT AUTO_INCREMENT PRIMARY KEY ,
-//            taskId INT NOT NULL,
-//            userId INT NOT NULL,
-//            taskerId INT NOT NULL,
-//            totalAmount  FLOAT DEFAULT 0,
-//            platformFee FLOAT DEFAULT 0,
-//            taskerAmount FLOAT DEFAULT 0,
-//            stripePaymentIntentId VARCHAR(255),
-//    status VARCHAR(30), -- CREATED, REQUIRES_PAYMENT, PAID, FAILED
-//    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//    paid_at TIMESTAMP,
-//    FOREIGN KEY (taskId) REFERENCES Task(taskID)
-//            );
-
-
-//
-//
-
     public void attachStripeIntent(Long paymentId, String intentId) {
         jdbcTemplate.update("""
             UPDATE payments
@@ -85,20 +66,6 @@ public class PaymentDao {
             WHERE paymentID = ?
         """, paymentId);
     }
-
-//    public Optional<Payment> getByTaskId(Long taskId) {
-//        try {
-//            return Optional.ofNullable(
-//                    jdbcTemplate.queryForObject(
-//                            "SELECT * FROM payments WHERE taskId = ?",
-//                            new PaymentRowMapper(),
-//                            taskId
-//                    )
-//            );
-//        } catch (Exception e) {
-//            return Optional.empty();
-//        }
-//    }
 
     public void updateStatus(Long paymentId, String status) {
         // ✅ FIXED: Using paymentID instead of id

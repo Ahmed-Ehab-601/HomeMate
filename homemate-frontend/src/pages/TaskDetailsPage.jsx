@@ -15,6 +15,7 @@ import { acceptTask, rejectTask } from "../api/taskActionsApi";
 import { getTaskReview } from "../api/taskManagementApi";
 import { deleteReview } from "../api/reviewsApi";
 import { getTaskerById } from "../api/taskerProfileApi";
+import { apiRequest, baseUrl } from "../utils/apiClient";
 import TaskerCard from "../components/TaskerCard";
 import services from "../data/services";
 import Modal from "../components/Modal";
@@ -103,6 +104,7 @@ function TaskDetailsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [estimation, setEstimation] = useState("");
   const [estimationError, setEstimationError] = useState("");
+  const [isMarkingPaid, setIsMarkingPaid] = useState(false);
 
   const [newStartDate, setNewStartDate] = useState("");
   const [rescheduleDate, setRescheduleDate] = useState("");
@@ -741,6 +743,25 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
       showErrorBanner(`✗ Failed to complete task. ${error.message}`);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleMarkPaidCash = async () => {
+    if (!task?.taskID) return;
+    setIsMarkingPaid(true);
+    try {
+      await apiRequest(`${baseUrl}/api/tasker/payments/mark-paid-cash/${task.taskID}`, {
+        method: "POST",
+      });
+
+      // Update local task state to mark as paid
+      setTask((prev) => ({ ...(prev || {}), paid: true }));
+      showSuccessBanner("✓ Task marked as paid (cash)");
+    } catch (err) {
+      console.error("Failed to mark paid:", err);
+      showErrorBanner(`✗ Failed to mark paid. ${err?.message || ""}`);
+    } finally {
+      setIsMarkingPaid(false);
     }
   };
 

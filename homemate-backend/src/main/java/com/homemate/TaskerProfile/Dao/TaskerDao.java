@@ -129,5 +129,11 @@ public class TaskerDao {
         jdbcTemplate.update(sql, stripeAccountId, taskerId);
     }
 
+    public String getTaskerStripeAccount(Long taskerId) {
+        String sql = "SELECT stripe_account_id FROM Tasker WHERE taskerID = ?";
+        return jdbcTemplate.queryForObject(sql, String.class, taskerId);
+    }
+
+
 
 }

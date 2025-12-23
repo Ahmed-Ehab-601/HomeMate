@@ -3,6 +3,7 @@ package com.homemate.taskmanagement.dao;
 import com.homemate.taskmanagement.dto.StatusDto;
 import com.homemate.taskmanagement.dto.TaskCardDto;
 import lombok.AllArgsConstructor;
+import org.springframework.data.redis.stream.Task;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -248,5 +249,6 @@ public class GetTasksDao {
         Long count = jdbcTemplate.queryForObject(sql, Long.class, taskerID, status.toString());
         return Optional.ofNullable(count);
     }
+
 
 }

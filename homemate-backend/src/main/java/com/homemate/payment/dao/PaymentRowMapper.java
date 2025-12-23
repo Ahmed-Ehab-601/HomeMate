@@ -7,9 +7,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
-/**
- * Maps database rows to Payment objects
- */
 public class PaymentRowMapper implements RowMapper<Payment> {
 
     @Override

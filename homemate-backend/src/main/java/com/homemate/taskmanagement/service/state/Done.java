@@ -1,15 +1,8 @@
 package com.homemate.taskmanagement.service.state;
 
-import com.homemate.TaskerProfile.Dao.TaskerDao;
-import com.homemate.TaskerProfile.models.Tasker;
-import com.homemate.payment.dao.PaymentDao;
-import com.homemate.payment.model.Payment;
-import com.homemate.payment.service.StripeCustomerService;
-import com.homemate.payment.service.StripePaymentService;
 import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 import com.homemate.taskmanagement.model.Status;
-import com.stripe.model.PaymentIntent;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -17,7 +10,6 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @AllArgsConstructor
 @NoArgsConstructor
