@@ -15,7 +15,7 @@ import java.util.Map;
 public class TaskerAnalysisDao {
     private final JdbcTemplate jdbcTemplate;
 
-    private String generateAgeBucketsSQL(String tableName, String ageCalculation) {
+    private String generateAgeBucketsSQL() {
         return "SELECT " +
                 "SUM(CASE WHEN age BETWEEN 0 AND 9 THEN 1 ELSE 0 END) AS b_0_10, " +
                 "SUM(CASE WHEN age BETWEEN 10 AND 19 THEN 1 ELSE 0 END) AS b_10_20, " +
@@ -24,10 +24,14 @@ public class TaskerAnalysisDao {
                 "SUM(CASE WHEN age BETWEEN 40 AND 49 THEN 1 ELSE 0 END) AS b_40_50, " +
                 "SUM(CASE WHEN age BETWEEN 50 AND 59 THEN 1 ELSE 0 END) AS b_50_60, " +
                 "SUM(CASE WHEN age >= 60 THEN 1 ELSE 0 END) AS b_60_plus " +
-                "FROM (" + ageCalculation + ") " + tableName;
+                "FROM (" + """
+                SELECT TIMESTAMPDIFF(YEAR, birthDate, CURDATE()) AS age
+                FROM Tasker
+                WHERE birthDate IS NOT NULL
+                """ + ") " + "t";
     }
 
-    private String generateRangeSQL(String tableName, String columnName, int[][] ranges, String[] labels) {
+    private String generateRangeSQL(String columnName, int[][] ranges, String[] labels) {
         StringBuilder sql = new StringBuilder("SELECT ");
         for (int i = 0; i < ranges.length; i++) {
             if (i > 0) sql.append(", ");
@@ -42,14 +46,14 @@ public class TaskerAnalysisDao {
                    .append(" THEN 1 ELSE 0 END) AS ").append(labels[i]);
             }
         }
-        sql.append(" FROM ").append(tableName);
+        sql.append(" FROM ").append("Tasker");
         return sql.toString();
     }
 
     public GenderCountResponse fetchGenderCounts() {
         String sql = """
                     SELECT
-                    SUM(CASE WHEN gender = 'M' THEN 1 ELSE 0 END) AS male, 
+                    SUM(CASE WHEN gender = 'M' THEN 1 ELSE 0 END) AS male,
                     SUM(CASE WHEN gender = 'F' THEN 1 ELSE 0 END) AS female
                     FROM Tasker
                     """;
@@ -66,12 +70,6 @@ public class TaskerAnalysisDao {
 
     public AgeBucketsResponse fetchAgeBuckets() {
         String sql = generateAgeBucketsSQL(
-            "t", 
-            """
-            SELECT TIMESTAMPDIFF(YEAR, birthDate, CURDATE()) AS age 
-            FROM Tasker 
-            WHERE birthDate IS NOT NULL
-            """
         );
 
         return jdbcTemplate.query(sql, rs -> {
@@ -104,7 +102,7 @@ public class TaskerAnalysisDao {
     public RatingRangesResponse fetchRatingRanges() {
         int[][] ranges = {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 6}};
         String[] labels = {"r_0_1", "r_1_2", "r_2_3", "r_3_4", "r_4_5"};
-        String sql = generateRangeSQL("Tasker", "rating", ranges, labels);
+        String sql = generateRangeSQL("rating", ranges, labels);
 
         return jdbcTemplate.query(sql, rs -> {
             Map<String, Long> _ranges = new HashMap<>();
@@ -139,7 +137,7 @@ public class TaskerAnalysisDao {
         ranges[numRanges - 1][1] = -1;
         labels[numRanges - 1] = "hr_" + maxValue + "_plus";
         
-        String sql = generateRangeSQL("Tasker", "hourRate", ranges, labels);
+        String sql = generateRangeSQL("hourRate", ranges, labels);
 
         return jdbcTemplate.query(sql, rs -> {
             Map<String, Long> _ranges = new HashMap<>();
@@ -175,7 +173,7 @@ public class TaskerAnalysisDao {
         ranges[numRanges - 1][1] = -1;
         labels[numRanges - 1] = "wh_" + maxValue + "_plus";
         
-        String sql = generateRangeSQL("Tasker", "WorkedHours", ranges, labels);
+        String sql = generateRangeSQL("WorkedHours", ranges, labels);
 
         return jdbcTemplate.query(sql, rs -> {
             Map<String, Long> _ranges = new HashMap<>();

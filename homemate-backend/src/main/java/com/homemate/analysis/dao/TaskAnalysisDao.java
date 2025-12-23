@@ -16,15 +16,13 @@ public class TaskAnalysisDao {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private String TABLE_NAME = "Task";
-    private String TASK_BILL = "bill";
-
     private String generateRangeSQL(int[][] ranges, String[] labels) {
         StringBuilder sql = new StringBuilder("SELECT ");
         for (int i = 0; i < ranges.length; i++) {
             if (i > 0) sql.append(", ");
             int start = ranges[i][0];
             int end = ranges[i][1];
+            String TASK_BILL = "bill";
             if (end == -1) {
                 sql.append("SUM(CASE WHEN ").append(TASK_BILL).append(" >= ").append(start)
                    .append(" THEN 1 ELSE 0 END) AS ").append(labels[i]);
@@ -34,6 +32,7 @@ public class TaskAnalysisDao {
                    .append(" THEN 1 ELSE 0 END) AS ").append(labels[i]);
             }
         }
+        String TABLE_NAME = "Task";
         sql.append(" FROM ").append(TABLE_NAME);
         return sql.toString();
     }

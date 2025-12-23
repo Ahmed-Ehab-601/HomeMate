@@ -16,7 +16,7 @@ public class UserAnalysisDao {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private String generateAgeBucketsSQL(String tableName, String ageCalculation) {
+    private String generateAgeBucketsSQL() {
         return "SELECT " +
                 "SUM(CASE WHEN age BETWEEN 0 AND 9 THEN 1 ELSE 0 END) AS b_0_10, " +
                 "SUM(CASE WHEN age BETWEEN 10 AND 19 THEN 1 ELSE 0 END) AS b_10_20, " +
@@ -25,7 +25,11 @@ public class UserAnalysisDao {
                 "SUM(CASE WHEN age BETWEEN 40 AND 49 THEN 1 ELSE 0 END) AS b_40_50, " +
                 "SUM(CASE WHEN age BETWEEN 50 AND 59 THEN 1 ELSE 0 END) AS b_50_60, " +
                 "SUM(CASE WHEN age >= 60 THEN 1 ELSE 0 END) AS b_60_plus " +
-                "FROM (" + ageCalculation + ") " + tableName;
+                "FROM (" + """
+                SELECT TIMESTAMPDIFF(YEAR, birthDate, CURDATE()) AS age
+                FROM Users
+                WHERE birthDate IS NOT NULL
+                """ + ") " + "u";
     }
 
     public GenderCountResponse fetchGenderCounts() {
@@ -62,12 +66,6 @@ public class UserAnalysisDao {
 
     public AgeBucketsResponse fetchAgeBuckets() {
         String sql = generateAgeBucketsSQL(
-            "u", 
-            """
-            SELECT TIMESTAMPDIFF(YEAR, birthDate, CURDATE()) AS age 
-            FROM Users 
-            WHERE birthDate IS NOT NULL      
-            """
         );
 
         return jdbcTemplate.query(sql, rs -> {
