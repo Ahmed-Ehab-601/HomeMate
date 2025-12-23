@@ -471,6 +471,79 @@ export const getTaskerStatusCounts = async () => {
     return data;
 };
 
+// Task Analysis APIs
+export const getTaskStartDateRanges = async (ranges) => {
+    const response = await apiFetch('/api/analysis/task/start-date-ranges', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ranges }),
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch task start date ranges',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskEndDateRanges = async (ranges) => {
+    const response = await apiFetch('/api/analysis/task/end-date-ranges', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ranges }),
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch task end date ranges',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskBillRanges = async () => {
+    const response = await apiFetch('/api/analysis/task/bill-ranges');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch task bill ranges',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskStatusCounts = async () => {
+    const response = await apiFetch('/api/analysis/task/status-counts');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch task status counts',
+            data,
+        };
+    }
+
+    return data;
+};
+
 export default {
     getUsers,
     getTaskers,
@@ -506,4 +579,8 @@ export default {
     getTaskerServiceCounts,
     getTaskerCityCounts,
     getTaskerStatusCounts,
+    getTaskStartDateRanges,
+    getTaskEndDateRanges,
+    getTaskBillRanges,
+    getTaskStatusCounts,
 };

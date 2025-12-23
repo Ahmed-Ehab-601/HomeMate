@@ -34,6 +34,10 @@ export {
   getTaskerServiceCounts,
   getTaskerCityCounts,
   getTaskerStatusCounts,
+  getTaskStartDateRanges,
+  getTaskEndDateRanges,
+  getTaskBillRanges,
+  getTaskStatusCounts,
   default,
 } from '../api/adminApi';
 

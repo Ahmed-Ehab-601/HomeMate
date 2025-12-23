@@ -1,5 +1,6 @@
 package com.homemate.analysis.controller;
 
+import com.homemate.analysis.dto.*;
 import com.homemate.analysis.service.TaskAnalysisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,8 +16,23 @@ public class TaskAnalysisController {
 
     private final TaskAnalysisService taskAnalysisService;
 
-    @GetMapping("/placeholder")
-    public ResponseEntity<String> placeholder() {
-        return ResponseEntity.ok("OK");
+    @PostMapping("/start-date-ranges")
+    public ResponseEntity<TaskDateRangesResponse> getStartDateRanges(@RequestBody TaskDateRangesRequest request) {
+        return ResponseEntity.ok(taskAnalysisService.getStartDateRanges(request));
+    }
+
+    @PostMapping("/end-date-ranges")
+    public ResponseEntity<TaskDateRangesResponse> getEndDateRanges(@RequestBody TaskDateRangesRequest request) {
+        return ResponseEntity.ok(taskAnalysisService.getEndDateRanges(request));
+    }
+
+    @GetMapping("/bill-ranges")
+    public ResponseEntity<BillRangesResponse> getBillRanges() {
+        return ResponseEntity.ok(taskAnalysisService.getBillRanges());
+    }
+
+    @GetMapping("/status-counts")
+    public ResponseEntity<TaskStatusCountsResponse> getStatusCounts() {
+        return ResponseEntity.ok(taskAnalysisService.getStatusCounts());
     }
 }

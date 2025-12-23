@@ -39,9 +39,14 @@ import {
     getTaskerServiceCounts,
     getTaskerCityCounts,
     getTaskerStatusCounts,
+    getTaskStartDateRanges,
+    getTaskEndDateRanges,
+    getTaskBillRanges,
+    getTaskStatusCounts,
 } from '../services/adminService';
 import { generateTimeRanges as generateUserTimeRanges, formatRangeLabel as formatUserRangeLabel } from '../utility/userAnalysisUtility';
 import { generateTimeRanges as generateTaskerTimeRanges, formatRangeLabel as formatTaskerRangeLabel } from '../utility/taskerAnalysisUtility';
+import { generateTimeRanges as generateTaskTimeRanges, formatRangeLabel as formatTaskRangeLabel } from '../utility/taskAnalysisUtility';
 
 const AnalysisPage = () => {
     const [analysisType, setAnalysisType] = useState('');
@@ -81,8 +86,10 @@ const AnalysisPage = () => {
             { value: 'status', label: 'Status Distribution' },
         ],
         task: [
-            { value: 'placeholder1', label: 'Placeholder 1' },
-            { value: 'placeholder2', label: 'Placeholder 2' },
+            { value: 'startDate', label: 'Task Start Dates' },
+            { value: 'endDate', label: 'Task End Dates' },
+            { value: 'bill', label: 'Bill Ranges' },
+            { value: 'status', label: 'Status Distribution' },
         ],
     };
 
@@ -124,7 +131,8 @@ const AnalysisPage = () => {
             return;
         }
 
-        if (metric === 'newAccounts') {
+        const needsTimeGrouping = metric === 'newAccounts' || (analysisType === 'task' && (metric === 'startDate' || metric === 'endDate'));
+        if (needsTimeGrouping) {
             if (!groupBy) {
                 setError('Please select a grouping option');
                 return;
@@ -235,10 +243,45 @@ const AnalysisPage = () => {
                         { name: 'Active', value: data.active },
                     ];
                 }
-            } else {
-                // Placeholder for task analysis
-                setError('This analysis type is not yet implemented');
-                return;
+            } else if (analysisType === 'task') {
+                if (metric === 'startDate') {
+                    const ranges = generateTaskTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
+                    data = await getTaskStartDateRanges(ranges);
+                    formattedData = data.counts.map((count, index) => {
+                        const label = formatTaskRangeLabel(ranges[index], groupBy);
+                        return {
+                            name: label,
+                            value: count,
+                        };
+                    });
+                } else if (metric === 'endDate') {
+                    const ranges = generateTaskTimeRanges(groupBy, selectedYear, selectedMonth, selectedDate);
+                    data = await getTaskEndDateRanges(ranges);
+                    formattedData = data.counts.map((count, index) => {
+                        const label = formatTaskRangeLabel(ranges[index], groupBy);
+                        return {
+                            name: label,
+                            value: count,
+                        };
+                    });
+                } else if (metric === 'bill') {
+                    data = await getTaskBillRanges();
+                    const sortedEntries = sortRanges(Object.entries(data.ranges));
+                    formattedData = sortedEntries.map(([range, count]) => ({
+                        name: range,
+                        value: count,
+                    }));
+                } else if (metric === 'status') {
+                    data = await getTaskStatusCounts();
+                    formattedData = [
+                        { name: 'In Review', value: data.inReview },
+                        { name: 'Accepted', value: data.accepted },
+                        { name: 'In Progress', value: data.inProgress },
+                        { name: 'Suspended', value: data.suspended },
+                        { name: 'Done', value: data.done },
+                        { name: 'Rejected', value: data.rejected },
+                    ];
+                }
             }
 
             setChartData(formattedData);
@@ -287,8 +330,8 @@ const AnalysisPage = () => {
                             </FormControl>
                         )}
 
-                        {/* New Accounts Specific Inputs */}
-                        {metric === 'newAccounts' && (
+                        {/* Time range inputs for new accounts and task date metrics */}
+                        {(metric === 'newAccounts' || (analysisType === 'task' && (metric === 'startDate' || metric === 'endDate'))) && (
                             <>
                                 <FormControl fullWidth>
                                     <InputLabel>Group By</InputLabel>
