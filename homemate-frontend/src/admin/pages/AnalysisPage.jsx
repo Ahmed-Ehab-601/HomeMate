@@ -148,8 +148,8 @@ const AnalysisPage = () => {
 
                     {/* Age Distribution Chart */}
                     <Grid item xs={12}>
-                        <Card elevation={2}>
-                            <CardContent >
+                        <Card elevation={2} sx={{ minWidth: 600, width: '100%' }}>
+                            <CardContent>
                                 <Typography variant="h6" gutterBottom>Age Distribution</Typography>
                                 <Divider sx={{ mb: 2 }} />
                                 <Box sx={{ width: '100%' }}>
@@ -195,7 +195,7 @@ const AnalysisPage = () => {
 
                     {/* Taskers Per Service Chart */}
                     <Grid item xs={12}>
-                        <Card elevation={2}>
+                        <Card elevation={2} sx={{ minWidth: 600, width: '100%' }}>
                             <CardContent>
                                 <Typography variant="h6" gutterBottom>Taskers Per Service</Typography>
                                 <Divider sx={{ mb: 2 }} />
@@ -270,7 +270,7 @@ const AnalysisPage = () => {
 
                     {/* Tasks Per Service Chart */}
                     <Grid item xs={12}>
-                        <Card elevation={2}>
+                        <Card elevation={2} sx={{ minWidth: 600, width: '100%' }}>
                             <CardContent>
                                 <Typography variant="h6" gutterBottom>Tasks Per Service</Typography>
                                 <Divider sx={{ mb: 2 }} />
@@ -296,7 +296,7 @@ const AnalysisPage = () => {
 
                     {/* Average Bill Per Service Chart */}
                     <Grid item xs={12}>
-                        <Card elevation={2}>
+                        <Card elevation={2} sx={{ minWidth: 600, width: '100%' }}>
                             <CardContent>
                                 <Typography variant="h6" gutterBottom>Average Bill Per Service</Typography>
                                 <Divider sx={{ mb: 2 }} />
