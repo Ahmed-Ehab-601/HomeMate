@@ -148,7 +148,7 @@ public class UserDao {
 
 
     private static final String GET_PROFILE_SQL =
-    "SELECT userID, username, password, firstName, lastName, email, birthDate, gender, phone, admin, suspended" +
+    "SELECT userID, username, password, firstName, lastName, email, birthDate, gender, phone, admin, suspended ,stripe_customer_id " +
     "FROM Users WHERE userID = ? ";
 
     /**

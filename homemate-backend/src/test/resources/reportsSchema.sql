@@ -25,7 +25,8 @@ CREATE TABLE Users (
     gender VARCHAR(1) CHECK (gender IN ('M', 'F')),
     phone VARCHAR(50),
     admin BOOLEAN DEFAULT FALSE NOT NULL,
-    suspended BOOLEAN DEFAULT FALSE NOT NULL
+    suspended BOOLEAN DEFAULT FALSE NOT NULL,
+    stripe_customer_id VARCHAR(255) NULL
 );
 
 -- ======================================================
@@ -76,6 +77,7 @@ CREATE TABLE Tasker (
     WorkedHours DOUBLE DEFAULT 0.00 NOT NULL,
     addressCity VARCHAR(200),
     suspended BOOLEAN DEFAULT FALSE NOT NULL,
+    stripe_account_id VARCHAR(255),
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
@@ -96,6 +98,7 @@ CREATE TABLE Task (
     startInProgress TIMESTAMP NULL,
     addressID INT NOT NULL,
     description VARCHAR(500),
+    paid BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (taskerID) REFERENCES Tasker(taskerID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE,
