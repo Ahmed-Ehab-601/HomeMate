@@ -14,7 +14,12 @@ function ContactPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "message") {
+      // Limit message to 500 characters
+      setFormData((prev) => ({ ...prev, [name]: value.slice(0, 500) }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -164,7 +169,7 @@ function ContactPage() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="message">Message *</label>
+                  <label htmlFor="message">Message * (max 500 characters)</label>
                   <textarea
                     id="message"
                     name="message"
@@ -174,7 +179,11 @@ function ContactPage() {
                     rows="6"
                     placeholder="Tell us more about your inquiry..."
                     disabled={isSubmitting}
+                    maxLength={500}
                   />
+                  <div style={{ textAlign: 'right', fontSize: '0.9em', color: formData.message.length === 500 ? 'red' : '#666' }}>
+                    {formData.message.length}/500
+                  </div>
                 </div>
 
                 <button
