@@ -28,5 +28,6 @@ public class TaskCardDto {
     @NotNull
     private Integer estimation;
 
+    private boolean paid;
 
 }

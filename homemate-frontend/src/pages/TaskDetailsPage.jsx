@@ -1172,6 +1172,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
               <strong>Pay Online visibility:</strong>
               <div>Task is DONE: <strong>{normalizedStatus === 'DONE' ? 'yes' : 'no'}</strong></div>
               <div>Has bill: <strong>{showBill ? 'yes' : 'no'}</strong></div>
+              <div>Task already paid: <strong>{task?.paid ? 'yes' : 'no'}</strong></div>
               <div>Tasker has Stripe account: <strong>{(tasker?.stripeAccountId || tasker?.stripe_account_id) ? 'yes' : 'no'}</strong></div>
               <div>User has Stripe customer id: <strong>{hasUserStripeCustomer ? 'yes' : 'no'}</strong></div>
             </div>
@@ -1276,7 +1277,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
                   <span className="btn-icon">⭐</span> Leave Review
                 </Link>
               )}
-              {normalizedStatus === "DONE" && !isTasker && showBill && (tasker?.stripeAccountId || tasker?.stripe_account_id) && hasUserStripeCustomer && (
+              {normalizedStatus === "DONE" && !isTasker && showBill && !task?.paid && (tasker?.stripeAccountId || tasker?.stripe_account_id) && hasUserStripeCustomer && (
                 <Link
                   to={`/task/payment?taskId=${task.taskID}&userId=${task.userID || task.userId || user?.id || user?.userId || user?.userID}&taskerId=${task.taskerID}&bill=${task.bill}`}
                   className="btn btn-primary"

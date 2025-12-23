@@ -4,6 +4,7 @@ import com.homemate.payment.dao.PaymentDao;
 import com.homemate.payment.dto.PaymentRequestDTO;
 import com.homemate.payment.mapper.PaymentMapper;
 import com.homemate.payment.model.Payment;
+import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
@@ -20,6 +21,7 @@ public class StripePaymentService {
 
     private final PaymentDao paymentDao;
     private final PaymentMapper paymentMapper;
+    private final TaskStatusDao taskStatusDao;
 
     /**
      * STEP 2: Create PaymentIntent
@@ -136,7 +138,10 @@ public class StripePaymentService {
 
         // Step 3: Update database - mark as PAID
         paymentDao.updateStatus(payment.getId(), "PAID");
+
         paymentDao.setPaidAt(payment.getId());
+        log.info("mark task as paid ");
+        taskStatusDao.setTaskAsPaid(payment.getTaskId());
 
         log.info("Payment {} marked as PAID", payment.getId());
 

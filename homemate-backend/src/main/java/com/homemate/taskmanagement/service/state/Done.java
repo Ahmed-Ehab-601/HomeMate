@@ -25,9 +25,6 @@ public class Done implements TaskState{
     private Long taskID;
     private Long taskerID;
     private TaskStatusDao taskDao;
-    private PaymentDao paymentDao;
-    private StripePaymentService stripePaymentService;
-    private long userID;
 
     public Done (long taskID, long taskerID, TaskStatusDao taskDao){
            this.taskID=taskID;
@@ -54,19 +51,6 @@ public class Done implements TaskState{
         taskDao.updateTaskBill(taskID,bill);
         taskDao.updateTaskEndData(taskID,Timestamp.valueOf(LocalDateTime.now()));
 
-//        userID= paymentDao.getUserID(taskID);
-
-//        try {
-//            stripePaymentService.createPayment(
-//                    taskID,
-//                    userID,
-//                    taskerID,
-//                    bill,
-//                    paymentDao.getTaskerStripeAccountId(taskerID)
-//            );
-//        } catch (Exception e) {
-//            throw new RuntimeException("Payment creation failed: " + e.getMessage());
-//        }
 
     }
 

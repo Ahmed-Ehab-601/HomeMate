@@ -200,15 +200,24 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
         <div className="task-card__header">
           <div className="task-card__title-section">
             <h3 className="task-card__service">{task.serviceName}</h3>
-            <span
-              className="task-card__status-badge"
-              style={{
-                backgroundColor: statusStyle.bg,
-                color: statusStyle.text,
-              }}
-            >
-              {statusStyle.label}
-            </span>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span
+                className="task-card__status-badge"
+                style={{
+                  backgroundColor: statusStyle.bg,
+                  color: statusStyle.text,
+                }}
+              >
+                {statusStyle.label}
+              </span>
+              {normalizedStatus === 'DONE' && (
+                <span
+                  className={`task-card__paid-badge ${task?.paid ? 'paid' : 'unpaid'}`}
+                >
+                  {task?.paid ? 'Paid' : 'Unpaid'}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

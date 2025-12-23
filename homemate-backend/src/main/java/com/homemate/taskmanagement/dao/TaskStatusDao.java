@@ -120,4 +120,28 @@ public class TaskStatusDao {
         return rowsAffected > 0;
     }
 
+    public double getTaskBill(Long taskID){
+        String sql = "SELECT bill FROM Task WHERE taskID = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, Double.class, taskID);
+
+        } catch (EmptyResultDataAccessException e) {
+            throw new TaskNotFoundException("id not correct");
+        }
+    }
+
+    public void setTaskAsPaid(Long taskID) {
+        String sql = "UPDATE Task SET paid = TRUE WHERE taskID = ?";
+        int rowsAffected = jdbcTemplate.update(sql, taskID);
+
+        if (rowsAffected == 0) {
+            throw new TaskNotFoundException("Task not found with id: " + taskID);
+        }
+    }
+
+
+
+
+
+
 }

@@ -22,5 +22,6 @@ public class TaskEntity {
     Long serviceID;
     Long chatID;
     Long addressID;
+    boolean paid;
 }
 
