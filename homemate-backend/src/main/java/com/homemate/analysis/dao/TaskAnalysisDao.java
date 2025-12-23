@@ -99,27 +99,27 @@ public class TaskAnalysisDao {
     }
 
     public TaskStatusCountsResponse fetchStatusCounts() {
-        long inReview = jdbcTemplate.queryForObject(
+        Long inReview = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM Task WHERE status = 'InReview'",
                 Long.class
         );
-        long accepted = jdbcTemplate.queryForObject(
+        Long accepted = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM Task WHERE status = 'Accepted'",
                 Long.class
         );
-        long inProgress = jdbcTemplate.queryForObject(
+        Long inProgress = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM Task WHERE status = 'InProgress'",
                 Long.class
         );
-        long suspended = jdbcTemplate.queryForObject(
+        Long suspended = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM Task WHERE status = 'Suspended'",
                 Long.class
         );
-        long done = jdbcTemplate.queryForObject(
+        Long done = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM Task WHERE status = 'Done'",
                 Long.class
         );
-        long rejected = jdbcTemplate.queryForObject(
+        Long rejected = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM Task WHERE status = 'Rejected'",
                 Long.class
         );

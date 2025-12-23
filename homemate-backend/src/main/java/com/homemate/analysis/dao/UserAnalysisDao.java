@@ -42,15 +42,15 @@ public class UserAnalysisDao {
     }
 
     public StatusCountsResponse fetchStatusCounts() {
-        long suspended = jdbcTemplate.queryForObject(
+        Long suspended = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM Users WHERE suspended = TRUE",
                 Long.class
         );
-        long adminActive = jdbcTemplate.queryForObject(
+        Long adminActive = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM Users WHERE admin = TRUE AND suspended = FALSE",
                 Long.class
         );
-        long nonAdminActive = jdbcTemplate.queryForObject(
+        Long nonAdminActive = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM Users WHERE admin = FALSE AND suspended = FALSE",
                 Long.class
         );

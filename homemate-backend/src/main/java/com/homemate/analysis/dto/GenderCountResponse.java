@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class GenderCountResponse {
-    private long male;
-    private long female;
+    private Long male;
+    private Long female;
 }

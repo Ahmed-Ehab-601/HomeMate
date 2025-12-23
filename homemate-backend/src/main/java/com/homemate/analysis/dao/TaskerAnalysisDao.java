@@ -215,11 +215,11 @@ public class TaskerAnalysisDao {
     }
 
     public TaskerStatusCountsResponse fetchStatusCounts() {
-        long suspended = jdbcTemplate.queryForObject(
+        Long suspended = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM Tasker WHERE suspended = TRUE",
                 Long.class
         );
-        long active = jdbcTemplate.queryForObject(
+        Long active = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM Tasker WHERE suspended = FALSE",
                 Long.class
         );
