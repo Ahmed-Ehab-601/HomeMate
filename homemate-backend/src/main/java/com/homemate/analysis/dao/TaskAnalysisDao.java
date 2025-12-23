@@ -13,24 +13,28 @@ import java.util.Map;
 @Repository
 @RequiredArgsConstructor
 public class TaskAnalysisDao {
+
     private final JdbcTemplate jdbcTemplate;
 
-    private String generateRangeSQL(String tableName, String columnName, int[][] ranges, String[] labels) {
+    private String TABLE_NAME = "Task";
+    private String TASK_BILL = "bill";
+
+    private String generateRangeSQL(int[][] ranges, String[] labels) {
         StringBuilder sql = new StringBuilder("SELECT ");
         for (int i = 0; i < ranges.length; i++) {
             if (i > 0) sql.append(", ");
             int start = ranges[i][0];
             int end = ranges[i][1];
             if (end == -1) {
-                sql.append("SUM(CASE WHEN ").append(columnName).append(" >= ").append(start)
+                sql.append("SUM(CASE WHEN ").append(TASK_BILL).append(" >= ").append(start)
                    .append(" THEN 1 ELSE 0 END) AS ").append(labels[i]);
             } else {
-                sql.append("SUM(CASE WHEN ").append(columnName).append(" >= ").append(start)
-                   .append(" AND ").append(columnName).append(" < ").append(end)
+                sql.append("SUM(CASE WHEN ").append(TASK_BILL).append(" >= ").append(start)
+                   .append(" AND ").append(TASK_BILL).append(" < ").append(end)
                    .append(" THEN 1 ELSE 0 END) AS ").append(labels[i]);
             }
         }
-        sql.append(" FROM ").append(tableName);
+        sql.append(" FROM ").append(TABLE_NAME);
         return sql.toString();
     }
 
@@ -78,7 +82,7 @@ public class TaskAnalysisDao {
         ranges[numRanges - 1][1] = -1;
         labels[numRanges - 1] = "bill_" + maxValue + "_plus";
         
-        String sql = generateRangeSQL("Task", "bill", ranges, labels);
+        String sql = generateRangeSQL(ranges, labels);
 
         return jdbcTemplate.query(sql, rs -> {
             Map<String, Long> billRanges = new HashMap<>();
