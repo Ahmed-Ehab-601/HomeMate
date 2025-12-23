@@ -144,6 +144,10 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                 }
                 const busyStartMinutes = busyHours * 60 + busyMins;
                 const busyEndMinutes = busyStartMinutes + busyTime.estimation;
+                // Allow multiple 0-duration tasks at the same time slot
+                if (estimationMinutes === 0 && busyTime.estimation === 0 && slotStartMinutes === busyStartMinutes) {
+                    continue;
+                }
                 // Check for ANY overlap - ALL 5 SCENARIOS
                 const hasOverlap = (
                     (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
@@ -429,6 +433,10 @@ const TaskCalendar = ({ onBackToList, onTasksUpdated, userRole }) => {
                 }
                 const busyStartMinutes = busyHours * 60 + busyMins;
                 const busyEndMinutes = busyStartMinutes + busyTime.estimation;
+                // Allow multiple 0-duration tasks at the same time slot
+                if (currentTaskEstMinutes === 0 && busyTime.estimation === 0 && newStartMinutes === busyStartMinutes) {
+                    continue;
+                }
                 const hasOverlap = (
                     (newStartMinutes >= busyStartMinutes && newStartMinutes < busyEndMinutes) ||
                     (newEndMinutes > busyStartMinutes && newEndMinutes <= busyEndMinutes) ||

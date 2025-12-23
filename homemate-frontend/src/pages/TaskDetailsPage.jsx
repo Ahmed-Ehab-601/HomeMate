@@ -366,6 +366,11 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
       const busyStartMinutes = busyHours * 60 + busyMins;
       const busyEndMinutes = busyStartMinutes + busyTime.estimation;
 
+      // Allow multiple 0-duration tasks at the same time slot
+      if (currentTaskEstMinutes === 0 && busyTime.estimation === 0 && slotStartMinutes === busyStartMinutes) {
+        continue;
+      }
+
       // Check for ANY overlap between slot and busy period
       const hasOverlap = (
         (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
@@ -591,6 +596,11 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
 
       const busyStartMinutes = busyHours * 60 + busyMins;
       const busyEndMinutes = busyStartMinutes + busyTime.estimation;
+
+      // Allow multiple 0-duration tasks at the same time slot
+      if (currentTaskEstMinutes === 0 && busyTime.estimation === 0 && newStartMinutes === busyStartMinutes) {
+        continue;
+      }
 
       // Check for ANY overlap (all 5 scenarios)
       const hasOverlap = (
