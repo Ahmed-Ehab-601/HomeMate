@@ -20,7 +20,6 @@ export {
   reactiveUsers,
   getReports,
   respondToReport,
-  getAnalysis,
   getUserGenderCount,
   getUserStatusCounts,
   getUserAgeBuckets,

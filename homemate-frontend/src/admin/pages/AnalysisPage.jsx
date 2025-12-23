@@ -24,10 +24,10 @@ import {
     Legend,
     ResponsiveContainer,
 } from 'recharts';
-import { 
-    getUserGenderCount, 
-    getUserStatusCounts, 
-    getUserAgeBuckets, 
+import {
+    getUserGenderCount,
+    getUserStatusCounts,
+    getUserAgeBuckets,
     getUserNewAccounts,
     getTaskerGenderCount,
     getTaskerAgeBuckets,
@@ -43,7 +43,7 @@ import {
     getTaskBillRanges,
     getTaskStatusCounts,
 } from '../services/adminService';
-import { generateTimeRanges, formatRangeLabel} from '../utility/userAnalysisUtility';
+import { generateTimeRanges, formatRangeLabel } from '../utility/userAnalysisUtility';
 
 const AnalysisPage = () => {
     const [analysisType, setAnalysisType] = useState('');
@@ -346,7 +346,7 @@ const AnalysisPage = () => {
                                 {groupBy === 'year' && (
                                     <TextField
                                         fullWidth
-                                        label="Select Year"
+                                        label="Start Point - Year"
                                         type="number"
                                         value={selectedYear}
                                         onChange={(e) => setSelectedYear(e.target.value)}
@@ -359,7 +359,7 @@ const AnalysisPage = () => {
                                 {groupBy === 'month' && (
                                     <TextField
                                         fullWidth
-                                        label="Select Month"
+                                        label="Start Point - Month"
                                         type="month"
                                         value={selectedMonth}
                                         onChange={(e) => setSelectedMonth(e.target.value)}
@@ -370,7 +370,7 @@ const AnalysisPage = () => {
                                 {groupBy === 'day' && (
                                     <TextField
                                         fullWidth
-                                        label="Select Start Date"
+                                        label="Start Point - Day"
                                         type="date"
                                         value={selectedDate}
                                         onChange={(e) => setSelectedDate(e.target.value)}
