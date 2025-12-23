@@ -71,7 +71,7 @@ export const setTaskerOffline = async (taskerId) => {
 
 // Forgot Password API
 export async function sendOtpForPasswordReset(email) {
-  const response = await fetch(`${baseUrl}/api/auth/otp/send`, {
+  const response = await fetch(`${baseUrl}/api/auth/otp/send/forgetpassword`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
