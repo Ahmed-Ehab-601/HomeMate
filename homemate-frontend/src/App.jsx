@@ -28,7 +28,7 @@ import TaskDetailsPage from "./pages/TaskDetailsPage";
 import EnterEmailPage from "./pages/EnterEmailPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
 import SignupMethodChoicePage from "./pages/SignupMethodChoicePage";
-import GlobalPresence from "./components/GlobalPresence";
+// import GlobalPresence from "./components/GlobalPresence";
 import AboutPage from "./pages/AboutPage";
 import HowItWorksPage from "./pages/HowItWorksPage";
 import ContactPage from "./pages/ContactPage";

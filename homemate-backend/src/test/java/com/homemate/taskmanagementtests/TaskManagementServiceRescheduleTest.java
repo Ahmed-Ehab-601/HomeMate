@@ -85,9 +85,6 @@ public class TaskManagementServiceRescheduleTest {
         verify(emailServiceImp, times(2)).sendEmail(any());
     }
 
-        // Verify email was sent
-        verify(emailServiceImp, times(2)).sendEmail(any());
-    }
     @Test
     void testReschedulePastDate() {
         long taskID = 10L;
