@@ -5,10 +5,19 @@ import { baseUrl } from "../utils/apiClient";
  * Send OTP to user's email
  * @param {string} email - User's email address
  * @param {string} emailType - Type of email: 'EMAIL_VERIFICATION' or 'FORGOT_PASSWORD'
+ * @param {string} type - OTP request type: 'signup' or 'forgetpassword'
  * @returns {Promise<{success: boolean, message: string}>}
  */
-export async function sendOtp(email, emailType) {
-    const response = await fetch(`${baseUrl}/api/auth/otp/send`, {
+export async function sendOtp(email, emailType, type = 'signup') {
+    // Determine the type parameter based on emailType if not explicitly provided
+    let otpType = type;
+    if (emailType === 'FORGOT_PASSWORD') {
+        otpType = 'forgetpassword';
+    } else if (emailType === 'EMAIL_VERIFICATION') {
+        otpType = 'signup';
+    }
+
+    const response = await fetch(`${baseUrl}/api/auth/otp/send/${otpType}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
