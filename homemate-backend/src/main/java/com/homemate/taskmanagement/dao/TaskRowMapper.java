@@ -24,7 +24,6 @@ public class TaskRowMapper implements RowMapper<TaskDto> {
                 workedHours(rs.getDouble("workedHours")).
                 startInProgress(toLocalDateTime(rs.getTimestamp("startInProgress"))).
                 bill(rs.getDouble("bill")).
-                timeEstimated(rs.getInt("estimation")).
                 userName(rs.getString("userName")).
                 taskerName(rs.getString("taskerName")).
                 serviceName(rs.getString("serviceName")).
@@ -32,7 +31,9 @@ public class TaskRowMapper implements RowMapper<TaskDto> {
                 addressDetails(buildAddress(rs)).
                 userMail(rs.getString("userMail")).
                 taskerMail(rs.getString("taskerMail")).
-                taskerID(rs.getLong("taskerID")).hourRate(rs.getDouble("hourRate"))
+                taskerID(rs.getLong("taskerID")).
+                hourRate(rs.getDouble("hourRate")).
+                estimation(rs.getInt("estimation"))
                 .build();
     }
 

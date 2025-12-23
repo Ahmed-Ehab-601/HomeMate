@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+
 @Component
 public class TaskCardRowMapper implements RowMapper<TaskCardDto> {
     @Override
@@ -21,18 +22,12 @@ public class TaskCardRowMapper implements RowMapper<TaskCardDto> {
                 .taskerName(rs.getString("taskerName"))
                 .serviceName(rs.getString("serviceName"))
                 .addressCity(rs.getString("city"))
-                .timeEstimated(rs.getInt("estimation"))
-
+                .estimation(rs.getInt("estimation"))
                 .build();
-        }
-
-    private LocalDateTime toLocalDateTime(Timestamp timestamp){
-        return timestamp != null ? timestamp.toLocalDateTime() : null;
     }
 
-    private Integer getNullableInt(ResultSet rs, String column) throws SQLException {
-        int value = rs.getInt(column);
-        return rs.wasNull() ? null : value;
+    private LocalDateTime toLocalDateTime(Timestamp timestamp) {
+        return timestamp != null ? timestamp.toLocalDateTime() : null;
     }
 }
 

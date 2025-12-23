@@ -107,8 +107,14 @@ function TaskDetailsPage() {
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [rescheduleBusyTimes, setRescheduleBusyTimes] = useState({});
   const [loadingRescheduleBusyTime, setLoadingRescheduleBusyTime] = useState(false);
-  // Use estimation from navigation state if available
-  const [taskEstimation, setTaskEstimation] = useState(location.state?.estimation ?? null);
+  // Use estimation from task directly (already in minutes from backend)
+  const [taskEstimation, setTaskEstimation] = useState(null);
+
+  useEffect(() => {
+    if (task?.estimation !== undefined && task?.estimation !== null) {
+      setTaskEstimation(task.estimation);
+    }
+  }, [task?.estimation]);
 
   const userRole = getUserRole();
   const isTasker = userRole === "ROLE_TASKER";
@@ -299,7 +305,7 @@ const WORK_DAY_END_MINUTES = 24 * 60 + 30; // 20:30 = 1230 minutes
       const busyTimeData = await getTaskerBusyTime(task.taskerID, rescheduleDate, userRole);
       setRescheduleBusyTimes(busyTimeData || []);
       console.log("Busy times loaded for date:", rescheduleDate, busyTimeData);
-      // No need to fetch estimation here; it's passed from navigation state
+      // No need to fetch estimation here; it's from task.estimation
     } catch (error) {
       console.error("Failed to fetch busy time:", error);
       setRescheduleBusyTimes([]);
@@ -890,14 +896,14 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
             </div>
 
             {/* Estimated Time */}
-            {task.timeEstimated !== undefined && task.timeEstimated !== null && (
+            {task.estimation !== undefined && task.estimation !== null && (
               <div className="task-detail-row">
                 <div className="task-detail-icon">⏳</div>
                 <div className="task-detail-content">
                   <div className="task-detail-label">Estimated Time</div>
                   <div className="task-detail-value">
                     {(() => {
-                      const mins = Number(task.timeEstimated);
+                      const mins = Number(task.estimation);
                       const h = Math.floor(mins / 60);
                       const m = mins % 60;
                       if (h > 0 && m > 0) return `${h}h ${m}m`;

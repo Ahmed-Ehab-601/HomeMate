@@ -130,7 +130,4 @@ public class TaskRequestService {
         }
         return true;
     }
-    public int getTaskDetails(Long taskId) {
-        return taskRequestDao.getEstimation(taskId);
-    }
 }

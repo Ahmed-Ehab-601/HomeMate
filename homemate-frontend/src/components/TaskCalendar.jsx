@@ -3,21 +3,21 @@ import TaskCard from './TaskCard';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import { rescheduleTask, getTaskerBusyTime, getTaskDetails } from '../api/taskManagementApi';
-import { fetchUserTasks, fetchTaskerTasks } from '../api/tasksApi';
+import { fetchUserTasksByDate, fetchTaskerTasksByDate } from '../api/tasksApi';
 import { useAuth } from '../contexts/AuthContext';
 
 // Work hours constants (same as TaskDetailsPage)
 const WORK_DAY_START_MINUTES = 8 * 60; // 08:00 = 480 minutes
 const WORK_DAY_END_MINUTES = 24 * 60 + 30; // 20:30 = 1230 minutes
 
-// Status configuration
+// Status configuration - Match TaskCard colors
 const statusConfig = {
     InReview: { bg: '#FEF3C7', text: '#92400E', display: 'In Review' },
     Accepted: { bg: '#DBEAFE', text: '#1E40AF', display: 'Accepted' },
-    InProgress: { bg: '#D1FAE5', text: '#065F46', display: 'In Progress' },
-    Suspended: { bg: '#FEE2E2', text: '#991B1B', display: 'Suspended' },
-    Done: { bg: '#E0E7FF', text: '#3730A3', display: 'Done' },
-    Rejected: { bg: '#F3F4F6', text: '#4B5563', display: 'Rejected' },
+    InProgress: { bg: '#FED7AA', text: '#C2410C', display: 'In Progress' },
+    Suspended: { bg: '#F3F4F6', text: '#6B7280', display: 'Suspended' },
+    Done: { bg: '#DCFCE7', text: '#166534', display: 'Done' },
+    Rejected: { bg: '#FEE2E2', text: '#991B1B', display: 'Rejected' },
 };
 
 // Day colors for calendar header (system colors)
@@ -196,15 +196,30 @@ function TaskCalendar() {
         try {
             setLoading(true);
             setError(null);
+            
+            // Get first and last day of current month
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            // Format as YYYY-MM-DD for LocalDate
+            const startDate = `${firstDay.getFullYear()}-${String(firstDay.getMonth() + 1).padStart(2, '0')}-${String(firstDay.getDate()).padStart(2, '0')}`;
+            const endDate = `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
+            
+            console.log('🔵 [TaskCalendar] Fetching tasks:', { startDate, endDate, filteredStatus, userRole });
+            
             let data;
             if (userRole === 'ROLE_TASKER') {
-                data = await fetchTaskerTasks(user?.id, filteredStatus, 0, 100);
-                setTasks(data.tasks || []);
+                data = await fetchTaskerTasksByDate(user?.id, startDate, endDate, filteredStatus);
             } else {
-                data = await fetchUserTasks(user?.id, filteredStatus, 0, 100);
-                setTasks(data.tasks || []);
+                data = await fetchUserTasksByDate(user?.id, startDate, endDate, filteredStatus);
             }
+            
+            setTasks(Array.isArray(data) ? data : []);
+            console.log('✅ [TaskCalendar] Tasks loaded:', data);
         } catch (err) {
+            console.error('❌ [TaskCalendar] Error:', err);
             setError(err.message);
         } finally {
             setLoading(false);
@@ -271,6 +286,8 @@ function TaskCalendar() {
         e.preventDefault();
         if (!draggedTask) return;
 
+        console.log('🔵 [Drag Drop] Dragged task:', draggedTask);
+
         const dropDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -287,21 +304,40 @@ function TaskCalendar() {
             return;
         }
 
-        // Fetch task details to get estimation
+        setLoadingBusyTimes(true);
+        
         try {
+            // Fetch full task details to get taskerID and estimation
             const taskDetails = await getTaskDetails(draggedTask.taskID);
-            setTaskEstimation(taskDetails.timeEstimated || 0);
+            console.log('🔵 [Drag Drop] Task details:', taskDetails);
+            
+            const estimation = taskDetails.estimation || 0;
+            const taskerID = taskDetails.taskerID;
+            
+            if (!taskerID) {
+                setSnackbar({
+                    show: true,
+                    message: 'Cannot reschedule: Tasker information missing.',
+                    type: 'error',
+                });
+                setTimeout(() => setSnackbar({ show: false, message: '', type: 'error' }), 3000);
+                setDraggedTask(null);
+                setLoadingBusyTimes(false);
+                return;
+            }
+            
+            setTaskEstimation(estimation);
             
             // Fetch busy times for the selected date
-            setLoadingBusyTimes(true);
             const dateStr = `${dropDate.getFullYear()}-${String(dropDate.getMonth() + 1).padStart(2, '0')}-${String(dropDate.getDate()).padStart(2, '0')}`;
-            const busyTimeData = await getTaskerBusyTime(taskDetails.taskerID, dateStr, userRole);
+            const busyTimeData = await getTaskerBusyTime(taskerID, dateStr, userRole);
             setBusyTimes(busyTimeData || []);
             
             setSelectedDate(dropDate);
             setSelectedTime('');
             setShowTimeModal(true);
         } catch (err) {
+            console.error('❌ [Drag Drop] Error:', err);
             setSnackbar({
                 show: true,
                 message: `Failed to load scheduling data: ${err.message}`,
@@ -548,7 +584,7 @@ function TaskCalendar() {
                                       hour12: false,
                                   })
                                 : 'N/A';
-                            const estMinutes = task.timeEstimated;
+                            const estMinutes = task.estimation;
                             const estLabel = formatEstimation(estMinutes);
 
                             return (
@@ -561,11 +597,7 @@ function TaskCalendar() {
                                         e.stopPropagation();
                                         navigate(`/tasks/${task.taskID}`);
                                     }}
-                                    title={`Time: ${taskTime}\n${estLabel ? `Estimation: ${estLabel}\n` : ''}Status: ${
-                                        task.status
-                                    }\nService: ${task.serviceName}\nCustomer: ${task.userName || 'N/A'}\nTasker: ${
-                                        task.taskerName || 'N/A'
-                                    }`}
+                                    title={`${task.serviceName}\nTime: ${taskTime}${estLabel ? `\nEstimation: ${estLabel}` : ''}\nStatus: ${config.display}\nLocation: ${task.addressCity || 'N/A'}\nCustomer: ${task.userName || 'N/A'}\nTasker: ${task.taskerName || 'N/A'}`}
                                     style={{
                                         backgroundColor: config.bg,
                                         color: config.text,
@@ -591,23 +623,9 @@ function TaskCalendar() {
                                         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {task.serviceName || config.display}
                                         </span>
-                                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '9px', opacity: 0.8, whiteSpace: 'nowrap' }}>
-                                                {taskTime}
-                                            </span>
-                                            {estLabel && (
-                                                <span
-                                                    style={{
-                                                        fontSize: '9px',
-                                                        opacity: 0.8,
-                                                        whiteSpace: 'nowrap',
-                                                        color: '#374151',
-                                                    }}
-                                                >
-                                                    • {estLabel}
-                                                </span>
-                                            )}
-                                        </div>
+                                        <span style={{ fontSize: '9px', opacity: 0.8, whiteSpace: 'nowrap' }}>
+                                            {taskTime}
+                                        </span>
                                     </div>
                                 </div>
                             );
