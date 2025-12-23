@@ -13,9 +13,6 @@ DROP TABLE IF EXISTS Users CASCADE;
 
 SET REFERENTIAL_INTEGRITY TRUE;
 
--- ======================================================
--- USERS
--- ======================================================
 CREATE TABLE Users (
     userID INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(50) NOT NULL,
@@ -27,12 +24,10 @@ CREATE TABLE Users (
     gender VARCHAR(1) CHECK (gender IN ('M', 'F')),
     phone VARCHAR(50),
     admin BOOLEAN DEFAULT FALSE NOT NULL,
-    suspended BOOLEAN DEFAULT FALSE NOT NULL
+    suspended BOOLEAN DEFAULT FALSE NOT NULL,
+    createdTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- ======================================================
--- ADDRESS
--- ======================================================
 CREATE TABLE Address (
     addressID INT AUTO_INCREMENT PRIMARY KEY,
     userID INT NOT NULL,
@@ -43,9 +38,6 @@ CREATE TABLE Address (
     FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- ======================================================
--- SERVICE
--- ======================================================
 CREATE TABLE Service (
     serviceID INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
@@ -55,9 +47,6 @@ CREATE TABLE Service (
     imageType VARCHAR(200)
 );
 
--- ======================================================
--- TASKER
--- ======================================================
 CREATE TABLE Tasker (
     taskerID INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(50) NOT NULL,
@@ -78,12 +67,10 @@ CREATE TABLE Tasker (
     WorkedHours DOUBLE DEFAULT 0.00 NOT NULL,
     addressCity VARCHAR(200),
     suspended BOOLEAN DEFAULT FALSE NOT NULL,
+    createdTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
--- ======================================================
--- TASK
--- ======================================================
 CREATE TABLE Task (
     taskID INT AUTO_INCREMENT PRIMARY KEY,
     startDate TIMESTAMP NOT NULL,
@@ -98,15 +85,13 @@ CREATE TABLE Task (
     startInProgress TIMESTAMP NULL,
     addressID INT NOT NULL,
     description VARCHAR(500),
+    estimation INT DEFAULT 0,
     FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (taskerID) REFERENCES Tasker(taskerID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (addressID) REFERENCES Address(addressID) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
--- ======================================================
--- CHAT
--- ======================================================
 CREATE TABLE Chat (
     chatID INT AUTO_INCREMENT PRIMARY KEY,
     userID INT NOT NULL,
@@ -115,9 +100,6 @@ CREATE TABLE Chat (
     FOREIGN KEY (taskerID) REFERENCES Tasker(taskerID) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- ======================================================
--- REPORT
--- ======================================================
 CREATE TABLE Report (
     reportID INT AUTO_INCREMENT PRIMARY KEY,
     taskID INT NOT NULL,
@@ -128,9 +110,6 @@ CREATE TABLE Report (
     FOREIGN KEY (taskID) REFERENCES Task(taskID) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- ======================================================
--- REVIEWS
--- ======================================================
 CREATE TABLE Reviews (
     reviewID INT AUTO_INCREMENT PRIMARY KEY,
     taskID INT NOT NULL,
