@@ -159,7 +159,8 @@ public class TaskRequestDao {
         LocalDateTime endOfDay = day.plusDays(1).atStartOfDay();
         String sql = "SELECT  taskID ,startDate , estimation FROM Task" +
                 " WHERE taskerID = ? AND startDate >= ? AND startDate < ? " +
-                "AND status NOT IN ('Rejected', 'Done')";
+                "AND status NOT IN ('Rejected', 'Done')" +
+                "AND estimation > 0";
         return jdbcTemplate.query(sql, taskerBusyTimeMapper,
                 taskerId,
                 Timestamp.valueOf(startOfDay),

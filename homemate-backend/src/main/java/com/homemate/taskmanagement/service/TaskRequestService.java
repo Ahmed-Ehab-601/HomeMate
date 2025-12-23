@@ -121,6 +121,9 @@ public class TaskRequestService {
             if (busyTime.getTaskID().equals(taskId)) {
                 continue;
             }
+            if (busyTime.getEstimation() <= 0) {
+                continue;
+            }
             if (startDateTime.isBefore(busyEnd) && endDateTime.isAfter(busyStart)) {
                 return false;
             }

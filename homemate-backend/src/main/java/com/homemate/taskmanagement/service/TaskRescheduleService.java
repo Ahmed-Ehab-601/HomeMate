@@ -122,6 +122,9 @@ public class TaskRescheduleService {
             if (busyTime.getTaskID().equals(taskId)) {
                 continue;
             }
+            if (busyTime.getEstimation() <= 0) {
+                continue;
+            }
 
             LocalDateTime busyStart = busyTime.getStartDate();
             LocalDateTime busyEnd = busyStart.plusMinutes(busyTime.getEstimation());
