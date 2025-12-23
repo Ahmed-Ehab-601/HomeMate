@@ -239,12 +239,21 @@ function SignInPage() {
           <div style={{ marginTop: "24px", textAlign: "center" }}>
             <p>
               Don't have an account?{" "}
-              <a
-                href="/signup"
-                style={{ color: "var(--primary)", textDecoration: "underline" }}
+              <button
+                type="button"
+                onClick={() => navigate("/signup")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--primary)",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  fontSize: "1em",
+                  padding: 0,
+                }}
               >
                 Sign up
-              </a>
+              </button>
             </p>
           </div>
         </div>
