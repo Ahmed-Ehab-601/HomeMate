@@ -55,7 +55,7 @@ public class TaskerAnalysisDao {
             if (rs.next()) {
                 return new GenderCountResponse(rs.getLong("male"), rs.getLong("female"));
             }
-            return new GenderCountResponse(0, 0);
+            return new GenderCountResponse(0L, 0L);
         });
     }
 
