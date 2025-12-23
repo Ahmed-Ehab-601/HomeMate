@@ -250,6 +250,73 @@ export const getAnalysis = async () => {
     return data;
 };
 
+// User Analysis APIs
+export const getUserGenderCount = async () => {
+    const response = await apiFetch('/api/analysis/user/gender-count');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch gender count',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getUserStatusCounts = async () => {
+    const response = await apiFetch('/api/analysis/user/status-counts');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch status counts',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getUserAgeBuckets = async () => {
+    const response = await apiFetch('/api/analysis/user/age-buckets');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch age buckets',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getUserNewAccounts = async (ranges) => {
+    const response = await apiFetch('/api/analysis/user/new-accounts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ranges }),
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch new accounts',
+            data,
+        };
+    }
+
+    return data;
+};
+
 export default {
     getUsers,
     getTaskers,
@@ -272,4 +339,8 @@ export default {
     getReports,
     respondToReport,
     getAnalysis,
+    getUserGenderCount,
+    getUserStatusCounts,
+    getUserAgeBuckets,
+    getUserNewAccounts,
 };

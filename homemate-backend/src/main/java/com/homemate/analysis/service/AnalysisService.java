@@ -1,20 +1,19 @@
-package com.homemate.analysis.service.imp;
+package com.homemate.analysis.service;
 
 import com.homemate.analysis.dao.AnalysisDao;
 import com.homemate.analysis.dto.AnalysisResponse;
-import com.homemate.analysis.service.IAnalysisService;
+
 import org.springframework.stereotype.Service;
 
 @Service
-public class AnalysisServiceImp implements IAnalysisService {
+public class AnalysisService {
 
     private final AnalysisDao analysisDao;
 
-    public AnalysisServiceImp(AnalysisDao analysisDao) {
+    public AnalysisService(AnalysisDao analysisDao) {
         this.analysisDao = analysisDao;
     }
 
-    @Override
     public AnalysisResponse getAnalysis() {
         return AnalysisResponse.builder()
                 .userAnalysis(analysisDao.getUserAnalysis())

@@ -21,6 +21,10 @@ export {
   getReports,
   respondToReport,
   getAnalysis,
+  getUserGenderCount,
+  getUserStatusCounts,
+  getUserAgeBuckets,
+  getUserNewAccounts,
   default,
 } from '../api/adminApi';
 
