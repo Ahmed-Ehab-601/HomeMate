@@ -129,6 +129,33 @@ class ReportServiceTest {
     }
 
     @Test
+    void testGetAllShortReports_PageSizeExceedsLimit() {
+        // Arrange
+        ReportFilterDto filterDto = new ReportFilterDto();
+        List<ShortReport> mockReports = new ArrayList<>();
+        mockReports.add(ShortReport.builder()
+                .reportID(1)
+                .header("Test Report")
+                .taskID(1)
+                .reporter(true)
+                .adminStatus(AdminStatus.PENDING)
+                .build());
+        
+        when(reportDao.getAllShortReports(30L, 0L, filterDto)).thenReturn(mockReports);
+        when(reportDao.countAllReports(filterDto)).thenReturn(1L);
+
+        // Act
+        PaginatedResponse<ShortReport> result = reportService.getAllShortReports(0, 150, filterDto);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(0, result.getCurrentPage());
+        assertEquals(30, result.getPageSize());
+        assertEquals(1, result.getData().size());
+        verify(reportDao, times(1)).getAllShortReports(30L, 0L, filterDto);
+    }
+
+    @Test
     void testSubmitReport_ByUser_Success() {
         // Arrange
         SubmitReport submitReport = SubmitReport.builder()

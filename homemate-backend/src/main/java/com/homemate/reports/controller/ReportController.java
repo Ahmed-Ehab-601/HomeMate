@@ -54,8 +54,7 @@ public class ReportController {
             @AuthenticationPrincipal AppUserDetails userDetails) {
 
         boolean ok = reportService.submitReport(submitReport, userDetails);
-        if (ok)
-            return ResponseEntity.ok("Report Submitted");
+        if (ok) return ResponseEntity.ok("Report Submitted");
         return ResponseEntity.badRequest().body("Invalid report data or task not accessible");
     }
   
