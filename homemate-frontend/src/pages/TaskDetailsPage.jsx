@@ -8,8 +8,7 @@ import {
   suspendTask,
   completeTask,
   getTaskerBusyTime,
-  addTaskEstimation,
-  getTaskEstimation,
+  addTaskEstimation
 } from "../api/taskManagementApi";
 import { acceptTask, rejectTask } from "../api/taskActionsApi";
 import { getTaskReview } from "../api/taskManagementApi";
@@ -108,7 +107,8 @@ function TaskDetailsPage() {
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [rescheduleBusyTimes, setRescheduleBusyTimes] = useState({});
   const [loadingRescheduleBusyTime, setLoadingRescheduleBusyTime] = useState(false);
-  const [taskEstimation, setTaskEstimation] = useState(null);
+  // Use estimation from navigation state if available
+  const [taskEstimation, setTaskEstimation] = useState(location.state?.estimation ?? null);
 
   const userRole = getUserRole();
   const isTasker = userRole === "ROLE_TASKER";
@@ -299,18 +299,7 @@ const WORK_DAY_END_MINUTES = 24 * 60 + 30; // 20:30 = 1230 minutes
       const busyTimeData = await getTaskerBusyTime(task.taskerID, rescheduleDate, userRole);
       setRescheduleBusyTimes(busyTimeData || []);
       console.log("Busy times loaded for date:", rescheduleDate, busyTimeData);
-
-      // Fetch task estimation separately (only if not already loaded)
-      if (!taskEstimation && task.taskID) {
-        try {
-          const estimationMinutes = await getTaskEstimation(task.taskID, userRole);
-          setTaskEstimation(estimationMinutes);
-          console.log("Task estimation loaded:", estimationMinutes, "minutes");
-        } catch (err) {
-          console.error("Failed to load estimation:", err);
-          setTaskEstimation(60); // Default to 60 minutes if fails
-        }
-      }
+      // No need to fetch estimation here; it's passed from navigation state
     } catch (error) {
       console.error("Failed to fetch busy time:", error);
       setRescheduleBusyTimes([]);
