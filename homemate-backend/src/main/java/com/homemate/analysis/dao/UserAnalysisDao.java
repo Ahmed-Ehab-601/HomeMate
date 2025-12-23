@@ -35,7 +35,10 @@ public class UserAnalysisDao {
                 "FROM Users";
         return jdbcTemplate.query(sql, rs -> {
             if (rs.next()) {
-                return new GenderCountResponse(rs.getLong("male"), rs.getLong("female"));
+                return new GenderCountResponse(
+                    rs.getLong("male"),
+                    rs.getLong("female")
+                );
             }
             return new GenderCountResponse(0L, 0L);
         });
@@ -58,8 +61,14 @@ public class UserAnalysisDao {
     }
 
     public AgeBucketsResponse fetchAgeBuckets() {
-        String sql = generateAgeBucketsSQL("u", 
-            "SELECT TIMESTAMPDIFF(YEAR, birthDate, CURDATE()) AS age FROM Users WHERE birthDate IS NOT NULL");
+        String sql = generateAgeBucketsSQL(
+            "u", 
+            """
+            SELECT TIMESTAMPDIFF(YEAR, birthDate, CURDATE()) AS age 
+            FROM Users 
+            WHERE birthDate IS NOT NULL      
+            """
+        );
 
         return jdbcTemplate.query(sql, rs -> {
             Map<String, Long> buckets = new HashMap<>();

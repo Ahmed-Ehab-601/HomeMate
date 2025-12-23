@@ -49,7 +49,7 @@ class UserAnalysisControllerTest {
 
     @Test
     void getGenderCount_returnsOkWithPayload() throws Exception {
-        when(userAnalysisService.getGenderCount()).thenReturn(new GenderCountResponse(3, 5));
+        when(userAnalysisService.getGenderCount()).thenReturn(new GenderCountResponse(3L, 5L));
 
         mockMvc.perform(get("/api/analysis/user/gender-count"))
                 .andExpect(status().isOk())

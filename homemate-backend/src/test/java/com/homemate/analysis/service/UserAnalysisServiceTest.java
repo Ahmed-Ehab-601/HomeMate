@@ -25,7 +25,7 @@ class UserAnalysisServiceTest {
 
     @Test
     void getGenderCount_delegatesToDao() {
-        GenderCountResponse resp = new GenderCountResponse(7, 8);
+        GenderCountResponse resp = new GenderCountResponse(7L, 8L);
         when(dao.fetchGenderCounts()).thenReturn(resp);
 
         GenderCountResponse actual = service.getGenderCount();

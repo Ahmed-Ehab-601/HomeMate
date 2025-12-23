@@ -47,21 +47,32 @@ public class TaskerAnalysisDao {
     }
 
     public GenderCountResponse fetchGenderCounts() {
-        String sql = "SELECT " +
-                "SUM(CASE WHEN gender = 'M' THEN 1 ELSE 0 END) AS male, " +
-                "SUM(CASE WHEN gender = 'F' THEN 1 ELSE 0 END) AS female " +
-                "FROM Tasker";
+        String sql = """
+                    SELECT
+                    SUM(CASE WHEN gender = 'M' THEN 1 ELSE 0 END) AS male, 
+                    SUM(CASE WHEN gender = 'F' THEN 1 ELSE 0 END) AS female
+                    FROM Tasker
+                    """;
         return jdbcTemplate.query(sql, rs -> {
             if (rs.next()) {
-                return new GenderCountResponse(rs.getLong("male"), rs.getLong("female"));
+                return new GenderCountResponse(
+                    rs.getLong("male"),
+                    rs.getLong("female")
+                );
             }
             return new GenderCountResponse(0L, 0L);
         });
     }
 
     public AgeBucketsResponse fetchAgeBuckets() {
-        String sql = generateAgeBucketsSQL("t", 
-            "SELECT TIMESTAMPDIFF(YEAR, birthDate, CURDATE()) AS age FROM Tasker WHERE birthDate IS NOT NULL");
+        String sql = generateAgeBucketsSQL(
+            "t", 
+            """
+            SELECT TIMESTAMPDIFF(YEAR, birthDate, CURDATE()) AS age 
+            FROM Tasker 
+            WHERE birthDate IS NOT NULL
+            """
+        );
 
         return jdbcTemplate.query(sql, rs -> {
             Map<String, Long> buckets = new HashMap<>();
