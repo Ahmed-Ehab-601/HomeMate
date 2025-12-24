@@ -1,0 +1,93 @@
+.banner-container {
+    position: relative;
+    width: 120px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.banner-board {
+    position: relative;
+    width: 80px;
+    height: 30px;
+    background: #c6ff4d;
+    border-radius: 6px;
+    border: 2px solid #33333363;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+}
+
+.banner-text {
+    font-size: 10px;
+    font-weight: 900;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    text-shadow: 0.5px 0.5px 0px rgba(0,0,0,0.08);
+    z-index: 1;
+    font-family: 'Arial Black', Arial, sans-serif;
+}
+
+.tool {
+    position: absolute;
+    z-index: 3;
+    font-size: 14px;
+}
+
+/* Top edge tools */
+.chainsaw {
+    top: 0px;
+    left: 8px;
+    transform: rotate(-25deg);
+}
+
+.saw-blade {
+    top: -1px;
+    left: 26px;
+    animation: spin 4s linear infinite;
+}
+
+.drill {
+    top: 1px;
+    right: 12px;
+    transform: rotate(35deg);
+}
+
+.tape {
+    top: 6px;
+    right: 28px;
+}
+
+/* Bottom edge tools */
+.wrench {
+    bottom: 0px;
+    left: 12px;
+    transform: rotate(-45deg);
+}
+
+.screwdriver {
+    bottom: 2px;
+    left: 30px;
+    transform: rotate(-60deg);
+}
+
+.pliers {
+    bottom: 1px;
+    right: 30px;
+    transform: rotate(40deg);
+}
+
+.hammer {
+    bottom: 0px;
+    right: 12px;
+    transform: rotate(25deg);
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

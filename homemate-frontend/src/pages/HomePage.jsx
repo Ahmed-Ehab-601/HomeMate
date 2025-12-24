@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { fetchServices } from "../api/servicesApi";
 import ServiceCard from "../components/ServiceCard";
 
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80";
+// const HERO_IMAGE =
+//   "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80";
+const HERO_IMAGE = "https://res.cloudinary.com/dq9nwnm1q/image/upload/v1766593497/Top_Amoladoras_2025___Gu%C3%ADa_de_Compra_Opiniones_de_expertos_zq5etl.jpg"
 
 function HomePage() {
   const navigate = useNavigate();

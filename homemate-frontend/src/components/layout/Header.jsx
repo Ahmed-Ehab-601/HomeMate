@@ -1,5 +1,7 @@
+
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import BannerLogo from "./BannerLogo";
 
 function Header() {
   const navigate = useNavigate();
@@ -19,9 +21,9 @@ function Header() {
           className="brand"
           onClick={() => navigate("/")}
           aria-label="Go to HomeMate homepage"
+          style={{ padding: 0, background: "none", border: "none" }}
         >
-          <span className="brand__mark">HM</span>
-          HomeMate
+          <BannerLogo />
         </button>
 
         <nav className="nav-links">
