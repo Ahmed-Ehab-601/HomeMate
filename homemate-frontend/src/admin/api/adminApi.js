@@ -529,6 +529,36 @@ export const getTaskStatusCounts = async () => {
     }
 
     return data;
+
+};
+
+// Report & Review Analysis APIs
+export const getReportsPerService = async () => {
+    const response = await apiFetch('/api/analysis/report-review/reports-per-service');
+    const data = await parseJson(response);
+    if (!response.ok) throw { status: response.status, message: data?.message || 'Failed to fetch reports per service' };
+    return data;
+};
+
+export const getReviewsPerService = async () => {
+    const response = await apiFetch('/api/analysis/report-review/reviews-per-service');
+    const data = await parseJson(response);
+    if (!response.ok) throw { status: response.status, message: data?.message || 'Failed to fetch reviews per service' };
+    return data;
+};
+
+export const getReportStatusCounts = async () => {
+    const response = await apiFetch('/api/analysis/report-review/report-status-counts');
+    const data = await parseJson(response);
+    if (!response.ok) throw { status: response.status, message: data?.message || 'Failed to fetch report status counts' };
+    return data;
+};
+
+export const getAvgRatingPerService = async () => {
+    const response = await apiFetch('/api/analysis/report-review/avg-rating-per-service');
+    const data = await parseJson(response);
+    if (!response.ok) throw { status: response.status, message: data?.message || 'Failed to fetch avg rating per service' };
+    return data;
 };
 
 export default {
@@ -569,4 +599,8 @@ export default {
     getTaskEndDateRanges,
     getTaskBillRanges,
     getTaskStatusCounts,
+    getReportsPerService,
+    getReviewsPerService,
+    getReportStatusCounts,
+    getAvgRatingPerService,
 };
