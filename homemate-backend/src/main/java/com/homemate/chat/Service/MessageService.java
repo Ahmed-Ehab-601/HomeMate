@@ -1,5 +1,6 @@
 package com.homemate.chat.Service;
 
+import com.homemate.admin.domain.entities.Tasker;
 import com.homemate.chat.Enum.MessageStatus;
 import com.homemate.chat.dao.ChatDao;
 import com.homemate.chat.dao.MessageDao;
@@ -45,37 +46,6 @@ public class MessageService {
         }
     }
 
-//    public int getUnreadMessagesForUser(Long chatID,AppUserDetails userDetails) throws Exception {
-//       try {
-//           if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
-//               throw new Exception("unauthorized user");
-//           return messageDao.getUnreadOnesForUser(chatID);
-//    }catch (Exception e){
-//           throw new Exception("Couldn't get unread Messages");
-//       }
-//       }
-//
-//    public int getUnreadMessagesForTasker(Long chatID,AppUserDetails userDetails) throws Exception {
-//        try {
-//            if(userDetails.getId()!=chatDao.getChat(chatID).getUserId()&&userDetails.getId()!=chatDao.getChat(chatID).getTaskerId())
-//                throw new Exception("unauthorized user");
-//            return messageDao.getUnreadOnesForTasker(chatID);
-//        }catch (Exception e){
-//            throw new Exception("Couldn't get unread Messages");
-//        }
-//    }
-    public void markAllAsReadUser(Long chatID,AppUserDetails userDetails)throws Exception {
-        try {
-            if(!userDetails.getId().equals(chatDao.getChat(chatID).getUserId())
-                    && !userDetails.getId().equals(chatDao.getChat(chatID).getTaskerId()))
-                throw new Exception("unauthorized user");
-
-            messageDao.markasReadUser(chatID);
-        }catch (Exception e){
-            throw new Exception("Couldn't change Message Status to read ");
-        }
-    }
-
     private void broadcastReceivedMessages(Long id,Boolean isUser) {
         List<MessageDto> list = messageDao.listMessagesRecievedTasker(id, isUser);
         Map<Long, List<MessageDto>> messagesByChat = list.stream()
@@ -105,6 +75,7 @@ public class MessageService {
             throw new Exception("Couldn't change Message Status to read ");
         }
     }
+
     public void markAllAsReceivedForUser(Long userID) throws Exception {
         try {
             messageDao.markasReceivedUser(userID);
@@ -113,8 +84,8 @@ public class MessageService {
             throw new Exception("Couldn't change Message Status to received: " + e.getMessage());
         }
     }
-
     // Tasker logs in
+
     public void markAllAsReceivedForTasker(Long taskerID) throws Exception {
         try {
             messageDao.markasReceivedTasker(taskerID);
@@ -123,5 +94,36 @@ public class MessageService {
             throw new Exception("Couldn't change Message Status to received: " + e.getMessage());
         }
     }
+    public Boolean calculateAndCheckUnread(Long userID, AppUserDetails userDetails) throws Exception {
+      try{
+          if(!userID.equals(userDetails.getId()))
+              throw new Exception("Unauthorized User");
+          return messageDao.getUnreadOnesForUser(userID);
 
+      } catch (Exception e) {
+          throw new Exception("Couldn't calculate unread messages ");
+      }
+    }
+    public Boolean calculateAndCheckUnreadT(Long taskerID, AppUserDetails userDetails) throws Exception {
+        try{
+            if(!taskerID.equals(userDetails.getId()))
+                throw new Exception("Unauthorized Tasker");
+            return messageDao.getUnreadOnesForTasker(taskerID);
+
+        } catch (Exception e) {
+            throw new Exception("Couldn't calculate unread messages ");
+        }
+    }
+
+    public void markAllAsReadUser(Long chatID,AppUserDetails userDetails)throws Exception {
+        try {
+            if(!userDetails.getId().equals(chatDao.getChat(chatID).getUserId())
+                    && !userDetails.getId().equals(chatDao.getChat(chatID).getTaskerId()))
+                throw new Exception("unauthorized user");
+
+            messageDao.markasReadUser(chatID);
+        }catch (Exception e){
+            throw new Exception("Couldn't change Message Status to read ");
+        }
+    }
 }

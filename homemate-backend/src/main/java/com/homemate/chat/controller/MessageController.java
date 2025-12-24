@@ -28,7 +28,7 @@ public class MessageController {
            return   ResponseEntity.status(HttpStatus.OK).body(messageDto1);
         }
         catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
     @PostMapping("/taskerSendMessage/{chatID}")
@@ -40,70 +40,32 @@ public class MessageController {
             return   ResponseEntity.status(HttpStatus.OK).body(messageDto1);
         }
         catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
-//    @GetMapping("/{chatID}/user-unread-count")
-//    @PreAuthorize("hasRole('USER')")
-//    public ResponseEntity<Integer> getUnreadCountU(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception {
-//        int unreadMessages = messageService.getUnreadMessagesForUser(chatID,userDetails);
-//        return ResponseEntity.ok(unreadMessages);
-//    }
-//
-//    @GetMapping("/{chatID}/tasker-unread-count")
-//    @PreAuthorize("hasRole('TASKER')")
-//    public ResponseEntity<Integer> getUnreadCountT(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails)throws Exception {
-//        int unreadMessages = messageService.getUnreadMessagesForTasker(chatID,userDetails);
-//        return ResponseEntity.ok(unreadMessages);
-//    }
-    @PutMapping("/{chatID}/mark-read-user")
+    @PutMapping("/user/{userID}/calculate-unread")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> markMessageAsRead(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
-       try {
-           messageService.markAllAsReadUser(chatID,userDetails);
-        //websocket
-        return ResponseEntity.ok().build();
-    }catch (Exception e){
-           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-
-       }
-    }
-
-    @PutMapping("/{chatID}/mark-read-tasker")
-    @PreAuthorize("hasRole('TASKER')")
-
-    public ResponseEntity<Void> markMessagesAsRead(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
+    public ResponseEntity<Boolean> markMessageAsRead(@PathVariable Long userID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
         try {
-            messageService.markAllAsReadTasker(chatID,userDetails);
-            //websocket
-            return ResponseEntity.ok().build();
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-
+            Boolean haveUnread =messageService.calculateAndCheckUnread(userID,userDetails);
+            return new ResponseEntity<>(haveUnread,HttpStatus.OK);
+        }
+        catch (Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
-//    @PutMapping("/{UserID}/mark-receivedU")
-//    @PreAuthorize("hasRole('USER')")
-//    public ResponseEntity<Void> markMessagesAsReceivedU(@PathVariable Long UserID) throws Exception{
-//       // try {
-//            messageService.markAllAsReceivedForUser(UserID);
-//            //websocket
-//            return ResponseEntity.ok().build();
-////        }catch (Exception e){
-////            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-////
-////        }
-//    }
-//    @PutMapping("/{TaskerID}/mark-receivedT")
-//    @PreAuthorize("hasRole('TASKER')")
-//    public ResponseEntity<Void> markMessagesAsReceivedT(@PathVariable Long TaskerID) throws Exception{
-//        try {
-//            messageService.markAllAsReceivedForTasker(TaskerID);
-//            //websocket
-//            return ResponseEntity.ok().build();
-//        }catch (Exception e){
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-//
-//        }
-//    }
+
+    @PutMapping("/tasker/{taskerID}/calculate-unread")
+    @PreAuthorize("hasRole('TASKER')")
+    public ResponseEntity<Boolean> markMessagesAsRead(@PathVariable Long taskerID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
+            try {
+                Boolean haveUnread =messageService.calculateAndCheckUnreadT(taskerID,userDetails);
+                return new ResponseEntity<>(haveUnread,HttpStatus.OK);
+            }
+            catch (Exception e){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+        }
+
+
 }

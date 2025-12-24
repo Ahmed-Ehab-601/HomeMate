@@ -13,6 +13,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -221,6 +222,13 @@ public class WebSocketMessageController {
         } catch (Exception e) {
             logger.error("❌ Failed to process heartbeat: {}", e.getMessage(), e);
         }
+    }
+    @GetMapping("/online")
+    public Map<String, Object> getAllOnlineUsers() {
+        Map<String, Object> allStatus = new HashMap<>();
+        allStatus.put("users", presenceService.getAllUserOnlineStatus());
+        allStatus.put("taskers", presenceService.getAllTaskerOnlineStatus());
+        return allStatus;
     }
 
 }

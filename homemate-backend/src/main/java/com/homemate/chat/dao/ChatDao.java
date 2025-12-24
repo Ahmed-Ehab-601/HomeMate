@@ -103,4 +103,14 @@ public class ChatDao implements IChatDao<ChatDto> {
         String sql="SELECT chatID FROM Chat WHERE userID = ?";
         return jdbcTemplate.queryForObject(sql, Long.class,userId);
     }
+
+    public void resetUserUnreadCount(Long chatID) {
+        String sql="UPDATE Chat SET userUnreadMessages = 0 WHERE chatID = ?";
+        jdbcTemplate.update(sql,chatID);
+    }
+
+    public void resetTaskerUnreadCount(Long chatID) {
+        String sql="UPDATE Chat SET taskerUnreadMessages = 0 WHERE chatID = ?";
+        jdbcTemplate.update(sql,chatID);
+    }
 }

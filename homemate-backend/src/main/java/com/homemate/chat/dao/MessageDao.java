@@ -99,15 +99,46 @@ public MessageDto save(Long chatID, MessageDto messageDto) {
                 "WHERE m.messageID = ? ",new MessageRowMapper(),messageId);
     }
 @Override
-public int getUnreadOnesForUser(Long chatID) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Message WHERE chatID = ? AND status != 'seen' AND isUserSender = FALSE";
-        return jdbcTemplate.queryForObject(sql,Integer.class,chatID);
+public Boolean getUnreadOnesForUser(Long userID) throws SQLException {
+        String sql = "UPDATE Chat c "+
+    "SET userUnreadMessages = ("+
+        " SELECT COUNT(*)"+
+        " FROM Message m"+
+        " WHERE m.chatID = c.chatID"+
+        " AND m.status != 'seen'"+
+        " AND m.isUserSender = FALSE"+
+        " )"+
+    " WHERE c.userID = ?";
+        jdbcTemplate.update(sql,userID);
+        sql= "SELECT EXISTS (" +
+                "    SELECT 1" +
+                "    FROM Chat c" +
+                "    WHERE c.userID = ?" +
+                "    AND c.userUnreadMessages > 0" +
+                " )";
+        return jdbcTemplate.queryForObject(sql,Boolean.class,userID);
     }
 @Override
-public int getUnreadOnesForTasker(Long chatID) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Message WHERE chatID = ? AND status != 'seen' AND isUserSender = TRUE";
-        return jdbcTemplate.queryForObject(sql,Integer.class,chatID);
-    }
+public Boolean getUnreadOnesForTasker(Long taskerID) throws SQLException {
+    String sql = "UPDATE Chat c "+
+            "SET taskerUnreadMessages = ("+
+            " SELECT COUNT(*)"+
+            " FROM Message m"+
+            " WHERE m.chatID = c.chatID"+
+            " AND m.status != 'seen'"+
+            " AND m.isUserSender = TRUE"+
+            " )"+
+            " WHERE c.taskerID = ?";
+    jdbcTemplate.update(sql,taskerID);
+    sql= "SELECT EXISTS (" +
+            "    SELECT 1" +
+            "    FROM Chat c" +
+            "    WHERE c.taskerID = ?" +
+            "    AND c.taskerUnreadMessages > 0" +
+            " )";
+    return jdbcTemplate.queryForObject(sql,Boolean.class,taskerID);
+}
+
 @Override
 public void markasReadUser(Long chatID) throws SQLException {
         String sql = "UPDATE Message SET status = 'seen' WHERE chatID = ? AND isUserSender= FALSE";

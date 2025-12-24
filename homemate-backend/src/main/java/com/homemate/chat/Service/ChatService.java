@@ -7,8 +7,6 @@ import com.homemate.chat.dto.MessageDto;
 import com.homemate.chat.dto.PaginatedResponse;
 import com.homemate.security.model.AppUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,9 +14,9 @@ import java.util.List;
 @Service
 public class ChatService {
     @Autowired
-    private MessageDao messageDao;
-    private ChatDao chatDao;
-    private MessageService messageService;
+    private final MessageDao messageDao;
+    private final ChatDao chatDao;
+    private final MessageService messageService;
     public ChatService(MessageDao messageDao, ChatDao chatDao,MessageService messageService) {
         this.messageDao = messageDao;
         this.chatDao = chatDao;
@@ -29,13 +27,13 @@ public class ChatService {
 
     }
     public PaginatedResponse getChatHistory(Long chatId, int page, int size,AppUserDetails userDetails) throws Exception{
-        if(userDetails.getId()!=chatDao.getChat(chatId).getUserId()&&userDetails.getId()!=chatDao.getChat(chatId).getTaskerId())
+        if(!userDetails.getId().equals(chatDao.getChat(chatId).getUserId()) && !userDetails.getId().equals(chatDao.getChat(chatId).getTaskerId()))
                    throw new Exception("unauthorized user");
         List<MessageDto> messages = messageDao.getAllMessages(chatId, page, size);
 
         Long totalCount = messageDao.getTotalCount(chatId);
 
-        Long totalPages = (long) Math.ceil((double) totalCount / size);
+        long totalPages = (long) Math.ceil((double) totalCount / size);
 
         return PaginatedResponse.builder()
                 .messages(messages)
@@ -49,7 +47,7 @@ public class ChatService {
     }
 
     public String getUserPhoneNumber(Long Id,AppUserDetails userDetails) throws Exception{
-        if(userDetails.getId()!=chatDao.getChat(Id).getUserId()&&userDetails.getId()!=chatDao.getChat(Id).getTaskerId())
+        if(!userDetails.getId().equals(chatDao.getChat(Id).getUserId()) && !userDetails.getId().equals(chatDao.getChat(Id).getTaskerId()))
             throw new Exception("unauthorized user");
         String str=chatDao.getUserPhone(Id);
         if(str==null)
@@ -59,7 +57,7 @@ public class ChatService {
     }
 
     public String getTaskerPhoneNumber(Long Id,AppUserDetails userDetails)throws Exception {
-        if(userDetails.getId()!=chatDao.getChat(Id).getUserId()&&userDetails.getId()!=chatDao.getChat(Id).getTaskerId())
+        if(!userDetails.getId().equals(chatDao.getChat(Id).getUserId()) && !userDetails.getId().equals(chatDao.getChat(Id).getTaskerId()))
             throw new Exception("unauthorized user");
         String str=chatDao.getTaskerPhone(Id);
         if(str==null)
@@ -74,7 +72,7 @@ public class ChatService {
         ChatDto chat = chatDao.getChat(chatId);
 
         if(chat == null) throw new Exception("Unknown chat");
-        if(userDetails.getId() != chat.getTaskerId())
+        if(!userDetails.getId().equals(chat.getTaskerId()))
             throw new Exception("Unauthorized user");
 
         return chatDao.getNameUser(chat.getUserId());
@@ -83,7 +81,7 @@ public class ChatService {
         ChatDto chat = chatDao.getChat(chatId);
 
         if(chat == null) throw new Exception("Unknown chat");
-        if(userDetails.getId() != chat.getUserId())
+        if(!userDetails.getId().equals(chat.getUserId()))
             throw new Exception("Unauthorized user");
 
         return chatDao.getNameTasker(chat.getTaskerId());
@@ -108,11 +106,29 @@ public class ChatService {
 
     public void setUserOnline(Long userId) throws Exception {
         try {
-
             messageService.markAllAsReceivedForUser(userId);
             chatDao.setUserOnline(userId);
         } catch (Exception e) {
             throw new Exception("Failed to set user online: " + e.getMessage());
+        }
+    }
+         public  void resetUnreadForUser(Long chatID,AppUserDetails userDetails) throws Exception {
+          try {
+              if(!chatDao.getChat(chatID).getUserId().equals(userDetails.getId())){
+                  throw new Exception("UnAuthorizied user");}
+                  chatDao.resetUserUnreadCount(chatID);
+          } catch (Exception e) {
+              throw new Exception("couldn't reset unread count");
+          }
+         }
+
+    public void resetUnreadForTasker(Long chatID, AppUserDetails userDetails) throws Exception {
+        try {
+            if(!chatDao.getChat(chatID).getTaskerId().equals(userDetails.getId())){
+                throw new Exception("UnAuthorizied tasker");}
+            chatDao.resetTaskerUnreadCount(chatID);
+        } catch (Exception e) {
+            throw new Exception("couldn't reset unread count");
         }
     }
 }
