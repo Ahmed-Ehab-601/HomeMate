@@ -35,7 +35,7 @@ public class ReportReviewAnalysisDao {
                 sql,
                 (ResultSetExtractor<ReportsPerServiceResponse>) rs ->
                         new ReportsPerServiceResponse(mapLongCounts(rs, "count")),
-                MIN_YEAR
+                        MIN_YEAR
         );
     }
 
@@ -45,7 +45,7 @@ public class ReportReviewAnalysisDao {
             FROM Service s
             LEFT JOIN Task t ON t.serviceID = s.serviceID
             LEFT JOIN Reviews rev ON rev.taskID = t.taskID
-            WHERE YEAR(rev.time) >= ?
+            WHERE YEAR(t.startDate) >= ?
             GROUP BY s.name
         """;
 
@@ -85,7 +85,7 @@ public class ReportReviewAnalysisDao {
             FROM Service s
             LEFT JOIN Task t ON t.serviceID = s.serviceID
             LEFT JOIN Reviews rev ON rev.taskID = t.taskID
-            WHERE YEAR(rev.time) >= ?
+            WHERE YEAR(t.startDate) >= ?
             GROUP BY s.name
         """;
 
