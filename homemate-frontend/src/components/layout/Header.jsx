@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import BannerLogo from "./BannerLogo";
 
-function Header() {
+function Header({ onLogoHover }) {
   const navigate = useNavigate();
   const { isAuthenticated, isTasker, isRegularUser, isAdmin, logout } =
     useAuth();
@@ -22,6 +22,8 @@ function Header() {
           onClick={() => navigate("/")}
           aria-label="Go to HomeMate homepage"
           style={{ padding: 0, background: "none", border: "none" }}
+          onMouseEnter={() => onLogoHover && onLogoHover(true)}
+          onMouseLeave={() => onLogoHover && onLogoHover(false)}
         >
           <BannerLogo />
         </button>

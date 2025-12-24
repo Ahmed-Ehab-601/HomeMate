@@ -4,11 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { fetchServices } from "../api/servicesApi";
 import ServiceCard from "../components/ServiceCard";
 
-// const HERO_IMAGE =
-//   "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80";
 const HERO_IMAGE = "https://res.cloudinary.com/dq9nwnm1q/image/upload/v1766593497/Top_Amoladoras_2025___Gu%C3%ADa_de_Compra_Opiniones_de_expertos_zq5etl.jpg"
 
-function HomePage() {
+function HomePage({ isLogoHovered = false }) {
   const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -75,7 +73,17 @@ function HomePage() {
       <section className="hero">
         <div>
           <p className="hero__eyebrow">Home services on demand</p>
-          <h1 className="hero__title">Find trusted taskers near you</h1>
+          <h1 className="hero__title">
+            Find <span 
+              className={`trusted-word ${isLogoHovered ? 'underlined' : ''}`}
+              style={{
+                position: 'relative',
+                display: 'inline-block'
+              }}
+            >
+              trusted
+            </span> taskers near you
+          </h1>
           <p className="hero__subtitle">
             Connect with skilled professionals for cleaning, repairs, moving, and more. Book the
             right tasker in minutes.
@@ -152,42 +160,6 @@ function HomePage() {
         )}
       </section>
 
-      {/* Service Discovery Section */}
-      {/* <section id="how-it-works">
-        <div className="section-title">
-          <div>
-            <p className="section-kicker">Service discovery</p>
-            <h2 className="section-heading">
-              {searchText ? `Results for "${searchText}"` : "Explore every HomeMate service"}
-            </h2>
-          </div>
-        </div>
-
-        {status === "loading" && <div className="load-indicator">Loading services…</div>}
-        {status === "error" && <div className="no-results">{error}</div>}
-
-        {status === "success" && (
-          <>
-            {hasNoMatches ? (
-              <div className="empty-state">
-                We couldn't find a service named "{searchText}". Try another search or browse all
-                taskers below.
-              </div>
-            ) : (
-              <div className="grid grid--services">
-                {matchingServices.map((service) => (
-                  <ServiceCard
-                    key={service.serviceId}
-                    service={service}
-                    onSelect={handleSelectService}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </section> */}
-
       {/* Info Links Section */}
       <section className="info-links-section">
         <div className="info-links-grid">
@@ -211,6 +183,24 @@ function HomePage() {
           </div>
         </div>
       </section>
+
+      <style>{`
+        .trusted-word::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 0;
+          width: 0;
+          height: 3px;
+          background: #c6ff4d;
+          transition: width 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+          box-shadow: 0 0 10px rgba(198, 255, 77, 0.6);
+        }
+        
+        .trusted-word.underlined::after {
+          width: 100%;
+        }
+      `}</style>
     </main>
   );
 }

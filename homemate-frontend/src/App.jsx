@@ -5,6 +5,7 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+import { useState } from "react";
 import "./App.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Header from "./components/layout/Header";
@@ -21,14 +22,12 @@ import SignUpPage from "./pages/SignUpPage";
 import UserTasksPage from "./pages/UserTasksPage";
 import TaskerTasksPage from "./pages/TaskerTasksPage";
 import SubmitReviewPage from "./pages/SubmitReviewPage";
-import AdminRoutes from "./admin/routing/AdminRoutes";
 import SubmitReportPage from "./pages/SubmitReportPage";
 import ChatPage from "./pages/ChatPage";
 import TaskDetailsPage from "./pages/TaskDetailsPage";
 import EnterEmailPage from "./pages/EnterEmailPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
 import SignupMethodChoicePage from "./pages/SignupMethodChoicePage";
-// import GlobalPresence from "./components/GlobalPresence";
 import AboutPage from "./pages/AboutPage";
 import HowItWorksPage from "./pages/HowItWorksPage";
 import ContactPage from "./pages/ContactPage";
@@ -67,10 +66,10 @@ function UserProfileRoute() {
   return <UserProfilePage />;
 }
 
-function AppRoutes() {
+function AppRoutes({ isLogoHovered }) {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={<HomePage isLogoHovered={isLogoHovered} />} />
       <Route path="/services" element={<ServicesCatalog />} />
       <Route path="/services/:slug/taskers" element={<TaskerDiscoveryPage />} />
       <Route path="/taskers/:taskerId" element={<TaskerProfilePage />} />
@@ -127,14 +126,7 @@ function AppRoutes() {
       />
       <Route path="/my-tasks" element={<UserTasksPage />} />
       <Route path="/tasker/my-tasks" element={<TaskerTasksPage />} />
-      <Route
-        path="/admin/*"
-        element={
-          <ProtectedRoute requiredRole="ROLE_ADMIN">
-            <AdminRoutes />
-          </ProtectedRoute>
-        }
-      />
+    
     </Routes>
   );
 }
@@ -142,11 +134,12 @@ function AppRoutes() {
 function App() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
+  const [isLogoHovered, setIsLogoHovered] = useState(false);
 
   return (
     <div className="app-shell">
-      {!isAdminRoute && <Header />}
-      <AppRoutes />
+      {!isAdminRoute && <Header onLogoHover={setIsLogoHovered} />}
+      <AppRoutes isLogoHovered={isLogoHovered} />
       <Footer />
     </div>
   );
