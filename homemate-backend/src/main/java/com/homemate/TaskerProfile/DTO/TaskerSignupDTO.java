@@ -2,6 +2,7 @@ package com.homemate.TaskerProfile.DTO;
 
 import java.sql.Timestamp;
 
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -16,6 +17,7 @@ import lombok.Setter;
 public class TaskerSignupDTO {
     private String username;
     private String email;
+    @Size(max = 72, message = "password max size is 72")
     private String password;
     private String phoneNumber;
     private Timestamp dateOfBirth;

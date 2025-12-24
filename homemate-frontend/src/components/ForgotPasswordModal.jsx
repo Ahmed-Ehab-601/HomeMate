@@ -202,6 +202,7 @@ function ForgotPasswordModal({ isOpen, onClose, onSuccess }) {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
+                  maxLength={72}
                   required
                   disabled={isLoading}
                 />
@@ -243,6 +244,9 @@ function ForgotPasswordModal({ isOpen, onClose, onSuccess }) {
                   )}
                 </button>
               </div>
+              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                {newPassword.length}/72
+              </div>
             </div>
             <div className="form-field">
               <label htmlFor="confirm-password" className="form-label">
@@ -256,6 +260,7 @@ function ForgotPasswordModal({ isOpen, onClose, onSuccess }) {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
+                  maxLength={72}
                   required
                   disabled={isLoading}
                 />
@@ -298,6 +303,9 @@ function ForgotPasswordModal({ isOpen, onClose, onSuccess }) {
                     </svg>
                   )}
                 </button>
+              </div>
+              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                {confirmPassword.length}/72
               </div>
             </div>
             <button

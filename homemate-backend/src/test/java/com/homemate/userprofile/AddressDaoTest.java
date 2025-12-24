@@ -50,7 +50,7 @@ class AddressDaoTest {
         assertEquals(2, addresses.size());
         
         AddressDTO firstAddress = addresses.get(0);
-        assertEquals(1L, firstAddress.getUserId());
+        assertEquals(1L, firstAddress.getUserID());
         assertEquals("USA", firstAddress.getCountry());
         assertEquals("New York", firstAddress.getCity());
         assertEquals("123 Main Street", firstAddress.getStreet());
@@ -68,7 +68,7 @@ class AddressDaoTest {
     @Test
     void testAddAddress() {
         AddressDTO newAddress = new AddressDTO();
-        newAddress.setUserId(1L);
+        newAddress.setUserID(1L);
         newAddress.setCountry("USA");
         newAddress.setCity("Miami");
         newAddress.setStreet("159 Ocean Drive");
@@ -97,7 +97,7 @@ class AddressDaoTest {
         // Update the address
         AddressDTO updatedAddress = new AddressDTO();
         updatedAddress.setAddressId(addressId);
-        updatedAddress.setUserId(1L);
+        updatedAddress.setUserID(1L);
         updatedAddress.setCountry("USA");
         updatedAddress.setCity("Los Angeles");
         updatedAddress.setStreet("999 Updated Street");
@@ -158,7 +158,7 @@ class AddressDaoTest {
     @Test
     void testAddAddressWithApartment() {
         AddressDTO newAddress = new AddressDTO();
-        newAddress.setUserId(2L);
+        newAddress.setUserID(2L);
         newAddress.setCountry("USA");
         newAddress.setCity("Denver");
         newAddress.setStreet("753 Mountain View");
@@ -181,7 +181,7 @@ class AddressDaoTest {
     @Test
     void testAddAddressWithoutApartment() {
         AddressDTO newAddress = new AddressDTO();
-        newAddress.setUserId(3L);
+        newAddress.setUserID(3L);
         newAddress.setCountry("USA");
         newAddress.setCity("Portland");
         newAddress.setStreet("456 Forest Avenue");

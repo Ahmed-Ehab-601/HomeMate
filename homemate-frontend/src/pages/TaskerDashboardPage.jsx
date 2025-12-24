@@ -955,7 +955,11 @@ function TaskerDashboardPage() {
                   onChange={(event) =>
                     handleChange("oldPassword", event.target.value)
                   }
+                  maxLength={72}
                 />
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                  {forms.oldPassword.length}/72
+                </div>
               </div>
               <div className="form-field">
                 <label htmlFor="new-password-input">New password</label>
@@ -967,7 +971,11 @@ function TaskerDashboardPage() {
                   onChange={(event) =>
                     handleChange("newPassword", event.target.value)
                   }
+                  maxLength={72}
                 />
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                  {forms.newPassword.length}/72
+                </div>
               </div>
               <div className="form-actions">
                 <button

@@ -611,7 +611,11 @@ const handleLogout = async () => {
                   className="input"
                   value={forms.password.oldPassword}
                   onChange={(event) => handleChange("password", "oldPassword", event.target.value)}
+                  maxLength={72}
                 />
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                  {forms.password.oldPassword.length}/72
+                </div>
               </div>
               <div className="form-field">
                 <label htmlFor="new-password-input">New password</label>
@@ -621,7 +625,11 @@ const handleLogout = async () => {
                   className="input"
                   value={forms.password.newPassword}
                   onChange={(event) => handleChange("password", "newPassword", event.target.value)}
+                  maxLength={72}
                 />
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                  {forms.password.newPassword.length}/72
+                </div>
               </div>
               <div className="form-actions">
                 <button
