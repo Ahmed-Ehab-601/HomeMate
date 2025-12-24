@@ -23,14 +23,6 @@ public class TaskerProfileDTO {
     private String addressCity;
     private byte[] image;
     private String stripeAccountId;
-
-    public String getStripeAccountId() {
-        return stripeAccountId;
-    }
-
-    public void setStripeAccountId(String stripeAccountId) {
-        this.stripeAccountId = stripeAccountId;
-    }
-
+    
 }
 
