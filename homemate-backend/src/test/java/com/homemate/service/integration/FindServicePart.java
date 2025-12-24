@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
-@ActiveProfiles("service")  // uses application-admin.properties
+@ActiveProfiles("admin")  // uses application-admin.properties
 @Transactional  // Rolls back after each test
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class FindServicePart {

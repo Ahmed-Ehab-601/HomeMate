@@ -3,12 +3,10 @@ package com.homemate.taskmanagement.dao;
 import com.homemate.taskmanagement.dto.StatusDto;
 import com.homemate.taskmanagement.dto.TaskCardDto;
 import lombok.AllArgsConstructor;
-import org.springframework.data.redis.stream.Task;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +24,9 @@ public class GetTasksDao {
                     t.startDate,
                     t.status,
                     t.estimation,
+                    t.paid,
                     c.userUnreadMessages,
+                    c.taskerUnreadMessages,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -130,7 +130,7 @@ public class GetTasksDao {
                     t.status,
                     t.paid,
                     t.estimation,
-                    c.taskerUnreadMessages,       
+                    c.taskerUnreadMessages,
                     c.userUnreadMessages,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
@@ -170,8 +170,8 @@ public class GetTasksDao {
                     INNER JOIN Service s ON t.serviceID = s.serviceID
                     INNER JOIN Address a ON t.addressID = a.addressID
                     INNER JOIN Chat c ON t.chatID = c.chatID
-                WHERE u.userID = ? 
-                    AND DATE(t.startDate) >= ? 
+                WHERE u.userID = ?
+                    AND DATE(t.startDate) >= ?
                     AND DATE(t.startDate) <= ?
                 ORDER BY startDate ASC
                 """;
@@ -199,8 +199,8 @@ public class GetTasksDao {
                     INNER JOIN Address a ON t.addressID = a.addressID
                     INNER JOIN Chat c ON t.chatID = c.chatID
 
-                WHERE u.userID = ? 
-                    AND DATE(t.startDate) >= ? 
+                WHERE u.userID = ?
+                    AND DATE(t.startDate) >= ?
                     AND DATE(t.startDate) <= ?
                     AND t.status = ?
                 ORDER BY startDate ASC
@@ -215,9 +215,9 @@ public class GetTasksDao {
                     t.startDate,
                     t.status,
                     t.estimation,
+                    t.paid,
                     c.taskerUnreadMessages,
                     c.userUnreadMessages,
-                    t.paid,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -229,8 +229,8 @@ public class GetTasksDao {
                     INNER JOIN Address a ON t.addressID = a.addressID
                     INNER JOIN Chat c ON t.chatID = c.chatID
 
-                WHERE tas.taskerID = ? 
-                    AND DATE(t.startDate) >= ? 
+                WHERE tas.taskerID = ?
+                    AND DATE(t.startDate) >= ?
                     AND DATE(t.startDate) <= ?
                 ORDER BY startDate ASC
                 """;
@@ -244,9 +244,9 @@ public class GetTasksDao {
                     t.startDate,
                     t.status,
                     t.estimation,
+                    t.paid,
                     c.taskerUnreadMessages,
                     c.userUnreadMessages,
-                    t.paid,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -255,10 +255,10 @@ public class GetTasksDao {
                     INNER JOIN Users u ON t.userID = u.userID
                     INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
                     INNER JOIN Service s ON t.serviceID = s.serviceID
-                    INNER JOIN Address a ON t.addressID = a.addressID  
+                    INNER JOIN Address a ON t.addressID = a.addressID
                     INNER JOIN Chat c ON t.chatID = c.chatID
-                WHERE tas.taskerID = ? 
-                    AND DATE(t.startDate) >= ? 
+                WHERE tas.taskerID = ?
+                    AND DATE(t.startDate) >= ?
                     AND DATE(t.startDate) <= ?
                     AND t.status = ?
                 ORDER BY startDate ASC
