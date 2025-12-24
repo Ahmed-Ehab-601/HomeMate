@@ -889,22 +889,37 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
           {showBill && (
             <div className="bill-summary-section">
               <h3 className="bill-summary-title">Task Completion Summary</h3>
-              <div className="bill-row">
-                <span className="bill-label">Total Worked Time:</span>
-                <span className="bill-value">
-                  {formatWorkedHours(task.workedHours)}
-                </span>
-              </div>
-              <div className="bill-row">
-                <span className="bill-label">Hourly Rate:</span>
-                <span className="bill-value">
-                  ${task.hourRate || task.rate || "N/A"}/hour
-                </span>
-              </div>
-              <div className="bill-row bill-total">
-                <span className="bill-label">Final Bill:</span>
-                <span className="bill-value">${task.bill.toFixed(2)}</span>
-              </div>
+              {(() => {
+                const bill = Number(task.bill || 0);
+                // Tasker receives 90% and HomeMate keeps 10%
+                const taskerAmount = Math.round(bill * 0.9 * 100) / 100;
+                const homemateFee = Math.round((bill - taskerAmount) * 100) / 100;
+
+                return (
+                  <>
+                    <div className="bill-row">
+                      <span className="bill-label">Total Worked Time:</span>
+                      <span className="bill-value">{formatWorkedHours(task.workedHours)}</span>
+                    </div>
+                    <div className="bill-row">
+                      <span className="bill-label">Hourly Rate:</span>
+                      <span className="bill-value">${task.hourRate || task.rate || "N/A"}/hour</span>
+                    </div>
+                    <div className="bill-row">
+                      <span className="bill-label">Tasker Earnings (90%):</span>
+                      <span className="bill-value">${taskerAmount.toFixed(2)}</span>
+                    </div>
+                    <div className="bill-row bill-fee">
+                      <span className="bill-label">HomeMate Fee (10%):</span>
+                      <span className="bill-value">${homemateFee.toFixed(2)}</span>
+                    </div>
+                    <div className="bill-row bill-total">
+                      <span className="bill-label">Final Bill:</span>
+                      <span className="bill-value">${bill.toFixed(2)}</span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
 
@@ -1290,6 +1305,17 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
               >
                 <span className="btn-icon">🛡️</span> Report Issue
               </Link>
+              {/* Tasker: allow marking task as paid when done and unpaid */}
+              {isTasker && normalizedStatus === "DONE" && showBill && !task?.paid && (
+                <button
+                  className="btn btn-accept"
+                  onClick={handleMarkPaidCash}
+                  disabled={isMarkingPaid}
+                >
+                  <span className="btn-icon">💵</span>
+                  {isMarkingPaid ? "Marking..." : "Mark Paid (Cash)"}
+                </button>
+              )}
               {normalizedStatus === "DONE" && !isTasker && !review && (
                 <Link
                   to={`/submit-review/${task.taskID}`}

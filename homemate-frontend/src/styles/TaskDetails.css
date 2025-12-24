@@ -204,6 +204,18 @@
   margin-top: 12px;
 }
 
+/* subtle styling for fee row to differentiate it from earnings */
+.bill-fee .bill-value {
+  color: #6b7280;
+  font-weight: 600;
+}
+
+/* make final bill value stand out more */
+.bill-total .bill-value {
+  color: #065f46;
+  font-size: 1.1rem;
+}
+
 /* Review Section */
 .review-section {
   background: white;

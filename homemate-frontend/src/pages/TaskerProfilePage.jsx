@@ -409,16 +409,11 @@ function TaskerProfilePage() {
           )}
 
           {/* If the current user is the tasker owner, show Stripe connect button */}
-          {isTasker() && (tasker?.id || tasker?.taskerId || taskerId) && String(user?.id || user?.taskerId) === String(tasker?.id || tasker?.taskerId || taskerId) && !(tasker?.stripeAccountId || tasker?.stripe_account_id) && (
-            <button
-              type="button"
-              className="btn btn-secondary btn-large"
-              onClick={handleCreateStripeAccount}
-              disabled={isConnectingStripe}
-            >
-              {isConnectingStripe ? "Connecting…" : "Enable payouts (Stripe)"}
-            </button>
-          )}
+              {isTasker() && (tasker?.id || tasker?.taskerId || taskerId) && String(user?.id || user?.taskerId) === String(tasker?.id || tasker?.taskerId || taskerId) && !(tasker?.stripeAccountId || tasker?.stripe_account_id) && (
+                <div style={{ marginTop: 8 }}>
+                  {/* In-card Enable payouts removed — header CTA provides the primary action */}
+                </div>
+              )}
         </div>
       </section>
 

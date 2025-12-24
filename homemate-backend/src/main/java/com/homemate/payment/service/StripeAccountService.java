@@ -33,8 +33,8 @@ public class StripeAccountService {
             AccountLink link = AccountLink.create(Map.of(
                     "account", accountId,
                     "type", "account_onboarding",
-                    "refresh_url", "https://example.com/refresh",
-                    "return_url", "https://example.com/return"
+                    "refresh_url", "http://localhost:5173/tasker/profile",
+                    "return_url", "http://localhost:5173/tasker/profile"
             ));
             return link.getUrl();
         } catch (Exception e) {

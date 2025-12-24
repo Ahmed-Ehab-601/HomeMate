@@ -35,7 +35,6 @@ public class StripePaymentService {
 
     private final StripeAccountService stripeAccountService;
 
-    // ==================== TASKER ACCOUNT ====================
 
     public String generateOnboardingLink(Long taskerId) {
         Tasker tasker = taskerDao.getByID(taskerId);
@@ -48,7 +47,6 @@ public class StripePaymentService {
         );
     }
 
-    // ==================== CREATE PAYMENT ====================
 
     public PaymentResponseDTO createPaymentAndReturnClientSecret(
             PaymentRequestDTO request) {
@@ -68,9 +66,7 @@ public class StripePaymentService {
         }
     }
 
-    /**
-     * LOGIC UNCHANGED (your original method)
-     */
+
     public Payment createPayment(PaymentRequestDTO paymentRequestDTO)
             throws StripeException {
 
@@ -106,7 +102,6 @@ public class StripePaymentService {
         return payment;
     }
 
-    // ==================== STRIPE INTENT ====================
 
     private PaymentIntent createPaymentIntent(
             Double totalAmount,
@@ -132,7 +127,6 @@ public class StripePaymentService {
         return PaymentIntent.create(params);
     }
 
-    // ==================== CONFIRM PAYMENT ====================
 
     public void confirmPayment(String paymentIntentId) {
         try {
@@ -197,5 +191,7 @@ public class StripePaymentService {
         taskStatusDao.updateTaskerTotalEarning(taskerId, taskDto.getHourRate() * taskDto.getWorkedHours());
 
     }
+
+
 
 }

@@ -3,10 +3,7 @@ package com.homemate.payment.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
-/**
- * Used when frontend confirms payment succeeded
- * Frontend sends this after Stripe.confirmCardPayment() succeeds
- */
+
 @Data
 public class PaymentConfirmDTO {
 

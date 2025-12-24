@@ -595,13 +595,7 @@ function TaskerDashboardPage() {
             className="form-actions"
             style={{ justifyContent: "flex-start" }}
           >
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleTaskerLogout}
-            >
-              Sign out
-            </button>
+            {/* Sign out handled by global header; removed duplicate here */}
             {/* Visible CTA in header so taskers can enable payouts from Tasker Hub */}
             {profile && !(profile.stripeAccountId || profile.stripe_account_id) && (
               <button
@@ -676,19 +670,7 @@ function TaskerDashboardPage() {
                   <p className="tasker-card__meta">
                     Username: {profile.username}
                   </p>
-                    {/* Stripe connect button: visible only if tasker has no stripe account id */}
-                    {!(profile.stripeAccountId || profile.stripe_account_id) && (
-                      <div style={{ marginTop: 8 }}>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={handleCreateStripeConnectedAccount}
-                          disabled={isConnectingStripe}
-                        >
-                          {isConnectingStripe ? "Connecting…" : "Enable payouts (Stripe)"}
-                        </button>
-                      </div>
-                    )}
+                    {/* In-card Enable payouts button removed to avoid duplication — use header CTA */}
                 </div>
               </div>
               <dl className="profile-summary__grid">

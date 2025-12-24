@@ -51,7 +51,6 @@ public class StripePaymentController {
         return ResponseEntity.ok("Payment confirmed successfully");
     }
 
-    // ==================== PAYMENT STATUS ====================
 
     @GetMapping("/payments/{paymentId}/status")
     @PreAuthorize("hasAnyRole('USER','TASKER')")
