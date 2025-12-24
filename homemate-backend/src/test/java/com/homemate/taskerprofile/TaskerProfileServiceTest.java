@@ -423,5 +423,34 @@ class TaskerProfileServiceTest {
 
    
 
+    @Test
+    void testDeleteImage_Success() {
+        Boolean result = taskerProfileService.deleteImage(1L);
+        assertTrue(result);
+
+        // Verify in DB
+        byte[] image = jdbcTemplate.queryForObject(
+            "SELECT image FROM Tasker WHERE taskerID = ?", byte[].class, 1L);
+        assertNull(image);
+    }
+
+
+
+    @Test
+    void testDeleteImage_NullId() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            taskerProfileService.deleteImage(null);
+        });
+        assertEquals("Tasker ID cannot be null.", ex.getMessage());
+    }
+
+    @Test
+    void testDeleteImage_NotFound() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            taskerProfileService.deleteImage(9999L);
+        });
+        assertTrue(ex.getMessage().contains("Tasker not found"));
+    }
+
 }
 

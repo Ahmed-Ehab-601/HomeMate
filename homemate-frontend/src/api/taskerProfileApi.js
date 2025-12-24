@@ -116,6 +116,10 @@ export function updateTaskerImage(payload) {
   return putJson(`${TASKER_PROFILE_ENDPOINT}/image`, payload);
 }
 
+export function deleteTaskerImage() {
+  return request(`${TASKER_PROFILE_ENDPOINT}/image`, { method: "DELETE" });
+}
+
 export function updateTaskerService(serviceId) {
   const url = `${TASKER_PROFILE_ENDPOINT}/service?serviceId=${encodeURIComponent(serviceId)}`;
   return request(url, { method: "PUT" });

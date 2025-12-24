@@ -10,7 +10,9 @@ import {
   updateTaskerCity,
   updateTaskerEmail,
   updateTaskerHourRate,
+
   updateTaskerImage,
+  deleteTaskerImage,
   updateTaskerName,
   updateTaskerPassword,
   updateTaskerPhone,
@@ -416,6 +418,26 @@ function TaskerDashboardPage() {
     }
   };
 
+  const handleImageDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete your profile photo?")) {
+      return;
+    }
+    setImageStatus("deleting");
+    try {
+      await deleteTaskerImage();
+      setImagePreview(null);
+      loadProfile();
+      setFeedback({ type: "success", message: "Profile photo deleted." });
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: error?.message ?? "Failed to delete image.",
+      });
+    } finally {
+      setImageStatus("idle");
+    }
+  };
+
   const [expandedImage, setExpandedImage] = useState(null);
 
   const renderReviews = () => {
@@ -496,9 +518,8 @@ function TaskerDashboardPage() {
                 {review.reviewImages.map((img, index) => {
                   const imgSrc = img.imgFile.startsWith("data:")
                     ? img.imgFile
-                    : `data:image/${img.format || "jpeg"};base64,${
-                        img.imgFile
-                      }`;
+                    : `data:image/${img.format || "jpeg"};base64,${img.imgFile
+                    }`;
                   return (
                     <img
                       key={img.imgId ?? index}
@@ -558,9 +579,8 @@ function TaskerDashboardPage() {
 
         {feedback && (
           <div
-            className={`alert-banner ${
-              feedback.type === "error" ? "error" : "success"
-            } profile-alert`}
+            className={`alert-banner ${feedback.type === "error" ? "error" : "success"
+              } profile-alert`}
           >
             <span>{feedback.message}</span>
             <button
@@ -660,7 +680,7 @@ function TaskerDashboardPage() {
                   <dt>Worked hours</dt>
                   <dd>
                     {profile.workedHours !== undefined &&
-                    profile.workedHours !== null
+                      profile.workedHours !== null
                       ? profile.workedHours.toFixed(2)
                       : "—"}
                   </dd>
@@ -991,16 +1011,36 @@ function TaskerDashboardPage() {
                 <div className="avatar-placeholder">Upload a photo</div>
               )}
             </div>
-            <label className="btn btn-ghost" style={{ width: "fit-content" }}>
-              {imageStatus === "uploading" ? "Uploading…" : "Upload new photo"}
-              <input
-                type="file"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={handleImageChange}
-                disabled={imageStatus === "uploading"}
-              />
-            </label>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <label className="btn btn-ghost" style={{ width: "fit-content" }}>
+                {imageStatus === "uploading"
+                  ? "Uploading…"
+                  : "Upload new photo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleImageChange}
+                  disabled={imageStatus === "uploading"}
+                />
+              </label>
+              {imagePreview && (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={handleImageDelete}
+                  disabled={
+                    imageStatus === "deleting" || imageStatus === "uploading"
+                  }
+                  style={{
+                    color: "var(--color-danger, #ef4444)",
+                    borderColor: "var(--color-danger, #ef4444)",
+                  }}
+                >
+                  {imageStatus === "deleting" ? "Deleting…" : "Delete photo"}
+                </button>
+              )}
+            </div>
           </article>
         </section>
 

@@ -121,5 +121,10 @@ public class TaskerDao {
         String sql = "UPDATE Tasker SET password = ? WHERE email = ?";
         jdbcTemplate.update(sql, newPassword, email);
     }
+
+    public int deleteImage(Long taskerID) {
+        String sql = "UPDATE Tasker SET image = NULL WHERE taskerID = ?";
+        return jdbcTemplate.update(sql, taskerID);
+    }
     
 }

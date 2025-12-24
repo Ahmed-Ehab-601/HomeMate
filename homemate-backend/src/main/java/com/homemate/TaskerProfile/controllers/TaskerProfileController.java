@@ -59,6 +59,20 @@ public class TaskerProfileController {
         }
     }
 
+    @org.springframework.web.bind.annotation.DeleteMapping("/image")
+    @PreAuthorize("hasRole('TASKER')")
+    public ResponseEntity<Map<String, String>> deleteImage(@AuthenticationPrincipal AppUserDetails taskerDetails) {
+        try {
+            taskerProfileService.deleteImage(taskerDetails.getId());
+            return okStatus("Image deleted");
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    Map.of("error", e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
     @GetMapping("/profile")
     @PreAuthorize("hasRole('ROLE_TASKER')")
     public ResponseEntity<TaskerProfileDTO> getProfile(@AuthenticationPrincipal AppUserDetails taskerDetails) {

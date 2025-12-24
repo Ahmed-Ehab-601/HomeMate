@@ -217,5 +217,12 @@ class TaskerDaoTest {
         assertEquals(5.0, profile3.getRating());
         assertEquals(100.0, profile3.getHourrate());
     }
+    @Test
+    void testDeleteImage_Success() {
+        taskerDao.deleteImage(1L);
+        
+        Tasker tasker = taskerDao.getByID(1L);
+        assertNull(tasker.getImage());
+    }
 }
 

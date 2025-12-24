@@ -255,6 +255,17 @@ public class TaskerProfileService {
     
         return true;
     }
+
+    public Boolean deleteImage(Long taskerID) {
+        if (taskerID == null) {
+            throw new IllegalArgumentException("Tasker ID cannot be null.");
+        }
+        int rows = taskerDao.deleteImage(taskerID);
+        if (rows == 0) {
+            throw new IllegalArgumentException("Tasker not found with ID: " + taskerID);
+        }
+        return true;
+    }
     public Boolean deleteAccount(Long taskerID) {
         taskerDao.delete(taskerID);
         return true;
