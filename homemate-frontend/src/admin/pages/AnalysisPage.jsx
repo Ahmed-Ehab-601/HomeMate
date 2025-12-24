@@ -42,6 +42,10 @@ import {
     getTaskEndDateRanges,
     getTaskBillRanges,
     getTaskStatusCounts,
+    getReportsPerService,
+    getReviewsPerService,
+    getReportStatusCounts,
+    getAvgRatingPerService,
 } from '../services/adminService';
 import { generateTimeRanges, formatRangeLabel } from '../utility/userAnalysisUtility';
 
@@ -87,6 +91,12 @@ const AnalysisPage = () => {
             { value: 'endDate', label: 'Task End Dates' },
             { value: 'bill', label: 'Bill Ranges' },
             { value: 'status', label: 'Status Distribution' },
+        ],
+        reportReview: [
+            { value: 'reportsPerService', label: 'Reports per Service' },
+            { value: 'reviewsPerService', label: 'Reviews per Service' },
+            { value: 'reportStatus', label: 'Report Status' },
+            { value: 'avgRating', label: 'Avg Rating per Service' },
         ],
     };
 
@@ -279,6 +289,35 @@ const AnalysisPage = () => {
                         { name: 'Rejected', value: data.rejected },
                     ];
                 }
+            } else if (analysisType === 'reportReview') {
+                if (metric === 'reportsPerService') {
+                    data = await getReportsPerService();
+                    const sortedEntries = Object.entries(data.counts).sort((a, b) => a[0].localeCompare(b[0]));
+                    formattedData = sortedEntries.map(([range, count]) => ({
+                        name: range,
+                        value: count,
+                    }));
+                } else if (metric === 'reviewsPerService') {
+                    data = await getReviewsPerService();
+                    const sortedEntries = Object.entries(data.counts).sort((a, b) => a[0].localeCompare(b[0]));
+                    formattedData = sortedEntries.map(([range, count]) => ({
+                        name: range,
+                        value: count,
+                    }));
+                } else if (metric === 'reportStatus') {
+                    data = await getReportStatusCounts();
+                    formattedData = [
+                        { name: 'Pending', value: data.pending },
+                        { name: 'Done', value: data.done },
+                    ];
+                } else if (metric === 'avgRating') {
+                    data = await getAvgRatingPerService();
+                    const sortedEntries = Object.entries(data.ratings).sort((a, b) => a[0].localeCompare(b[0]));
+                    formattedData = sortedEntries.map(([range, count]) => ({
+                        name: range,
+                        value: count,
+                    }));
+                }
             }
 
             setChartData(formattedData);
@@ -306,6 +345,7 @@ const AnalysisPage = () => {
                                 <MenuItem value="user">User Analysis</MenuItem>
                                 <MenuItem value="tasker">Tasker Analysis</MenuItem>
                                 <MenuItem value="task">Task Analysis</MenuItem>
+                                <MenuItem value="reportReview">Report & Review Analysis</MenuItem>
                             </Select>
                         </FormControl>
 
@@ -327,6 +367,7 @@ const AnalysisPage = () => {
                             </FormControl>
                         )}
 
+                  
                         {/* Time range inputs for new accounts and task date metrics */}
                         {(metric === 'newAccounts' || (analysisType === 'task' && (metric === 'startDate' || metric === 'endDate'))) && (
                             <>
