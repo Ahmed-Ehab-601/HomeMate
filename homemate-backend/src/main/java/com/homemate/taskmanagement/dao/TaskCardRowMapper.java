@@ -9,10 +9,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+
 @Component
 public class TaskCardRowMapper implements RowMapper<TaskCardDto> {
     @Override
     public TaskCardDto mapRow(ResultSet rs, int rowNum) throws SQLException {
+        boolean userUnread = rs.getObject("userUnreadMessages") != null && rs.getInt("userUnreadMessages") > 0;
+        boolean taskerUnread = rs.getObject("taskerUnreadMessages") != null && rs.getInt("taskerUnreadMessages") > 0;
         return TaskCardDto.builder()
                 .taskID(rs.getLong("taskID"))
                 .startDate(toLocalDateTime(rs.getTimestamp("startDate")))
@@ -23,6 +26,7 @@ public class TaskCardRowMapper implements RowMapper<TaskCardDto> {
                 .addressCity(rs.getString("city"))
                 .estimation(rs.getInt("estimation"))
                 .paid(rs.getBoolean("paid"))
+                .haveUnreadMessages(userUnread || taskerUnread)
                 .build();
     }
 

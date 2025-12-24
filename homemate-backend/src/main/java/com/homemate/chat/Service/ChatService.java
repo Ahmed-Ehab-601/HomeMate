@@ -112,24 +112,5 @@ public class ChatService {
             throw new Exception("Failed to set user online: " + e.getMessage());
         }
     }
-         public  void resetUnreadForUser(Long chatID,AppUserDetails userDetails) throws Exception {
-          try {
-              if(!chatDao.getChat(chatID).getUserId().equals(userDetails.getId())){
-                  throw new Exception("UnAuthorizied user");}
-                  chatDao.resetUserUnreadCount(chatID);
-          } catch (Exception e) {
-              throw new Exception("couldn't reset unread count");
-          }
-         }
-
-    public void resetUnreadForTasker(Long chatID, AppUserDetails userDetails) throws Exception {
-        try {
-            if(!chatDao.getChat(chatID).getTaskerId().equals(userDetails.getId())){
-                throw new Exception("UnAuthorizied tasker");}
-            chatDao.resetTaskerUnreadCount(chatID);
-        } catch (Exception e) {
-            throw new Exception("couldn't reset unread count");
-        }
-    }
 }
 

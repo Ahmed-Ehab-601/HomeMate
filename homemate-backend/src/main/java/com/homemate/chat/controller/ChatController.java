@@ -164,31 +164,6 @@ public class ChatController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
-    @PutMapping("/user/reset-unreadMessages/{chatID}")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> resetMessageCount(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails){
-        try{
-            chatService.resetUnreadForUser(chatID,userDetails);
-            return new ResponseEntity<>(HttpStatus.OK);
-        }
-        catch (Exception e)
-        {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-    }
-    @PutMapping("/tasker/reset-unreadMessages/{chatID}")
-    @PreAuthorize("hasRole('TASKER')")
-    public ResponseEntity<?> resetMessageCountT(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails){
-        try{
-            chatService.resetUnreadForTasker(chatID,userDetails);
-            return new ResponseEntity<>(HttpStatus.OK);
-        }
-        catch (Exception e)
-        {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-    }
     @GetMapping("/online")
     public Map<String, Object> getAllOnlineUsers() {
         Map<String, Object> allStatus = new HashMap<>();

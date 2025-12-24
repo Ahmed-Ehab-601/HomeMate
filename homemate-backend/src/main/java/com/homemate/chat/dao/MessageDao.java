@@ -105,7 +105,7 @@ public Boolean getUnreadOnesForUser(Long userID) throws SQLException {
         " SELECT COUNT(*)"+
         " FROM Message m"+
         " WHERE m.chatID = c.chatID"+
-        " AND m.status != 'seen'"+
+        " AND m.status IN ('sent', 'received')"+
         " AND m.isUserSender = FALSE"+
         " )"+
     " WHERE c.userID = ?";
@@ -125,7 +125,7 @@ public Boolean getUnreadOnesForTasker(Long taskerID) throws SQLException {
             " SELECT COUNT(*)"+
             " FROM Message m"+
             " WHERE m.chatID = c.chatID"+
-            " AND m.status != 'seen'"+
+            " AND m.status IN ('sent', 'received')"+
             " AND m.isUserSender = TRUE"+
             " )"+
             " WHERE c.taskerID = ?";
@@ -138,6 +138,15 @@ public Boolean getUnreadOnesForTasker(Long taskerID) throws SQLException {
             " )";
     return jdbcTemplate.queryForObject(sql,Boolean.class,taskerID);
 }
+    public void incrementUnreadForUser(Long chatID) {
+        String sql = "UPDATE Chat SET userUnreadMessages = userUnreadMessages + 1 WHERE chatID = ?";
+        jdbcTemplate.update(sql, chatID);
+    }
+
+    public void incrementUnreadForTasker(Long chatID) {
+        String sql = "UPDATE Chat SET taskerUnreadMessages = taskerUnreadMessages + 1 WHERE chatID = ?";
+        jdbcTemplate.update(sql, chatID);
+    }
 
 @Override
 public void markasReadUser(Long chatID) throws SQLException {

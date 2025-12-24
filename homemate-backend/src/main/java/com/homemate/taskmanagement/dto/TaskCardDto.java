@@ -27,6 +27,8 @@ public class TaskCardDto {
     private String addressCity;
     @NotNull
     private Integer estimation;
+    @NotNull
+    private Boolean haveUnreadMessages;
 
     private boolean paid;
 

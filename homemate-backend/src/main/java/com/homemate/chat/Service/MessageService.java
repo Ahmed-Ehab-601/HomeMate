@@ -31,16 +31,20 @@ public class MessageService {
     public MessageDto sendMessage(Long chatID, MessageDto messageDto, AppUserDetails userDetails)throws Exception {
         try {
             if(!userDetails.getId().equals(chatDao.getChat(chatID).getUserId())
-                    && !userDetails.getId().equals(chatDao.getChat(chatID).getTaskerId()))
+                    && !userDetails.getId().equals(chatDao.getChat(chatID).getTaskerId())) {
                 throw new Exception("unauthorized user");
+            }
             boolean isUserSender = messageDto.isIsUserSender();
+            MessageDto messageDto1 =messageDao.save(chatID, messageDto);
 
             if (isUserSender&& messageDao.getTaskerStatus(chatID)) {
                 messageDto.setMessageStatus(MessageStatus.received);
+                messageDao.incrementUnreadForTasker(chatID);
             } else if (!isUserSender && messageDao.getUserStatus(chatID)) {
                 messageDto.setMessageStatus(MessageStatus.received);
+                messageDao.incrementUnreadForUser(chatID);
             }
-            return messageDao.save(chatID, messageDto);
+            return messageDto1;
         } catch (Exception e) {
             throw new Exception(e);
         }
@@ -71,6 +75,7 @@ public class MessageService {
                     && !userDetails.getId().equals(chatDao.getChat(chatID).getTaskerId()))
                 throw new Exception("unauthorized user");
             messageDao.markasReadTasker(chatID);
+            chatDao.resetTaskerUnreadCount(chatID);
         }catch (Exception e){
             throw new Exception("Couldn't change Message Status to read ");
         }
@@ -122,6 +127,7 @@ public class MessageService {
                 throw new Exception("unauthorized user");
 
             messageDao.markasReadUser(chatID);
+            chatDao.resetUserUnreadCount(chatID);
         }catch (Exception e){
             throw new Exception("Couldn't change Message Status to read ");
         }
