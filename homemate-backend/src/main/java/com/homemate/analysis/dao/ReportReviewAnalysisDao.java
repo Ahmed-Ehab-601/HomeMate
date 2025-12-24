@@ -3,6 +3,7 @@ package com.homemate.analysis.dao;
 import com.homemate.analysis.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
@@ -14,6 +15,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ReportReviewAnalysisDao {
 
+    private static final int MIN_YEAR = 2023;
+    private static final String STATUS_PENDING = "pending";
+    private static final String STATUS_DONE = "done";
+
     private final JdbcTemplate jdbcTemplate;
 
     public ReportsPerServiceResponse fetchReportsPerService() {
@@ -22,12 +27,15 @@ public class ReportReviewAnalysisDao {
             FROM Service s
             LEFT JOIN Task t ON t.serviceID = s.serviceID
             LEFT JOIN Report r ON r.taskID = t.taskID
+            WHERE YEAR(t.startDate) >= ?
             GROUP BY s.name
         """;
 
         return jdbcTemplate.query(
                 sql,
-                (org.springframework.jdbc.core.ResultSetExtractor<ReportsPerServiceResponse>) rs -> new ReportsPerServiceResponse(mapLongCounts(rs, "count"))
+                (ResultSetExtractor<ReportsPerServiceResponse>) rs ->
+                        new ReportsPerServiceResponse(mapLongCounts(rs, "count")),
+                MIN_YEAR
         );
     }
 
@@ -37,21 +45,26 @@ public class ReportReviewAnalysisDao {
             FROM Service s
             LEFT JOIN Task t ON t.serviceID = s.serviceID
             LEFT JOIN Reviews rev ON rev.taskID = t.taskID
+            WHERE YEAR(rev.time) >= ?
             GROUP BY s.name
         """;
 
         return jdbcTemplate.query(
                 sql,
-                (org.springframework.jdbc.core.ResultSetExtractor<ReviewsPerServiceResponse>) rs -> new ReviewsPerServiceResponse(mapLongCounts(rs, "count"))
+                (ResultSetExtractor<ReviewsPerServiceResponse>) rs ->
+                        new ReviewsPerServiceResponse(mapLongCounts(rs, "count")),
+                        MIN_YEAR
         );
     }
 
     public ReportStatusCountResponse fetchReportStatusCounts() {
         String sql = """
             SELECT
-                SUM(CASE WHEN adminStatus = 'pending' THEN 1 ELSE 0 END) AS pending,
-                SUM(CASE WHEN adminStatus = 'done' THEN 1 ELSE 0 END) AS done
-            FROM Report
+                SUM(CASE WHEN r.adminStatus = ? THEN 1 ELSE 0 END) AS pending,
+                SUM(CASE WHEN r.adminStatus = ? THEN 1 ELSE 0 END) AS done
+            FROM Report r
+            JOIN Task t ON r.taskID = t.taskID
+            WHERE YEAR(t.startDate) >= ?
         """;
 
         return jdbcTemplate.queryForObject(
@@ -59,7 +72,10 @@ public class ReportReviewAnalysisDao {
                 (rs, rowNum) -> new ReportStatusCountResponse(
                         rs.getLong("pending"),
                         rs.getLong("done")
-                )
+                ),
+                STATUS_PENDING,
+                STATUS_DONE,
+                MIN_YEAR
         );
     }
 
@@ -69,12 +85,15 @@ public class ReportReviewAnalysisDao {
             FROM Service s
             LEFT JOIN Task t ON t.serviceID = s.serviceID
             LEFT JOIN Reviews rev ON rev.taskID = t.taskID
+            WHERE YEAR(rev.time) >= ?
             GROUP BY s.name
         """;
 
         return jdbcTemplate.query(
                 sql,
-                (org.springframework.jdbc.core.ResultSetExtractor<AvgRatingPerServiceResponse>) rs -> new AvgRatingPerServiceResponse(mapDoubleAverages(rs, "avgRating"))
+                (ResultSetExtractor<AvgRatingPerServiceResponse>) rs ->
+                        new AvgRatingPerServiceResponse(mapDoubleAverages(rs, "avgRating")),
+                        MIN_YEAR
         );
     }
 
