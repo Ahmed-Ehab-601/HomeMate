@@ -100,18 +100,28 @@ public class StripeSignupServiceTest {
     @Test
     void testSignupTaskerExistingAccount() {
         Long taskerId = 1L;
+
         Tasker tasker = new Tasker();
-        tasker.setStripeAccountId("acct_existing");
+        tasker.setEmail("test@mail.com");
+        tasker.setFirstName("Test");
+        tasker.setLastName("User");
 
         when(taskerDao.getByID(taskerId)).thenReturn(tasker);
+        when(taskerDao.getTaskerStripeAccount(taskerId))
+                .thenReturn("acct_existing");
+
         when(stripeAccountService.generateOnboardingLink("acct_existing"))
                 .thenReturn("https://onboarding.url");
 
         String url = stripeSignupService.signupTasker(taskerId);
 
         assertEquals("https://onboarding.url", url);
-        verify(stripeAccountService, never()).createConnectedAccount(any(), any(), any());
-        verify(taskerDao, never()).updateStripeAccountId(any(), any());
+
+        verify(stripeAccountService, never())
+                .createConnectedAccount(any(), any(), any());
+
+        verify(taskerDao, never())
+                .updateStripeAccountId(any(), any());
     }
 
     @Test

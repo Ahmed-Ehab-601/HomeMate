@@ -36,8 +36,8 @@ public class PaymentDaoIntegrationTest {
     void testCreatePaymentSuccessfully() {
         Payment payment = new Payment();
         payment.setTaskId(1L);
-        payment.setUserId(2L);
-        payment.setTaskerId(3L);
+        payment.setUserId(1L);
+        payment.setTaskerId(1L);
         payment.setTotalAmount(100.0);
         payment.setPlatformFee(10.0);
         payment.setTaskerAmount(90.0);

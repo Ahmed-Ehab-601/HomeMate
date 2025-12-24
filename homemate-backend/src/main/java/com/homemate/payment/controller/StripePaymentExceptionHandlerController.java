@@ -1,6 +1,7 @@
 package com.homemate.payment.controller;
 
 import com.homemate.payment.exceptions.BadRequestException;
+import com.homemate.payment.exceptions.PaymentException;
 import com.homemate.payment.exceptions.ResourceNotFoundException;
 import com.homemate.payment.exceptions.StripeOperationException;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,10 @@ public class StripePaymentExceptionHandlerController {
     @ExceptionHandler(StripeOperationException.class)
     public ResponseEntity<String> handleStripeError(StripeOperationException ex) {
         return ResponseEntity.status(502).body(ex.getMessage());
+    }
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<String> handlePayment(Exception ex) {
+        return ResponseEntity.status(500).body(ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

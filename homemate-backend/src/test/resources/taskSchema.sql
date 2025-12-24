@@ -8,6 +8,7 @@
 SET REFERENTIAL_INTEGRITY FALSE;
 
 DROP TABLE IF EXISTS Report CASCADE;
+DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS Task CASCADE;
 DROP TABLE IF EXISTS Chat CASCADE;
 DROP TABLE IF EXISTS Address CASCADE;
@@ -31,7 +32,8 @@ CREATE TABLE Users (
     gender VARCHAR(1) CHECK (gender IN ('M', 'F')),
     phone VARCHAR(50),
     admin BOOLEAN DEFAULT FALSE NOT NULL,
-    suspended BOOLEAN DEFAULT FALSE NOT NULL
+    suspended BOOLEAN DEFAULT FALSE NOT NULL,
+    stripe_account_id VARCHAR(255) DEFAULT NULL
 );
 
 CREATE INDEX idx_users_username ON Users(username);
@@ -90,7 +92,7 @@ CREATE TABLE Tasker (
     totalEarning DOUBLE DEFAULT 0.00 NOT NULL,
     WorkedHours DOUBLE DEFAULT 0.00 NOT NULL,
     addressCity VARCHAR(200),
-    stripe_account_id VARCHAR(255),
+    stripe_account_id VARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
@@ -132,10 +134,10 @@ CREATE TABLE Task (
     chatID INT,
     bill FLOAT DEFAULT 0,
     status VARCHAR(20) DEFAULT 'InReview' NOT NULL CHECK (status IN ('InReview','Accepted','InProgress','Suspended','Done','Rejected')),
-    estimation INT DEFAULT 0,
     startInProgress TIMESTAMP NULL,
     addressID INT NOT NULL,
     description VARCHAR(500),
+    estimation INT DEFAULT 0,
     paid BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (taskerID) REFERENCES Tasker(taskerID) ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -181,5 +183,21 @@ CREATE TABLE Reviews (
     INDEX idx_review_rate (rate),
     INDEX idx_review_time (time)
 );
+
+CREATE TABLE payments (
+                          paymentID INT AUTO_INCREMENT PRIMARY KEY ,
+                          taskId INT NOT NULL,
+                          userId INT NOT NULL,
+                          taskerId INT NOT NULL,
+                          totalAmount  FLOAT DEFAULT 0,
+                          platformFee FLOAT DEFAULT 0,
+                          taskerAmount FLOAT DEFAULT 0,
+                          stripePaymentIntentId VARCHAR(255),
+                          status VARCHAR(30), -- CREATED, REQUIRES_PAYMENT, PAID, FAILED
+                          created_at TIMESTAMP,
+                          paid_at TIMESTAMP,
+                          FOREIGN KEY (taskId) REFERENCES Task(taskID)
+);
+
 
 

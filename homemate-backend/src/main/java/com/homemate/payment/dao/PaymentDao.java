@@ -1,7 +1,7 @@
 package com.homemate.payment.dao;
+import com.homemate.payment.exceptions.PaymentException;
 import com.homemate.payment.model.Payment;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
-import com.homemate.taskmanagement.exceptions.BadTaskRequestException;
 import com.homemate.taskmanagement.exceptions.TaskNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
@@ -45,7 +45,7 @@ public class PaymentDao {
             return key != null ? Optional.of(key.longValue()) : Optional.empty();
 
         } catch (DataAccessException e) {
-            throw new BadTaskRequestException();
+            throw new PaymentException("payment not created");
         }
     }
 

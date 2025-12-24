@@ -9,6 +9,7 @@
 SET REFERENTIAL_INTEGRITY FALSE;
 
 DROP TABLE IF EXISTS Report CASCADE;
+DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS Task CASCADE;
 DROP TABLE IF EXISTS Chat CASCADE;
 DROP TABLE IF EXISTS Address CASCADE;
@@ -169,4 +170,20 @@ CREATE TABLE Report (
 
 CREATE INDEX idx_report_task ON Report(taskID);
 CREATE INDEX idx_report_admin_status ON Report(adminStatus);
+
+
+CREATE TABLE payments (
+                          paymentID INT AUTO_INCREMENT PRIMARY KEY ,
+                          taskId INT NOT NULL,
+                          userId INT NOT NULL,
+                          taskerId INT NOT NULL,
+                          totalAmount  FLOAT DEFAULT 0,
+                          platformFee FLOAT DEFAULT 0,
+                          taskerAmount FLOAT DEFAULT 0,
+                          stripePaymentIntentId VARCHAR(255),
+                          status VARCHAR(30), -- CREATED, REQUIRES_PAYMENT, PAID, FAILED
+                          created_at TIMESTAMP,
+                          paid_at TIMESTAMP,
+                          FOREIGN KEY (taskId) REFERENCES Task(taskID)
+);
 
