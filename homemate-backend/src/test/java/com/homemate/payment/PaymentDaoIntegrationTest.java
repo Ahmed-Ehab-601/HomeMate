@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@ActiveProfiles("payment")
+@ActiveProfiles("task")
 public class PaymentDaoIntegrationTest {
 
     private final PaymentDao underTest;
