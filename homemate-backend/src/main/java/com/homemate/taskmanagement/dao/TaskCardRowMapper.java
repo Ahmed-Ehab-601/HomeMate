@@ -25,8 +25,9 @@ public class TaskCardRowMapper implements RowMapper<TaskCardDto> {
                 .serviceName(rs.getString("serviceName"))
                 .addressCity(rs.getString("city"))
                 .estimation(rs.getInt("estimation"))
+                .userHasUnreadMessages(userUnread)
+                .taskerHasUnreadMessages(taskerUnread)
                 .paid(rs.getBoolean("paid"))
-                .haveUnreadMessages(userUnread || taskerUnread)
                 .build();
     }
 

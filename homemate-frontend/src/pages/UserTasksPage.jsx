@@ -62,7 +62,7 @@ function UserTasksPage() {
     try {
       const response = await fetchUserTasks(
         userId,
-        selectedStatus,
+        selectedStatus === "Unread" ? "All" : selectedStatus, // Backend doesn't support "Unread" filter
         currentPage,
         pageSize
       );
@@ -137,7 +137,14 @@ function UserTasksPage() {
 
   // Filter tasks by unread if "Unread" status selected
   const displayTasks = selectedStatus === "Unread"
-    ? tasks.filter(task => task.haveUnreadMessages === true)
+    ? tasks.filter(task => {
+        if (user?.role === "ROLE_USER") {
+          return task.userHasUnreadMessages === true;
+        } else if (user?.role === "ROLE_TASKER") {
+          return task.taskerHasUnreadMessages === true;
+        }
+        return false;
+      })
     : tasks;
 
   const displayCount = selectedStatus === "Unread" ? displayTasks.length : totalCount;

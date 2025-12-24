@@ -36,8 +36,9 @@ public class TaskRowMapper implements RowMapper<TaskDto> {
                 taskerID(rs.getLong("taskerID")).
                 hourRate(rs.getDouble("hourRate")).
                 estimation(rs.getInt("estimation")).
-                unreadMessagesCount(userUnread + taskerUnread)
-                .paid(rs.getBoolean("paid"))
+                paid(rs.getBoolean("paid"))
+                .taskerUnreadMessagesCount(taskerUnread)
+                .userUnreadMessagesCount(userUnread)
                 .build();
     }
 

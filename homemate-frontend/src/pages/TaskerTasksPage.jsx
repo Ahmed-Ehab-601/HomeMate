@@ -136,7 +136,14 @@ function TaskerTasksPage() {
 
   // Filter tasks by unread if "Unread" status selected
   const displayTasks = selectedStatus === "Unread"
-    ? tasks.filter(task => task.haveUnreadMessages === true)
+    ? tasks.filter(task => {
+        if (user?.role === "ROLE_USER") {
+          return task.userHasUnreadMessages === true;
+        } else if (user?.role === "ROLE_TASKER") {
+          return task.taskerHasUnreadMessages === true;
+        }
+        return false;
+      })
     : tasks;
 
   const displayCount = selectedStatus === "Unread" ? displayTasks.length : totalCount;

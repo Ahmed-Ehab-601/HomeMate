@@ -140,9 +140,7 @@ public class PresenceService {
                 taskerOnlineStatus.put(id, isOnline);
             }
 
-        } else {
-            System.out.println("wrong user type");
-            }
+        }
     }
 
     @Scheduled(fixedRate = 30000) // Run every 30 seconds

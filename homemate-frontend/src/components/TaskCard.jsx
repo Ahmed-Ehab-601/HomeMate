@@ -65,12 +65,11 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   // Determine if there are unread messages
   // TaskDto has unreadMessagesCount (number)
   // TaskCardDto has haveUnreadMessages (boolean)
-  const unreadCount = typeof task.unreadMessagesCount === 'number' 
-    ? task.unreadMessagesCount 
-    : 0;
-  
-  const hasUnread = task.haveUnreadMessages === true || unreadCount > 0;
-  
+  const userhasUnread = task.userHasUnreadMessages === true  ;
+  const taskerhasUnread = task.taskerHasUnreadMessages === true ;
+  const hasUnread =
+    (viewType === "user" && userhasUnread) ||
+    (viewType === "tasker" && taskerhasUnread);
   // Normalize status: remove spaces and convert to uppercase to match STATUS_STYLES keys
   const normalizedStatus =
     localStatus?.toUpperCase().replace(/\s+/g, "") || "INREVIEW";
@@ -97,7 +96,6 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   };
 
   const handleAccept = () => {
-    // Show estimation modal first
     setShowAcceptModal(false);
     setShowEstimationModal(true);
     setEstimation("");
@@ -105,7 +103,6 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   };
 
   const handleEstimationSubmit = async () => {
-    // Validate estimation (in hours)
     const estValueHours = parseFloat(estimation);
     if (!estimation || isNaN(estValueHours) || estValueHours <= 0) {
       setEstimationError("Please enter a valid estimation (hours greater than 0)");
@@ -117,7 +114,6 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
       return;
     }
 
-    // Convert hours to minutes for storage
     const estValueMinutes = Math.round(estValueHours * 60);
 
     setIsSubmitting(true);
@@ -216,10 +212,7 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
         <div className="task-card__header">
           <div className="task-card__title-section">
             <h3 className="task-card__service">{task.serviceName}
-             {hasUnread && (
-                <span style={{ marginLeft: "8px", position: "relative", top: "2px" }}>
-                </span>
-              )}</h3>
+             </h3>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span
                 className="task-card__status-badge"
@@ -265,16 +258,14 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
             <span className="task-card__value">{task.addressCity || "N/A"}</span>
           </div>
           
-          {/* Show unread indicator/badge */}
+          {/* Show unread count badge OR indicator for TaskCardDto */}
           {hasUnread && (
             <div className="task-card__detail-row">
               <span className="task-card__label">
-                {unreadCount > 0 ? "Unread Messages:" : "Messages:"}
+                {hasUnread ? "Unread Messages:" : "Messages:"}
               </span>
               <span className="task-card__value">
-                {unreadCount > 0 ? (
-                  <UnreadBadge count={unreadCount} />
-                ) : (
+                {hasUnread && (
                   <span style={{ 
                     color: "#ef4444", 
                     fontWeight: "600",
@@ -282,8 +273,7 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
                     alignItems: "center",
                     gap: "4px"
                   }}>
-                    <UnreadIndicator show={true} size="small" />
-                    New
+                    New 
                   </span>
                 )}
               </span>
@@ -352,6 +342,7 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
         </div>
       </article>
 
+      {/* Keep all your modals exactly as they are */}
       {showAcceptModal && (
         <Modal
           title="Accept Task Request?"

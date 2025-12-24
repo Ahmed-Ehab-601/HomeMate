@@ -21,7 +21,7 @@ import services from "../data/services";
 import Modal from "../components/Modal";
 import { websocketService } from "../services/websocketService";
 import "../styles/TaskDetails.css";
-
+import UnreadBadge from "../components/UnreadBadge";
 const normalizeImage = (imageValue) => {
   if (!imageValue) return null;
   if (typeof imageValue === "string") {
@@ -113,6 +113,7 @@ function TaskDetailsPage() {
   const [loadingRescheduleBusyTime, setLoadingRescheduleBusyTime] = useState(false);
   // Use estimation from task directly (already in minutes from backend)
   const [taskEstimation, setTaskEstimation] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (task?.estimation !== undefined && task?.estimation !== null) {
@@ -224,6 +225,11 @@ const WORK_DAY_END_MINUTES = 24 * 60 + 30; // 20:30 = 1230 minutes
     const taskData = await getTaskDetails(taskId);
     console.log("Task data loaded:", taskData);
     setTask(taskData);
+
+    // Fetch unread messages count
+    if (taskData.userUnreadMessagesCount !== undefined|| taskData.taskerUnreadMessagesCount !== undefined) {
+      userRole === "ROLE_TASKER" ?setUnreadCount(taskData.taskerUnreadMessagesCount):setUnreadCount(taskData.userUnreadMessagesCount);
+    }
 
     // Load review if task is done
     if (taskData.status === "Done") {
@@ -1296,7 +1302,12 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
               {task.chatID && (
                 <Link to={`/chat/${task.chatID}`} className="btn btn-message">
                   <span className="btn-icon">✉️</span> Message
-                </Link>
+                  {unreadCount > 0 ? (
+                  <UnreadBadge count={unreadCount} />
+                ) : (
+                  <span className="btn-icon-empty">
+                  </span>
+                )}                </Link>
               )}
 
               <Link

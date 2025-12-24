@@ -28,7 +28,9 @@ public class TaskCardDto {
     @NotNull
     private Integer estimation;
     @NotNull
-    private Boolean haveUnreadMessages;
+    private Boolean userHasUnreadMessages;
+    @NotNull
+    private Boolean taskerHasUnreadMessages;
 
     private boolean paid;
 

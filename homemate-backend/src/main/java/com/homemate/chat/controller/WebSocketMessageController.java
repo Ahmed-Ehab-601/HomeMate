@@ -25,7 +25,6 @@ import java.util.Map;
 @Controller
 public class WebSocketMessageController {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketMessageController.class);
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
@@ -46,8 +45,6 @@ public class WebSocketMessageController {
             @DestinationVariable Long chatId,
             @Payload MessageDto messageDto) {
         try {
-            logger.debug("📨 Sending message to chat {}", chatId);
-
             messagingTemplate.convertAndSend(
                     "/send/chat/" + chatId,
                     messageDto
@@ -69,10 +66,8 @@ public class WebSocketMessageController {
                     notification
             );
 
-            logger.info("✅ Message sent successfully to chat {}", chatId);
 
         } catch (Exception e) {
-            logger.error("❌ Failed to send message to chat {}: {}", chatId, e.getMessage(), e);
 
             Map<String, Object> error = new HashMap<>();
             error.put("type", "ERROR");
@@ -105,10 +100,8 @@ public class WebSocketMessageController {
                     statusBroadcast
             );
 
-            logger.debug("📊 Message {} status updated to {} in chat {}", messageId, status, chatId);
 
         } catch (Exception e) {
-            logger.error("❌ Failed to update message status in chat {}: {}", chatId, e.getMessage(), e);
         }
     }
 
@@ -134,7 +127,6 @@ public class WebSocketMessageController {
             );
 
         } catch (Exception e) {
-            logger.error("❌ Failed to handle typing indicator in chat {}: {}", chatId, e.getMessage(), e);
         }
     }
 
@@ -158,7 +150,6 @@ public class WebSocketMessageController {
             );
 
         } catch (Exception e) {
-            logger.error("❌ Failed to mark messages as read in chat {}: {}", chatId, e.getMessage(), e);
         }
     }
 
@@ -178,19 +169,9 @@ public class WebSocketMessageController {
     @MessageMapping("/presence/update")
     public void updatePresence(@Payload PresenceUpdate presenceUpdate) {
         try {
-            logger.info("🔥 Received EXPLICIT presence update: {} {} -> {}",
-                    presenceUpdate.getUserType(),
-                    presenceUpdate.getId(),
-                    presenceUpdate.getOnlineStatus());
-
-            // This will ALWAYS broadcast (unless throttled)
             presenceService.updatePresence(presenceUpdate);
 
         } catch (Exception e) {
-            logger.error("❌ Failed to update presence for {} {}: {}",
-                    presenceUpdate.getUserType(),
-                    presenceUpdate.getId(),
-                    e.getMessage(), e);
             throw new RuntimeException("Failed to update presence", e);
         }
     }
@@ -207,7 +188,6 @@ public class WebSocketMessageController {
             Long userId = Long.valueOf(heartbeatData.get("userId").toString());
             String userType = (String) heartbeatData.get("userType");
 
-            logger.debug("💓 Heartbeat received for {} {}", userType, userId);
 
             PresenceUpdate presenceUpdate = PresenceUpdate.builder()
                     .Id(userId)
@@ -220,7 +200,6 @@ public class WebSocketMessageController {
             presenceService.updatePresenceFromHeartbeat(presenceUpdate);
 
         } catch (Exception e) {
-            logger.error("❌ Failed to process heartbeat: {}", e.getMessage(), e);
         }
     }
     
