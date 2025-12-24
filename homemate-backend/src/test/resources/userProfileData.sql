@@ -1,7 +1,7 @@
 
 -- Insert Users
 INSERT INTO Users (firstName, lastName, username, password, email, birthDate, gender, phone, admin, suspended) VALUES 
-('John', 'Smith', 'jsmith', '$2a$10$test123456789', 'john.smith@email.com', '1990-05-15 00:00:00', 'M', '+1-555-0101', false, false),
+('John', 'Smith', 'jsmith', '$2a$12$nLTDYQmKfdYxxWHFmNBiDeupQODnkqZSNrShvq2BhbFNq3jF0gyIO', 'john.smith@email.com', '1990-05-15 00:00:00', 'M', '+1-555-0101', false, false),
 ('Sarah', 'Johnson', 'sjohnson', '$2a$10$test123456790', 'sarah.j@email.com', '1988-08-22 00:00:00', 'F', '+1-555-0102', false, false),
 ('Michael', 'Brown', 'mbrown', '$2a$10$test123456791', 'michael.b@email.com', '1992-03-10 00:00:00', 'M', '+1-555-0103', false, false),
 ('Emily', 'Davis', 'edavis', '$2a$10$test123456792', 'emily.davis@email.com', '1995-11-30 00:00:00', 'F', '+1-555-0104', false, false),

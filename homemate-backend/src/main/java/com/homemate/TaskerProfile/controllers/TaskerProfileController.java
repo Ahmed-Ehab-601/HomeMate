@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -144,7 +145,7 @@ public class TaskerProfileController {
     @PutMapping("/password")
     @PreAuthorize("hasRole('ROLE_TASKER')")
     public ResponseEntity<Map<String, String>> changePassword(@AuthenticationPrincipal AppUserDetails taskerDetails,
-                                                              @RequestBody PasswordDTO passwordDTO) {
+                                                              @RequestBody @Valid PasswordDTO passwordDTO) {
         try {
             passwordDTO.setTaskerID(taskerDetails.getId());
             taskerProfileService.changePassword(passwordDTO);

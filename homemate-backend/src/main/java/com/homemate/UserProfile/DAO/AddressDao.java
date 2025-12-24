@@ -33,7 +33,7 @@ public class AddressDao {
     private static final String ADD_ADDRESS_SQL = "INSERT INTO Address (userID, country, city, street, apartment) VALUES (?, ?, ?, ?, ?)";
 
     public void addAddress(AddressDTO addressDTO) {
-        jdbcTemplate.update(ADD_ADDRESS_SQL, addressDTO.getUserId(), addressDTO.getCountry(), addressDTO.getCity(), addressDTO.getStreet(), addressDTO.getApartment());
+        jdbcTemplate.update(ADD_ADDRESS_SQL, addressDTO.getUserID(), addressDTO.getCountry(), addressDTO.getCity(), addressDTO.getStreet(), addressDTO.getApartment());
     }
 
     private static final String UPDATE_ADDRESS_SQL = "UPDATE Address SET country = ?, city = ?, street = ?, apartment = ? WHERE addressID = ?";

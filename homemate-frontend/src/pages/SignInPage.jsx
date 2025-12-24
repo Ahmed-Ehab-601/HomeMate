@@ -160,6 +160,7 @@ function SignInPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
+                  maxLength={72}
                   required
                   disabled={isLoading || isGoogleLoading}
                 />
@@ -200,6 +201,9 @@ function SignInPage() {
                     </svg>
                   )}
                 </button>
+              </div>
+              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                {password.length}/72
               </div>
             </div>
 

@@ -7,6 +7,7 @@ import com.homemate.Authentication.dto.LoginResponseDto;
 import com.homemate.Authentication.dto.PasswordResetDto;
 import com.homemate.Authentication.service.GoogleTokenVerifierService;
 import com.homemate.Authentication.service.LoginService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +29,7 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<LoginResponseDto> login(@RequestBody @Valid LoginRequestDto loginRequestDto) {
         LoginResponseDto response = loginService.loginWithEmailPassword(loginRequestDto);
 
         if (response == null) {
@@ -57,7 +58,7 @@ public class LoginController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestBody PasswordResetDto passwordResetDto) {
+    public ResponseEntity<String> resetPassword(@RequestBody @Valid PasswordResetDto passwordResetDto) {
         if (passwordResetDto == null || passwordResetDto.getVerifyToken() == null || 
             passwordResetDto.getNewPassword() == null) {
             return ResponseEntity.badRequest().body("Invalid request: token and password are required");

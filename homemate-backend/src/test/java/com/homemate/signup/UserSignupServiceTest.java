@@ -4,6 +4,7 @@ import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.UserProfile.DTO.SignupUserDTO;
 import com.homemate.UserProfile.Services.UserSignupService;
+import com.homemate.hashing.HashingService;
 import com.homemate.security.service.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,9 @@ class UserSignupServiceTest {
 
     @Mock
     private TaskerDao taskerDao;
+
+    @Mock
+    private HashingService hashingService;
 
     @InjectMocks
     private UserSignupService userSignupService;
@@ -117,7 +121,6 @@ class UserSignupServiceTest {
                    user.getFirstName().equals("Test") &&
                    user.getLastName().equals("User") &&
                    user.getEmail().equals("test@example.com") &&
-                   user.getPassword().equals("Password123!") &&
                    user.getGender().equals('M') &&
                    user.getPhone().equals("01012345678") &&
                    !user.getIsAdmin() &&

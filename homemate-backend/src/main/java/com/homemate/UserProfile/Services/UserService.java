@@ -2,7 +2,9 @@ package com.homemate.UserProfile.Services;
 
 import java.util.Objects;
 
-import org.springframework.stereotype.Service;      
+import com.homemate.hashing.HashingService;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import com.homemate.UserProfile.DAO.AddressDao;
 import com.homemate.UserProfile.DAO.UserDao;
@@ -20,16 +22,12 @@ import com.homemate.UserProfile.DTO.UsernameDTO;
 import com.homemate.UserProfile.Models.User;
 
 @Service
+@AllArgsConstructor
 public class UserService {
 
     private final UserDao userDao;
     private final AddressDao addressDao;
-    public UserService(UserDao userDao, AddressDao addressDao) {
-        this.userDao = userDao;
-        this.addressDao = addressDao;
-    }
-
-
+    private final HashingService hashingService;
 
     public Boolean changePassword(PasswordDTO passwordDTO) {
         Objects.requireNonNull(passwordDTO, "passwordDTO cannot be null");
@@ -47,11 +45,11 @@ public class UserService {
         
         User user = requireUser(passwordDTO.getUserId());
         
-        if (!user.getPassword().equals(oldPassword)) {
+        if (!hashingService.verifyPassword(oldPassword,user.getPassword())) {
             throw new IllegalArgumentException("Old password is incorrect.");
         }
         // Simplified special chars set
-        String passwordPattern = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}\\|;:'\",.<>/?]).{8,}$";
+        String passwordPattern = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}|;:'\",.<>/?]).{8,}$";
 
         if (!newPassword.matches(passwordPattern)) {
             throw new IllegalArgumentException(
@@ -60,12 +58,12 @@ public class UserService {
             );
         }
         
-        user.setPassword(newPassword);
+        user.setPassword(hashingService.hashPassword(newPassword));
         userDao.update(user);
         return Boolean.TRUE;
     }
     
-    public Boolean changeName(NameDTO nameDTO) {
+    public void changeName(NameDTO nameDTO) {
         final int  max_len = 50;
         User user = requireUser(nameDTO.getUserId());
         String letterOnlyRegex = "^[A-Za-z]+$";
@@ -93,7 +91,6 @@ public class UserService {
         user.setFirstName(nameDTO.getNewFirstName());
         user.setLastName(nameDTO.getNewLastName());
         userDao.update(user);
-        return Boolean.TRUE;
     }
 
     public Boolean changeUsername(UsernameDTO newUsernameDTO) {
@@ -111,7 +108,6 @@ public class UserService {
 
     public Boolean changePhoneNumber(PhoneNumberDTO newPhoneNumberDTO) {
         Objects.requireNonNull(newPhoneNumberDTO, "newPhoneNumberDTO cannot be null");
-        final int  max_len = 50;
         String newPhoneNumber = newPhoneNumberDTO.getPhoneNumber();
 
         if (!newPhoneNumber.matches("^\\+?[0-9\\-]+$")) {
@@ -131,11 +127,6 @@ public class UserService {
         userDao.update(user);
         return Boolean.TRUE;
     }
-
-        // public UserProfileDTO getData(Long userId) {
-        //     Objects.requireNonNull(userId, "userId cannot be null");
-        //     return userDao.getProfile(userId);
-        // }
 
     public UserProfileDTO getProfile(Long userID) {
         Objects.requireNonNull(userID, "userID cannot be null");
@@ -163,7 +154,7 @@ public class UserService {
         return Boolean.TRUE;
     }
     public AddressDTO[] getAddresses(Long userID) {
-        return addressDao.getByUserID((long) userID).toArray(new AddressDTO[0]);
+        return addressDao.getByUserID(userID).toArray(new AddressDTO[0]);
     }
 
     public Boolean addAddress(AddressDTO newAddress) {
@@ -171,9 +162,9 @@ public class UserService {
         final int MAX_LENGTH =50;
         
 
-        if (!isValidString(newAddress.getCountry(), MAX_LENGTH)) return false;
-        if (!isValidString(newAddress.getCity(), MAX_LENGTH)) return false;
-        if (!isValidString(newAddress.getStreet(), MAX_LENGTH)) return false;
+        if (isValidString(newAddress.getCountry())) return false;
+        if (isValidString(newAddress.getCity())) return false;
+        if (isValidString(newAddress.getStreet())) return false;
         if (newAddress.getApartment() != null && newAddress.getApartment().length() > MAX_LENGTH) {
             return false;
         }  
@@ -196,9 +187,9 @@ public class UserService {
         final int MAX_LENGTH =50;
         
 
-        if (!isValidString(AddressDTO.getCountry(), MAX_LENGTH)) return false;
-        if (!isValidString(AddressDTO.getCity(), MAX_LENGTH)) return false;
-        if (!isValidString(AddressDTO.getStreet(), MAX_LENGTH)) return false;
+        if (isValidString(AddressDTO.getCountry())) return false;
+        if (isValidString(AddressDTO.getCity())) return false;
+        if (isValidString(AddressDTO.getStreet())) return false;
         if (AddressDTO.getApartment() != null && AddressDTO.getApartment().length() > MAX_LENGTH) {
             return false;
         }
@@ -206,8 +197,8 @@ public class UserService {
         addressDao.updateAddress(AddressDTO);
         return Boolean.TRUE;
     }
-    private boolean isValidString(String value, int maxLength) {
-        return value != null && !value.isEmpty() && value.length() <= maxLength;
+    private boolean isValidString(String value) {
+        return value == null || value.isEmpty() || value.length() > 50;
     }
 
     public Boolean deleteAccount(DeleteAccountRequestDTO deleteAccountRequest) {

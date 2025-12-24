@@ -4,22 +4,22 @@ import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.UserProfile.DAO.UserDao;
 import com.homemate.UserProfile.DTO.SignupUserDTO;
 import com.homemate.UserProfile.Models.User;
+import com.homemate.hashing.HashingService;
 import com.homemate.security.service.JwtService;
+import lombok.AllArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class UserSignupService {
 
-    UserDao userDao;
-    JwtService jwtService;
-    TaskerDao taskerDao;
+    private final UserDao userDao;
+    private final JwtService jwtService;
+    private final TaskerDao taskerDao;
+    private final HashingService hashingService;
 
-    public UserSignupService(UserDao userDao, JwtService jwtService, TaskerDao taskerDao) {
-        this.userDao = userDao;
-        this.jwtService = jwtService;
-        this.taskerDao = taskerDao;
-    }
+
 
      public String signup(SignupUserDTO userData) {
          if (userData == null)
@@ -30,7 +30,7 @@ public class UserSignupService {
             try {
                 taskerDao.getByEmail(user.getEmail());
                 return null;
-            } catch (EmptyResultDataAccessException e) {}
+            } catch (EmptyResultDataAccessException ignored) {}
 
          Long id = userDao.signup(user);
 
@@ -46,13 +46,13 @@ public class UserSignupService {
          );
      }
 
-    private static User getUser(SignupUserDTO userData) {
+    private  User getUser(SignupUserDTO userData) {
         User user = new User();
         user.setUsername(userData.getUsername());
         user.setFirstName(userData.getFirstName());
         user.setLastName(userData.getLastName());
         user.setEmail(userData.getEmail());
-        user.setPassword(userData.getPassword());
+        user.setPassword(hashingService.hashPassword(userData.getPassword()));
         user.setBirthDate(userData.getBirthDate());
         user.setGender(userData.getGender());
         user.setPhone(userData.getPhone());
