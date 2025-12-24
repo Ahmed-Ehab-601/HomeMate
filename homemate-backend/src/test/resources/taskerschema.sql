@@ -90,6 +90,7 @@ CREATE TABLE Tasker (
     totalEarning DOUBLE DEFAULT 0.00 NOT NULL,
     WorkedHours DOUBLE DEFAULT 0.00 NOT NULL,
     addressCity VARCHAR(200),
+    stripe_account_id VARCHAR(255),
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 

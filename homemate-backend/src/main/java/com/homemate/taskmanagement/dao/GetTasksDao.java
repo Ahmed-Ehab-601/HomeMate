@@ -3,11 +3,11 @@ package com.homemate.taskmanagement.dao;
 import com.homemate.taskmanagement.dto.StatusDto;
 import com.homemate.taskmanagement.dto.TaskCardDto;
 import lombok.AllArgsConstructor;
+import org.springframework.data.redis.stream.Task;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +25,7 @@ public class GetTasksDao {
                     t.startDate,
                     t.status,
                     t.estimation,
+                    t.paid,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -52,6 +53,7 @@ public class GetTasksDao {
                     t.startDate,
                     t.status,
                     t.estimation,
+                    t.paid,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -92,6 +94,7 @@ public class GetTasksDao {
                     t.startDate,
                     t.status,
                     t.estimation,
+                    t.paid,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -117,6 +120,7 @@ public class GetTasksDao {
                     t.taskID,
                     t.startDate,
                     t.status,
+                    t.paid,
                     t.estimation,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
@@ -142,6 +146,7 @@ public class GetTasksDao {
                     t.startDate,
                     t.status,
                     t.estimation,
+                    t.paid,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -165,6 +170,7 @@ public class GetTasksDao {
                     t.taskID,
                     t.startDate,
                     t.status,
+                    t.paid,
                     t.estimation,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
@@ -191,6 +197,7 @@ public class GetTasksDao {
                     t.startDate,
                     t.status,
                     t.estimation,
+                    t.paid,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -215,6 +222,7 @@ public class GetTasksDao {
                     t.startDate,
                     t.status,
                     t.estimation,
+                    t.paid,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,

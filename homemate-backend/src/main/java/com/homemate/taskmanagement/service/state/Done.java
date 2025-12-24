@@ -4,6 +4,7 @@ import com.homemate.taskmanagement.dao.TaskStatusDao;
 import com.homemate.taskmanagement.exceptions.BadStateUpdateException;
 import com.homemate.taskmanagement.model.Status;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
 import java.time.Duration;
@@ -11,11 +12,17 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 
 @AllArgsConstructor
+@NoArgsConstructor
 public class Done implements TaskState{
     private Long taskID;
     private Long taskerID;
     private TaskStatusDao taskDao;
 
+    public Done (long taskID, long taskerID, TaskStatusDao taskDao){
+           this.taskID=taskID;
+           this.taskerID=taskerID;
+           this.taskDao=taskDao;
+    }
 
 
     @Override
@@ -34,8 +41,6 @@ public class Done implements TaskState{
 
         double bill = hourRate * workedHours;
         taskDao.updateTaskBill(taskID,bill);
-        taskDao.updateTaskerTotalEarning(taskerID,bill);
-
         taskDao.updateTaskEndData(taskID,Timestamp.valueOf(LocalDateTime.now()));
 
 

@@ -1,4 +1,3 @@
-
 INSERT INTO Users (userID, firstName, lastName, username, password, email, birthDate, gender, phone, admin, suspended, createdTime)
 VALUES 
     (1, 'John', 'Doe', 'johndoe', 'password123', 'john@test.com', '1990-01-01 00:00:00', 'M', '1234567890', false, false, '2023-01-01 10:00:00'),
@@ -59,7 +58,7 @@ VALUES
     (2, 2, 'User did not pay', 'User refused to pay after work was completed.', false, 'pending'),
     (3, 5, 'Poor quality work', 'The work quality was below expectations.', true, 'done');
 
-INSERT INTO Reviews (reviewID, taskID, rate, comment)
+INSERT INTO Reviews (reviewID, taskID, rate, text)
 VALUES 
     (1, 1, 4.5, 'Good work overall'),
     (2, 2, 5.0, 'Excellent service!'),

@@ -9,7 +9,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-
 @Component
 public class TaskCardRowMapper implements RowMapper<TaskCardDto> {
     @Override
@@ -23,6 +22,7 @@ public class TaskCardRowMapper implements RowMapper<TaskCardDto> {
                 .serviceName(rs.getString("serviceName"))
                 .addressCity(rs.getString("city"))
                 .estimation(rs.getInt("estimation"))
+                .paid(rs.getBoolean("paid"))
                 .build();
     }
 

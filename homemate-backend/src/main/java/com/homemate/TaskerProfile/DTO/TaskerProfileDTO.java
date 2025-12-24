@@ -22,6 +22,7 @@ public class TaskerProfileDTO {
     private Double workedHours;
     private String addressCity;
     private byte[] image;
-
+    private String stripeAccountId;
+    
 }
 

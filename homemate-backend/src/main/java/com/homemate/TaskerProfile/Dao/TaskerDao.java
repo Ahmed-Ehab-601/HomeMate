@@ -2,6 +2,7 @@ package com.homemate.TaskerProfile.Dao;
 
 import java.sql.PreparedStatement;
 
+import com.homemate.payment.service.StripeAccountService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -19,6 +20,7 @@ public class TaskerDao {
     private final JdbcTemplate jdbcTemplate;
     private final TaskerProfileDTORowMapper taskerProfileDTORowMapper;
     private final TaskerRowMapper taskerRowMapper;
+
 
     public TaskerDao(JdbcTemplate jdbcTemplate, TaskerProfileDTORowMapper taskerProfileDTORowMapper, TaskerRowMapper taskerRowMapper){
         this.jdbcTemplate = jdbcTemplate;
@@ -76,10 +78,10 @@ public class TaskerDao {
     public Long saveTasker(TaskerSignupDTO dto) {
 
         String sql = """
-                INSERT INTO Tasker 
-                (firstName, lastName, username, password, email, birthDate, phone, gender, 
-                 image, availability, rating, hourrate, bio, serviceID, totalEarning, WorkedHours, addressCity)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO Tasker 
+        (firstName, lastName, username, password, email, birthDate, phone, gender, 
+         image, availability, rating, hourrate, bio, serviceID, totalEarning, WorkedHours, addressCity)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -121,5 +123,17 @@ public class TaskerDao {
         String sql = "UPDATE Tasker SET password = ? WHERE email = ?";
         jdbcTemplate.update(sql, newPassword, email);
     }
-    
+
+    public void updateStripeAccountId(Long taskerId, String stripeAccountId) {
+        String sql = "UPDATE Tasker SET stripe_account_id = ? WHERE taskerID = ?";
+        jdbcTemplate.update(sql, stripeAccountId, taskerId);
+    }
+
+    public String getTaskerStripeAccount(Long taskerId) {
+        String sql = "SELECT stripe_account_id FROM Tasker WHERE taskerID = ?";
+        return jdbcTemplate.queryForObject(sql, String.class, taskerId);
+    }
+
+
+
 }

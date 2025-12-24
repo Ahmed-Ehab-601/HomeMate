@@ -16,5 +16,14 @@ public class UserProfileDTO {
     private String phone;
     private Boolean admin;
     private Boolean suspended;
+    private String stripeCustomerId;
+
+    public String getStripeCustomerId() {
+        return stripeCustomerId;
+    }
+
+    public void setStripeCustomerId(String stripeCustomerId) {
+        this.stripeCustomerId = stripeCustomerId;
+    }
 
 }

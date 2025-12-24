@@ -15,4 +15,5 @@ public class TaskerCardDto {
     private String bio;
     private String addressCity;
     private double hourRate;
+    private String stripe_account_id;
 }

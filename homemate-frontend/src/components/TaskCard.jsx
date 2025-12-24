@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Modal from "./Modal";
+import { useEffect, useCallback } from "react";
 import { acceptTask, rejectTask } from "../api/taskActionsApi";
 import { addTaskEstimation } from "../api/taskManagementApi";
 import "../styles/TaskCard.css";
 import { useAuth } from "../contexts/AuthContext";
+import { apiRequest, baseUrl } from "../utils/apiClient";
 
 const STATUS_STYLES = {
   INREVIEW: {
@@ -50,10 +52,13 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   const [localStatus, setLocalStatus] = useState(task.status);
   const [estimation, setEstimation] = useState("");
   const [estimationError, setEstimationError] = useState("");
-  const { user, getUserRole } = useAuth(); 
+  const { user, getUserRole } = useAuth();
 
   const taskerId = user?.taskerId || user?.id;
   const userRole = getUserRole();
+  const [localPaid, setLocalPaid] = useState(!!task.paid);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [checkingReview, setCheckingReview] = useState(false);
 
   // Normalize status: remove spaces and convert to uppercase to match STATUS_STYLES keys
   const normalizedStatus =
@@ -121,7 +126,7 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
       // First add estimation (send as minutes)
       // Backend will validate against busy times and schedule conflicts
       await addTaskEstimation(task.taskID, estValueMinutes);
-      
+
       // Then accept the task
       await acceptTask(task.taskID);
 
@@ -177,6 +182,29 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
     }
   };
 
+  const handleMarkPaidCash = async () => {
+    setIsSubmitting(true);
+    setErrorBanner(null);
+    try {
+      // Call backend to mark task as paid (cash)
+      await apiRequest(`${baseUrl}/api/tasker/payments/mark-paid-cash/${task.taskID}`, {
+        method: "POST",
+      });
+
+      setLocalPaid(true);
+      setSuccessBanner("✓ Task marked as paid (cash)");
+      // notify parent if needed
+      if (onTaskUpdated) onTaskUpdated({ ...task, paid: true });
+      setTimeout(() => setSuccessBanner(null), 3000);
+    } catch (err) {
+      console.error("Failed to mark paid:", err);
+      setErrorBanner(`✗ Failed to mark paid. ${err?.message || ''}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+
   return (
     <>
       {successBanner && (
@@ -200,15 +228,24 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
         <div className="task-card__header">
           <div className="task-card__title-section">
             <h3 className="task-card__service">{task.serviceName}</h3>
-            <span
-              className="task-card__status-badge"
-              style={{
-                backgroundColor: statusStyle.bg,
-                color: statusStyle.text,
-              }}
-            >
-              {statusStyle.label}
-            </span>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span
+                className="task-card__status-badge"
+                style={{
+                  backgroundColor: statusStyle.bg,
+                  color: statusStyle.text,
+                }}
+              >
+                {statusStyle.label}
+              </span>
+              {normalizedStatus === 'DONE' && (
+                <span
+                  className={`task-card__paid-badge ${task?.paid ? 'paid' : 'unpaid'}`}
+                >
+                  {task?.paid ? 'Paid' : 'Unpaid'}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -261,13 +298,26 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
             </>
           )}
           {viewType === "tasker" && (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleViewDetails}
-            >
-              View Details
-            </button>
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleViewDetails}
+              >
+                View Details
+              </button>
+              {normalizedStatus === "DONE" && !localPaid && (
+                <button
+                  type="button"
+                  className="btn btn-accept"
+                  onClick={handleMarkPaidCash}
+                  disabled={isSubmitting}
+                >
+                  <span className="btn-icon">💵</span>
+                  Mark Paid (Cash)
+                </button>
+              )}
+            </>
           )}
           {viewType === "user" && (
             <button
@@ -278,6 +328,7 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
               View Details
             </button>
           )}
+
         </div>
       </article>
 

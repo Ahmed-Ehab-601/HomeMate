@@ -32,6 +32,7 @@ public class UserSignupService {
                 return null;
             } catch (EmptyResultDataAccessException ignored) {}
 
+
          Long id = userDao.signup(user);
 
          if (id == -1) {

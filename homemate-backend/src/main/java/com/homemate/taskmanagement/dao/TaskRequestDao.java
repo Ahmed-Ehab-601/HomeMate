@@ -113,6 +113,7 @@ public class TaskRequestDao {
                 t.startDate,
                 t.endDate,
                 t.status,
+                t.paid,
                 t.description,
                 t.workedHours,
                 t.startInProgress,
