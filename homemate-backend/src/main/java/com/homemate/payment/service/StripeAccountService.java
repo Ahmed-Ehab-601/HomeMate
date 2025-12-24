@@ -32,6 +32,7 @@ public class StripeAccountService {
 
             Account account = Account.create(params);
             return account.getId();
+
         } catch (Exception e) {
             throw new StripeOperationException("Failed to create connected account", e);
         }
@@ -46,31 +47,28 @@ public class StripeAccountService {
                     "return_url", "http://localhost:5173/tasker/profile"
             ));
             return link.getUrl();
+
         } catch (Exception e) {
             throw new StripeOperationException("Failed to generate onboarding link", e);
         }
     }
 
     public boolean isAccountEnabled(Long taskerId) {
-        log.info("tasker is {}",taskerId);
 
         Tasker tasker = taskerDao.getByID(taskerId);
-
         if (tasker == null) {
             throw new PaymentException("Tasker not found");
         }
 
         String accountId = taskerDao.getTaskerStripeAccount(taskerId);
-        log.info("account {}",accountId);
-
         if (accountId == null) {
-            log.info("heeeeeeee");
             return false;
         }
 
         try {
             Account account = Account.retrieve(accountId);
             return account.getChargesEnabled() && account.getPayoutsEnabled();
+
         } catch (StripeException e) {
             throw new PaymentException("Failed to check Stripe account status", e);
         }

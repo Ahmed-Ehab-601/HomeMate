@@ -69,9 +69,6 @@ public class StripePaymentService {
 
     public Payment createPayment(PaymentRequestDTO paymentRequestDTO)
             throws StripeException {
-
-        log.info("Creating payment for task {}", paymentRequestDTO.getTaskId());
-
         Payment payment = paymentMapper.getPaymnetEntity(paymentRequestDTO);
         Optional<Long> paymentIdOpt = paymentDao.create(payment);
 

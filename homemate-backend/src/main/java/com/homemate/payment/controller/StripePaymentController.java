@@ -19,8 +19,6 @@ public class StripePaymentController {
 
     private final StripePaymentService stripePaymentService;
 
-
-
     @PostMapping("/create-connected-account/{taskerId}")
     @PreAuthorize("hasRole('TASKER')")
     public ResponseEntity<String> createConnectedAccount(@PathVariable Long taskerId,@AuthenticationPrincipal AppUserDetails userDetails) {
@@ -28,7 +26,6 @@ public class StripePaymentController {
                 stripePaymentService.generateOnboardingLink(userDetails.getId())
         );
     }
-
 
 
     @PostMapping("/payments/create")
@@ -40,7 +37,6 @@ public class StripePaymentController {
                 stripePaymentService.createPaymentAndReturnClientSecret(request)
         );
     }
-
 
 
     @PostMapping("/payments/confirm")

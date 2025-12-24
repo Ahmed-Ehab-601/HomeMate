@@ -88,6 +88,7 @@ public class PaymentDao {
                     new PaymentRowMapper(),
                     intentId
             );
+
         } catch (EmptyResultDataAccessException e) {
             throw new RuntimeException("Payment not found for Stripe Intent ID: " + intentId);
         }
@@ -97,6 +98,7 @@ public class PaymentDao {
         String sql = "SELECT stripe_account_id FROM Tasker WHERE taskerID = ?";
         try {
             return jdbcTemplate.queryForObject(sql, String.class, taskerID);
+
         } catch (EmptyResultDataAccessException e) {
             throw new BadStateUpdateException("Tasker ID not correct");
         }
@@ -106,6 +108,7 @@ public class PaymentDao {
         String sql = "SELECT taskerID FROM Task WHERE taskID = ?";
         try {
             return jdbcTemplate.queryForObject(sql, Long.class, taskID);
+
         } catch (EmptyResultDataAccessException e) {
             throw new TaskNotFoundException("Task ID not found: " + taskID);
         }
@@ -115,6 +118,7 @@ public class PaymentDao {
         String sql = "SELECT userID FROM Task WHERE taskID = ?";
         try {
             return jdbcTemplate.queryForObject(sql, Long.class, taskID);
+
         } catch (EmptyResultDataAccessException e) {
             throw new TaskNotFoundException("Task ID not found: " + taskID);
         }
@@ -125,6 +129,7 @@ public class PaymentDao {
         String sql = "SELECT bill FROM Task WHERE taskID = ?";
         try {
             return jdbcTemplate.queryForObject(sql, Double.class, taskID);
+
         } catch (EmptyResultDataAccessException e) {
             throw new TaskNotFoundException("Task id not found");
         }
@@ -137,6 +142,7 @@ public class PaymentDao {
                     new PaymentRowMapper(),
                     paymentId
             );
+
         } catch (EmptyResultDataAccessException e) {
             throw new RuntimeException("Payment not found with ID: " + paymentId);
         }

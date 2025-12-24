@@ -11,7 +11,6 @@ public class PaymentRequestDTO {
     @NotNull
     private Long taskerId;
 
-
     private Long userId;
 
     @NotNull
