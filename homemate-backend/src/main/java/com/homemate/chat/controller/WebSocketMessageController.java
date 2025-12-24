@@ -223,12 +223,6 @@ public class WebSocketMessageController {
             logger.error("❌ Failed to process heartbeat: {}", e.getMessage(), e);
         }
     }
-    @GetMapping("/online")
-    public Map<String, Object> getAllOnlineUsers() {
-        Map<String, Object> allStatus = new HashMap<>();
-        allStatus.put("users", presenceService.getAllUserOnlineStatus());
-        allStatus.put("taskers", presenceService.getAllTaskerOnlineStatus());
-        return allStatus;
-    }
+    
 
 }

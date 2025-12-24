@@ -43,9 +43,33 @@ public class MessageController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
+    @PutMapping("/{chatID}/mark-read-user")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> markMessageAsRead(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
+        try {
+            messageService.markAllAsReadUser(chatID,userDetails);
+            //websocket
+            return ResponseEntity.ok().build();
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+
+        }
+    }
+    @PutMapping("/{chatID}/mark-read-tasker")
+    @PreAuthorize("hasRole('TASKER')")
+    public ResponseEntity<Void> markMessagesAsRead(@PathVariable Long chatID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
+        try {
+            messageService.markAllAsReadTasker(chatID,userDetails);
+            //websocket
+            return ResponseEntity.ok().build();
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+
+        }
+    }
     @PutMapping("/user/{userID}/calculate-unread")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Boolean> markMessageAsRead(@PathVariable Long userID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
+    public ResponseEntity<Boolean> calculate(@PathVariable Long userID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
         try {
             Boolean haveUnread =messageService.calculateAndCheckUnread(userID,userDetails);
             return new ResponseEntity<>(haveUnread,HttpStatus.OK);
@@ -57,7 +81,7 @@ public class MessageController {
 
     @PutMapping("/tasker/{taskerID}/calculate-unread")
     @PreAuthorize("hasRole('TASKER')")
-    public ResponseEntity<Boolean> markMessagesAsRead(@PathVariable Long taskerID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
+    public ResponseEntity<Boolean> calculateT(@PathVariable Long taskerID,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception{
             try {
                 Boolean haveUnread =messageService.calculateAndCheckUnreadT(taskerID,userDetails);
                 return new ResponseEntity<>(haveUnread,HttpStatus.OK);
