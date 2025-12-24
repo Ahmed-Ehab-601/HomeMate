@@ -118,6 +118,7 @@ public class TaskRequestDao {
                 t.startInProgress,
                 t.bill,
                 t.chatID,
+                t.estimation,
                 CONCAT(u.firstName, ' ', u.lastName) AS userName,
                 CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                 s.name AS serviceName,
@@ -126,7 +127,7 @@ public class TaskRequestDao {
                 a.city,
                 a.country,
                 u.email AS userMail,
-                tas.email AS taskerMail,tas.hourRate
+                tas.email AS taskerMail, tas.hourRate
             FROM Task t
                 INNER JOIN Users u ON t.userID = u.userID
                 INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
@@ -158,7 +159,8 @@ public class TaskRequestDao {
         LocalDateTime endOfDay = day.plusDays(1).atStartOfDay();
         String sql = "SELECT  taskID ,startDate , estimation FROM Task" +
                 " WHERE taskerID = ? AND startDate >= ? AND startDate < ? " +
-                "AND status NOT IN ('Rejected', 'Done')";
+                "AND status NOT IN ('Rejected', 'Done')" +
+                "AND estimation > 0";
         return jdbcTemplate.query(sql, taskerBusyTimeMapper,
                 taskerId,
                 Timestamp.valueOf(startOfDay),
@@ -193,31 +195,5 @@ public class TaskRequestDao {
             return 0;
         }
     }
-    //CREATE TABLE Task (
-    //    taskID INT AUTO_INCREMENT PRIMARY KEY,
-    //    startDate TIMESTAMP NOT NULL,
-    //    workedHours FLOAT DEFAULT 0,
-    //    userID INT NOT NULL,
-    //    taskerID INT NOT NULL,
-    //    serviceID INT NOT NULL,
-    //    endDate TIMESTAMP NULL,
-    //    chatID INT,
-    //    bill FLOAT DEFAULT 0,
-    //    status ENUM('InReview','Accepted','InProgress','Suspended','Done','Rejected') DEFAULT 'InReview' NOT NULL,
-    //    startInProgress TIMESTAMP NULL,
-    //    addressID INT NOT NULL,
-    //    description VARCHAR(500),
-    //    FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE RESTRICT ON UPDATE CASCADE,
-    //    FOREIGN KEY (taskerID) REFERENCES Tasker(taskerID) ON DELETE RESTRICT ON UPDATE CASCADE,
-    //    FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE,
-    //    FOREIGN KEY (chatID) REFERENCES Chat(chatID) ON DELETE SET NULL ON UPDATE CASCADE,
-    //    FOREIGN KEY (addressID) REFERENCES Address(addressID) ON DELETE RESTRICT ON UPDATE CASCADE,
-    //    INDEX idx_task_user (userID),
-    //    INDEX idx_task_tasker (taskerID),
-    //    INDEX idx_task_service (serviceID),
-    //    INDEX idx_task_status (status),
-    //    INDEX idx_task_start_date (startDate),
-    //    INDEX idx_task_finish_date (endDate),
-    //    INDEX idx_task_chat (chatID)
-    //);
+
 }

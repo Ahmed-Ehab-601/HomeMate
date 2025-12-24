@@ -19,7 +19,7 @@ const ReportsPage = () => {
   const [appliedFilters, setAppliedFilters] = useState({});
   const [pagination, setPagination] = useState({
     page: 0,
-    size: 20,
+    size: 10,
     totalItems: 0,
     totalPages: 0,
   });

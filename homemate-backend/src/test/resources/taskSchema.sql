@@ -131,6 +131,7 @@ CREATE TABLE Task (
     chatID INT,
     bill FLOAT DEFAULT 0,
     status VARCHAR(20) DEFAULT 'InReview' NOT NULL CHECK (status IN ('InReview','Accepted','InProgress','Suspended','Done','Rejected')),
+    estimation INT DEFAULT 0,
     startInProgress TIMESTAMP NULL,
     addressID INT NOT NULL,
     description VARCHAR(500),

@@ -20,6 +20,11 @@ public class SignupController {
     ValidateSignupService validateSignup;
     JwtService jwtService;
 
+    private final String NO_TOKEN = "No verification token found";
+    private final String INVALID_TOKEN = "Invalid or expired verification token";
+    private final String EMAIL_MISMATCH = "Email does not match verified email";
+    private final String USER_ALREADY_EXISTS = "user with the same username or email already exists";
+
     SignupController(
         UserSignupService userSignupService,
         ValidateSignupService validateSignup,
@@ -32,25 +37,26 @@ public class SignupController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signupUser(@RequestBody SignupUserDTO signupUserDTO) {
-        // Validate verification token if provided
-        if (signupUserDTO.getVerifyToken() != null && !signupUserDTO.getVerifyToken().isEmpty()) {
-            String verifiedEmail = jwtService.validateVerifyToken(signupUserDTO.getVerifyToken());
-            if (verifiedEmail == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired verification token");
-            }
-            // Ensure the email in the DTO matches the verified email
-            if (!verifiedEmail.equalsIgnoreCase(signupUserDTO.getEmail())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email does not match verified email");
-            }
+        if (signupUserDTO.getVerifyToken() == null || signupUserDTO.getVerifyToken().trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(NO_TOKEN);
         }
 
-        String error = validateSignup.validateUserSignup(signupUserDTO);
-        if (error != null) 
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        String verifiedEmail = jwtService.validateVerifyToken(signupUserDTO.getVerifyToken());
+        if (verifiedEmail == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(INVALID_TOKEN);
+        }
+
+        if (!verifiedEmail.equalsIgnoreCase(signupUserDTO.getEmail())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(EMAIL_MISMATCH);
+        }
+        
+        String errorMsg = validateSignup.validateUserSignup(signupUserDTO);
+        if (errorMsg != null) 
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
 
         String result = userSignupService.signup(signupUserDTO);
         if (result == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("user with the same username or email already exists");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(USER_ALREADY_EXISTS);
         }
 
         return ResponseEntity.ok(result);

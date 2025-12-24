@@ -25,6 +25,8 @@ public class TaskCardDto {
     private StatusDto status;
     @NotNull
     private String addressCity;
+    @NotNull
+    private Integer estimation;
 
 
 }

@@ -8,8 +8,7 @@ import {
   suspendTask,
   completeTask,
   getTaskerBusyTime,
-  addTaskEstimation,
-  getTaskEstimation,
+  addTaskEstimation
 } from "../api/taskManagementApi";
 import { acceptTask, rejectTask } from "../api/taskActionsApi";
 import { getTaskReview } from "../api/taskManagementApi";
@@ -108,7 +107,14 @@ function TaskDetailsPage() {
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [rescheduleBusyTimes, setRescheduleBusyTimes] = useState({});
   const [loadingRescheduleBusyTime, setLoadingRescheduleBusyTime] = useState(false);
+  // Use estimation from task directly (already in minutes from backend)
   const [taskEstimation, setTaskEstimation] = useState(null);
+
+  useEffect(() => {
+    if (task?.estimation !== undefined && task?.estimation !== null) {
+      setTaskEstimation(task.estimation);
+    }
+  }, [task?.estimation]);
 
   const userRole = getUserRole();
   const isTasker = userRole === "ROLE_TASKER";
@@ -299,18 +305,7 @@ const WORK_DAY_END_MINUTES = 24 * 60 + 30; // 20:30 = 1230 minutes
       const busyTimeData = await getTaskerBusyTime(task.taskerID, rescheduleDate, userRole);
       setRescheduleBusyTimes(busyTimeData || []);
       console.log("Busy times loaded for date:", rescheduleDate, busyTimeData);
-
-      // Fetch task estimation separately (only if not already loaded)
-      if (!taskEstimation && task.taskID) {
-        try {
-          const estimationMinutes = await getTaskEstimation(task.taskID, userRole);
-          setTaskEstimation(estimationMinutes);
-          console.log("Task estimation loaded:", estimationMinutes, "minutes");
-        } catch (err) {
-          console.error("Failed to load estimation:", err);
-          setTaskEstimation(60); // Default to 60 minutes if fails
-        }
-      }
+      // No need to fetch estimation here; it's from task.estimation
     } catch (error) {
       console.error("Failed to fetch busy time:", error);
       setRescheduleBusyTimes([]);
@@ -347,7 +342,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
   const [year, month, day] = rescheduleDate.split("-").map(Number);
   
   // Current task's estimation (in minutes)
-  const currentTaskEstMinutes = taskEstimation || 60;
+  const currentTaskEstMinutes = taskEstimation ?? 0;
   
   // Calculate slot start and end times in minutes from midnight
   const slotStartMinutes = slotHours * 60 + slotMinutes;
@@ -377,6 +372,10 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
       const busyStartMinutes = busyHours * 60 + busyMins;
       const busyEndMinutes = busyStartMinutes + busyTime.estimation;
 
+      if (currentTaskEstMinutes === 0 && slotStartMinutes === busyEndMinutes) {
+                                     continue;
+       }
+                
       // Check for ANY overlap between slot and busy period
       const hasOverlap = (
         (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
@@ -420,7 +419,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
   }
 
   // 2. Check if there's enough time in the day to complete the task
-  const currentTaskEstMinutes = taskEstimation || 60;
+  const currentTaskEstMinutes = taskEstimation ?? 0;
   if (!hasEnoughTimeToComplete(slot, currentTaskEstMinutes)) {
     return false; // Not enough time before end of work day
   }
@@ -557,7 +556,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
   const [year, month, day] = rescheduleDate.split("-").map(Number);
   
   // Current task estimation in minutes
-  const currentTaskEstMinutes = taskEstimation || 60;
+  const currentTaskEstMinutes = taskEstimation ?? 0;
   const newStartMinutes = hours * 60 + minutes;
   const newEndMinutes = newStartMinutes + currentTaskEstMinutes;
 
@@ -602,6 +601,10 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
 
       const busyStartMinutes = busyHours * 60 + busyMins;
       const busyEndMinutes = busyStartMinutes + busyTime.estimation;
+
+      if (currentTaskEstMinutes === 0 && slotStartMinutes === busyEndMinutes) {
+                                     continue;
+       }
 
       // Check for ANY overlap (all 5 scenarios)
       const hasOverlap = (
@@ -891,6 +894,26 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
                 </div>
               </div>
             </div>
+
+            {/* Estimated Time */}
+            {task.estimation !== undefined && task.estimation !== null && (
+              <div className="task-detail-row">
+                <div className="task-detail-icon">⏳</div>
+                <div className="task-detail-content">
+                  <div className="task-detail-label">Estimated Time</div>
+                  <div className="task-detail-value">
+                    {(() => {
+                      const mins = Number(task.estimation);
+                      const h = Math.floor(mins / 60);
+                      const m = mins % 60;
+                      if (h > 0 && m > 0) return `${h}h ${m}m`;
+                      if (h > 0) return `${h}h`;
+                      return `${m}m`;
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {task.endDate && normalizedStatus === "DONE" && (
               <div className="task-detail-row">
