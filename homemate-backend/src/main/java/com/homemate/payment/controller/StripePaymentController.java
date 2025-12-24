@@ -22,18 +22,20 @@ public class StripePaymentController {
 
 
     @PostMapping("/create-connected-account/{taskerId}")
-    public ResponseEntity<String> createConnectedAccount(@PathVariable Long taskerId) {
+    @PreAuthorize("hasRole('TASKER')")
+    public ResponseEntity<String> createConnectedAccount(@PathVariable Long taskerId,@AuthenticationPrincipal AppUserDetails userDetails) {
         return ResponseEntity.ok(
-                stripePaymentService.generateOnboardingLink(taskerId)
+                stripePaymentService.generateOnboardingLink(userDetails.getId())
         );
     }
 
 
 
     @PostMapping("/payments/create")
-    public ResponseEntity<PaymentResponseDTO> createPayment(
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<PaymentResponseDTO> createPayment(@AuthenticationPrincipal AppUserDetails userDetails,
             @Valid @RequestBody PaymentRequestDTO request) {
-
+        request.setUserId(userDetails.getId());
         return ResponseEntity.ok(
                 stripePaymentService.createPaymentAndReturnClientSecret(request)
         );
@@ -42,9 +44,9 @@ public class StripePaymentController {
 
 
     @PostMapping("/payments/confirm")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> confirmPayment(
             @Valid @RequestBody PaymentConfirmDTO request) {
-
         stripePaymentService.confirmPayment(request.getPaymentIntentId());
         return ResponseEntity.ok("Payment confirmed successfully");
     }
@@ -52,6 +54,7 @@ public class StripePaymentController {
     // ==================== PAYMENT STATUS ====================
 
     @GetMapping("/payments/{paymentId}/status")
+    @PreAuthorize("hasAnyRole('USER','TASKER')")
     public ResponseEntity<String> getPaymentStatus(@PathVariable Long paymentId) {
         return ResponseEntity.ok(
                 stripePaymentService.getPaymentStatus(paymentId)
