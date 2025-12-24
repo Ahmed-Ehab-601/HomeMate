@@ -31,7 +31,8 @@ CREATE TABLE Users (
     gender VARCHAR(1) CHECK (gender IN ('M', 'F')),
     phone VARCHAR(50),
     admin BOOLEAN DEFAULT FALSE NOT NULL,
-    suspended BOOLEAN DEFAULT FALSE NOT NULL
+    suspended BOOLEAN DEFAULT FALSE NOT NULL,
+    stripe_account_id VARCHAR(255) DEFAULT NULL
 );
 
 CREATE INDEX idx_users_username ON Users(username);
@@ -135,6 +136,7 @@ CREATE TABLE Task (
     startInProgress TIMESTAMP NULL,
     addressID INT NOT NULL,
     description VARCHAR(500),
+    paid BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (taskerID) REFERENCES Tasker(taskerID) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -165,3 +167,19 @@ CREATE TABLE Report (
 
 CREATE INDEX idx_report_task ON Report(taskID);
 CREATE INDEX idx_report_admin_status ON Report(adminStatus);
+
+
+CREATE TABLE payments (
+                          paymentID INT AUTO_INCREMENT PRIMARY KEY ,
+                          taskId INT NOT NULL,
+                          userId INT NOT NULL,
+                          taskerId INT NOT NULL,
+                          totalAmount  FLOAT DEFAULT 0,
+                          platformFee FLOAT DEFAULT 0,
+                          taskerAmount FLOAT DEFAULT 0,
+                          stripePaymentIntentId VARCHAR(255),
+                          status VARCHAR(30), -- CREATED, REQUIRES_PAYMENT, PAID, FAILED
+                          created_at TIMESTAMP,
+                          paid_at TIMESTAMP,
+                          FOREIGN KEY (taskId) REFERENCES Task(taskID)
+);
