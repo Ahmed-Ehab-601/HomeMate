@@ -367,6 +367,13 @@ const AnalysisPage = () => {
                             </FormControl>
                         )}
 
+                        {/* Note for Report & Review Analysis */}
+                        {analysisType === 'reportReview' && (
+                            <Alert severity="info" sx={{ mt: 1 }}>
+                                Note: Data is analyzed from year 2023 onwards.
+                            </Alert>
+                        )}
+
                         {/* Time range inputs for new accounts and task date metrics */}
                         {(metric === 'newAccounts' || (analysisType === 'task' && (metric === 'startDate' || metric === 'endDate'))) && (
                             <>
