@@ -5,6 +5,12 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.banner-container:hover {
+    transform: scale(1.15);
+    z-index: 10;
 }
 
 .banner-board {
@@ -36,6 +42,49 @@
     position: absolute;
     z-index: 3;
     font-size: 14px;
+    cursor: pointer;
+    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Flying out animation for each tool */
+.chainsaw:hover {
+    transform: rotate(-25deg) translate(-30px, -25px) scale(1.5);
+    filter: drop-shadow(0 0 10px rgba(198, 255, 77, 0.8));
+}
+
+.saw-blade:hover {
+    transform: translate(0, -35px) scale(1.5) rotate(360deg);
+    filter: drop-shadow(0 0 10px rgba(198, 255, 77, 0.8));
+}
+
+.drill:hover {
+    transform: rotate(35deg) translate(30px, -25px) scale(1.5);
+    filter: drop-shadow(0 0 10px rgba(198, 255, 77, 0.8));
+}
+
+.tape:hover {
+    transform: translate(35px, -20px) scale(1.5);
+    filter: drop-shadow(0 0 10px rgba(198, 255, 77, 0.8));
+}
+
+.wrench:hover {
+    transform: rotate(-45deg) translate(-30px, 25px) scale(1.5);
+    filter: drop-shadow(0 0 10px rgba(198, 255, 77, 0.8));
+}
+
+.screwdriver:hover {
+    transform: rotate(-60deg) translate(-20px, 30px) scale(1.5);
+    filter: drop-shadow(0 0 10px rgba(198, 255, 77, 0.8));
+}
+
+.pliers:hover {
+    transform: rotate(40deg) translate(20px, 30px) scale(1.5);
+    filter: drop-shadow(0 0 10px rgba(198, 255, 77, 0.8));
+}
+
+.hammer:hover {
+    transform: rotate(25deg) translate(30px, 25px) scale(1.5);
+    filter: drop-shadow(0 0 10px rgba(198, 255, 77, 0.8));
 }
 
 /* Top edge tools */
