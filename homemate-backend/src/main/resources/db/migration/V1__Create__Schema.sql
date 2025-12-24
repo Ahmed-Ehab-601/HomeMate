@@ -101,16 +101,16 @@ CREATE TABLE Tasker (
 -- CHAT
 -- ======================================================
 CREATE TABLE Chat (
-                      chatID INT AUTO_INCREMENT PRIMARY KEY,
-                      userID INT NOT NULL,
-                      taskerID INT NOT NULL,
-                      userIsActive BOOLEAN DEFAULT TRUE NOT NULL,
-                      taskerIsActive BOOLEAN DEFAULT TRUE NOT NULL,
-                      UNIQUE KEY unique_chat (userID, taskerID),
-                      FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE CASCADE ON UPDATE CASCADE,
-                      FOREIGN KEY (taskerID) REFERENCES Tasker(taskerID) ON DELETE CASCADE ON UPDATE CASCADE,
-                      INDEX idx_chat_user (userID),
-                      INDEX idx_chat_tasker (taskerID)
+                    chatID INT AUTO_INCREMENT PRIMARY KEY,
+                    userID INT NOT NULL,
+                    taskerID INT NOT NULL,
+                    userIsActive BOOLEAN DEFAULT TRUE NOT NULL,
+                    taskerIsActive BOOLEAN DEFAULT TRUE NOT NULL,
+                    UNIQUE KEY unique_chat (userID, taskerID),
+                    FOREIGN KEY (userID) REFERENCES Users(userID) ON DELETE CASCADE ON UPDATE CASCADE,
+                    FOREIGN KEY (taskerID) REFERENCES Tasker(taskerID) ON DELETE CASCADE ON UPDATE CASCADE,
+                    INDEX idx_chat_user (userID),
+                    INDEX idx_chat_tasker (taskerID)
 );
 
 -- ======================================================
