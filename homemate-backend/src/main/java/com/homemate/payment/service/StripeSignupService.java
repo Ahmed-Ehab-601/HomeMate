@@ -42,7 +42,7 @@ public class StripeSignupService {
             throw new ResourceNotFoundException("Tasker not found");
         }
 
-        String accountId = tasker.getStripeAccountId();
+        String accountId = taskerDao.getTaskerStripeAccount(taskerId);
         if (accountId == null) {
             accountId = stripeAccountService.createConnectedAccount(
                     tasker.getEmail(),

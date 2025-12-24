@@ -78,6 +78,7 @@ function TaskerDashboardPage() {
   const [imageStatus, setImageStatus] = useState("idle");
   const [imagePreview, setImagePreview] = useState(null);
   const [isConnectingStripe, setIsConnectingStripe] = useState(false);
+  const [stripeEnabled, setStripeEnabled] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -89,6 +90,26 @@ function TaskerDashboardPage() {
     loadServices();
     loadReviews(1);
   }, [user, navigate]);
+
+  // After profile loads, check whether the tasker's Stripe account is enabled
+  useEffect(() => {
+    if (!profile) return;
+    // dynamic import to keep bundle sizes similar to other payment calls
+    import("../api/paymentApi")
+      .then(({ checkTaskerStripeStatus }) =>
+        checkTaskerStripeStatus()
+          .then((enabled) => setStripeEnabled(Boolean(enabled)))
+          .catch((err) => {
+            console.error("Failed to check Stripe enabled status:", err);
+            // If check fails, default to false so CTA remains visible
+            setStripeEnabled(false);
+          }),
+      )
+      .catch((err) => {
+        console.error("Failed to load paymentApi for stripe status check", err);
+        setStripeEnabled(false);
+      });
+  }, [profile]);
 
   const loadProfile = () => {
     setProfileStatus("loading");
@@ -597,7 +618,7 @@ function TaskerDashboardPage() {
           >
             {/* Sign out handled by global header; removed duplicate here */}
             {/* Visible CTA in header so taskers can enable payouts from Tasker Hub */}
-            {profile && !(profile.stripeAccountId || profile.stripe_account_id) && (
+            {profile && stripeEnabled === false && (
               <button
                 type="button"
                 className="btn btn-primary"

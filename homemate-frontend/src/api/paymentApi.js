@@ -1,4 +1,4 @@
-import { baseUrl, apiFetch } from "../utils/apiClient";
+import { baseUrl, apiFetch, apiRequest } from "../utils/apiClient";
 
 const PAYMENT_ENDPOINT = `${baseUrl}/api/stripe/signup`;
 
@@ -35,6 +35,20 @@ export function createStripeCustomer(userId) {
 export function createStripeConnectedAccount(taskerId) {
   if (!taskerId) return Promise.reject(new Error("Missing taskerId"));
   return _postAndParse(`${PAYMENT_ENDPOINT}/tasker/${taskerId}`);
+}
+
+export async function checkTaskerStripeStatus() {
+  // Endpoint returns boolean indicating whether the tasker's Stripe account is enabled
+  const url = `${PAYMENT_ENDPOINT}/tasker/status`;
+  // apiRequest will parse JSON and throw on non-OK responses
+  const data = await apiRequest(url, { method: "GET" });
+  // Expecting a boolean in the response body (true/false)
+  if (typeof data === "boolean") return data;
+  // If backend returned { enabled: true } or similar, attempt to find a boolean
+  if (data && typeof data.enabled === "boolean") return data.enabled;
+  if (data && typeof data.status === "boolean") return data.status;
+  // Fallback: treat truthy responses as enabled
+  return !!data;
 }
 
 export default {
