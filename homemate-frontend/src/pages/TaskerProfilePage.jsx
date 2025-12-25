@@ -422,7 +422,7 @@ function TaskerProfilePage() {
         <div className="profile-stat-card">
           <div className="profile-stat-icon">⭐</div>
           <div className="profile-stat-content">
-            <div className="profile-stat-value">{tasker.rating.toFixed(1)}</div>
+            <div className="profile-stat-value">{tasker.rating > 0 ? tasker.rating.toFixed(1) : 'N/A'}</div>
             <div className="profile-stat-label">Rating</div>
           </div>
         </div>
@@ -444,7 +444,7 @@ function TaskerProfilePage() {
           <div className="profile-stat-icon">🕐</div>
           <div className="profile-stat-content">
             <div className="profile-stat-value">
-              {tasker.workedHours.toFixed(0)}h
+              {tasker.workedHours.toFixed(2)}h
             </div>
             <div className="profile-stat-label">Worked Hours</div>
           </div>

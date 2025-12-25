@@ -1208,16 +1208,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
 
           {/* Action Buttons */}
           <div className="action-buttons-section">
-            <h3 className="action-buttons-title">Actions</h3>
-            {/* Debug: show why Pay Online is hidden (remove after debugging) */}
-            <div style={{ marginBottom: 8, fontSize: 13, color: '#6b7280' }}>
-              <strong>Pay Online visibility:</strong>
-              <div>Task is DONE: <strong>{normalizedStatus === 'DONE' ? 'yes' : 'no'}</strong></div>
-              <div>Has bill: <strong>{showBill ? 'yes' : 'no'}</strong></div>
-              <div>Task already paid: <strong>{task?.paid ? 'yes' : 'no'}</strong></div>
-              <div>Tasker has Stripe account: <strong>{(tasker?.stripeAccountId || tasker?.stripe_account_id) ? 'yes' : 'no'}</strong></div>
-              <div>User has Stripe customer id: <strong>{hasUserStripeCustomer ? 'yes' : 'no'}</strong></div>
-            </div>
+            <h3 className="action-buttons-title">Actions</h3>   
             <div className="action-buttons-list">
               {/* Accept/Reject for taskers on In Review tasks */}
               {showAcceptRejectButtons && (

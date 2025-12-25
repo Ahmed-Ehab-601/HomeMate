@@ -57,6 +57,7 @@ export async function fetchTaskers({
     body: JSON.stringify(criteria),
   });
   const list = Array.isArray(body) ? body : [];
+  console.log('[fetchTaskers] Response:', list.map(t => ({ id: t.id, name: t.name, rating: t.rating })));
 
   return {
     data: list.map(normalizeTasker),
