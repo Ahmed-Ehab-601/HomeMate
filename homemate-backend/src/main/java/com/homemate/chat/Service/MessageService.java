@@ -35,7 +35,6 @@ public class MessageService {
                 throw new Exception("unauthorized user");
             }
             boolean isUserSender = messageDto.isIsUserSender();
-            MessageDto messageDto1 =messageDao.save(chatID, messageDto);
 
             if (isUserSender&& messageDao.getTaskerStatus(chatID)) {
                 messageDto.setMessageStatus(MessageStatus.received);
@@ -44,7 +43,7 @@ public class MessageService {
                 messageDto.setMessageStatus(MessageStatus.received);
                 messageDao.incrementUnreadForUser(chatID);
             }
-            return messageDto1;
+            return messageDao.save(chatID, messageDto);
         } catch (Exception e) {
             throw new Exception(e);
         }
