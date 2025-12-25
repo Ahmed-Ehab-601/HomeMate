@@ -9,7 +9,6 @@ import lombok.AllArgsConstructor;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 @AllArgsConstructor
 public class InProgress implements TaskState{
@@ -18,9 +17,7 @@ public class InProgress implements TaskState{
 
     @Override
     public void updateWorkedHours() {
-        LocalDateTime ldt = LocalDateTime.now(ZoneId.of("Africa/Cairo")); // or your timezone
-        Timestamp timestamp = Timestamp.valueOf(ldt);
-        taskDao.updateTaskStartInProgress(taskID, timestamp);
+        taskDao.updateTaskStartInProgress(taskID, Timestamp.from(Instant.now()));
 
     }
 
