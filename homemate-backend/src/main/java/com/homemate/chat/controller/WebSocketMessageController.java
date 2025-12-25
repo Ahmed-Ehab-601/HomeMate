@@ -5,8 +5,6 @@ import com.homemate.chat.Service.MessageService;
 import com.homemate.chat.Service.PresenceService;
 import com.homemate.chat.dto.MessageDto;
 import com.homemate.chat.dto.PresenceUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -24,7 +22,6 @@ import java.util.Map;
 @Controller
 public class WebSocketMessageController {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketMessageController.class);
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
@@ -45,8 +42,6 @@ public class WebSocketMessageController {
             @DestinationVariable Long chatId,
             @Payload MessageDto messageDto) {
         try {
-            logger.debug("📨 Sending message to chat {}", chatId);
-
             messagingTemplate.convertAndSend(
                     "/send/chat/" + chatId,
                     messageDto
@@ -68,10 +63,8 @@ public class WebSocketMessageController {
                     notification
             );
 
-            logger.info("✅ Message sent successfully to chat {}", chatId);
 
         } catch (Exception e) {
-            logger.error("❌ Failed to send message to chat {}: {}", chatId, e.getMessage(), e);
 
             Map<String, Object> error = new HashMap<>();
             error.put("type", "ERROR");
@@ -104,10 +97,8 @@ public class WebSocketMessageController {
                     statusBroadcast
             );
 
-            logger.debug("📊 Message {} status updated to {} in chat {}", messageId, status, chatId);
 
-        } catch (Exception e) {
-            logger.error("❌ Failed to update message status in chat {}: {}", chatId, e.getMessage(), e);
+        } catch (Exception ignored) {
         }
     }
 
@@ -132,8 +123,7 @@ public class WebSocketMessageController {
                     typingIndicator
             );
 
-        } catch (Exception e) {
-            logger.error("❌ Failed to handle typing indicator in chat {}: {}", chatId, e.getMessage(), e);
+        } catch (Exception ignored) {
         }
     }
 
@@ -156,8 +146,7 @@ public class WebSocketMessageController {
                     readReceipt
             );
 
-        } catch (Exception e) {
-            logger.error("❌ Failed to mark messages as read in chat {}: {}", chatId, e.getMessage(), e);
+        } catch (Exception ignored) {
         }
     }
 
@@ -177,19 +166,9 @@ public class WebSocketMessageController {
     @MessageMapping("/presence/update")
     public void updatePresence(@Payload PresenceUpdate presenceUpdate) {
         try {
-            logger.info("🔥 Received EXPLICIT presence update: {} {} -> {}",
-                    presenceUpdate.getUserType(),
-                    presenceUpdate.getId(),
-                    presenceUpdate.getOnlineStatus());
-
-            // This will ALWAYS broadcast (unless throttled)
             presenceService.updatePresence(presenceUpdate);
 
         } catch (Exception e) {
-            logger.error("❌ Failed to update presence for {} {}: {}",
-                    presenceUpdate.getUserType(),
-                    presenceUpdate.getId(),
-                    e.getMessage(), e);
             throw new RuntimeException("Failed to update presence", e);
         }
     }
@@ -206,7 +185,6 @@ public class WebSocketMessageController {
             Long userId = Long.valueOf(heartbeatData.get("userId").toString());
             String userType = (String) heartbeatData.get("userType");
 
-            logger.debug("💓 Heartbeat received for {} {}", userType, userId);
 
             PresenceUpdate presenceUpdate = PresenceUpdate.builder()
                     .Id(userId)
@@ -218,9 +196,9 @@ public class WebSocketMessageController {
             // Use heartbeat method (doesn't broadcast, just updates timestamp)
             presenceService.updatePresenceFromHeartbeat(presenceUpdate);
 
-        } catch (Exception e) {
-            logger.error("❌ Failed to process heartbeat: {}", e.getMessage(), e);
+        } catch (Exception ignored) {
         }
     }
+    
 
 }

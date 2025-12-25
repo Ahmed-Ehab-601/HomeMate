@@ -122,53 +122,156 @@ public class MessageTest {
 
     @Test
     public void testSendMessage_GetTaskerStatusThrowsException() throws Exception {
+        // Arrange
         when(chatDao.getChat(CHAT_ID)).thenReturn(testChat);
         when(userDetails.getId()).thenReturn(USER_ID);
-        when(messageDao.getTaskerStatus(CHAT_ID)).thenThrow(new RuntimeException("Database error"));
 
         testMessage.setIsUserSender(true);
+        testMessage.setSenderId(USER_ID);
+        testMessage.setReceiverId(TASKER_ID);
 
+        // Mock getTaskerStatus to throw exception (this happens BEFORE save now)
+        when(messageDao.getTaskerStatus(CHAT_ID)).thenThrow(new RuntimeException("Database error"));
+
+        // Act & Assert
         Exception exception = assertThrows(Exception.class,
                 () -> messageService.sendMessage(CHAT_ID, testMessage, userDetails));
 
+        // Verify
         assertNotNull(exception.getCause());
-        verify(messageDao).getTaskerStatus(CHAT_ID);
-        verify(messageDao, never()).save(any(), any());
+        assertEquals("Database error", exception.getCause().getMessage());
+
+        // Verify getTaskerStatus was called, but save was never called
+        verify(messageDao, times(1)).getTaskerStatus(CHAT_ID);
+        verify(messageDao, never()).save(eq(CHAT_ID), any(MessageDto.class));
+        verify(messageDao, never()).incrementUnreadForTasker(any());
     }
 
     @Test
     public void testSendMessage_GetUserStatusThrowsException() throws Exception {
+        // Arrange
         when(chatDao.getChat(CHAT_ID)).thenReturn(testChat);
         when(userDetails.getId()).thenReturn(TASKER_ID);
-        when(messageDao.getUserStatus(CHAT_ID)).thenThrow(new RuntimeException("Database error"));
 
         testMessage.setIsUserSender(false);
         testMessage.setSenderId(TASKER_ID);
         testMessage.setReceiverId(USER_ID);
 
+        // Mock getUserStatus to throw exception (this happens BEFORE save now)
+        when(messageDao.getUserStatus(CHAT_ID)).thenThrow(new RuntimeException("Database error"));
+
+        // Act & Assert
         Exception exception = assertThrows(Exception.class,
                 () -> messageService.sendMessage(CHAT_ID, testMessage, userDetails));
 
+        // Verify
         assertNotNull(exception.getCause());
-        verify(messageDao).getUserStatus(CHAT_ID);
-        verify(messageDao, never()).save(any(), any());
+        assertEquals("Database error", exception.getCause().getMessage());
+
+        // Verify getUserStatus was called, but save was never called
+        verify(messageDao, times(1)).getUserStatus(CHAT_ID);
+        verify(messageDao, never()).save(eq(CHAT_ID), any(MessageDto.class));
+        verify(messageDao, never()).incrementUnreadForUser(any());
     }
 
     @Test
     public void testSendMessage_SaveThrowsException() throws Exception {
+        // Arrange
         when(chatDao.getChat(CHAT_ID)).thenReturn(testChat);
         when(userDetails.getId()).thenReturn(USER_ID);
-        when(messageDao.getTaskerStatus(CHAT_ID)).thenReturn(true);
+
+        testMessage.setIsUserSender(true);
+        testMessage.setSenderId(USER_ID);
+        testMessage.setReceiverId(TASKER_ID);
+
+        // Mock tasker offline (so status check happens but no increment)
+        when(messageDao.getTaskerStatus(CHAT_ID)).thenReturn(false);
+
+        // Mock save to throw exception (this happens AFTER status check)
         when(messageDao.save(eq(CHAT_ID), any(MessageDto.class)))
                 .thenThrow(new RuntimeException("Database error"));
 
+        // Act & Assert
         Exception exception = assertThrows(Exception.class,
                 () -> messageService.sendMessage(CHAT_ID, testMessage, userDetails));
 
+        // Verify
         assertNotNull(exception.getCause());
-        verify(messageDao).save(eq(CHAT_ID), any(MessageDto.class));
+        assertEquals("Database error", exception.getCause().getMessage());
+
+        // Verify status check happened, then save was attempted
+        verify(messageDao, times(1)).getTaskerStatus(CHAT_ID);
+        verify(messageDao, times(1)).save(eq(CHAT_ID), any(MessageDto.class));
+
+        // Verify no increment (since tasker was offline)
+        verify(messageDao, never()).incrementUnreadForTasker(any());
     }
 
+    @Test
+    public void testSendMessage_IncrementUnreadForTaskerThrowsException() throws Exception {
+        // Arrange
+        when(chatDao.getChat(CHAT_ID)).thenReturn(testChat);
+        when(userDetails.getId()).thenReturn(USER_ID);
+
+        testMessage.setIsUserSender(true);
+        testMessage.setSenderId(USER_ID);
+        testMessage.setReceiverId(TASKER_ID);
+
+        // Mock tasker is online
+        when(messageDao.getTaskerStatus(CHAT_ID)).thenReturn(true);
+
+        // Mock increment throws exception (this happens BEFORE save)
+        doThrow(new RuntimeException("Database error"))
+                .when(messageDao).incrementUnreadForTasker(CHAT_ID);
+
+        // Act & Assert
+        Exception exception = assertThrows(Exception.class,
+                () -> messageService.sendMessage(CHAT_ID, testMessage, userDetails));
+
+        // Verify
+        assertNotNull(exception.getCause());
+        assertEquals("Database error", exception.getCause().getMessage());
+
+        // Verify the flow: getTaskerStatus -> incrementUnreadForTasker (fails here)
+        verify(messageDao, times(1)).getTaskerStatus(CHAT_ID);
+        verify(messageDao, times(1)).incrementUnreadForTasker(CHAT_ID);
+
+        // Save never happens because increment failed first
+        verify(messageDao, never()).save(eq(CHAT_ID), any(MessageDto.class));
+    }
+
+    @Test
+    public void testSendMessage_IncrementUnreadForUserThrowsException() throws Exception {
+        // Arrange
+        when(chatDao.getChat(CHAT_ID)).thenReturn(testChat);
+        when(userDetails.getId()).thenReturn(TASKER_ID);
+
+        testMessage.setIsUserSender(false);
+        testMessage.setSenderId(TASKER_ID);
+        testMessage.setReceiverId(USER_ID);
+
+        // Mock user is online
+        when(messageDao.getUserStatus(CHAT_ID)).thenReturn(true);
+
+        // Mock increment throws exception (this happens BEFORE save)
+        doThrow(new RuntimeException("Database error"))
+                .when(messageDao).incrementUnreadForUser(CHAT_ID);
+
+        // Act & Assert
+        Exception exception = assertThrows(Exception.class,
+                () -> messageService.sendMessage(CHAT_ID, testMessage, userDetails));
+
+        // Verify
+        assertNotNull(exception.getCause());
+        assertEquals("Database error", exception.getCause().getMessage());
+
+        // Verify the flow: getUserStatus -> incrementUnreadForUser (fails here)
+        verify(messageDao, times(1)).getUserStatus(CHAT_ID);
+        verify(messageDao, times(1)).incrementUnreadForUser(CHAT_ID);
+
+        // Save never happens because increment failed first
+        verify(messageDao, never()).save(eq(CHAT_ID), any(MessageDto.class));
+    }
     @Test
     public void testSendMessage_UserSenderTaskerOffline() throws Exception {
         when(chatDao.getChat(CHAT_ID)).thenReturn(testChat);

@@ -37,6 +37,10 @@ export {
   getTaskEndDateRanges,
   getTaskBillRanges,
   getTaskStatusCounts,
+  getReportsPerService,
+  getReviewsPerService,
+  getReportStatusCounts,
+  getAvgRatingPerService,
   default,
 } from '../api/adminApi';
 

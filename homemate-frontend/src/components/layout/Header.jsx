@@ -2,11 +2,13 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import BannerLogo from "./BannerLogo";
+import { useUnread } from "../../contexts/UnreadContext";
+import UnreadIndicator from "../UnreadIndicator";
 
 function Header({ onLogoHover }) {
   const navigate = useNavigate();
-  const { isAuthenticated, isTasker, isRegularUser, isAdmin, logout } =
-    useAuth();
+  const { isAuthenticated, isTasker, isRegularUser, isAdmin, logout } = useAuth();
+  const { hasUnread } = useUnread();
 
   // Default to showing regular user menu if not authenticated
   const showUserMenu = !isAuthenticated || (isRegularUser() && !isAdmin());
@@ -78,8 +80,10 @@ function Header({ onLogoHover }) {
                 `nav-link${isActive ? " active" : ""}`
               }
               to="/my-tasks"
+              style={{ position: "relative" }}
             >
               My Tasks
+              <UnreadIndicator show={hasUnread} size="small" />
             </NavLink>
           )}
 
@@ -89,8 +93,10 @@ function Header({ onLogoHover }) {
                 `nav-link${isActive ? " active" : ""}`
               }
               to="/tasker/my-tasks"
+              style={{ position: "relative" }}
             >
               Tasker Tasks
+              <UnreadIndicator show={hasUnread} size="small" />
             </NavLink>
           )}
 

@@ -14,9 +14,9 @@ public interface IMessageDao <M>{
 
     MessageDto save(Long chatID, MessageDto messageDto);
 
-    int getUnreadOnesForUser(Long chatID) throws SQLException;
+    Boolean getUnreadOnesForUser(Long chatID) throws SQLException;
 
-    int getUnreadOnesForTasker(Long chatID) throws SQLException;
+    Boolean getUnreadOnesForTasker(Long chatID) throws SQLException;
 
 
     void markasReadUser(Long chatID) throws SQLException;

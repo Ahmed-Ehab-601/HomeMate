@@ -1,0 +1,9 @@
+USE HomeMate;
+
+UPDATE Users
+SET password = '$2a$12$bMBNm/JfrrCS47zk8BK6eeLjlSxHXHrL3308rlFxBIcr8I6SExMwi'
+WHERE userID BETWEEN 1 AND 10;
+
+UPDATE Tasker
+SET password = '$2a$12$bMBNm/JfrrCS47zk8BK6eeLjlSxHXHrL3308rlFxBIcr8I6SExMwi'
+WHERE taskerID BETWEEN 1 AND 40;

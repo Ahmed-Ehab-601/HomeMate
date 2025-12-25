@@ -15,6 +15,8 @@ public class TaskRowMapper implements RowMapper<TaskDto> {
 
     @Override
     public TaskDto mapRow(ResultSet rs, int rowNum) throws SQLException {
+        int userUnread = rs.getObject("userUnreadMessages") != null ? rs.getInt("userUnreadMessages") : 0;
+        int taskerUnread = rs.getObject("taskerUnreadMessages") != null ? rs.getInt("taskerUnreadMessages") : 0;
         return TaskDto.builder().
                 taskID(rs.getLong("taskID")).
                 startDate(toLocalDateTime(rs.getTimestamp("startDate"))).
@@ -33,7 +35,10 @@ public class TaskRowMapper implements RowMapper<TaskDto> {
                 taskerMail(rs.getString("taskerMail")).
                 taskerID(rs.getLong("taskerID")).
                 hourRate(rs.getDouble("hourRate")).
-                estimation(rs.getInt("estimation"))
+                estimation(rs.getInt("estimation")).
+                paid(rs.getBoolean("paid"))
+                .taskerUnreadMessagesCount(taskerUnread)
+                .userUnreadMessagesCount(userUnread)
                 .build();
     }
 

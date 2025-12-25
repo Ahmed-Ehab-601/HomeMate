@@ -96,10 +96,11 @@ const MOCK_REVIEWS = [
 
 function TaskerProfilePage() {
   const { taskerId } = useParams();
+  const { user, isTasker } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { isTasker } = useAuth();
+  const [isConnectingStripe, setIsConnectingStripe] = useState(false);
 
   // Get service from navigation state (passed from TaskerCard)
   const serviceFromState = location.state?.service;
@@ -258,6 +259,54 @@ function TaskerProfilePage() {
     });
   };
 
+  const handleCreateStripeAccount = () => {
+    // Only tasker themselves should create connected account for now
+    const currentUserId = user?.id || user?.taskerId || user?.taskerID || user?.id;
+    const profileTaskerId = tasker?.id || tasker?.taskerId || taskerId;
+    if (!currentUserId || String(currentUserId) !== String(profileTaskerId)) {
+      // Not the owner; do nothing
+      setIsConnectingStripe(false);
+      return;
+    }
+    const idToSend = profileTaskerId;
+    setIsConnectingStripe(true);
+    import("../api/paymentApi")
+      .then(({ createStripeConnectedAccount }) =>
+        createStripeConnectedAccount(idToSend)
+          .then((res) => {
+            const possibleUrl =
+              (typeof res === "string" && /^https?:\/\//.test(res) && res) ||
+              res?.onboardingUrl || res?.onboarding_url || res?.url || res?.redirectUrl || res?.redirect_url || null;
+            if (possibleUrl) {
+              const newWin = window.open(possibleUrl, "_blank", "noopener,noreferrer");
+              try {
+                if (newWin) newWin.opener = null;
+              } catch (e) {
+                // ignore
+              }
+              if (!newWin) {
+                setFeedback({
+                  type: "success",
+                  message: `Onboarding opened in a new tab. If nothing happened, open this link: ${possibleUrl}`,
+                });
+              }
+              return;
+            }
+            loadTaskerProfile();
+            setFeedback({ type: "success", message: res?.message ?? "Stripe connected account created successfully." });
+          })
+          .catch((err) => {
+            console.error(err);
+            setFeedback({ type: "error", message: err?.message ?? "Failed to create Stripe connected account." });
+          })
+          .finally(() => setIsConnectingStripe(false)),
+      )
+      .catch((err) => {
+        console.error(err);
+        setIsConnectingStripe(false);
+      });
+  };
+
   const getInitials = (firstName, lastName) => {
     return `${firstName?.charAt(0) || ""}${
       lastName?.charAt(0) || ""
@@ -358,6 +407,13 @@ function TaskerProfilePage() {
               Request Task
             </button>
           )}
+
+          {/* If the current user is the tasker owner, show Stripe connect button */}
+              {isTasker() && (tasker?.id || tasker?.taskerId || taskerId) && String(user?.id || user?.taskerId) === String(tasker?.id || tasker?.taskerId || taskerId) && !(tasker?.stripeAccountId || tasker?.stripe_account_id) && (
+                <div style={{ marginTop: 8 }}>
+                  {/* In-card Enable payouts removed — header CTA provides the primary action */}
+                </div>
+              )}
         </div>
       </section>
 
@@ -366,7 +422,7 @@ function TaskerProfilePage() {
         <div className="profile-stat-card">
           <div className="profile-stat-icon">⭐</div>
           <div className="profile-stat-content">
-            <div className="profile-stat-value">{tasker.rating.toFixed(1)}</div>
+            <div className="profile-stat-value">{tasker.rating > 0 ? tasker.rating.toFixed(1) : 'N/A'}</div>
             <div className="profile-stat-label">Rating</div>
           </div>
         </div>
@@ -388,7 +444,7 @@ function TaskerProfilePage() {
           <div className="profile-stat-icon">🕐</div>
           <div className="profile-stat-content">
             <div className="profile-stat-value">
-              {tasker.workedHours.toFixed(0)}h
+              {tasker.workedHours.toFixed(2)}h
             </div>
             <div className="profile-stat-label">Worked Hours</div>
           </div>

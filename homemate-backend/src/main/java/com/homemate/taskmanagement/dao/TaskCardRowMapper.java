@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 public class TaskCardRowMapper implements RowMapper<TaskCardDto> {
     @Override
     public TaskCardDto mapRow(ResultSet rs, int rowNum) throws SQLException {
+        boolean userUnread = rs.getObject("userUnreadMessages") != null && rs.getInt("userUnreadMessages") > 0;
+        boolean taskerUnread = rs.getObject("taskerUnreadMessages") != null && rs.getInt("taskerUnreadMessages") > 0;
         return TaskCardDto.builder()
                 .taskID(rs.getLong("taskID"))
                 .startDate(toLocalDateTime(rs.getTimestamp("startDate")))
@@ -23,6 +25,9 @@ public class TaskCardRowMapper implements RowMapper<TaskCardDto> {
                 .serviceName(rs.getString("serviceName"))
                 .addressCity(rs.getString("city"))
                 .estimation(rs.getInt("estimation"))
+                .userHasUnreadMessages(userUnread)
+                .taskerHasUnreadMessages(taskerUnread)
+                .paid(rs.getBoolean("paid"))
                 .build();
     }
 

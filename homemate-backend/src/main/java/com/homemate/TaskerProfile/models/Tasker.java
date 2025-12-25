@@ -32,4 +32,5 @@ public class Tasker {
     private String addressCity;
     private String serviceName;
     private Boolean isSuspended;
+    private String stripeAccountId;
 }

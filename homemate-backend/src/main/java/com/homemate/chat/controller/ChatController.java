@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -36,7 +35,7 @@ public class ChatController {
     @PreAuthorize("hasRole('USER')")
 
     public ResponseEntity<PaginatedResponse> getHistory(@PathVariable Long chatId, @RequestParam(defaultValue = "0") int page,
-    @RequestParam(defaultValue = "20") int size,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception {
+    @RequestParam(defaultValue = "20") int size,@AuthenticationPrincipal AppUserDetails userDetails)  {
         try {
             PaginatedResponse RES=chatService.getChatHistory(chatId,page,size,userDetails);
             return ResponseEntity.status(HttpStatus.OK).body(RES);
@@ -171,5 +170,4 @@ public class ChatController {
         allStatus.put("taskers", presenceService.getAllTaskerOnlineStatus());
         return allStatus;
     }
-
 }

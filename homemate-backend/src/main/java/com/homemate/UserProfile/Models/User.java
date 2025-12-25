@@ -14,6 +14,15 @@ public class User {
     private Boolean suspended;
     private String firstName;
     private String lastName;
+    private String stripeCustomerId;
+
+    public String getStripeCustomerId() {
+        return stripeCustomerId;
+    }
+
+    public void setStripeCustomerId(String stripeCustomerId) {
+        this.stripeCustomerId = stripeCustomerId;
+    }
 
     public Long getUserID() {
         return this.userID;

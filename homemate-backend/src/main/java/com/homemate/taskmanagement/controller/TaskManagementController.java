@@ -25,7 +25,6 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api")
 @CrossOrigin("*")
-
 public class TaskManagementController {
     private final TaskRequestService taskRequestService;
     private final GetTaskService getTaskService;

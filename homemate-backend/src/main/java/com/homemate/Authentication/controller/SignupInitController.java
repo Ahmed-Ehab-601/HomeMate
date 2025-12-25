@@ -30,19 +30,17 @@ public class SignupInitController {
     private final UserDao userDao;
     private final TaskerDao taskerDao;
 
-    private String INVALID_TOKEN = "Invalid Google token";
-    private String EMAIL_NOT_VERIFIED = "Email not verified by Google";
-    private String EMAIL_ALREADY_EXISTS = "Email already Exists"; 
-    
     @PostMapping("/google/init")
     public ResponseEntity<?> initGoogleSignup(@RequestBody GoogleTokenDto googleTokenDto) {
         GoogleUserDto googleUser = googleTokenVerifierService.verify(googleTokenDto.getIdToken());
         
         if (googleUser == null) {
+            String INVALID_TOKEN = "Invalid Google token";
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(INVALID_TOKEN);
         }
 
         if (!googleUser.isEmailVerified()) {
+            String EMAIL_NOT_VERIFIED = "Email not verified by Google";
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(EMAIL_NOT_VERIFIED);
         }
 
@@ -63,6 +61,7 @@ public class SignupInitController {
         }
 
         if (user != null || tasker != null) {
+            String EMAIL_ALREADY_EXISTS = "Email already Exists";
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(EMAIL_ALREADY_EXISTS);
         }
 

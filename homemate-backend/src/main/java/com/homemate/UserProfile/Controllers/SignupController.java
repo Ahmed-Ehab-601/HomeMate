@@ -5,6 +5,7 @@ import com.homemate.UserProfile.Services.UserSignupService;
 import com.homemate.security.service.ValidateSignupService;
 import com.homemate.security.service.JwtService;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,11 +21,6 @@ public class SignupController {
     ValidateSignupService validateSignup;
     JwtService jwtService;
 
-    private final String NO_TOKEN = "No verification token found";
-    private final String INVALID_TOKEN = "Invalid or expired verification token";
-    private final String EMAIL_MISMATCH = "Email does not match verified email";
-    private final String USER_ALREADY_EXISTS = "user with the same username or email already exists";
-
     SignupController(
         UserSignupService userSignupService,
         ValidateSignupService validateSignup,
@@ -36,17 +32,20 @@ public class SignupController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signupUser(@RequestBody SignupUserDTO signupUserDTO) {
+    public ResponseEntity<String> signupUser(@RequestBody @Valid SignupUserDTO signupUserDTO) {
         if (signupUserDTO.getVerifyToken() == null || signupUserDTO.getVerifyToken().trim().isEmpty()) {
+            String NO_TOKEN = "No verification token found";
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(NO_TOKEN);
         }
 
         String verifiedEmail = jwtService.validateVerifyToken(signupUserDTO.getVerifyToken());
         if (verifiedEmail == null) {
+            String INVALID_TOKEN = "Invalid or expired verification token";
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(INVALID_TOKEN);
         }
 
         if (!verifiedEmail.equalsIgnoreCase(signupUserDTO.getEmail())) {
+            String EMAIL_MISMATCH = "Email does not match verified email";
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(EMAIL_MISMATCH);
         }
         
@@ -56,6 +55,7 @@ public class SignupController {
 
         String result = userSignupService.signup(signupUserDTO);
         if (result == null) {
+            String USER_ALREADY_EXISTS = "user with the same username or email already exists";
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(USER_ALREADY_EXISTS);
         }
 

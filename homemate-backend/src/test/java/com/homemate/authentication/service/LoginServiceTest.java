@@ -9,6 +9,7 @@ import com.homemate.Authentication.dto.LoginResponseDto;
 import com.homemate.Authentication.dto.PasswordResetDto;
 import com.homemate.Authentication.service.LoginService;
 import com.homemate.chat.Service.ChatService;
+import com.homemate.hashing.HashingService;
 import com.homemate.security.service.JwtService;
 import com.homemate.security.service.ValidateSignupService;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +41,9 @@ class LoginServiceTest {
 
     @Mock
     private ValidateSignupService validateSignup;
+
+    @Mock
+    private HashingService hashingService;
 
     @InjectMocks
     private LoginService loginService;
@@ -88,6 +92,7 @@ class LoginServiceTest {
         when(userDao.getByEmail(loginRequestDto.getEmail())).thenReturn(user);
         when(jwtService.generateToken(1L, "testuser", "test@example.com", "ROLE_USER"))
             .thenReturn("jwt-token-123");
+        when(hashingService.verifyPassword(loginRequestDto.getPassword(),user.getPassword())).thenReturn(true);
 
         LoginResponseDto response = loginService.loginWithEmailPassword(loginRequestDto);
 
@@ -107,6 +112,7 @@ class LoginServiceTest {
         when(userDao.getByEmail(loginRequestDto.getEmail())).thenReturn(user);
         when(jwtService.generateToken(1L, "testuser", "test@example.com", "ROLE_ADMIN"))
             .thenReturn("admin-token-123");
+        when(hashingService.verifyPassword(loginRequestDto.getPassword(),user.getPassword())).thenReturn(true);
 
         LoginResponseDto response = loginService.loginWithEmailPassword(loginRequestDto);
 
@@ -122,6 +128,7 @@ class LoginServiceTest {
         when(taskerDao.getByEmail(loginRequestDto.getEmail())).thenReturn(tasker);
         when(jwtService.generateToken(1L, "taskeruser", "tasker@example.com", "ROLE_TASKER"))
             .thenReturn("tasker-token-123");
+        when(hashingService.verifyPassword(loginRequestDto.getPassword(),tasker.getPassword())).thenReturn(true);
 
         LoginResponseDto response = loginService.loginWithEmailPassword(loginRequestDto);
 
@@ -139,6 +146,7 @@ class LoginServiceTest {
     void loginWithEmailPasswordShouldReturnNullWithWrongPassword() {
         when(userDao.getByEmail(loginRequestDto.getEmail())).thenReturn(user);
         loginRequestDto.setPassword("wrongpassword");
+        when(hashingService.verifyPassword(loginRequestDto.getPassword(),user.getPassword())).thenReturn(false);
 
         LoginResponseDto response = loginService.loginWithEmailPassword(loginRequestDto);
 
@@ -268,6 +276,8 @@ class LoginServiceTest {
         when(jwtService.validateVerifyToken("valid-token")).thenReturn("test@example.com");
         when(validateSignup.validatePassword("NewPass123!")).thenReturn(null);
         when(userDao.getByEmail("test@example.com")).thenReturn(user);
+        when(hashingService.hashPassword(passwordResetDto.getNewPassword())).
+                thenReturn(passwordResetDto.getNewPassword());
 
         String result = loginService.resetPassword(passwordResetDto);
 
@@ -289,6 +299,8 @@ class LoginServiceTest {
         when(validateSignup.validatePassword("NewPass123!")).thenReturn(null);
         when(userDao.getByEmail("tasker@example.com")).thenThrow(new EmptyResultDataAccessException(1));
         when(taskerDao.getByEmail("tasker@example.com")).thenReturn(tasker);
+        when(hashingService.hashPassword(passwordResetDto.getNewPassword())).
+                thenReturn(passwordResetDto.getNewPassword());
 
         String result = loginService.resetPassword(passwordResetDto);
 
@@ -382,7 +394,10 @@ class LoginServiceTest {
         when(jwtService.validateVerifyToken("valid-token")).thenReturn("test@example.com");
         when(validateSignup.validatePassword("NewPass123!")).thenReturn(null);
         when(userDao.getByEmail("test@example.com")).thenReturn(user);
+        when(hashingService.hashPassword(passwordResetDto.getNewPassword())).
+                thenReturn(passwordResetDto.getNewPassword());
         doThrow(new RuntimeException("Database error")).when(userDao).updatePassword("test@example.com", "NewPass123!");
+
 
         String result = loginService.resetPassword(passwordResetDto);
 
@@ -400,6 +415,8 @@ class LoginServiceTest {
         when(validateSignup.validatePassword("NewPass123!")).thenReturn(null);
         when(userDao.getByEmail("tasker@example.com")).thenThrow(new EmptyResultDataAccessException(1));
         when(taskerDao.getByEmail("tasker@example.com")).thenReturn(tasker);
+        when(hashingService.hashPassword(passwordResetDto.getNewPassword())).
+                thenReturn(passwordResetDto.getNewPassword());
         doThrow(new RuntimeException("Database error")).when(taskerDao).updatePassword("tasker@example.com", "NewPass123!");
 
         String result = loginService.resetPassword(passwordResetDto);

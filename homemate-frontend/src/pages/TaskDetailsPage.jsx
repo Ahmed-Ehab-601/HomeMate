@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { getUserProfile } from "../api/userProfileApi";
 import {
   getTaskDetails,
   rescheduleTask,
@@ -14,12 +15,13 @@ import { acceptTask, rejectTask } from "../api/taskActionsApi";
 import { getTaskReview } from "../api/taskManagementApi";
 import { deleteReview } from "../api/reviewsApi";
 import { getTaskerById } from "../api/taskerProfileApi";
+import { apiRequest, baseUrl } from "../utils/apiClient";
 import TaskerCard from "../components/TaskerCard";
 import services from "../data/services";
 import Modal from "../components/Modal";
 import { websocketService } from "../services/websocketService";
 import "../styles/TaskDetails.css";
-
+import UnreadBadge from "../components/UnreadBadge";
 const normalizeImage = (imageValue) => {
   if (!imageValue) return null;
   if (typeof imageValue === "string") {
@@ -76,11 +78,12 @@ function TaskDetailsPage() {
   const { taskId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { getUserRole, getToken } = useAuth();
+  const { getUserRole, getToken, user } = useAuth();
 
   const [task, setTask] = useState(null);
   const [review, setReview] = useState(null);
   const [tasker, setTasker] = useState(null);
+  const [hasUserStripeCustomer, setHasUserStripeCustomer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -101,6 +104,7 @@ function TaskDetailsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [estimation, setEstimation] = useState("");
   const [estimationError, setEstimationError] = useState("");
+  const [isMarkingPaid, setIsMarkingPaid] = useState(false);
 
   const [newStartDate, setNewStartDate] = useState("");
   const [rescheduleDate, setRescheduleDate] = useState("");
@@ -109,6 +113,7 @@ function TaskDetailsPage() {
   const [loadingRescheduleBusyTime, setLoadingRescheduleBusyTime] = useState(false);
   // Use estimation from task directly (already in minutes from backend)
   const [taskEstimation, setTaskEstimation] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (task?.estimation !== undefined && task?.estimation !== null) {
@@ -120,7 +125,7 @@ function TaskDetailsPage() {
   const isTasker = userRole === "ROLE_TASKER";
 const WORK_DAY_START_MINUTES = 8 * 60; // 08:00 = 480 minutes
 const WORK_DAY_END_MINUTES = 24 * 60 + 30; // 20:30 = 1230 minutes
-  
+
   // Check for review submitted or request submitted success message
   useEffect(() => {
     if (location.state?.reviewSubmitted) {
@@ -221,6 +226,11 @@ const WORK_DAY_END_MINUTES = 24 * 60 + 30; // 20:30 = 1230 minutes
     console.log("Task data loaded:", taskData);
     setTask(taskData);
 
+    // Fetch unread messages count
+    if (taskData.userUnreadMessagesCount !== undefined|| taskData.taskerUnreadMessagesCount !== undefined) {
+      userRole === "ROLE_TASKER" ?setUnreadCount(taskData.taskerUnreadMessagesCount):setUnreadCount(taskData.userUnreadMessagesCount);
+    }
+
     // Load review if task is done
     if (taskData.status === "Done") {
       try {
@@ -243,19 +253,33 @@ const WORK_DAY_END_MINUTES = 24 * 60 + 30; // 20:30 = 1230 minutes
           setTask({ ...taskData });
         }
 
-        setTasker({
-          id: taskerData.taskerId,
-          name: `${taskerData.firstName} ${taskerData.lastName}`,
-          photo: normalizeImage(taskerData.imageBase64),
-          rating: taskerData.rating,
-          location: taskerData.addressCity,
-          availability: taskerData.availability,
-          hourRate: taskerData.hourRate,
-        });
-      } catch (err) {
-        console.error("Failed to load tasker:", err);
+          // Transform backend DTO to match TaskerCard props
+          setTasker({
+            id: taskerData.taskerId,
+            name: `${taskerData.firstName} ${taskerData.lastName}`,
+            photo: normalizeImage(taskerData.imageBase64),
+            rating: taskerData.rating,
+            location: taskerData.addressCity,
+            availability: taskerData.availability,
+            hourRate: taskerData.hourRate,
+            // include Stripe account identifiers from backend so UI can check them
+            stripeAccountId: taskerData.stripeAccountId || taskerData.stripe_account_id || null,
+            stripe_account_id: taskerData.stripe_account_id || taskerData.stripeAccountId || null,
+          });
+          // Check if current logged-in user has stripe customer id
+          try {
+            const profile = await getUserProfile();
+            if (profile && (profile.stripeCustomerId || profile.stripe_customer_id)) {
+              setHasUserStripeCustomer(true);
+            }
+          } catch (err) {
+            // ignore - treat as not having stripe
+            console.debug("Could not load user profile for stripe check", err);
+          }
+        } catch (err) {
+          console.error("Failed to load tasker:", err);
+        }
       }
-    }
 
     if (isTasker && taskData.taskerID) {
       try {
@@ -321,13 +345,13 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
   const [hours, minutes] = timeSlot.split(":").map(Number);
   const slotStartMinutes = hours * 60 + minutes;
   const slotEndMinutes = slotStartMinutes + estimationMinutes;
-  
+
   // Check if task would extend beyond working hours (20:30)
   if (slotEndMinutes > WORK_DAY_END_MINUTES) {
     console.log(`❌ Slot ${timeSlot}: Task would end at ${Math.floor(slotEndMinutes/60)}:${String(slotEndMinutes%60).padStart(2, '0')}, beyond 24:30`);
     return false;
   }
-  
+
   return true;
 };
 
@@ -340,10 +364,10 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
 
   const [slotHours, slotMinutes] = timeSlot.split(":").map(Number);
   const [year, month, day] = rescheduleDate.split("-").map(Number);
-  
+
   // Current task's estimation (in minutes)
   const currentTaskEstMinutes = taskEstimation ?? 0;
-  
+
   // Calculate slot start and end times in minutes from midnight
   const slotStartMinutes = slotHours * 60 + slotMinutes;
   const slotEndMinutes = slotStartMinutes + currentTaskEstMinutes;
@@ -362,7 +386,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
       const busyDay = busyStart.getDate();
       const busyHours = busyStart.getHours();
       const busyMins = busyStart.getMinutes();
-      
+
       // Only check if dates match
       if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
         continue;
@@ -375,7 +399,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
       if (currentTaskEstMinutes === 0 && slotStartMinutes === busyEndMinutes) {
                                      continue;
        }
-                
+
       // Check for ANY overlap between slot and busy period
       const hasOverlap = (
         (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
@@ -513,7 +537,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
     try {
       // First add estimation (send as minutes)
       await addTaskEstimation(task.taskID, estValueMinutes);
-      
+
       // Then accept the task
       await acceptTask(task.taskID);
       showSuccessBanner("✓ Task accepted successfully with estimation!");
@@ -554,7 +578,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
 
   const [hours, minutes] = rescheduleTime.split(":").map(Number);
   const [year, month, day] = rescheduleDate.split("-").map(Number);
-  
+
   // Current task estimation in minutes
   const currentTaskEstMinutes = taskEstimation ?? 0;
   const newStartMinutes = hours * 60 + minutes;
@@ -619,7 +643,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
         const busyTimeStr = `${String(busyHours).padStart(2, '0')}:${String(busyMins).padStart(2, '0')}`;
         const busyDurationHours = (busyTime.estimation / 60).toFixed(1);
         const taskEndTime = `${String(Math.floor(newEndMinutes/60)).padStart(2, '0')}:${String(newEndMinutes%60).padStart(2, '0')}`;
-        
+
         showErrorBanner(
           `⏰ Cannot reschedule: Your task (${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} - ${taskEndTime}, ${(currentTaskEstMinutes/60).toFixed(1)}h) ` +
           `would overlap with another scheduled period starting at ${busyTimeStr} (${busyDurationHours}h duration). ` +
@@ -725,6 +749,25 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
       showErrorBanner(`✗ Failed to complete task. ${error.message}`);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleMarkPaidCash = async () => {
+    if (!task?.taskID) return;
+    setIsMarkingPaid(true);
+    try {
+      await apiRequest(`${baseUrl}/api/tasker/payments/mark-paid-cash/${task.taskID}`, {
+        method: "POST",
+      });
+
+      // Update local task state to mark as paid
+      setTask((prev) => ({ ...(prev || {}), paid: true }));
+      showSuccessBanner("✓ Task marked as paid (cash)");
+    } catch (err) {
+      console.error("Failed to mark paid:", err);
+      showErrorBanner(`✗ Failed to mark paid. ${err?.message || ""}`);
+    } finally {
+      setIsMarkingPaid(false);
     }
   };
 
@@ -852,22 +895,37 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
           {showBill && (
             <div className="bill-summary-section">
               <h3 className="bill-summary-title">Task Completion Summary</h3>
-              <div className="bill-row">
-                <span className="bill-label">Total Worked Time:</span>
-                <span className="bill-value">
-                  {formatWorkedHours(task.workedHours)}
-                </span>
-              </div>
-              <div className="bill-row">
-                <span className="bill-label">Hourly Rate:</span>
-                <span className="bill-value">
-                  ${task.hourRate || task.rate || "N/A"}/hour
-                </span>
-              </div>
-              <div className="bill-row bill-total">
-                <span className="bill-label">Final Bill:</span>
-                <span className="bill-value">${task.bill.toFixed(2)}</span>
-              </div>
+              {(() => {
+                const bill = Number(task.bill || 0);
+                // Tasker receives 90% and HomeMate keeps 10%
+                const taskerAmount = Math.round(bill * 0.9 * 100) / 100;
+                const homemateFee = Math.round((bill - taskerAmount) * 100) / 100;
+
+                return (
+                  <>
+                    <div className="bill-row">
+                      <span className="bill-label">Total Worked Time:</span>
+                      <span className="bill-value">{formatWorkedHours(task.workedHours)}</span>
+                    </div>
+                    <div className="bill-row">
+                      <span className="bill-label">Hourly Rate:</span>
+                      <span className="bill-value">${task.hourRate || task.rate || "N/A"}/hour</span>
+                    </div>
+                    <div className="bill-row">
+                      <span className="bill-label">Tasker Earnings (90%):</span>
+                      <span className="bill-value">${taskerAmount.toFixed(2)}</span>
+                    </div>
+                    <div className="bill-row bill-fee">
+                      <span className="bill-label">HomeMate Fee (10%):</span>
+                      <span className="bill-value">${homemateFee.toFixed(2)}</span>
+                    </div>
+                    <div className="bill-row bill-total">
+                      <span className="bill-label">Final Bill:</span>
+                      <span className="bill-value">${bill.toFixed(2)}</span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
 
@@ -1150,7 +1208,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
 
           {/* Action Buttons */}
           <div className="action-buttons-section">
-            <h3 className="action-buttons-title">Actions</h3>
+            <h3 className="action-buttons-title">Actions</h3>   
             <div className="action-buttons-list">
               {/* Accept/Reject for taskers on In Review tasks */}
               {showAcceptRejectButtons && (
@@ -1235,7 +1293,12 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
               {task.chatID && (
                 <Link to={`/chat/${task.chatID}`} className="btn btn-message">
                   <span className="btn-icon">✉️</span> Message
-                </Link>
+                  {unreadCount > 0 ? (
+                  <UnreadBadge count={unreadCount} />
+                ) : (
+                  <span className="btn-icon-empty">
+                  </span>
+                )}                </Link>
               )}
 
               <Link
@@ -1244,12 +1307,31 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
               >
                 <span className="btn-icon">🛡️</span> Report Issue
               </Link>
+              {/* Tasker: allow marking task as paid when done and unpaid */}
+              {isTasker && normalizedStatus === "DONE" && showBill && !task?.paid && (
+                <button
+                  className="btn btn-accept"
+                  onClick={handleMarkPaidCash}
+                  disabled={isMarkingPaid}
+                >
+                  <span className="btn-icon">💵</span>
+                  {isMarkingPaid ? "Marking..." : "Mark Paid (Cash)"}
+                </button>
+              )}
               {normalizedStatus === "DONE" && !isTasker && !review && (
                 <Link
                   to={`/submit-review/${task.taskID}`}
                   className="btn btn-review"
                 >
                   <span className="btn-icon">⭐</span> Leave Review
+                </Link>
+              )}
+              {normalizedStatus === "DONE" && !isTasker && showBill && !task?.paid && (tasker?.stripeAccountId || tasker?.stripe_account_id) && hasUserStripeCustomer && (
+                <Link
+                  to={`/task/payment?taskId=${task.taskID}&userId=${task.userID || task.userId || user?.id || user?.userId || user?.userID}&taskerId=${task.taskerID}&bill=${task.bill}`}
+                  className="btn btn-primary"
+                >
+                  <span className="btn-icon">💳</span> Pay Online
                 </Link>
               )}
             </div>

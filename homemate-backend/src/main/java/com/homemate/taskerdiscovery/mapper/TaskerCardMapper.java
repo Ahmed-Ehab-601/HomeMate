@@ -18,6 +18,7 @@ public class TaskerCardMapper {
         dto.setBio(tasker.getBio());
         dto.setAddressCity(tasker.getAddressCity());
         dto.setHourRate(tasker.getHourRate());
+        dto.setStripe_account_id(tasker.getStripe_account_id());
 
         if (tasker.getImage() != null && tasker.getImage().length > 0) {
             dto.setImageBase64(Base64.getEncoder().encodeToString(tasker.getImage()));

@@ -3,6 +3,7 @@ import { Send, Phone, Image, X } from 'lucide-react';
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useUnread } from '../contexts/UnreadContext'; // ADD THIS IMPORT
 
 const ChatInterface = () => {
   const [inputMessage, setInputMessage] = useState('');
@@ -27,6 +28,7 @@ const ChatInterface = () => {
   const typingTimeoutRef = useRef(null);
 
   const { getToken, getUserRole, user } = useAuth();
+  const { refreshUnread } = useUnread(); // ADD THIS
   const navigate = useNavigate();
   const { chatId } = useParams();
 
@@ -65,6 +67,7 @@ const ChatInterface = () => {
   const isUserRole = userRole === 'ROLE_USER';
   const currentUserId = user?.id || _decoded?.sub;
 
+  const [allMessages, setAllMessages] = useState([]);
 
   // Initialize WebSocket
   const handleMessageReceived = useCallback((newMessage) => {
@@ -80,12 +83,16 @@ const ChatInterface = () => {
 
       return [...prev, newMessage];
     });
-  }, []);
+    
+    // Refresh unread count when new message arrives
+    refreshUnread();
+  }, [refreshUnread]);
+
   const recipientId = chatDetails
     ? (isUserRole ? chatDetails.taskerId : chatDetails.userId)
     : null;
 
- const handleStatusUpdate = useCallback((update) => {
+  const handleStatusUpdate = useCallback((update) => {
     console.log('📊 Status update received:', update);
     
     setAllMessages(prev => prev.map(msg => {
@@ -121,7 +128,7 @@ const ChatInterface = () => {
 
       // Handle INDIVIDUAL message status updates
       if (msg.messageId == update.messageId) {
-        console.log(`📝 Updating message ${msg.messageId} status to ${update.status}`);
+        console.log(`🔍 Updating message ${msg.messageId} status to ${update.status}`);
         return {
           ...msg,
           messageStatus: update.status
@@ -130,7 +137,7 @@ const ChatInterface = () => {
       
       return msg;
     }));
-}, [currentUserId, isUserRole]);
+  }, [currentUserId, isUserRole]);
 
   // Initialize WebSocket with callbacks
   const {
@@ -143,7 +150,7 @@ const ChatInterface = () => {
   } = useWebSocket(
     chatId,
     currentUserId,
-    recipientId, // This will update when chatDetails loads
+    recipientId,
     userRole.replace('ROLE_', ''),
     _token,
     handleMessageReceived,
@@ -158,8 +165,6 @@ const ChatInterface = () => {
     }
   };
 
-  const [allMessages, setAllMessages] = useState([]);
-
   // Auto-mark incoming messages as read when viewed
   useEffect(() => {
     if (allMessages.length > 0 && connected) {
@@ -169,11 +174,12 @@ const ChatInterface = () => {
 
       if (!isSender && status !== 'READ' && status !== 'SEEN') {
         markAllMessagesAsRead(_token);
+        // Refresh unread count after marking as read
+        refreshUnread();
       }
     }
-  }, [allMessages, connected, isUserRole, markAllMessagesAsRead, _token]);
+  }, [allMessages, connected, isUserRole, markAllMessagesAsRead, _token, refreshUnread]);
 
-  // Sync online status from WebSocket
   // Sync online status from WebSocket
   useEffect(() => {
     if (recipientId && onlineStatus) {
@@ -224,6 +230,17 @@ const ChatInterface = () => {
     }
   }, [allMessages]);
 
+  // Refresh unread count when chat opens
+  useEffect(() => {
+    if (chatId) {
+      // Small delay to ensure backend has processed the mark-as-read
+      const timer = setTimeout(() => {
+        refreshUnread();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [chatId, refreshUnread]);
+
   // Mark messages as read when chat opens
   const markAsRead = async () => {
     try {
@@ -239,12 +256,14 @@ const ChatInterface = () => {
       });
 
       if (response.ok) {
-        console.log('Messages marked as read via REST endpoint');
+        console.log('✅ Messages marked as read via REST endpoint');
+        // Refresh unread count after successfully marking as read
+        setTimeout(() => refreshUnread(), 300);
       } else {
-        console.error('Failed to mark messages as read:', response.status);
+        console.error('❌ Failed to mark messages as read:', response.status);
       }
     } catch (error) {
-      console.error('Error marking as read:', error);
+      console.error('❌ Error marking as read:', error);
     }
   };
 
@@ -255,7 +274,7 @@ const ChatInterface = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        console.log('🐛 Debug: chatDetails:', data);
+        console.log('🛠 Debug: chatDetails:', data);
         setChatDetails(data);
       }
     } catch (error) {

@@ -113,12 +113,15 @@ public class TaskRequestDao {
                 t.startDate,
                 t.endDate,
                 t.status,
+                t.paid,
                 t.description,
                 t.workedHours,
                 t.startInProgress,
                 t.bill,
                 t.chatID,
                 t.estimation,
+                c.userUnreadMessages,
+                c.taskerUnreadMessages,
                 CONCAT(u.firstName, ' ', u.lastName) AS userName,
                 CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                 s.name AS serviceName,
@@ -133,7 +136,8 @@ public class TaskRequestDao {
                 INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
                 INNER JOIN Service s ON t.serviceID = s.serviceID
                 INNER JOIN Address a ON t.addressID = a.addressID
-            WHERE t.taskID = ?
+                INNER JOIN Chat c ON t.chatID = c.chatID
+                            WHERE t.taskID = ?
             """;
 
         TaskDto taskDto = jdbcTemplate.queryForObject(sql,taskRowMapper,taskID);

@@ -14,8 +14,7 @@ function TaskerCard({ tasker, service, hideRequestButton = false }) {
     .slice(0, 2)
     .toUpperCase();
 
-  const rating =
-    Number.isFinite(tasker.rating) && tasker.rating > 0 ? tasker.rating : 5;
+  const rating = Number.isFinite(tasker.rating) ? tasker.rating : 0;
   const locationText = tasker.location || "Not specified";
   const availabilityText = tasker.availability || "N/A";
 
@@ -50,7 +49,7 @@ function TaskerCard({ tasker, service, hideRequestButton = false }) {
             {service?.serviceName ?? "Home service"} • {locationText}
           </p>
           <p className="tasker-card__meta">
-            Rating {rating.toFixed(1)} ★ • Status {availabilityText}
+            {rating > 0 ? `Rating ${rating.toFixed(1)} ★` : 'No ratings yet'} • Status {availabilityText}
           </p>
         </div>
       </div>

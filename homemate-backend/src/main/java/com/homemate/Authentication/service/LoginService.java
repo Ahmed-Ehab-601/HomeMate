@@ -8,33 +8,23 @@ import com.homemate.Authentication.dto.LoginRequestDto;
 import com.homemate.Authentication.dto.LoginResponseDto;
 import com.homemate.Authentication.dto.PasswordResetDto;
 import com.homemate.chat.Service.ChatService;
+import com.homemate.hashing.HashingService;
 import com.homemate.security.service.JwtService;
+import lombok.AllArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import com.homemate.security.service.ValidateSignupService;
 
 @Service
+@AllArgsConstructor
 public class LoginService {
-    TaskerDao taskerDao;
-    UserDao userDao;
-    JwtService jwtService;
-    ValidateSignupService validateSignup;
-    ChatService chatService;
-    public LoginService(
-        TaskerDao taskerDao,
-         UserDao userDao,
-          JwtService jwtService,
-          ValidateSignupService validateSignup,
-        ChatService chatService
-    ) {
-        this.taskerDao = taskerDao;
-        this.userDao = userDao;
-        this.jwtService = jwtService;
-        this.validateSignup = validateSignup;
-        this.chatService=chatService;
-    }
-
+    private final TaskerDao taskerDao;
+    private final UserDao userDao;
+    private final JwtService jwtService;
+    private final ValidateSignupService validateSignup;
+    private final ChatService chatService;
+    private final HashingService hashingService;
     public LoginResponseDto loginWithEmailPassword(LoginRequestDto loginRequestDto) {
 
         if (
@@ -58,7 +48,7 @@ public class LoginService {
                 return new LoginResponseDto("SUSPENDED","", "","", "");
             }
 
-            if (user.getPassword().equals(password)) {
+            if (hashingService.verifyPassword(password,user.getPassword())) {
 
                 String role = "ROLE_USER";
                 if (Boolean.TRUE.equals(user.getIsAdmin()))
@@ -94,7 +84,7 @@ public class LoginService {
                     return new LoginResponseDto("SUSPENDED","", "","", "");
                 }
 
-                if (tasker.getPassword().equals(password)) {
+                if (hashingService.verifyPassword(password,tasker.getPassword())) {
                     String role = "ROLE_TASKER";
                     String token = jwtService.generateToken(
                         tasker.getTaskerID(),
@@ -192,7 +182,7 @@ public class LoginService {
         try {
             User user = userDao.getByEmail(email);
             if (user != null) {
-                userDao.updatePassword(email, passwordResetDto.getNewPassword());
+                userDao.updatePassword(email, hashingService.hashPassword(passwordResetDto.getNewPassword()));
                 return null; // Success
             }
         } catch (EmptyResultDataAccessException e) {
@@ -205,7 +195,7 @@ public class LoginService {
         try {
             Tasker tasker = taskerDao.getByEmail(email);
             if (tasker != null) {
-                taskerDao.updatePassword(email, passwordResetDto.getNewPassword());
+                taskerDao.updatePassword(email, hashingService.hashPassword(passwordResetDto.getNewPassword()));
                 return null; // Success
             }
         } catch (EmptyResultDataAccessException e) {

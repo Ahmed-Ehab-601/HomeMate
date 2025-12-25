@@ -20,6 +20,7 @@ public class TaskerCardRowMapper implements RowMapper<Tasker> {
         tasker.setBio(rs.getString("bio"));
         tasker.setAddressCity(rs.getString("addressCity"));
         tasker.setHourRate(rs.getDouble("hourRate"));
+        tasker.setStripe_account_id(rs.getString("stripe_account_id"));
         return tasker;
     }
 }
