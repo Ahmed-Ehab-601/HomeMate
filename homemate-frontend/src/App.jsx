@@ -139,7 +139,14 @@ function AppRoutes({ isLogoHovered }) {
       <Route path="/stripe/onboarding/callback" element={<StripeOnboardingCallback />} />
       <Route path="/my-tasks" element={<UserTasksPage />} />
       <Route path="/tasker/my-tasks" element={<TaskerTasksPage />} />
-    
+      <Route
+        path="/admin/*"
+        element={
+          <ProtectedRoute requiredRole="ROLE_ADMIN">
+            <AdminRoutes />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }

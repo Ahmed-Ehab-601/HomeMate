@@ -22,7 +22,6 @@ import HandymanIcon from "@mui/icons-material/Handyman";
 import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
 import ReportIcon from "@mui/icons-material/Report";
 import LogoutIcon from "@mui/icons-material/Logout";
-import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -145,9 +144,6 @@ const AdminLayout = () => {
             <IconButton onClick={toggleMode} color="inherit" size="small">
               {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
-            <Badge color="secondary" variant="dot">
-              <NotificationsNoneIcon />
-            </Badge>
             <Button
               startIcon={<LogoutIcon />}
               onClick={handleLogout}

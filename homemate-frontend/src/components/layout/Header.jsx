@@ -10,6 +10,10 @@ function Header({ onLogoHover }) {
   const { isAuthenticated, isTasker, isRegularUser, isAdmin, logout } = useAuth();
   const { hasUnread } = useUnread();
 
+  const handleLogoHover = (isHovered) => {
+    if (onLogoHover) onLogoHover(isHovered);
+  };
+
   // Default to showing regular user menu if not authenticated
   const showUserMenu = !isAuthenticated || (isRegularUser() && !isAdmin());
   const showTaskerMenu = isAuthenticated && isTasker();
@@ -24,10 +28,8 @@ function Header({ onLogoHover }) {
           onClick={() => navigate("/")}
           aria-label="Go to HomeMate homepage"
           style={{ padding: 0, background: "none", border: "none" }}
-          onMouseEnter={() => onLogoHover && onLogoHover(true)}
-          onMouseLeave={() => onLogoHover && onLogoHover(false)}
         >
-          <BannerLogo />
+          <BannerLogo onHoverChange={handleLogoHover} />
         </button>
 
         <nav className="nav-links">

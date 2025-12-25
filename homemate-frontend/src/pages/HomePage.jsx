@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchServices } from "../api/servicesApi";
 import ServiceCard from "../components/ServiceCard";
 
-const HERO_IMAGE = "https://res.cloudinary.com/dq9nwnm1q/image/upload/v1766593497/Top_Amoladoras_2025___Gu%C3%ADa_de_Compra_Opiniones_de_expertos_zq5etl.jpg"
+const HERO_IMAGE = "https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
 
 function HomePage({ isLogoHovered = false }) {
   const navigate = useNavigate();
@@ -74,15 +74,7 @@ function HomePage({ isLogoHovered = false }) {
         <div>
           <p className="hero__eyebrow">Home services on demand</p>
           <h1 className="hero__title">
-            Find <span 
-              className={`trusted-word ${isLogoHovered ? 'underlined' : ''}`}
-              style={{
-                position: 'relative',
-                display: 'inline-block'
-              }}
-            >
-              trusted
-            </span> taskers near you
+            Find <span className={`trusted-word ${isLogoHovered ? 'highlighted' : ''}`}>trusted</span> taskers near you
           </h1>
           <p className="hero__subtitle">
             Connect with skilled professionals for cleaning, repairs, moving, and more. Book the
@@ -185,20 +177,12 @@ function HomePage({ isLogoHovered = false }) {
       </section>
 
       <style>{`
-        .trusted-word::after {
-          content: '';
-          position: absolute;
-          bottom: -2px;
-          left: 0;
-          width: 0;
-          height: 3px;
-          background: #c6ff4d;
-          transition: width 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-          box-shadow: 0 0 10px rgba(198, 255, 77, 0.6);
+        .trusted-word {
+          transition: color 0.3s ease;
         }
         
-        .trusted-word.underlined::after {
-          width: 100%;
+        .trusted-word.highlighted {
+          color: #c6ff4d;
         }
       `}</style>
     </main>

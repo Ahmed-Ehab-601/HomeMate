@@ -16,21 +16,17 @@ const BannerLogo = ({ onHoverChange }) => {
 
   return (
     <div 
-      className="banner-container"
+      className="logo-container"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div className={`tool chainsaw ${isHovered ? 'flying' : ''}`}>🪚</div>
-      <div className="tool saw-blade">⚙️</div>
-      <div className="tool drill">🔧</div>
-      <div className="tool tape">📏</div>
-      <div className="tool wrench">🔨</div>
-      <div className="tool hammer">🛠️</div>
-      <div className="tool screwdriver">🪛</div>
-      <div className="tool pliers">🔩</div>
-      <div className="banner-board">
-        <div className="banner-text">Homemate</div>
-      </div>
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 4L4 14V28C4 30.2091 5.79086 32 8 32H32C34.2091 32 36 30.2091 36 28V14L20 4Z" fill="#c6ff4d"/>
+        <path d="M20 4L4 14V28C4 30.2091 5.79086 32 8 32H32C34.2091 32 36 30.2091 36 28V14L20 4Z" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M15 32V20H25V32" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="28" cy="18" r="2" fill="#1a1a1a"/>
+      </svg>
+      <span className="logo-text">HomeMate</span>
     </div>
   );
 };
