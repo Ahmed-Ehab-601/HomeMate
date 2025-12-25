@@ -18,7 +18,7 @@ public class InProgress implements TaskState{
 
     @Override
     public void updateWorkedHours() {
-        LocalDateTime ldt = LocalDateTime.now(ZoneId.of("Africa/Cairo")); // or your timezone
+        LocalDateTime ldt = LocalDateTime.now(ZoneId.of("Africa/Cairo"));
         Timestamp timestamp = Timestamp.valueOf(ldt);
         taskDao.updateTaskStartInProgress(taskID, timestamp);
 

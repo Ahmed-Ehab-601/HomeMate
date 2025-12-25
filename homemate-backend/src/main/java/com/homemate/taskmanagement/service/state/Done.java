@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @AllArgsConstructor
 public class Done implements TaskState{
@@ -21,8 +22,11 @@ public class Done implements TaskState{
     @Override
     public void updateWorkedHours() {
         Timestamp startInProgress = taskDao.getStartInProgress(taskID);
+        ZoneId zoneId = ZoneId.of("Africa/Cairo");
         if(startInProgress != null){
-            Duration duration = Duration.between(startInProgress.toInstant(), Instant.now());
+            LocalDateTime start = LocalDateTime.ofInstant(startInProgress.toInstant(), zoneId);
+            LocalDateTime now = LocalDateTime.now(zoneId);
+            Duration duration = Duration.between(start, now);
             double workedHours = duration.toMinutes() / 60.0 ;
             taskDao.updateTaskWorkedHours(taskID,workedHours);
             taskDao.updateTaskStartInProgress(taskID,null);
@@ -36,7 +40,7 @@ public class Done implements TaskState{
         taskDao.updateTaskBill(taskID,bill);
         taskDao.updateTaskerTotalEarning(taskerID,bill);
 
-        taskDao.updateTaskEndData(taskID,Timestamp.valueOf(LocalDateTime.now()));
+        taskDao.updateTaskEndData(taskID,Timestamp.valueOf(LocalDateTime.now(zoneId)));
 
 
     }
