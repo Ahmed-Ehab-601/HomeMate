@@ -7,6 +7,7 @@ import com.homemate.taskmanagement.model.Status;
 import lombok.AllArgsConstructor;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @AllArgsConstructor
@@ -16,7 +17,7 @@ public class InProgress implements TaskState{
 
     @Override
     public void updateWorkedHours() {
-        taskDao.updateTaskStartInProgress(taskID, Timestamp.valueOf(LocalDateTime.now()));
+        taskDao.updateTaskStartInProgress(taskID, Timestamp.from(Instant.now()));
 
     }
 
