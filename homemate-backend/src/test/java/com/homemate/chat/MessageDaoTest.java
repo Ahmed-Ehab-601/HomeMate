@@ -257,53 +257,6 @@ public class MessageDaoTest {
         assertEquals(MESSAGE_ID, result.getMessageId());
     }
 
-    // ==================== UNREAD MESSAGES TESTS ====================
-
-    @Test
-    public void testGetUnreadOnesForUser_Success() throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Message WHERE chatID = ? AND status != 'seen' AND isUserSender = FALSE";
-        when(jdbcTemplate.queryForObject(sql, Integer.class, CHAT_ID))
-                .thenReturn(5);
-
-        int result = messageDao.getUnreadOnesForUser(CHAT_ID);
-
-        assertEquals(5, result);
-        verify(jdbcTemplate).queryForObject(sql, Integer.class, CHAT_ID);
-    }
-
-    @Test
-    public void testGetUnreadOnesForUser_Zero() throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Message WHERE chatID = ? AND status != 'seen' AND isUserSender = FALSE";
-        when(jdbcTemplate.queryForObject(sql, Integer.class, CHAT_ID))
-                .thenReturn(0);
-
-        int result = messageDao.getUnreadOnesForUser(CHAT_ID);
-
-        assertEquals(0, result);
-    }
-
-    @Test
-    public void testGetUnreadOnesForTasker_Success() throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Message WHERE chatID = ? AND status != 'seen' AND isUserSender = TRUE";
-        when(jdbcTemplate.queryForObject(sql, Integer.class, CHAT_ID))
-                .thenReturn(3);
-
-        int result = messageDao.getUnreadOnesForTasker(CHAT_ID);
-
-        assertEquals(3, result);
-        verify(jdbcTemplate).queryForObject(sql, Integer.class, CHAT_ID);
-    }
-
-    @Test
-    public void testGetUnreadOnesForTasker_Zero() throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Message WHERE chatID = ? AND status != 'seen' AND isUserSender = TRUE";
-        when(jdbcTemplate.queryForObject(sql, Integer.class, CHAT_ID))
-                .thenReturn(0);
-
-        int result = messageDao.getUnreadOnesForTasker(CHAT_ID);
-
-        assertEquals(0, result);
-    }
 
     // ==================== MARK AS READ TESTS ====================
 

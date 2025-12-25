@@ -3,7 +3,6 @@ package com.homemate.taskmanagement.dao;
 import com.homemate.taskmanagement.dto.StatusDto;
 import com.homemate.taskmanagement.dto.TaskCardDto;
 import lombok.AllArgsConstructor;
-import org.springframework.data.redis.stream.Task;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +25,8 @@ public class GetTasksDao {
                     t.status,
                     t.estimation,
                     t.paid,
+                    c.userUnreadMessages,
+                    c.taskerUnreadMessages,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -35,6 +36,7 @@ public class GetTasksDao {
                     INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
                     INNER JOIN Service s ON t.serviceID = s.serviceID
                     INNER JOIN Address a ON t.addressID = a.addressID
+                    INNER JOIN Chat c ON t.chatID = c.chatID
                 WHERE u.userID = ?
                 ORDER BY startDate DESC
                 LIMIT ? OFFSET ?
@@ -54,6 +56,8 @@ public class GetTasksDao {
                     t.status,
                     t.estimation,
                     t.paid,
+                    c.userUnreadMessages,
+                    c.taskerUnreadMessages,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -63,6 +67,7 @@ public class GetTasksDao {
                     INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
                     INNER JOIN Service s ON t.serviceID = s.serviceID
                     INNER JOIN Address a ON t.addressID = a.addressID
+                    INNER JOIN Chat c ON t.chatID = c.chatID
                 WHERE u.userID = ? and status = ?
                 ORDER BY startDate DESC
                 LIMIT ? OFFSET ?
@@ -95,6 +100,8 @@ public class GetTasksDao {
                     t.status,
                     t.estimation,
                     t.paid,
+                    c.taskerUnreadMessages,
+                    c.userUnreadMessages,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -104,6 +111,7 @@ public class GetTasksDao {
                     INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
                     INNER JOIN Service s ON t.serviceID = s.serviceID
                     INNER JOIN Address a ON t.addressID = a.addressID
+                    INNER JOIN Chat c ON t.chatID = c.chatID
                 WHERE tas.taskerID = ?
                 ORDER BY startDate DESC
                 LIMIT ? OFFSET ?
@@ -122,6 +130,8 @@ public class GetTasksDao {
                     t.status,
                     t.paid,
                     t.estimation,
+                    c.taskerUnreadMessages,
+                    c.userUnreadMessages,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -131,6 +141,7 @@ public class GetTasksDao {
                     INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
                     INNER JOIN Service s ON t.serviceID = s.serviceID
                     INNER JOIN Address a ON t.addressID = a.addressID
+                    INNER JOIN Chat c ON t.chatID = c.chatID
                 WHERE tas.taskerID = ? and status = ?
                 ORDER BY startDate DESC
                 LIMIT ? OFFSET ?
@@ -147,6 +158,8 @@ public class GetTasksDao {
                     t.status,
                     t.estimation,
                     t.paid,
+                    c.userUnreadMessages,
+                    c.taskerUnreadMessages,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -156,8 +169,9 @@ public class GetTasksDao {
                     INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
                     INNER JOIN Service s ON t.serviceID = s.serviceID
                     INNER JOIN Address a ON t.addressID = a.addressID
-                WHERE u.userID = ? 
-                    AND DATE(t.startDate) >= ? 
+                    INNER JOIN Chat c ON t.chatID = c.chatID
+                WHERE u.userID = ?
+                    AND DATE(t.startDate) >= ?
                     AND DATE(t.startDate) <= ?
                 ORDER BY startDate ASC
                 """;
@@ -172,6 +186,8 @@ public class GetTasksDao {
                     t.status,
                     t.paid,
                     t.estimation,
+                    c.userUnreadMessages,
+                    c.taskerUnreadMessages,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -181,8 +197,10 @@ public class GetTasksDao {
                     INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
                     INNER JOIN Service s ON t.serviceID = s.serviceID
                     INNER JOIN Address a ON t.addressID = a.addressID
-                WHERE u.userID = ? 
-                    AND DATE(t.startDate) >= ? 
+                    INNER JOIN Chat c ON t.chatID = c.chatID
+
+                WHERE u.userID = ?
+                    AND DATE(t.startDate) >= ?
                     AND DATE(t.startDate) <= ?
                     AND t.status = ?
                 ORDER BY startDate ASC
@@ -198,6 +216,8 @@ public class GetTasksDao {
                     t.status,
                     t.estimation,
                     t.paid,
+                    c.taskerUnreadMessages,
+                    c.userUnreadMessages,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -207,8 +227,10 @@ public class GetTasksDao {
                     INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
                     INNER JOIN Service s ON t.serviceID = s.serviceID
                     INNER JOIN Address a ON t.addressID = a.addressID
-                WHERE tas.taskerID = ? 
-                    AND DATE(t.startDate) >= ? 
+                    INNER JOIN Chat c ON t.chatID = c.chatID
+
+                WHERE tas.taskerID = ?
+                    AND DATE(t.startDate) >= ?
                     AND DATE(t.startDate) <= ?
                 ORDER BY startDate ASC
                 """;
@@ -223,6 +245,8 @@ public class GetTasksDao {
                     t.status,
                     t.estimation,
                     t.paid,
+                    c.taskerUnreadMessages,
+                    c.userUnreadMessages,
                     CONCAT(u.firstName, ' ', u.lastName) AS userName,
                     CONCAT(tas.firstName, ' ', tas.lastName) AS taskerName,
                     s.name AS serviceName,
@@ -232,8 +256,9 @@ public class GetTasksDao {
                     INNER JOIN Tasker tas ON t.taskerID = tas.taskerID
                     INNER JOIN Service s ON t.serviceID = s.serviceID
                     INNER JOIN Address a ON t.addressID = a.addressID
-                WHERE tas.taskerID = ? 
-                    AND DATE(t.startDate) >= ? 
+                    INNER JOIN Chat c ON t.chatID = c.chatID
+                WHERE tas.taskerID = ?
+                    AND DATE(t.startDate) >= ?
                     AND DATE(t.startDate) <= ?
                     AND t.status = ?
                 ORDER BY startDate ASC

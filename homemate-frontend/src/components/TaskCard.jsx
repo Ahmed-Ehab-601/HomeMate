@@ -4,6 +4,8 @@ import Modal from "./Modal";
 import { useEffect, useCallback } from "react";
 import { acceptTask, rejectTask } from "../api/taskActionsApi";
 import { addTaskEstimation } from "../api/taskManagementApi";
+import UnreadIndicator from "./UnreadIndicator";
+import UnreadBadge from "./UnreadBadge";
 import "../styles/TaskCard.css";
 import { useAuth } from "../contexts/AuthContext";
 import { apiRequest, baseUrl } from "../utils/apiClient";
@@ -60,6 +62,14 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   const [hasReviewed, setHasReviewed] = useState(false);
   const [checkingReview, setCheckingReview] = useState(false);
 
+  // Determine if there are unread messages
+  // TaskDto has unreadMessagesCount (number)
+  // TaskCardDto has haveUnreadMessages (boolean)
+  const userhasUnread = task.userHasUnreadMessages === true  ;
+  const taskerhasUnread = task.taskerHasUnreadMessages === true ;
+  const hasUnread =
+    (viewType === "user" && userhasUnread) ||
+    (viewType === "tasker" && taskerhasUnread);
   // Normalize status: remove spaces and convert to uppercase to match STATUS_STYLES keys
   const normalizedStatus =
     localStatus?.toUpperCase().replace(/\s+/g, "") || "INREVIEW";
@@ -69,18 +79,9 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   const showActionButtons =
     viewType === "tasker" && normalizedStatus === "INREVIEW";
 
-  // Debug log only once per task
-  if (!task._logged) {
-    console.log("📋 [TaskCard] Task status:", {
-      original: task.status,
-      normalized: normalizedStatus,
-      found: !!STATUS_STYLES[normalizedStatus],
-    });
-    task._logged = true;
-  }
-
   // Format date as DD/MM/YYYY HH:MM
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -95,7 +96,6 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   };
 
   const handleAccept = () => {
-    // Show estimation modal first
     setShowAcceptModal(false);
     setShowEstimationModal(true);
     setEstimation("");
@@ -103,7 +103,6 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
   };
 
   const handleEstimationSubmit = async () => {
-    // Validate estimation (in hours)
     const estValueHours = parseFloat(estimation);
     if (!estimation || isNaN(estValueHours) || estValueHours <= 0) {
       setEstimationError("Please enter a valid estimation (hours greater than 0)");
@@ -115,7 +114,6 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
       return;
     }
 
-    // Convert hours to minutes for storage
     const estValueMinutes = Math.round(estValueHours * 60);
 
     setIsSubmitting(true);
@@ -123,32 +121,23 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
     setErrorBanner(null);
 
     try {
-      // First add estimation (send as minutes)
-      // Backend will validate against busy times and schedule conflicts
       await addTaskEstimation(task.taskID, estValueMinutes);
 
-      // Then accept the task
       await acceptTask(task.taskID);
 
-      // Instantly update local status
       setLocalStatus("Accepted");
-
-      // Show success banner
       setSuccessBanner("✅ Task accepted successfully with estimation!");
       setShowEstimationModal(false);
       setEstimation("");
 
-      // Auto-dismiss success after 3 seconds
       setTimeout(() => {
         setSuccessBanner(null);
       }, 3000);
 
-      // Call onTaskUpdated if provided
       if (onTaskUpdated) {
         onTaskUpdated();
       }
     } catch (error) {
-      // Display the specific error message from backend
       setEstimationError(`❌ ${error.message}`);
       setErrorBanner(`❌ ${error.message}`);
     } finally {
@@ -162,15 +151,10 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
 
     try {
       await rejectTask(task.taskID);
-
-      // Instantly update local status
       setLocalStatus("Rejected");
-
-      // Show success banner
       setSuccessBanner("✅ Task rejected successfully.");
       setShowRejectModal(false);
 
-      // Auto-dismiss success after 3 seconds
       setTimeout(() => {
         setSuccessBanner(null);
       }, 3000);
@@ -227,7 +211,8 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
       <article className="task-card">
         <div className="task-card__header">
           <div className="task-card__title-section">
-            <h3 className="task-card__service">{task.serviceName}</h3>
+            <h3 className="task-card__service">{task.serviceName}
+             </h3>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span
                 className="task-card__status-badge"
@@ -270,8 +255,30 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
 
           <div className="task-card__detail-row">
             <span className="task-card__label">Location:</span>
-            <span className="task-card__value">{task.addressCity}</span>
+            <span className="task-card__value">{task.addressCity || "N/A"}</span>
           </div>
+          
+          {/* Show unread count badge OR indicator for TaskCardDto */}
+          {hasUnread && (
+            <div className="task-card__detail-row">
+              <span className="task-card__label">
+                {hasUnread ? "Unread Messages:" : "Messages:"}
+              </span>
+              <span className="task-card__value">
+                {hasUnread && (
+                  <span style={{ 
+                    color: "#ef4444", 
+                    fontWeight: "600",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}>
+                    New 
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="task-card__actions">
@@ -305,6 +312,8 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
                 onClick={handleViewDetails}
               >
                 View Details
+                 {hasUnread && <UnreadIndicator show={true} size="small" position="top-right" />}
+
               </button>
               {normalizedStatus === "DONE" && !localPaid && (
                 <button
@@ -326,12 +335,14 @@ function TaskCard({ task, viewType = "user", onTaskUpdated }) {
               onClick={handleViewDetails}
             >
               View Details
+            {hasUnread && <UnreadIndicator show={true} size="small" position="top-right" />}
             </button>
           )}
 
         </div>
       </article>
 
+      {/* Keep all your modals exactly as they are */}
       {showAcceptModal && (
         <Modal
           title="Accept Task Request?"

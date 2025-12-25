@@ -21,7 +21,7 @@ import services from "../data/services";
 import Modal from "../components/Modal";
 import { websocketService } from "../services/websocketService";
 import "../styles/TaskDetails.css";
-
+import UnreadBadge from "../components/UnreadBadge";
 const normalizeImage = (imageValue) => {
   if (!imageValue) return null;
   if (typeof imageValue === "string") {
@@ -113,6 +113,7 @@ function TaskDetailsPage() {
   const [loadingRescheduleBusyTime, setLoadingRescheduleBusyTime] = useState(false);
   // Use estimation from task directly (already in minutes from backend)
   const [taskEstimation, setTaskEstimation] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (task?.estimation !== undefined && task?.estimation !== null) {
@@ -224,6 +225,11 @@ const WORK_DAY_END_MINUTES = 24 * 60 + 30; // 20:30 = 1230 minutes
     const taskData = await getTaskDetails(taskId);
     console.log("Task data loaded:", taskData);
     setTask(taskData);
+
+    // Fetch unread messages count
+    if (taskData.userUnreadMessagesCount !== undefined|| taskData.taskerUnreadMessagesCount !== undefined) {
+      userRole === "ROLE_TASKER" ?setUnreadCount(taskData.taskerUnreadMessagesCount):setUnreadCount(taskData.userUnreadMessagesCount);
+    }
 
     // Load review if task is done
     if (taskData.status === "Done") {
@@ -1202,16 +1208,7 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
 
           {/* Action Buttons */}
           <div className="action-buttons-section">
-            <h3 className="action-buttons-title">Actions</h3>
-            {/* Debug: show why Pay Online is hidden (remove after debugging) */}
-            <div style={{ marginBottom: 8, fontSize: 13, color: '#6b7280' }}>
-              <strong>Pay Online visibility:</strong>
-              <div>Task is DONE: <strong>{normalizedStatus === 'DONE' ? 'yes' : 'no'}</strong></div>
-              <div>Has bill: <strong>{showBill ? 'yes' : 'no'}</strong></div>
-              <div>Task already paid: <strong>{task?.paid ? 'yes' : 'no'}</strong></div>
-              <div>Tasker has Stripe account: <strong>{(tasker?.stripeAccountId || tasker?.stripe_account_id) ? 'yes' : 'no'}</strong></div>
-              <div>User has Stripe customer id: <strong>{hasUserStripeCustomer ? 'yes' : 'no'}</strong></div>
-            </div>
+            <h3 className="action-buttons-title">Actions</h3>   
             <div className="action-buttons-list">
               {/* Accept/Reject for taskers on In Review tasks */}
               {showAcceptRejectButtons && (
@@ -1296,7 +1293,12 @@ const hasEnoughTimeToComplete = (timeSlot, estimationMinutes) => {
               {task.chatID && (
                 <Link to={`/chat/${task.chatID}`} className="btn btn-message">
                   <span className="btn-icon">✉️</span> Message
-                </Link>
+                  {unreadCount > 0 ? (
+                  <UnreadBadge count={unreadCount} />
+                ) : (
+                  <span className="btn-icon-empty">
+                  </span>
+                )}                </Link>
               )}
 
               <Link

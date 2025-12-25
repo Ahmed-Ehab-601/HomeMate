@@ -29,9 +29,4 @@ public class StripePaymentExceptionHandlerController {
     public ResponseEntity<String> handlePayment(Exception ex) {
         return ResponseEntity.status(500).body(ex.getMessage());
     }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleGeneral(Exception ex) {
-        return ResponseEntity.status(500).body("Internal server error");
-    }
 }
