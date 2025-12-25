@@ -1,0 +1,26 @@
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.logo-container:hover {
+  transform: scale(1.05);
+}
+
+.logo-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.logo-container svg {
+  transition: transform 0.3s ease;
+}
+
+.logo-container:hover svg {
+  transform: rotate(-5deg);
+}

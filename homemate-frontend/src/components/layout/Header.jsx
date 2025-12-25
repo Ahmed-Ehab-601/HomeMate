@@ -1,13 +1,18 @@
-// components/Header.jsx
+
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import BannerLogo from "./BannerLogo";
 import { useUnread } from "../../contexts/UnreadContext";
 import UnreadIndicator from "../UnreadIndicator";
 
-function Header() {
+function Header({ onLogoHover }) {
   const navigate = useNavigate();
   const { isAuthenticated, isTasker, isRegularUser, isAdmin, logout } = useAuth();
   const { hasUnread } = useUnread();
+
+  const handleLogoHover = (isHovered) => {
+    if (onLogoHover) onLogoHover(isHovered);
+  };
 
   // Default to showing regular user menu if not authenticated
   const showUserMenu = !isAuthenticated || (isRegularUser() && !isAdmin());
@@ -22,9 +27,9 @@ function Header() {
           className="brand"
           onClick={() => navigate("/")}
           aria-label="Go to HomeMate homepage"
+          style={{ padding: 0, background: "none", border: "none" }}
         >
-          <span className="brand__mark">HM</span>
-          HomeMate
+          <BannerLogo onHoverChange={handleLogoHover} />
         </button>
 
         <nav className="nav-links">
@@ -126,12 +131,24 @@ function Header() {
             </>
           )}
 
-          <a className="nav-link" href="#how-it-works">
+          <NavLink
+            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+            to="/how-it-works"
+          >
             How It Works
-          </a>
-          <a className="nav-link" href="#about">
+          </NavLink>
+          <NavLink
+            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+            to="/about"
+          >
             About
-          </a>
+          </NavLink>
+          <NavLink
+            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+            to="/contact"
+          >
+            Contact
+          </NavLink>
         </nav>
 
         <div className="header-cta">

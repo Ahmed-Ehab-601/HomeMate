@@ -815,7 +815,7 @@ function SignUpPage() {
                     id="tasker-hourRate"
                     name="hourRate"
                     type="number"
-                    step="0.01"
+                    step="1"
                     min="0"
                     className="input"
                     value={taskerForm.hourRate}

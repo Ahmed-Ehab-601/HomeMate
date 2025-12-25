@@ -5,6 +5,7 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+import { useState } from "react";
 import "./App.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Header from "./components/layout/Header";
@@ -30,9 +31,10 @@ import TaskDetailsPage from "./pages/TaskDetailsPage";
 import EnterEmailPage from "./pages/EnterEmailPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
 import SignupMethodChoicePage from "./pages/SignupMethodChoicePage";
+import AboutPage from "./pages/AboutPage";
+import HowItWorksPage from "./pages/HowItWorksPage";
+import ContactPage from "./pages/ContactPage";
 import { UnreadProvider } from "./contexts/UnreadContext";
-
-// import GlobalPresence from "./components/GlobalPresence";
 
 // Protected route component - redirects to signin on 401
 function ProtectedRoute({ children, requiredRole }) {
@@ -68,14 +70,17 @@ function UserProfileRoute() {
   return <UserProfilePage />;
 }
 
-function AppRoutes() {
+function AppRoutes({ isLogoHovered }) {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={<HomePage isLogoHovered={isLogoHovered} />} />
       <Route path="/services" element={<ServicesCatalog />} />
       <Route path="/services/:slug/taskers" element={<TaskerDiscoveryPage />} />
       <Route path="/taskers/:taskerId" element={<TaskerProfilePage />} />
       <Route path="/taskers/:taskerId/request" element={<RequestTaskPage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/how-it-works" element={<HowItWorksPage />} />
+      <Route path="/contact" element={<ContactPage />} />
       <Route
         path="/submit-review/:taskId"
         element={
@@ -149,11 +154,12 @@ function AppRoutes() {
 function App() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
+  const [isLogoHovered, setIsLogoHovered] = useState(false);
 
   return (
     <div className="app-shell">
-      {!isAdminRoute && <Header />}
-      <AppRoutes />
+      {!isAdminRoute && <Header onLogoHover={setIsLogoHovered} />}
+      <AppRoutes isLogoHovered={isLogoHovered} />
       <Footer />
     </div>
   );
