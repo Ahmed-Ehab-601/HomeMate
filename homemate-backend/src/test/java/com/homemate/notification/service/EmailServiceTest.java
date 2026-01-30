@@ -1,3 +1,4 @@
+
 package com.homemate.notification.service;
 
 import com.homemate.notification.domains.dto.EmailRequest;
@@ -25,7 +26,6 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.http.HttpHeaders;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -60,9 +60,9 @@ class EmailServiceTest {
         ReflectionTestUtils.setField(underTest, "restTemplate", restTemplate);
     }
 
-    
+
     // BREVO API TESTS
-    
+
 
     @Test
     void testSendEmailViaBrevoAPIWhenEnabled() throws ExecutionException, InterruptedException {
@@ -588,9 +588,9 @@ class EmailServiceTest {
         verify(javaMailSender).send(any(SimpleMailMessage.class));
     }
 
-    
+
     // EXISTING SMTP TESTS (Keep all of them)
-    
+
 
     @Test
     void testSendUserEmailWithTaskAcceptedType() throws ExecutionException, InterruptedException {
@@ -647,9 +647,9 @@ class EmailServiceTest {
 
     // Add these additional tests to your existing EmailServiceTest.java class
 
-    
+
     // SMTP EDGE CASES AND COVERAGE IMPROVEMENTS
-    
+
 
     @Test
     void testSendEmailViaSMTPWithNullTask() throws ExecutionException, InterruptedException {
@@ -748,9 +748,9 @@ class EmailServiceTest {
         assertEquals(expectedBody, capturedMessage.getText());
     }
 
-    
+
     // BREVO API ADVANCED COVERAGE
-    
+
 
     @Test
     void testSendEmailBrevoAPIWithNullResponseBody() throws ExecutionException, InterruptedException {
@@ -900,9 +900,9 @@ class EmailServiceTest {
         verify(javaMailSender).send(any(SimpleMailMessage.class));
     }
 
-    
+
     // TEMPLATE EXCEPTION HANDLING
-    
+
 
     @Test
     void testSendEmailWhenBuildSubjectThrowsException() throws ExecutionException, InterruptedException {
@@ -950,9 +950,9 @@ class EmailServiceTest {
         verify(javaMailSender, never()).send(any(SimpleMailMessage.class));
     }
 
-    
+
     // ASYNC BEHAVIOR TESTS
-    
+
 
     @Test
     void testSendEmailReturnsCompletableFuture() {
@@ -999,9 +999,9 @@ class EmailServiceTest {
         assertFalse(future.isCancelled());
     }
 
-    
+
     // REQUEST VALIDATION COVERAGE
-    
+
 
     @Test
     void testSendEmailWithNullRecipientEmail() throws ExecutionException, InterruptedException {
@@ -1080,7 +1080,7 @@ class EmailServiceTest {
         assertEquals(HOMEMATE_EMAIL, message.getFrom());
     }
 
-     @Test
+    @Test
     void testSendDirectEmail_Success() throws ExecutionException, InterruptedException {
         String to = "test@example.com";
         String subject = "Test Subject";
@@ -1092,8 +1092,9 @@ class EmailServiceTest {
         verify(javaMailSender).send(any(SimpleMailMessage.class));
         ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(javaMailSender).send(captor.capture());
-        
+
         SimpleMailMessage sentMessage = captor.getValue();
+        assertNotNull(sentMessage.getTo());
         assertEquals(to, sentMessage.getTo()[0]);
         assertEquals(subject, sentMessage.getSubject());
         assertEquals(body, sentMessage.getText());
@@ -1102,7 +1103,7 @@ class EmailServiceTest {
 
     @Test
     void testSendDirectEmail_Failure() throws ExecutionException, InterruptedException {
-        String to = "test@example.com"; 
+        String to = "test@example.com";
         String subject = "Test Subject";
         String body = "Test Body";
 
@@ -1113,6 +1114,5 @@ class EmailServiceTest {
         assertFalse(response.isSuccess());
         assertTrue(response.getMessage().contains("Failed to send email"));
     }
-
 }
 

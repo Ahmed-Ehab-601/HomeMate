@@ -70,7 +70,7 @@ public class CreationPart {
         String savedImageData = jdbcTemplate.queryForObject(
                 "SELECT imageData FROM service WHERE name = ?",
                 String.class,
-                "Electrical"
+                "Security"
         );
         assertNotNull(savedImageData);
         assertEquals(imageData, savedImageData);
