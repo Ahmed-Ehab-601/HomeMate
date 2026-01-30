@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback } f
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 import { useAuth } from './AuthContext';
+import { baseUrl } from '../utils/apiClient';
 
 const WebSocketContext = createContext(null);
 
@@ -18,7 +19,7 @@ export const WebSocketProvider = ({ children }) => {
     const reconnectAttempts = useRef(0);
     const heartbeatIntervalRef = useRef(null);
 
-    const WEBSOCKET_URL = 'http://localhost:8080/HomeMate';
+    const WEBSOCKET_URL = baseUrl + '/HomeMate';
     const MAX_RECONNECT_ATTEMPTS = 5;
     const RECONNECT_DELAY_BASE = 1000;
     const MAX_RECONNECT_DELAY = 30000;
@@ -107,7 +108,7 @@ export const WebSocketProvider = ({ children }) => {
     const fetchOnlineUsers = useCallback(async () => {
         try {
             console.log('🌐 [Global] Fetching initial online users list from /api/chat/online...');
-            const response = await fetch('http://localhost:8080/api/chat/online', {
+            const response = await fetch(baseUrl + '/api/chat/online', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

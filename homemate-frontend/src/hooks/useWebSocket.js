@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useGlobalWebSocket } from '../contexts/WebSocketContext';
+import { baseUrl } from '../utils/apiClient';
 
 /**
  * Custom React hook for WebSocket interaction (Chat specific)

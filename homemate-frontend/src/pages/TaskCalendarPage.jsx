@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TaskCalendar from '../components/TaskCalendar';
 import { Calendar, Sparkles, TrendingUp, CheckCircle2, Clock } from 'lucide-react';
+import { baseUrl } from '../utils/apiClient';
 
 /**
  * TaskCalendarPage - Ultra Modern Edition
@@ -157,7 +158,7 @@ const TaskCalendarPage = () => {
                 <div className={`transition-all duration-1000 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
                     <TaskCalendar
                         userType={userType}
-                        baseURL="http://localhost:8080"
+                        baseUrl={baseUrl}
                     />
                 </div>
 
