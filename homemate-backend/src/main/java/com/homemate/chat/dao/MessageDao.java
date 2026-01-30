@@ -96,15 +96,55 @@ public MessageDto save(Long chatID, MessageDto messageDto) {
                 "WHERE m.messageID = ? ",new MessageRowMapper(),messageId);
     }
 @Override
-public int getUnreadOnesForUser(Long chatID) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Message WHERE chatID = ? AND status != 'seen' AND isUserSender = FALSE";
-        return jdbcTemplate.queryForObject(sql,Integer.class,chatID);
+public Boolean getUnreadOnesForUser(Long userID) throws SQLException {
+        String sql = "UPDATE Chat c "+
+    "SET userUnreadMessages = ("+
+        " SELECT COUNT(*)"+
+        " FROM Message m"+
+        " WHERE m.chatID = c.chatID"+
+        " AND m.status IN ('sent', 'received')"+
+        " AND m.isUserSender = FALSE"+
+        " )"+
+    " WHERE c.userID = ?";
+        jdbcTemplate.update(sql,userID);
+        sql= "SELECT EXISTS (" +
+                "    SELECT 1" +
+                "    FROM Chat c" +
+                "    WHERE c.userID = ?" +
+                "    AND c.userUnreadMessages > 0" +
+                " )";
+        return jdbcTemplate.queryForObject(sql,Boolean.class,userID);
     }
 @Override
-public int getUnreadOnesForTasker(Long chatID) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Message WHERE chatID = ? AND status != 'seen' AND isUserSender = TRUE";
-        return jdbcTemplate.queryForObject(sql,Integer.class,chatID);
+public Boolean getUnreadOnesForTasker(Long taskerID) throws SQLException {
+    String sql = "UPDATE Chat c "+
+            "SET taskerUnreadMessages = ("+
+            " SELECT COUNT(*)"+
+            " FROM Message m"+
+            " WHERE m.chatID = c.chatID"+
+            " AND m.status IN ('sent', 'received')"+
+            " AND m.isUserSender = TRUE"+
+            " )"+
+            " WHERE c.taskerID = ?";
+    jdbcTemplate.update(sql,taskerID);
+    sql= "SELECT EXISTS (" +
+            "    SELECT 1" +
+            "    FROM Chat c" +
+            "    WHERE c.taskerID = ?" +
+            "    AND c.taskerUnreadMessages > 0" +
+            " )";
+    return jdbcTemplate.queryForObject(sql,Boolean.class,taskerID);
+}
+    public void incrementUnreadForUser(Long chatID) {
+        String sql = "UPDATE Chat SET userUnreadMessages = userUnreadMessages + 1 WHERE chatID = ?";
+        jdbcTemplate.update(sql, chatID);
     }
+
+    public void incrementUnreadForTasker(Long chatID) {
+        String sql = "UPDATE Chat SET taskerUnreadMessages = taskerUnreadMessages + 1 WHERE chatID = ?";
+        jdbcTemplate.update(sql, chatID);
+    }
+
 @Override
 public void markasReadUser(Long chatID) throws SQLException {
         String sql = "UPDATE Message SET status = 'seen' WHERE chatID = ? AND isUserSender= FALSE";
@@ -140,5 +180,29 @@ public void markasReceivedTasker(Long taskerID) {
     public Boolean getTaskerStatus(Long chatID){
         String sql="SELECT taskerIsActive FROM Chat WHERE chatID = ?";
         return jdbcTemplate.queryForObject(sql,Boolean.class,chatID);
+    }
+
+    public List<MessageDto> listMessagesRecievedTasker(Long id, Boolean isUser) {
+        String sql;
+        if(isUser){
+            sql = "SELECT * FROM Message m " +
+                    "LEFT JOIN MessageImage mi ON m.messageId = mi.messageID " +
+                    "WHERE m.status = 'received' " +
+                    "AND m.receiverID = ? " +
+                    "AND m.isUserSender = FALSE " +
+                    "ORDER BY m.timestamp DESC";
+        }
+        else{
+            sql = "SELECT * FROM Message m " +
+                    "LEFT JOIN MessageImage mi ON m.messageId = mi.messageID " +
+                    "WHERE m.status = 'received' " +
+                    "AND m.receiverID = ? " +
+                    "AND m.isUserSender = TRUE " +
+                    "ORDER BY m.timestamp DESC";
+        }
+
+        return jdbcTemplate.query(sql,
+                new Object[]{id},
+                new MessageRowMapper());
     }
 }

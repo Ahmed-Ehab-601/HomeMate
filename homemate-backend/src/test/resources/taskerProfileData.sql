@@ -7,11 +7,11 @@ INSERT INTO Service (serviceID, name, description) VALUES
 -- Insert Taskers
 -- 1. Standard Tasker
 INSERT INTO Tasker (taskerID, firstName, lastName, username, password, email, birthDate, phone, gender, availability, rating, hourRate, bio, serviceID, totalEarning, WorkedHours, addressCity) VALUES 
-(1, 'John', 'Doe', 'johndoe', 'password123', 'john.doe@email.com', '1990-05-15 00:00:00', '+1-555-0101', 'M', 'available', 4.5, 50.0, 'Experienced tasker', 1, 1000.0, 20.0, 'New York');
+(1, 'John', 'Doe', 'johndoe', '$2a$12$nLTDYQmKfdYxxWHFmNBiDeupQODnkqZSNrShvq2BhbFNq3jF0gyIO', 'john.doe@email.com', '1990-05-15 00:00:00', '+1-555-0101', 'M', 'available', 4.5, 50.0, 'Experienced tasker', 1, 1000.0, 20.0, 'New York');
 
 -- 2. Standard Tasker (Female, Unavailable)
 INSERT INTO Tasker (taskerID, firstName, lastName, username, password, email, birthDate, phone, gender, availability, rating, hourRate, bio, serviceID, totalEarning, WorkedHours, addressCity) VALUES 
-(2, 'Jane', 'Smith', 'janesmith', 'password456', 'jane.smith@email.com', '1988-08-22 00:00:00', '+1-555-0102', 'F', 'unavailable', 4.8, 60.0, 'Professional service', 1, 2000.0, 35.0, 'Los Angeles');
+(2, 'Jane', 'Smith', 'janesmith', '$2a$12$nLTDYQmKfdYxxWHFmNBiDeupQODnkqZSNrShvq2BhbFNq3jF0gyIO', 'jane.smith@email.com', '1988-08-22 00:00:00', '+1-555-0102', 'F', 'unavailable', 4.8, 60.0, 'Professional service', 1, 2000.0, 35.0, 'Los Angeles');
 
 -- 3. Max length username
 INSERT INTO Tasker (taskerID, firstName, lastName, username, password, email, birthDate, phone, gender, availability, rating, hourRate, bio, serviceID, totalEarning, WorkedHours, addressCity) VALUES 
@@ -19,7 +19,7 @@ INSERT INTO Tasker (taskerID, firstName, lastName, username, password, email, bi
 
 -- 4. Max length email
 INSERT INTO Tasker (taskerID, firstName, lastName, username, password, email, birthDate, phone, gender, availability, rating, hourRate, bio, serviceID, totalEarning, WorkedHours, addressCity) VALUES 
-(4, 'Email', 'Test', 'emailtest', 'password123', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@email.com', '1995-11-30 00:00:00', '+1-555-0104', 'F', 'available', 4.2, 55.0, 'Email test', 2, 750.0, 15.0, 'Houston');
+(4, 'Email', 'Test', 'emailtest', '$2a$12$nLTDYQmKfdYxxWHFmNBiDeupQODnkqZSNrShvq2BhbFNq3jF0gyIO', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@email.com', '1995-11-30 00:00:00', '+1-555-0104', 'F', 'available', 4.2, 55.0, 'Email test', 2, 750.0, 15.0, 'Houston');
 
 -- 5. Max length phone
 INSERT INTO Tasker (taskerID, firstName, lastName, username, password, email, birthDate, phone, gender, availability, rating, hourRate, bio, serviceID, totalEarning, WorkedHours, addressCity) VALUES 

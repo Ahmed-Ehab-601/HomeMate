@@ -31,5 +31,9 @@ public class TaskDto {
     private String userMail;
     @Email
     private String taskerMail;
+    private Integer estimation;
+    private boolean paid;
+    private Integer userUnreadMessagesCount;
+    private Integer taskerUnreadMessagesCount;
 
 }

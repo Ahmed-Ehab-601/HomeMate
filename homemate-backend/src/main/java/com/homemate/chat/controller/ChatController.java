@@ -2,20 +2,19 @@ package com.homemate.chat.controller;
 
 import com.homemate.chat.Service.ChatService;
 import com.homemate.chat.Service.MessageService;
-import com.homemate.chat.dao.MessageDao;
+import com.homemate.chat.Service.PresenceService;
 import com.homemate.chat.dto.ChatDto;
-import com.homemate.chat.dto.MessageDto;
 import com.homemate.chat.dto.PaginatedResponse;
 import com.homemate.security.model.AppUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -24,15 +23,19 @@ public class ChatController {
     @Autowired
     private ChatService chatService;
     private final MessageService messageService;
-    public ChatController(ChatService chatService,MessageService messageService){
+    @Autowired
+    private PresenceService presenceService;
+
+    public ChatController(ChatService chatService,MessageService messageService,PresenceService presenceService){
         this.chatService=chatService;
         this.messageService=messageService;
+        this.presenceService=presenceService;
     }
     @GetMapping("/getHistory/user/{chatId}")
     @PreAuthorize("hasRole('USER')")
 
     public ResponseEntity<PaginatedResponse> getHistory(@PathVariable Long chatId, @RequestParam(defaultValue = "0") int page,
-    @RequestParam(defaultValue = "20") int size,@AuthenticationPrincipal AppUserDetails userDetails) throws Exception {
+    @RequestParam(defaultValue = "20") int size,@AuthenticationPrincipal AppUserDetails userDetails)  {
         try {
             PaginatedResponse RES=chatService.getChatHistory(chatId,page,size,userDetails);
             return ResponseEntity.status(HttpStatus.OK).body(RES);
@@ -160,5 +163,11 @@ public class ChatController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
+    @GetMapping("/online")
+    public Map<String, Object> getAllOnlineUsers() {
+        Map<String, Object> allStatus = new HashMap<>();
+        allStatus.put("users", presenceService.getAllUserOnlineStatus());
+        allStatus.put("taskers", presenceService.getAllTaskerOnlineStatus());
+        return allStatus;
+    }
 }

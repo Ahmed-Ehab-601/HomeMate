@@ -160,6 +160,7 @@ function SignInPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
+                  maxLength={72}
                   required
                   disabled={isLoading || isGoogleLoading}
                 />
@@ -201,6 +202,9 @@ function SignInPage() {
                   )}
                 </button>
               </div>
+              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                {password.length}/72
+              </div>
             </div>
 
             <div style={{ textAlign: "right", marginBottom: "16px" }}>
@@ -239,12 +243,21 @@ function SignInPage() {
           <div style={{ marginTop: "24px", textAlign: "center" }}>
             <p>
               Don't have an account?{" "}
-              <a
-                href="/signup"
-                style={{ color: "var(--primary)", textDecoration: "underline" }}
+              <button
+                type="button"
+                onClick={() => navigate("/signup")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--primary)",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  fontSize: "1em",
+                  padding: 0,
+                }}
               >
                 Sign up
-              </a>
+              </button>
             </p>
           </div>
         </div>

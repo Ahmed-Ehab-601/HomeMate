@@ -10,19 +10,21 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
 @CrossOrigin("*")
-
 public class TaskManagementController {
     private final TaskRequestService taskRequestService;
     private final GetTaskService getTaskService;
@@ -82,6 +84,28 @@ public class TaskManagementController {
         }else{
             return new ResponseEntity <> (response.get(),HttpStatus.OK);
         }
+    }
+    @GetMapping("/tasker/getTasks")
+    @PreAuthorize("hasRole('TASKER')")
+    public ResponseEntity<?> getTaskerTasksForCalendar(
+            @AuthenticationPrincipal AppUserDetails userDetails,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "All") StatusDto status) {
+        List<TaskCardDto> tasks = getTaskService.getTaskerTasksForNewView(userDetails.getId(), startDate, endDate, status);
+        return new ResponseEntity <> (tasks,HttpStatus.OK);
+
+    }
+    @GetMapping("/user/getTasks")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> getUserTasksForCalendar(
+            @AuthenticationPrincipal AppUserDetails userDetails,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "All") StatusDto status) {
+
+        List<TaskCardDto> tasks = getTaskService.getUserTasksForNewView(userDetails.getId(), startDate, endDate, status);
+        return new ResponseEntity <> (tasks,HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('TASKER')") @PatchMapping("/tasker/task/{taskID}/accept")

@@ -7,6 +7,8 @@ import com.homemate.taskmanagement.dto.TaskCardDto;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -85,6 +87,31 @@ public class GetTaskService {
             return Optional.ofNullable(response);
 
         }
+    }
+    public List<TaskCardDto> getTaskerTasksForNewView(
+            Long taskerID, LocalDate startDate,
+            LocalDate endDate, StatusDto statusDto) {
+        if(statusDto == StatusDto.All){
+            return getTasksDao.getTaskerTasksByDateRange(taskerID,startDate,endDate);
+        }
+
+        return  getTasksDao.getTaskerTasksByDateRangeAndStatus(taskerID,startDate,endDate,statusDto);
+
+
+
+    }
+    public List<TaskCardDto> getUserTasksForNewView(
+            Long userID, LocalDate startDate,
+            LocalDate endDate, StatusDto statusDto) {
+        if(statusDto == StatusDto.All){
+            return getTasksDao.getUserTasksByDateRange(userID,startDate,endDate);
+        }
+
+        return  getTasksDao.getUserTasksByDateRangeAndStatus(userID
+                ,startDate,endDate,statusDto);
+
+
+
     }
     
 }

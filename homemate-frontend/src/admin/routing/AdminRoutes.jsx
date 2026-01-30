@@ -6,6 +6,7 @@ import TaskersPage from '../pages/TaskersPage';
 import ServicesPage from '../pages/ServicesPage';
 import ReportsPage from '../pages/ReportsPage';
 import ReportDetailsPage from '../pages/ReportDetailsPage';
+import AnalysisPage from '../pages/AnalysisPage';
 import ThemeProviderSwitcher from '../theme/ThemeProviderSwitcher';
 
 const AdminRoutes = () => (
@@ -19,6 +20,7 @@ const AdminRoutes = () => (
         <Route path="services" element={<ServicesPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="reports/:id" element={<ReportDetailsPage />} />
+        <Route path="analysis" element={<AnalysisPage />} />
       </Route>
     </Routes>
   </ThemeProviderSwitcher>

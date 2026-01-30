@@ -53,6 +53,7 @@ function UserProfilePage() {
   const [feedback, setFeedback] = useState(null);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeletingAccount, setDeletingAccount] = useState(false);
+  const [isCreatingStripe, setIsCreatingStripe] = useState(false);
 
   const [forms, setForms] = useState({
     name: { firstName: "", lastName: "" },
@@ -122,6 +123,31 @@ function UserProfilePage() {
   };
 
   const dismissFeedback = () => setFeedback(null);
+
+  const handleCreateStripeCustomer = () => {
+    if (!profile) return;
+    const userId = profile.id || profile.userId || profile.userID || profile.user_id;
+    if (!userId) {
+      setFeedback({ type: "error", message: "Unable to detect user ID." });
+      return;
+    }
+    setIsCreatingStripe(true);
+    // Lazy-import to avoid adding unused import at top-level
+    import("../api/paymentApi").then(({ createStripeCustomer }) =>
+      createStripeCustomer(userId)
+        .then(() => {
+          setFeedback({ type: "success", message: "Stripe customer created successfully." });
+          loadProfile();
+        })
+        .catch((err) => {
+          setFeedback({
+            type: "error",
+            message: err?.message ?? "Failed to create Stripe customer.",
+          });
+        })
+        .finally(() => setIsCreatingStripe(false)),
+    );
+  };
 
   const validateAddress = (values) => {
     const errors = {};
@@ -437,6 +463,18 @@ const handleLogout = async () => {
                 </h2>
                 <p className="tasker-card__meta">Username: {profile.username}</p>
               </div>
+              {!(profile.stripeCustomerId || profile.stripe_customer_id) && (
+                <div style={{ marginTop: 12 }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleCreateStripeCustomer}
+                    disabled={isCreatingStripe}
+                  >
+                    {isCreatingStripe ? "Creating…" : "Enable payments (Stripe)"}
+                  </button>
+                </div>
+              )}
               <dl className="profile-summary__grid">
                 <div>
                   <dt>Email</dt>
@@ -611,7 +649,11 @@ const handleLogout = async () => {
                   className="input"
                   value={forms.password.oldPassword}
                   onChange={(event) => handleChange("password", "oldPassword", event.target.value)}
+                  maxLength={72}
                 />
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                  {forms.password.oldPassword.length}/72
+                </div>
               </div>
               <div className="form-field">
                 <label htmlFor="new-password-input">New password</label>
@@ -621,7 +663,11 @@ const handleLogout = async () => {
                   className="input"
                   value={forms.password.newPassword}
                   onChange={(event) => handleChange("password", "newPassword", event.target.value)}
+                  maxLength={72}
                 />
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                  {forms.password.newPassword.length}/72
+                </div>
               </div>
               <div className="form-actions">
                 <button

@@ -5,6 +5,7 @@ import com.homemate.UserProfile.Models.User;
 import com.homemate.TaskerProfile.DTO.TaskerSignupDTO;
 import com.homemate.TaskerProfile.Dao.TaskerDao;
 import com.homemate.TaskerProfile.services.TaskerSignupService;
+import com.homemate.hashing.HashingService;
 import com.homemate.security.service.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,9 @@ class TaskerSignupServiceTest {
 
     @Mock
     private UserDao userDao;
+
+    @Mock
+    private HashingService hashingService;
 
     @InjectMocks
     private TaskerSignupService taskerSignupService;

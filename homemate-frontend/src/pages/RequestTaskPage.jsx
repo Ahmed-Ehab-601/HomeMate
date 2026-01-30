@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getUserAddresses } from "../api/userProfileApi";
 import { requestTask } from "../api/tasksApi";
 import { fetchServices } from "../api/servicesApi";
+import { getTaskerBusyTime } from "../api/taskManagementApi";
+import { useAuth } from "../contexts/AuthContext";
 import "../styles/RequestTask.css";
 
 import Modal from "../components/Modal";
@@ -19,7 +21,13 @@ const timeSlots = Array.from({ length: 25 }, (_, index) => {
   return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
 }).filter(Boolean);
 
-const formatDateForInput = (date) => date.toISOString().split("T")[0];
+const formatDateForInput = (date) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const formatDisplayDateTime = (date, time) => {
   if (!date || !time) return "--";
@@ -39,6 +47,7 @@ function RequestTaskPage() {
   const { taskerId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const stateTasker = location.state?.tasker;
   const stateService = location.state?.service;
   const fromPath = location.state?.from;
@@ -64,6 +73,9 @@ function RequestTaskPage() {
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
   const [duplicateMessage, setDuplicateMessage] = useState("");
   const [limitError, setLimitError] = useState("");
+  const [busyTimes, setBusyTimes] = useState([]);
+  const [loadingBusyTime, setLoadingBusyTime] = useState(false);
+  const [taskerUnavailable, setTaskerUnavailable] = useState(false);
 
   const hasUnsavedChanges =
     Boolean(description) ||
@@ -79,6 +91,13 @@ function RequestTaskPage() {
   }, [today]);
 
   useEffect(() => {
+    // Only fetch addresses if user is authenticated
+    if (!isAuthenticated) {
+      setAddressStatus("error");
+      setAddresses([]);
+      return;
+    }
+
     let cancelled = false;
     getUserAddresses()
       .then((data) => {
@@ -102,22 +121,86 @@ function RequestTaskPage() {
         }
         setAddressStatus("success");
       })
-      .catch(() => {
+      .catch((error) => {
         if (!cancelled) {
-          setAddressStatus("error");
+          // Handle 401 gracefully - user just needs to sign in
+          if (error?.status === 401) {
+            setAddressStatus("error");
+            setAddresses([]);
+          } else {
+            setAddressStatus("error");
+          }
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!successBanner) return undefined;
     const timeoutId = window.setTimeout(() => setSuccessBanner(null), 5000);
     return () => window.clearTimeout(timeoutId);
   }, [successBanner]);
+
+  // Fetch busy time when date is selected
+  useEffect(() => {
+    if (!dateValue || !tasker?.id) {
+      setBusyTimes([]);
+      setTimeValue(""); // Clear time when date changes
+      setTaskerUnavailable(false);
+      return;
+    }
+
+    // Reset time when date changes
+    setTimeValue("");
+    setBusyTimes([]);
+    setTaskerUnavailable(false);
+    // Clear error banner if it was about unavailability
+    if (errorBanner?.message?.includes("unavailable")) {
+      setErrorBanner(null);
+    }
+
+    const fetchBusyTime = async () => {
+      setLoadingBusyTime(true);
+      setTaskerUnavailable(false);
+      try {
+        const busyTimeData = await getTaskerBusyTime(tasker.id, dateValue);
+        setBusyTimes(busyTimeData || []);
+        setTaskerUnavailable(false);
+        // Clear error banner on successful fetch
+        if (errorBanner?.message?.includes("unavailable")) {
+          setErrorBanner(null);
+        }
+      } catch (error) {
+        console.error("Failed to fetch busy time:", error);
+        // Check if error is due to tasker being unavailable
+        const errorMessage = error?.message || "";
+        if (
+          error?.error === "TASKER_UNAVAILABLE" ||
+          error?.status === 503 ||
+          errorMessage.includes("UNAVAILABLE") ||
+          errorMessage.toLowerCase().includes("unavailable")
+        ) {
+          setTaskerUnavailable(true);
+          setBusyTimes([]);
+          setTimeValue(""); // Clear selected time
+          // Show notification banner
+          setErrorBanner({
+            message: `⚠️ ${tasker.name || "This tasker"} is currently unavailable. Please select another tasker or try again later.`,
+          });
+        } else {
+          setTaskerUnavailable(false);
+          setBusyTimes([]);
+        }
+      } finally {
+        setLoadingBusyTime(false);
+      }
+    };
+
+    fetchBusyTime();
+  }, [dateValue, tasker?.id]);
 
   if (!tasker || !service) {
     return <div className="page">We couldn't find that tasker.</div>;
@@ -138,6 +221,91 @@ function RequestTaskPage() {
       const max = new Date(formatDateForInput(maxDate));
       return selected >= min && selected <= max;
     })();
+
+  // Check if a time slot is busy
+  // busyTimes is now an array of TaskTimeDto: [{taskID, startDate, estimation}, ...]
+  const isTimeSlotBusy = (timeSlot) => {
+    if (!dateValue || busyTimes.length === 0) return false;
+
+    const [slotHours, slotMinutes] = timeSlot.split(":").map(Number);
+    const [year, month, day] = dateValue.split("-").map(Number);
+    
+    // Slot start and end in minutes from midnight
+    const slotStartMinutes = slotHours * 60 + slotMinutes;
+    const slotEndMinutes = slotStartMinutes + 30; // 30 minutes slot duration
+
+    // Check each busy time interval
+    for (const busyTime of busyTimes) {
+      try {
+        const busyStart = new Date(busyTime.startDate);
+        const busyYear = busyStart.getFullYear();
+        const busyMonth = busyStart.getMonth();
+        const busyDay = busyStart.getDate();
+        const busyHours = busyStart.getHours();
+        const busyMins = busyStart.getMinutes();
+        
+        // Only check if dates match
+        if (busyYear !== year || busyMonth !== month - 1 || busyDay !== day) {
+          continue;
+        }
+        
+        // Calculate busy period in minutes
+        const busyStartMinutes = busyHours * 60 + busyMins;
+        const busyEndMinutes = busyStartMinutes + busyTime.estimation;
+        
+        // Check for overlap
+        if (
+          (slotStartMinutes >= busyStartMinutes && slotStartMinutes < busyEndMinutes) ||
+          (slotEndMinutes > busyStartMinutes && slotEndMinutes <= busyEndMinutes) ||
+          (slotStartMinutes <= busyStartMinutes && slotEndMinutes >= busyEndMinutes)
+        ) {
+          return true;
+        }
+      } catch (e) {
+        console.warn("Failed to parse busy time:", busyTime, e);
+        continue;
+      }
+    }
+
+    return false;
+  };
+
+  // Check if date is in the past
+  const isDatePast = (dateStr) => {
+    if (!dateStr) return false;
+    const selected = new Date(dateStr);
+    const todayStart = new Date(formatDateForInput(today));
+    todayStart.setHours(0, 0, 0, 0);
+    return selected < todayStart;
+  };
+
+  // Filter available time slots
+  const availableTimeSlots = timeSlots.filter((slot) => {
+    // If tasker is unavailable, disable all slots
+    if (taskerUnavailable) {
+      return false;
+    }
+    
+    if (!dateValue) return true;
+    
+    // Disable if date is today and time has passed
+    const selectedDate = new Date(dateValue);
+    const todayDate = new Date(formatDateForInput(today));
+    const isToday = selectedDate.getTime() === todayDate.getTime();
+    
+    if (isToday) {
+      const [hours, minutes] = slot.split(":").map(Number);
+      const slotTime = new Date();
+      slotTime.setHours(hours, minutes, 0, 0);
+      const now = new Date();
+      if (slotTime <= now) {
+        return false;
+      }
+    }
+    
+    // Disable if slot is busy
+    return !isTimeSlotBusy(slot);
+  });
 
   const canSubmit =
     !isAddressMissing &&
@@ -337,9 +505,15 @@ function RequestTaskPage() {
               <p className="tasker-card__meta">Loading addresses…</p>
             )}
             {addressStatus === "error" && (
-              <p className="error-text">
-                We couldn't load your addresses. Please retry.
-              </p>
+              <div className="error-text">
+                {!isAuthenticated ? (
+                  <>
+                    Please <a href="/signin">sign in</a> to load your addresses and request a task.
+                  </>
+                ) : (
+                  "We couldn't load your addresses. Please retry."
+                )}
+              </div>
             )}
             {addressStatus === "success" && addresses.length === 0 && (
               <div className="empty-state">
@@ -384,7 +558,22 @@ function RequestTaskPage() {
                 min={formatDateForInput(today)}
                 max={formatDateForInput(maxDate)}
                 value={dateValue}
-                onChange={(event) => setDateValue(event.target.value)}
+                onChange={(event) => {
+                  const selectedDate = event.target.value;
+                  const minDate = formatDateForInput(today);
+                  const maxDateStr = formatDateForInput(maxDate);
+                  
+                  // Only set if the date is within valid range (not in the past)
+                  if (selectedDate >= minDate && selectedDate <= maxDateStr) {
+                    setDateValue(selectedDate);
+                  } else if (selectedDate < minDate) {
+                    // If user tries to select a past date, don't update
+                    // The browser's date picker should already prevent this, but this adds extra protection
+                    setDateValue("");
+                  } else {
+                    setDateValue(selectedDate);
+                  }
+                }}
               />
               {showErrors && !isDateWithinBounds && (
                 <p className="error-text">Please select a valid date.</p>
@@ -392,21 +581,50 @@ function RequestTaskPage() {
             </div>
             <div className="form-field">
               <label htmlFor="time-select">Preferred time*</label>
+              {loadingBusyTime && dateValue && (
+                <p className="tasker-card__meta" style={{ marginBottom: "8px" }}>
+                  Loading available times...
+                </p>
+              )}
+              {taskerUnavailable && dateValue && (
+                <p className="error-text" style={{ marginBottom: "8px", fontWeight: 600 }}>
+                  ⚠️ Tasker is currently unavailable. All time slots are disabled.
+                </p>
+              )}
               <select
                 id="time-select"
-                className={`input ${showErrors && !timeValue ? "error" : ""}`}
+                className={`input ${showErrors && !timeValue ? "error" : ""} ${
+                  taskerUnavailable ? "disabled" : ""
+                }`}
                 value={timeValue}
                 onChange={(event) => setTimeValue(event.target.value)}
+                disabled={loadingBusyTime || !dateValue || taskerUnavailable}
+                style={taskerUnavailable ? { backgroundColor: "#f3f4f6", cursor: "not-allowed" } : {}}
               >
-                <option value="">Select time</option>
-                {timeSlots.map((slot) => (
+                <option value="">
+                  {!dateValue
+                    ? "Select date first"
+                    : loadingBusyTime
+                    ? "Loading..."
+                    : taskerUnavailable
+                    ? "Tasker unavailable - no times available"
+                    : availableTimeSlots.length === 0
+                    ? "No available times"
+                    : "Select time"}
+                </option>
+                {availableTimeSlots.map((slot) => (
                   <option key={slot} value={slot}>
                     {slot}
                   </option>
                 ))}
               </select>
-              {showErrors && !timeValue && (
+              {showErrors && !timeValue && !taskerUnavailable && (
                 <p className="error-text">Please select a valid time.</p>
+              )}
+              {dateValue && !loadingBusyTime && !taskerUnavailable && availableTimeSlots.length === 0 && (
+                <p className="error-text">
+                  No available time slots on this day. Please select another date.
+                </p>
               )}
             </div>
           </div>

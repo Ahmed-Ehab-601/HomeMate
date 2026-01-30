@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Phone, Image, X, ArrowLeft } from 'lucide-react';
+import { Send, Phone, Image, X } from 'lucide-react';
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import { baseUrl } from '../utils/apiClient';
+import { useUnread } from '../contexts/UnreadContext'; // ADD THIS IMPORT
 
 const ChatInterface = () => {
   const [inputMessage, setInputMessage] = useState('');
@@ -21,14 +22,15 @@ const ChatInterface = () => {
   const [error, setError] = useState(null);
   const [showError, setShowError] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [expandedImage, setExpandedImage] = useState(null); // ADD THIS LINE
+  const [expandedImage, setExpandedImage] = useState(null);
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
-  const { getToken, getUserRole, isTasker, user } = useAuth();
+  const { getToken, getUserRole, user } = useAuth();
+  const { refreshUnread } = useUnread(); // ADD THIS
   const navigate = useNavigate();
   const { chatId } = useParams();
 
@@ -67,59 +69,39 @@ const ChatInterface = () => {
   const isUserRole = userRole === 'ROLE_USER';
   const currentUserId = user?.id || _decoded?.sub;
 
-  // Determine recipient ID for presence tracking
-  const recipientId = chatDetails
-    ? (isUserRole ? chatDetails.taskerId : chatDetails.userId)
-    : null;
-
-  useEffect(() => {
-    if (recipientId) {
-      console.log('👥 ChatPage identified recipientId:', recipientId);
-    }
-  }, [recipientId]);
+  const [allMessages, setAllMessages] = useState([]);
 
   // Initialize WebSocket
   const handleMessageReceived = useCallback((newMessage) => {
     setAllMessages(prev => {
-      // Avoid duplicates
       const exists = prev.some(msg => String(msg.messageId) === String(newMessage.messageId));
       if (exists) return prev;
 
-      // If we are currently watching this chat, mark incoming messages as read instantly?
-      // Typically we rely on the component mount or visibility.
-      // But for now, just add it.
-
-      // CHECK: If message has image but no data (lightweight notification), fetch full message
       if (newMessage.imageDto && !newMessage.imageDto.fileData) {
         console.log('🖼️ Received lightweight image message, fetching details...');
-        // We can either fetch the single message or just reload the latest page
-        // Since we don't have a clean getMessage(id) endpoint ready, let's reload the first page quietly
-        // OR: just let the user see "Loading image..." if we had that UI.
-        // For now, let's trigger a reload of messages to get the data.
         loadMessages(0, true);
-        return prev; // Don't add the incomplete message yet, wait for reload
+        return prev;
       }
 
       return [...prev, newMessage];
     });
+    
+    // Refresh unread count when new message arrives
+    refreshUnread();
+  }, [refreshUnread]);
 
-    // Scroll to bottom if near bottom?
-    // We have an effect for allMessages changes, so that handles scroll.
-  }, []);
+  const recipientId = chatDetails
+    ? (isUserRole ? chatDetails.taskerId : chatDetails.userId)
+    : null;
 
   const handleStatusUpdate = useCallback((update) => {
-    console.log('🔄 ChatPage handleStatusUpdate:', update);
+    console.log('📊 Status update received:', update);
+    
     setAllMessages(prev => prev.map(msg => {
-      // Handle explicit Read Receipts
+      // Handle READ receipts
       if (update.type === 'READ_RECEIPT') {
-        // If the receipt says it was read by the OTHER user
-        // Then mark all MY sent messages as SEEN
-        // (Assuming simple logic: if they read one, they read all prior? Or typical "Mark/Seen by X")
-        // The receipt has { chatId, readBy, role }
-
-        // If update.readBy is NOT me, then it means THEY read my messages.
         if (String(update.readBy) !== String(currentUserId)) {
-          if (msg.isUserSender === isUserRole) { // If I sent this message
+          if (msg.isUserSender === isUserRole) {
             if (msg.messageStatus !== 'SEEN' && msg.messageStatus !== 'READ') {
               return { ...msg, messageStatus: 'SEEN' };
             }
@@ -128,29 +110,33 @@ const ChatInterface = () => {
         return msg;
       }
 
-      if (update.bulkUpdate) {
-        // Bulk update logic (Legacy/Fallback)
-        if (update.status === 'READ') {
-          const isMyMessage = isUserRole ? msg.isUserSender : !msg.isUserSender;
-          if (isMyMessage && msg.messageStatus !== 'READ' && msg.messageStatus !== 'SEEN') {
-            return { ...msg, messageStatus: 'SEEN' };
-          }
-        }
-
-        if (msg.messageStatus === 'SENT' && update.status === 'RECEIVED') {
+      // Handle BULK updates OR individual RECEIVED updates
+      if (update.status === 'RECEIVED') {
+        const isMyMessage = isUserRole ? msg.isUserSender : !msg.isUserSender;
+        
+        if (isMyMessage && msg.messageStatus === 'SENT') {
+          console.log(`  ✓ Updating message ${msg.messageId}: SENT -> RECEIVED`);
           return { ...msg, messageStatus: 'RECEIVED' };
         }
-        return msg;
       }
 
-      if (msg.messageId == update.messageId) { // Loose equality
-        // Simple status update
-        console.log(`🔄 Updating message ${msg.messageId} status to ${update.status}`);
+      // Handle bulk READ updates
+      if (update.bulkUpdate && update.status === 'READ') {
+        const isMyMessage = isUserRole ? msg.isUserSender : !msg.isUserSender;
+        if (isMyMessage && msg.messageStatus !== 'READ' && msg.messageStatus !== 'SEEN') {
+          return { ...msg, messageStatus: 'SEEN' };
+        }
+      }
+
+      // Handle INDIVIDUAL message status updates
+      if (msg.messageId == update.messageId) {
+        console.log(`🔍 Updating message ${msg.messageId} status to ${update.status}`);
         return {
           ...msg,
           messageStatus: update.status
         };
       }
+      
       return msg;
     }));
   }, [currentUserId, isUserRole]);
@@ -162,10 +148,17 @@ const ChatInterface = () => {
     onlineStatus,
     sendTypingIndicator,
     sendMessage,
-    markMessageAsReceived,
-    markMessageAsRead,
     markAllMessagesAsRead
-  } = useWebSocket(chatId, currentUserId, recipientId, userRole.replace('ROLE_', ''), _token, handleMessageReceived, handleStatusUpdate);
+  } = useWebSocket(
+    chatId,
+    currentUserId,
+    recipientId,
+    userRole.replace('ROLE_', ''),
+    _token,
+    handleMessageReceived,
+    handleStatusUpdate
+  );
+
   const removeSelectedImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
@@ -173,7 +166,6 @@ const ChatInterface = () => {
       fileInputRef.current.value = '';
     }
   };
-  const [allMessages, setAllMessages] = useState([]);
 
   // Auto-mark incoming messages as read when viewed
   useEffect(() => {
@@ -182,21 +174,19 @@ const ChatInterface = () => {
       const isSender = isUserRole ? lastMsg.isUserSender : !lastMsg.isUserSender;
       const status = lastMsg.messageStatus?.toUpperCase();
 
-      // If messages exist and I am reading them (connected), mark all as read?
-      // Or just the last one?
-      // Let's mark ALL as read when we have messages.
       if (!isSender && status !== 'READ' && status !== 'SEEN') {
         markAllMessagesAsRead(_token);
+        // Refresh unread count after marking as read
+        refreshUnread();
       }
     }
-  }, [allMessages, connected, isUserRole, markAllMessagesAsRead, _token]);
+  }, [allMessages, connected, isUserRole, markAllMessagesAsRead, _token, refreshUnread]);
 
-  // Sync online status
+  // Sync online status from WebSocket
   useEffect(() => {
     if (recipientId && onlineStatus) {
-      const isOnline = !!onlineStatus[recipientId];
-      // Only log if status changed to avoid spam? No, effect only runs on change.
-      console.log(`👤 Recipient ${recipientId} is ${isOnline ? 'ONLINE' : 'OFFLINE'}`);
+      const recipientIdStr = String(recipientId);
+      const isOnline = !!onlineStatus[recipientIdStr];
       setRecipientOnline(isOnline);
     }
   }, [recipientId, onlineStatus]);
@@ -222,24 +212,12 @@ const ChatInterface = () => {
     loadMessages(0, true);
   }, [chatId]);
 
-  // Mark online / Join chat presence
+  // Mark as read when connected
   useEffect(() => {
     if (connected && chatId) {
       markAsRead();
-      // If there was a join method, we would call it here.
-      // For now, rely on connection + markAsRead.
     }
   }, [connected, chatId]);
-
-
-
-  // Update recipient online status
-  useEffect(() => {
-    if (chatDetails) {
-      const recipientId = isUserRole ? chatDetails.taskerId : chatDetails.userId;
-      setRecipientOnline(onlineStatus[recipientId] === true);
-    }
-  }, [onlineStatus, chatDetails, isUserRole]);
 
   // Check if someone is typing
   useEffect(() => {
@@ -253,6 +231,17 @@ const ChatInterface = () => {
       scrollToBottom();
     }
   }, [allMessages]);
+
+  // Refresh unread count when chat opens
+  useEffect(() => {
+    if (chatId) {
+      // Small delay to ensure backend has processed the mark-as-read
+      const timer = setTimeout(() => {
+        refreshUnread();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [chatId, refreshUnread]);
 
   // Mark messages as read when chat opens
   const markAsRead = async () => {
@@ -269,21 +258,17 @@ const ChatInterface = () => {
       });
 
       if (response.ok) {
-        console.log('Messages marked as read via REST endpoint');
+        console.log('✅ Messages marked as read via REST endpoint');
+        // Refresh unread count after successfully marking as read
+        setTimeout(() => refreshUnread(), 300);
       } else {
-        console.error('Failed to mark messages as read:', response.status);
+        console.error('❌ Failed to mark messages as read:', response.status);
       }
     } catch (error) {
-      console.error('Error marking as read:', error);
+      console.error('❌ Error marking as read:', error);
     }
   };
 
-  // Then your useEffect that calls markAsRead
-  useEffect(() => {
-    if (connected && chatId) {
-      markAsRead();
-    }
-  }, [connected, chatId]);
   const fetchChat = async () => {
     try {
       const response = await fetch(`${API_BASE}/chat/getChat/${chatId}`, {
@@ -291,6 +276,7 @@ const ChatInterface = () => {
       });
       if (response.ok) {
         const data = await response.json();
+        console.log('🛠 Debug: chatDetails:', data);
         setChatDetails(data);
       }
     } catch (error) {
@@ -370,15 +356,12 @@ const ChatInterface = () => {
   const handleInputChange = (e) => {
     setInputMessage(e.target.value);
 
-    // Send typing indicator
     sendTypingIndicator(true);
 
-    // Clear previous timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Stop typing indicator after 2 seconds of no typing
     typingTimeoutRef.current = setTimeout(() => {
       sendTypingIndicator(false);
     }, 2000);
@@ -443,6 +426,15 @@ const ChatInterface = () => {
         });
 
         sendMessage(savedMessage);
+        const wsMessage = {
+          ...savedMessage,
+          imageDto: savedMessage.imageDto ? {
+            ...savedMessage.imageDto,
+            fileData: null
+          } : null
+        };
+        sendMessage(wsMessage);
+
         setSelectedImage(null);
         setImagePreview(null);
         sendTypingIndicator(false);
@@ -471,7 +463,6 @@ const ChatInterface = () => {
         setPhoneNumber(phone);
         setShowCallModal(true);
       } else {
-        // Try to get error message from text or json
         const errorText = await response.text();
         try {
           const errorJson = JSON.parse(errorText);
@@ -548,7 +539,6 @@ const ChatInterface = () => {
   };
 
   const formatTime = (timestamp) => {
-    // Ensure timestamp is treated as UTC if it doesn't have timezone info
     let timeStr = timestamp;
     if (typeof timeStr === 'string' && !timeStr.endsWith('Z') && !timeStr.includes('+')) {
       timeStr += 'Z';
@@ -565,7 +555,6 @@ const ChatInterface = () => {
     }
   };
 
-  // Styles (keeping the same styles from original)
   const styles = {
     container: {
       position: 'fixed',
@@ -723,28 +712,6 @@ const ChatInterface = () => {
       color: '#95a5a6',
       fontWeight: '500'
     },
-    connectionIndicator: {
-      position: 'fixed',
-      bottom: '1rem',
-      right: '1rem',
-      padding: '0.5rem 1rem',
-      borderRadius: '20px',
-      fontSize: '0.8125rem',
-      fontWeight: '500',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-      zIndex: 1000,
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem'
-    },
-    connected: {
-      background: '#2ecc71',
-      color: '#ffffff'
-    },
-    disconnected: {
-      background: '#e74c3c',
-      color: '#ffffff'
-    },
     inputContainer: {
       background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
       borderTop: '2px solid #e9ecef',
@@ -756,7 +723,8 @@ const ChatInterface = () => {
       position: 'relative',
       marginBottom: '0.75rem',
       display: 'inline-block'
-    }, imagePreview: {
+    },
+    imagePreview: {
       maxWidth: '150px',
       maxHeight: '150px',
       borderRadius: '12px',
@@ -870,7 +838,8 @@ const ChatInterface = () => {
       borderRadius: '12px',
       cursor: 'pointer',
       fontWeight: '500'
-    }, imageModal: {
+    },
+    imageModal: {
       background: 'transparent',
       padding: '2rem',
       maxWidth: '90vw',
@@ -929,10 +898,8 @@ const ChatInterface = () => {
           <div style={styles.chatInfo}>
             <h1 style={styles.chatTitle}>{recipientName || 'Loading...'}</h1>
             <div style={styles.statusIndicator}>
-              {/* <div style={recipientOnline ? styles.onlineDot : styles.offlineDot}></div> */}
-              {/* <span>{recipientOnline ? 'Online' : 'Offline'}</span> */}
-              {<span style={styles.offlineDot}></span>}
-              {<span> {'offline'}</span>}
+              <div style={recipientOnline ? styles.onlineDot : styles.offlineDot}></div>
+              <span>{recipientOnline ? 'Online' : 'Offline'}</span>
 
             </div>
           </div>

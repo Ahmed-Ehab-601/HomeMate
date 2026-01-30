@@ -1,31 +1,27 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import SockJS from 'sockjs-client';
-import { Stomp } from '@stomp/stompjs';
-import { baseUrl } from '../utils/apiClient';
+import { useGlobalWebSocket } from '../contexts/WebSocketContext';
 
 /**
- * Custom React hook for WebSocket connection
- * Handles real-time messaging, status updates, and presence
- * 
- * @param {string|number} chatId - The chat ID to connect to
- * @param {string|number} userId - Current user's ID
- * @param {string|number} userId - Current user's ID
- * @param {string|number} [recipientId] - ID of the other user in chat (to track presence)
- * @param {string} role - User's role (USER or TASKER)
- * @param {string} token - JWT authentication token
- * @param {Function} onMessageReceived - Callback for new messages
- * @param {Function} onStatusUpdate - Callback for status updates
- * @returns {Object} WebSocket connection state and methods
+ * Custom React hook for WebSocket interaction (Chat specific)
+ * Now uses the shared WebSocketContext connection
  */
 export const useWebSocket = (chatId, userId, recipientId, role, token, onMessageReceived, onStatusUpdate) => {
-  // State
-  const [connected, setConnected] = useState(false);
+  const {
+    connected,
+    error,
+    onlineStatus,
+    client,
+    sendTypingIndicator: sendGlobalTyping,
+    sendPresenceUpdate,
+    sendHeartbeat
+  } = useGlobalWebSocket();
 
   const [typingUsers, setTypingUsers] = useState(new Set());
-  const [onlineStatus, setOnlineStatus] = useState({});
-  const [error, setError] = useState(null);
+  const subscriptionsRef = useRef([]);
+  const typingTimeoutRef = useRef(null);
+  const isActiveRef = useRef(true); // Track if this chat is currently active
 
-  // Keep latest callbacks in refs to avoid stale closures in subscriptions
+  // Keep callback refs
   const onMessageReceivedRef = useRef(onMessageReceived);
   const onStatusUpdateRef = useRef(onStatusUpdate);
 
@@ -34,12 +30,16 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
     onStatusUpdateRef.current = onStatusUpdate;
   }, [onMessageReceived, onStatusUpdate]);
 
-  // Refs
-  const stompClientRef = useRef(null);
-  const subscriptionsRef = useRef([]);
-  const reconnectTimeoutRef = useRef(null);
-  const reconnectAttempts = useRef(0);
-  const typingTimeoutRef = useRef(null);
+  // Mark this chat as active when mounted, inactive when unmounted
+  useEffect(() => {
+    isActiveRef.current = true;
+    console.log(`✅ [Hook] Chat ${chatId} is now ACTIVE`);
+    
+    return () => {
+      isActiveRef.current = false;
+      console.log(`❌ [Hook] Chat ${chatId} is now INACTIVE`);
+    };
+  }, [chatId]);
 
   // Constants
   const WEBSOCKET_URL = baseUrl + '/HomeMate';
@@ -47,306 +47,114 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
   const MAX_RECONNECT_ATTEMPTS = 5;
   const RECONNECT_DELAY_BASE = 1000;
   const MAX_RECONNECT_DELAY = 30000;
+  // Subscribe to chat-specific topics when connected and chatId is present
+  useEffect(() => {
+    if (!connected || !client || !chatId) return;
 
-  /**
-   * Connect to WebSocket server
-   */
-  const connect = useCallback(() => {
-    // Don't connect if already connected
-    if (stompClientRef.current?.connected) {
-      console.log('✅ Already connected to WebSocket');
-      return;
-    }
+    console.log(`🔌 [Hook] Subscribing to chat ${chatId}`);
 
-    // Validate required parameters
-    if (!chatId || !userId || !token) {
-      console.error('❌ Missing required parameters for WebSocket connection');
-      setError('Missing connection parameters');
-      return;
-    }
-
-    console.log('🔌 Connecting to WebSocket...', { chatId, userId, role });
+    const subs = [];
 
     try {
-      // Create SockJS connection
-      const socket = new SockJS(WEBSOCKET_URL);
-
-      // Create STOMP client with proper factory function
-      const client = Stomp.over(() => socket);
-
-      // Configure client
-      client.reconnectDelay = 5000;
-      client.heartbeatIncoming = 4000;
-      client.heartbeatOutgoing = 4000;
-
-      // Debug mode (set to false in production)
-      client.debug = (str) => {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('STOMP:', str);
-        }
-      };
-
-      // Connection headers with authentication
-      const connectHeaders = {
-        Authorization: `Bearer ${token}`,
-        userId: role === 'USER' ? String(userId) : '',
-        taskerId: role === 'TASKER' ? String(userId) : '',
-        role: role
-      };
-
-      // Connect to WebSocket
-      client.connect(
-        connectHeaders,
-        // Success callback
-        () => {
-          console.log('✅ WebSocket Connected Successfully');
-          setConnected(true);
-          setError(null);
-          reconnectAttempts.current = 0;
-          stompClientRef.current = client;
-
-          // Subscribe to all necessary topics
-          subscribeToTopics(client);
-        },
-        // Error callback
-        (error) => {
-          console.error('❌ WebSocket connection error:', error);
-          setConnected(false);
-          setError(error.message || 'Connection failed');
-          handleReconnect();
-        }
-      );
-    } catch (error) {
-      console.error('❌ Error creating WebSocket connection:', error);
-      setError(error.message);
-      handleReconnect();
-    }
-  }, [chatId, userId, recipientId, role, token]);
-
-  /**
-   * Subscribe to all WebSocket topics
-   */
-  const subscribeToTopics = useCallback((client) => {
-    try {
-      // 1. Subscribe to chat messages (Only if chatId exists)
-      if (chatId) {
-        const chatSub = client.subscribe(`/send/chat/${chatId}`, (message) => {
-          try {
-            const newMessage = JSON.parse(message.body);
-            console.log('📨 WS Received in hook (MAIN):', newMessage);
-
-            if (onMessageReceivedRef.current) {
-              onMessageReceivedRef.current(newMessage);
-            }
-
+      // 1. Chat Messages
+      const chatSub = client.subscribe(`/send/chat/${chatId}`, (message) => {
+        try {
+          const newMessage = JSON.parse(message.body);
+          
+          console.log(`📨 [Hook] Message received in chat ${chatId}:`, {
+            messageId: newMessage.messageId,
+            isActive: isActiveRef.current,
+            sender: newMessage.isUserSender ? 'USER' : 'TASKER',
+            myRole: role
+          });
+          
+          if (onMessageReceivedRef.current) {
+            onMessageReceivedRef.current(newMessage);
+          }
+          
+          // CRITICAL FIX: Only auto-mark if this chat is CURRENTLY ACTIVE
+          if (isActiveRef.current) {
             const isSender = role === 'USER' ? newMessage.isUserSender : !newMessage.isUserSender;
             if (!isSender && newMessage.messageStatus === 'SENT') {
+              console.log(`✅ [Hook] Auto-marking message ${newMessage.messageId} as RECEIVED (chat is active)`);
               markMessageAsReceived(newMessage.messageId, token);
             }
-
-            // Infer presence: If we received a message, they are online
-            if (!isSender) {
-              setOnlineStatus(prev => ({
-                ...prev,
-                [newMessage.senderId]: true
-              }));
-            }
-          } catch (err) {
-            console.error('Error processing message (MAIN):', err);
+          } else {
+            console.log(`⏸️ [Hook] Skipping auto-mark for message ${newMessage.messageId} (chat is inactive)`);
           }
-        });
-        subscriptionsRef.current.push(chatSub);
-
-        // DEBUG: Subscribe to fallback topics
-        const fallbackTopics = [
-          `/send/chat/${chatId}/message`,
-          `/send/messages/${chatId}`,
-          `/send/message/${chatId}`,
-          `/send/chat/${chatId}`
-        ];
-
-        fallbackTopics.forEach(topic => {
-          const sub = client.subscribe(topic, (message) => {
-            console.log(`📨 WS Received on FALLBACK topic (${topic}):`, message.body);
-            try {
-              const newMessage = JSON.parse(message.body);
-              if (onMessageReceivedRef.current) {
-                onMessageReceivedRef.current(newMessage);
-              }
-            } catch (e) {
-              console.error('Error parsing fallback message:', e);
-            }
-          });
-          subscriptionsRef.current.push(sub);
-        });
-
-        // 2. Subscribe to message status updates
-        const statusSub = client.subscribe(`/send/chat/${chatId}/status`, (message) => {
-          try {
-            const statusUpdate = JSON.parse(message.body);
-            console.log('📊 WS Status update in hook:', statusUpdate);
-
-            if (onStatusUpdateRef.current) {
-              onStatusUpdateRef.current(statusUpdate);
-            }
-          } catch (err) {
-            console.error('Error processing status update:', err);
-          }
-        });
-        subscriptionsRef.current.push(statusSub);
-
-        // 3. Subscribe to typing indicators
-        const typingSub = client.subscribe(`/send/chat/${chatId}/typing`, (message) => {
-          try {
-            const typingData = JSON.parse(message.body);
-            console.log('⌨️ Typing indicator:', typingData);
-
-            // Only track other users' typing status
-            // Compare as strings to handle potential type mismatches (API often returns strings)
-            if (String(typingData.userId) !== String(userId)) {
-              // Infer presence: If they are typing, they are online
-              setOnlineStatus(prev => ({
-                ...prev,
-                [typingData.userId]: true
-              }));
-
-              setTypingUsers(prev => {
-                const newSet = new Set(prev);
-                if (typingData.isTyping) {
-                  newSet.add(typingData.userId);
-                } else {
-                  newSet.delete(typingData.userId);
-                }
-                return newSet;
-              });
-            }
-          } catch (err) {
-            console.error('Error processing typing indicator:', err);
-          }
-        });
-        subscriptionsRef.current.push(typingSub);
-
-        // 4. Subscribe to read receipts
-        const readReceiptSub = client.subscribe(`/send/chat/${chatId}/read-receipt`, (message) => {
-          try {
-            const receipt = JSON.parse(message.body);
-            console.log('📖 Read receipt:', receipt);
-
-            if (onStatusUpdateRef.current) {
-              onStatusUpdateRef.current({
-                type: 'READ_RECEIPT',
-                ...receipt,
-                status: 'READ'
-              });
-            }
-
-            // Infer presence: If they read it, they are online
-            if (receipt.readBy && String(receipt.readBy) !== String(userId)) {
-              setOnlineStatus(prev => ({
-                ...prev,
-                [receipt.readBy]: true
-              }));
-            }
-          } catch (err) {
-            console.error('Error processing read receipt:', err);
-          }
-        });
-        subscriptionsRef.current.push(readReceiptSub);
-      }
-
-      // 5. Subscribe to personal notifications
-      const notificationSub = client.subscribe(
-        `/send/notifications/${role.toLowerCase()}/${userId}`,
-        (message) => {
-          try {
-            const notification = JSON.parse(message.body);
-            console.log('🔔 Notification:', notification);
-
-            // Handle notification (e.g., show toast, update badge)
-            if (notification.type === 'NEW_MESSAGE') {
-              console.log('New message notification from chat:', notification.chatId);
-            }
-          } catch (err) {
-            console.error('Error processing notification:', err);
-          }
-        }
-      );
-      subscriptionsRef.current.push(notificationSub);
-
-      // 6. Subscribe to online status updates (My own status - confirming connection)
-      const statusUpdateSub = client.subscribe(`/send/status/${userId}`, (message) => {
-        try {
-          const status = JSON.parse(message.body);
-          console.log('👤 My status update:', status);
-
-          // We don't necessarily update onlineStatus for ourselves, but we could
         } catch (err) {
-          console.error('Error processing status update:', err);
+          console.error('Error processing msg:', err);
         }
       });
-      subscriptionsRef.current.push(statusUpdateSub);
+      subs.push(chatSub);
 
-      // 7. Subscribe to RECIPIENT status (The other user)
-      if (recipientId) {
-        console.log(`👀 Watching status for recipient: ${recipientId}`);
-        const recipientStatusSub = client.subscribe(`/send/status/${recipientId}`, (message) => {
-          try {
-            const status = JSON.parse(message.body);
-            console.log('👤 Recipient status update:', status);
-
-            const statusUserId = status.userId || status.taskerId;
-            setOnlineStatus(prev => ({
-              ...prev,
-              [statusUserId]: status.status === 'online'
-            }));
-          } catch (err) {
-            console.error('Error processing recipient status:', err);
+      // 2. Status Updates
+      const statusSub = client.subscribe(`/send/chat/${chatId}/status`, (message) => {
+        try {
+          const update = JSON.parse(message.body);
+          if (onStatusUpdateRef.current) {
+            onStatusUpdateRef.current(update);
           }
-        });
-        subscriptionsRef.current.push(recipientStatusSub);
-      }
+        } catch (err) {
+          console.error('Error processing status:', err);
+        }
+      });
+      subs.push(statusSub);
 
-      console.log('✅ Subscribed to all topics successfully');
-    } catch (error) {
-      console.error('❌ Error subscribing to topics:', error);
-      setError('Failed to subscribe to topics');
+      // 3. Typing Indicators
+      const typingSub = client.subscribe(`/send/chat/${chatId}/typing`, (message) => {
+        try {
+          const data = JSON.parse(message.body);
+          if (String(data.userId) !== String(userId)) {
+            setTypingUsers(prev => {
+              const newSet = new Set(prev);
+              if (data.isTyping) newSet.add(data.userId);
+              else newSet.delete(data.userId);
+              return newSet;
+            });
+          }
+        } catch (err) {
+          console.error('Error processing typing:', err);
+        }
+      });
+      subs.push(typingSub);
+
+      // 4. Read Receipts
+      const readSub = client.subscribe(`/send/chat/${chatId}/read-receipt`, (message) => {
+        try {
+          const receipt = JSON.parse(message.body);
+          if (onStatusUpdateRef.current) {
+            onStatusUpdateRef.current({
+              type: 'READ_RECEIPT',
+              ...receipt,
+              status: 'READ'
+            });
+          }
+        } catch (err) {
+          console.error('Error processing read receipt:', err);
+        }
+      });
+      subs.push(readSub);
+
+    } catch (err) {
+      console.error('❌ [Hook] Subscription error:', err);
     }
-  }, [chatId, userId, recipientId, role, token]); // Callbacks are now in refs
 
-  /**
-   * Handle reconnection with exponential backoff
-   */
-  const handleReconnect = useCallback(() => {
-    if (reconnectAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
-      console.error('❌ Max reconnection attempts reached');
-      setError('Connection failed. Please refresh the page.');
-      return;
-    }
+    subscriptionsRef.current = subs;
 
-    reconnectAttempts.current += 1;
-    const delay = Math.min(
-      RECONNECT_DELAY_BASE * Math.pow(2, reconnectAttempts.current),
-      MAX_RECONNECT_DELAY
-    );
+    return () => {
+      console.log(`🔌 [Hook] Unsubscribing from chat ${chatId}`);
+      subs.forEach(s => s.unsubscribe());
+      subscriptionsRef.current = [];
+    };
+  }, [connected, client, chatId, userId, role, token]);
 
-    console.log(`🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current}/${MAX_RECONNECT_ATTEMPTS})`);
-
-    reconnectTimeoutRef.current = setTimeout(() => {
-      connect();
-    }, delay);
-  }, [connect]);
-
-  /**
-   * Send typing indicator
-   */
+  // Send Typing
   const sendTypingIndicator = useCallback((isTyping) => {
-    if (!stompClientRef.current?.connected) {
-      console.warn('Cannot send typing indicator: not connected');
-      return;
-    }
+    if (!client?.connected || !chatId) return;
 
     try {
-      stompClientRef.current.send(
+      client.send(
         `/app/chat/${chatId}/typing`,
         {},
         JSON.stringify({
@@ -356,100 +164,68 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
         })
       );
 
-      // Auto-stop typing after 2 seconds of inactivity
       if (isTyping) {
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current);
-        }
-        typingTimeoutRef.current = setTimeout(() => {
-          sendTypingIndicator(false);
-        }, 2000);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => sendTypingIndicator(false), 2000);
       }
-    } catch (error) {
-      console.error('Error sending typing indicator:', error);
+    } catch (err) {
+      console.error('Error sending typing:', err);
     }
-  }, [chatId, userId, role]);
+  }, [client, chatId, userId, role]);
 
-  /**
-   * Send a chat message via WebSocket (Broadcast only)
-   * Use this after saving to DB via REST to notify others immediately
-   */
+  // Send Message
   const sendMessage = useCallback((messageDto) => {
-    if (!stompClientRef.current?.connected) {
-      console.warn('Cannot send message via WS: not connected');
-      return;
-    }
-
+    if (!client?.connected || !chatId) return;
     try {
-      stompClientRef.current.send(
-        `/app/chat/${chatId}/send`,
-        {},
-        JSON.stringify(messageDto)
-      );
-      console.log('📤 Message broadcast via WS:', messageDto.messageId);
-    } catch (error) {
-      console.error('Error broadcasting message:', error);
+      client.send(`/app/chat/${chatId}/send`, {}, JSON.stringify(messageDto));
+    } catch (err) {
+      console.error('Error sending message:', err);
     }
-  }, [chatId]);
+  }, [client, chatId]);
 
-  /**
-   * Broadcast a status update via WebSocket
-   */
+  // Update Status
   const updateMessageStatus = useCallback((messageId, status) => {
-    if (!stompClientRef.current?.connected) return;
-
+    if (!client?.connected || !chatId) return;
     try {
-      stompClientRef.current.send(
+      client.send(
         `/app/chat/${chatId}/status`,
         {},
-        JSON.stringify({
-          messageId: String(messageId),
-          status: status
-        })
+        JSON.stringify({ messageId: String(messageId), status })
       );
-      console.log('📤 Status update broadcast:', { messageId, status });
-    } catch (error) {
-      console.error('Error broadcasting status:', error);
+    } catch (err) {
+      console.error('Error updating status:', err);
     }
-  }, [chatId]);
+  }, [client, chatId]);
 
-  /**
-   * Mark a single message as received (call REST endpoint)
-   */
+
+
   const markMessageAsReceived = useCallback(async (messageId, authToken) => {
     if (!messageId || !authToken) return;
-
     try {
       const endpoint = role === 'USER'
         ? `${API_BASE}/message/status/user/${messageId}/received`
         : `${API_BASE}/message/status/tasker/${messageId}/received`;
 
+      console.log(`🔄 [Hook] Marking message ${messageId} as RECEIVED via ${endpoint}`);
+      
       const response = await fetch(endpoint, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Authorization': `Bearer ${authToken}` }
       });
-
+      
       if (response.ok) {
-        console.log('✅ Message marked as received:', messageId);
-        // Also broadcast the status change
+        console.log(`✅ [Hook] Message ${messageId} marked as RECEIVED`);
         updateMessageStatus(messageId, 'RECEIVED');
       } else {
-        console.error('Failed to mark message as received:', response.status);
+        console.error(`❌ [Hook] Failed to mark message ${messageId}:`, response.status);
       }
-    } catch (error) {
-      console.error('Error marking message as received:', error);
+    } catch (e) { 
+      console.error('Error marking message as received:', e); 
     }
   }, [role, updateMessageStatus]);
 
-  /**
-   * Mark a single message as read (call REST endpoint)
-   */
   const markMessageAsRead = useCallback(async (messageId, authToken) => {
     if (!messageId || !authToken) return;
-
     try {
       const endpoint = role === 'USER'
         ? `${API_BASE}/message/status/user/${messageId}/read`
@@ -457,201 +233,59 @@ export const useWebSocket = (chatId, userId, recipientId, role, token, onMessage
 
       const response = await fetch(endpoint, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Authorization': `Bearer ${authToken}` }
       });
-
-      if (response.ok) {
-        console.log('✅ Message marked as read:', messageId);
-        // Also broadcast the status change
-        updateMessageStatus(messageId, 'READ');
-      } else {
-        console.error('Failed to mark message as read:', response.status);
-      }
-    } catch (error) {
-      console.error('Error marking message as read:', error);
-    }
+      if (response.ok) updateMessageStatus(messageId, 'READ');
+    } catch (e) { console.error(e); }
   }, [role, updateMessageStatus]);
 
-  /**
-   * Mark all messages in chat as received (call REST endpoint)
-   */
-  const markAllMessagesAsReceived = useCallback(async (authToken) => {
-    if (!chatId || !authToken) return;
-
-    try {
-      const endpoint = role === 'USER'
-        ? `${API_BASE}/message/status/user/chat/${chatId}/received`
-        : `${API_BASE}/message/status/tasker/chat/${chatId}/received`;
-
-      const response = await fetch(endpoint, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        console.log('✅ All messages marked as received in chat:', chatId);
-      } else {
-        console.error('Failed to mark all messages as received:', response.status);
-      }
-    } catch (error) {
-      console.error('Error marking all messages as received:', error);
-    }
-  }, [chatId, role]);
-
-  /**
-   * Mark all messages in chat as read (call REST endpoint)
-   */
   const markAllMessagesAsRead = useCallback(async (authToken) => {
     if (!chatId || !authToken) return;
-
     try {
       const endpoint = role === 'USER'
-        ? `${API_BASE}/message/${chatId}/mark-read-user` // Verify endpoint
-        // Or maybe endpoint is mark-all-read?
-        // Let's assume the controller: @MessageMapping is mark-all-read.
-        // REST endpoint? In logic above, user said 'markAsRead' in ChatPage uses:
-        // message/${chatId}/mark-read-user
+        ? `${API_BASE}/message/${chatId}/mark-read-user`
         : `${API_BASE}/message/${chatId}/mark-read-tasker`;
+
+      console.log(`📖 [Hook] Marking all messages as read in chat ${chatId}`);
 
       const response = await fetch(endpoint, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Authorization': `Bearer ${authToken}` }
       });
 
-      if (response.ok) {
-        console.log('✅ All messages marked as read in chat:', chatId);
-        // Also broadcast the status change via WebSocket
-        // Use the WebSocket controller's mark-all-read endpoint if possible
-        if (stompClientRef.current?.connected) {
-          stompClientRef.current.send(
-            `/app/chat/${chatId}/mark-all-read`,
-            {},
-            JSON.stringify({ userId: userId, role: role })
-          );
-        }
-      } else {
-        console.error('Failed to mark all messages as read:', response.status);
+      if (response.ok && client?.connected) {
+        client.send(
+          `/app/chat/${chatId}/mark-all-read`,
+          {},
+          JSON.stringify({ userId: userId, role: role })
+        );
+        console.log(`✅ [Hook] All messages marked as read in chat ${chatId}`);
       }
-    } catch (error) {
-      console.error('Error marking all messages as read:', error);
-    }
-  }, [chatId, role, userId]);
+    } catch (e) { console.error(e); }
+  }, [chatId, role, userId, client]);
 
-  /**
-   * Disconnect from WebSocket
-   */
-  const disconnect = useCallback(() => {
-    console.log('🔌 Disconnecting WebSocket...');
-
-    // Clear typing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-      typingTimeoutRef.current = null;
-    }
-
-    // Unsubscribe from all subscriptions
-    subscriptionsRef.current.forEach(sub => {
-      try {
-        sub.unsubscribe();
-      } catch (error) {
-        console.error('Error unsubscribing:', error);
-      }
-    });
-    subscriptionsRef.current = [];
-
-    // Disconnect client
-    if (stompClientRef.current?.connected) {
-      try {
-        stompClientRef.current.disconnect(() => {
-          console.log('✅ WebSocket disconnected');
-          setConnected(false);
-        });
-      } catch (error) {
-        console.error('Error disconnecting:', error);
-      }
-    }
-
-    stompClientRef.current = null;
-
-    // Clear reconnect timeout
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
-
-    // Reset state
-    setConnected(false);
-    setError(null);
-  }, []);
-
-  /**
-   * Check if a specific user is online
-   */
-  const isUserOnline = useCallback((targetUserId) => {
-    return onlineStatus[targetUserId] === true;
+  // Is User Online Helper
+  const isUserOnline = useCallback((targetId) => {
+    const online = onlineStatus[targetId] === true;
+    console.log(`👤 [Hook] isUserOnline(${targetId}) = ${online}`, onlineStatus);
+    return online;
   }, [onlineStatus]);
 
-  /**
-   * Connect on mount, disconnect on unmount
-   */
-  useEffect(() => {
-    // START CONNECTION: Connect if we have USER info. ChatId is optional (Global vs Chat mode).
-    if (userId && token) {
-      connect();
-    }
-
-    return () => {
-      disconnect();
-    };
-  }, [chatId, userId, token, connect, disconnect]);
-
-  /**
-   * Cleanup on unmount
-   */
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Return hook API
   return {
-    // Connection state
     connected,
     error,
-
-    // Presence state
     typingUsers,
     onlineStatus,
-
-    // Methods
     sendTypingIndicator,
-    sendMessage, // Exposed new method
-    updateMessageStatus, // Exposed new method
+    sendMessage,
+    updateMessageStatus,
     markMessageAsReceived,
     markMessageAsRead,
-    markAllMessagesAsReceived,
     markAllMessagesAsRead,
-    disconnect,
     isUserOnline,
-
-    // Connection control
-    reconnect: connect
+    disconnect: () => console.warn('Disconnect handled globally now'),
+    reconnect: () => console.warn('Reconnect handled globally now'),
+    sendPresenceUpdate,
+    sendHeartbeat
   };
 };
-
-export default useWebSocket;

@@ -175,6 +175,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>24.0.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -184,8 +190,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <!-- Fixed: Use @{argLine} to allow JaCoCo to inject its arguments -->
-                    <argLine>@{argLine}</argLine>
+                    <!-- Preserve JaCoCo's argLine and add JVM args to suppress warnings -->
+                    <argLine>@{argLine} -XX:+EnableDynamicAgentLoading</argLine>
                 </configuration>
             </plugin>
 
@@ -266,3 +272,4 @@
     </reporting>
 
 </project>
+

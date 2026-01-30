@@ -5,6 +5,7 @@ import com.homemate.TaskerProfile.services.TaskerSignupService;
 import com.homemate.security.service.ValidateSignupService;
 import com.homemate.security.service.JwtService;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,9 +17,9 @@ import org.springframework.http.HttpStatus;
 @RequestMapping("/api/tasker")
 public class SignupTaskerController {
 
-    private TaskerSignupService taskerSignupService;
-    private ValidateSignupService validateSignup;
-    private JwtService jwtService;
+    private final TaskerSignupService taskerSignupService;
+    private final ValidateSignupService validateSignup;
+    private final JwtService jwtService;
 
     SignupTaskerController(
         TaskerSignupService taskerSignupService, 
@@ -31,26 +32,32 @@ public class SignupTaskerController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody TaskerSignupDTO dto) {
-        // Validate verification token if provided
-        if (dto.getVerifyToken() != null && !dto.getVerifyToken().isEmpty()) {
-            String verifiedEmail = jwtService.validateVerifyToken(dto.getVerifyToken());
-            if (verifiedEmail == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired verification token");
-            }
-            // Ensure the email in the DTO matches the verified email
-            if (!verifiedEmail.equalsIgnoreCase(dto.getEmail())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email does not match verified email");
-            }
+    public ResponseEntity<String> signup(@RequestBody @Valid TaskerSignupDTO dto) {
+
+        if (dto.getVerifyToken() == null || dto.getVerifyToken().trim().isEmpty()) {
+            String NO_TOKEN = "No verification token found";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(NO_TOKEN);
         }
 
-        String error = validateSignup.validateTaskerSignup(dto);
-        if (error != null) 
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        String verifiedEmail = jwtService.validateVerifyToken(dto.getVerifyToken());
+        if (verifiedEmail == null) {
+            String INVALID_TOKEN = "Invalid or expired verification token";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(INVALID_TOKEN);
+        }
+
+        if (!verifiedEmail.equalsIgnoreCase(dto.getEmail())) {
+            String EMAIL_MISMATCH = "Email does not match verified email";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(EMAIL_MISMATCH);
+        }
+
+        String errorMsg = validateSignup.validateTaskerSignup(dto);
+        if (errorMsg != null) 
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
 
         String jwt = taskerSignupService.registerTasker(dto);
         if (jwt == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("user with the same username or email already exists");
+            String USER_ALREADY_EXISTS = "user with the same username or email already exists";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(USER_ALREADY_EXISTS);
         }
         return ResponseEntity.ok(jwt);
     }

@@ -175,7 +175,6 @@ class TaskManagementServiceUpdateStatusTest {
         when(taskStatusDao.getTaskWorkedHours(taskId)).thenReturn(workedHours);
         when(taskStatusDao.updateTaskerWorkedHours(taskerId, workedHours)).thenReturn(true);
         when(taskStatusDao.updateTaskBill(eq(taskId), anyDouble())).thenReturn(true);
-        when(taskStatusDao.updateTaskerTotalEarning(eq(taskerId), anyDouble())).thenReturn(true);
         when(taskStatusDao.updateTaskEndData(eq(taskId), any(Timestamp.class))).thenReturn(true);
         when(taskStatusDao.updateStatus(taskId, newStatus)).thenReturn(true);
 
@@ -193,7 +192,6 @@ class TaskManagementServiceUpdateStatusTest {
         verify(taskStatusDao).getTaskWorkedHours(taskId);
         verify(taskStatusDao).updateTaskerWorkedHours(taskerId, workedHours);
         verify(taskStatusDao).updateTaskBill(eq(taskId), eq(hourRate * workedHours));
-        verify(taskStatusDao).updateTaskerTotalEarning(eq(taskerId), eq(hourRate * workedHours));
         verify(taskStatusDao).updateTaskEndData(eq(taskId), any(Timestamp.class));
         verify(taskStatusDao).updateStatus(taskId, newStatus);
     }
@@ -216,7 +214,6 @@ class TaskManagementServiceUpdateStatusTest {
         when(taskStatusDao.getTaskWorkedHours(taskId)).thenReturn(workedHours);
         when(taskStatusDao.updateTaskerWorkedHours(taskerId, workedHours)).thenReturn(true);
         when(taskStatusDao.updateTaskBill(eq(taskId), anyDouble())).thenReturn(true);
-        when(taskStatusDao.updateTaskerTotalEarning(eq(taskerId), anyDouble())).thenReturn(true);
         when(taskStatusDao.updateTaskEndData(eq(taskId), any(Timestamp.class))).thenReturn(true);
         when(taskStatusDao.updateStatus(taskId, newStatus)).thenReturn(true);
 
@@ -433,7 +430,6 @@ class TaskManagementServiceUpdateStatusTest {
         when(taskStatusDao.getTaskWorkedHours(taskId)).thenReturn(workedHours);
         when(taskStatusDao.updateTaskerWorkedHours(taskerId, workedHours)).thenReturn(true);
         when(taskStatusDao.updateTaskBill(eq(taskId), anyDouble())).thenReturn(true);
-        when(taskStatusDao.updateTaskerTotalEarning(eq(taskerId), anyDouble())).thenReturn(true);
         when(taskStatusDao.updateTaskEndData(eq(taskId), any(Timestamp.class))).thenReturn(true);
         when(taskStatusDao.updateStatus(taskId, newStatus)).thenReturn(true);
 

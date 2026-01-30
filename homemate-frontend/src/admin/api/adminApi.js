@@ -224,6 +224,342 @@ export const getReports = async ({
     return data;
 };
 
+export const respondToReport = async (reportId, message) => {
+    return apiFetch(`/api/reports/${reportId}/response`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+    });
+}
+
+
+
+// User Analysis APIs
+export const getUserGenderCount = async () => {
+    const response = await apiFetch('/api/analysis/user/gender-count');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch gender count',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getUserStatusCounts = async () => {
+    const response = await apiFetch('/api/analysis/user/status-counts');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch status counts',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getUserAgeBuckets = async () => {
+    const response = await apiFetch('/api/analysis/user/age-buckets');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch age buckets',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getUserNewAccounts = async (ranges) => {
+    const response = await apiFetch('/api/analysis/user/new-accounts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ranges }),
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch new accounts',
+            data,
+        };
+    }
+
+    return data;
+};
+
+// Tasker Analysis APIs
+export const getTaskerGenderCount = async () => {
+    const response = await apiFetch('/api/analysis/tasker/gender-count');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker gender count',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerAgeBuckets = async () => {
+    const response = await apiFetch('/api/analysis/tasker/age-buckets');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker age buckets',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerNewAccounts = async (ranges) => {
+    const response = await apiFetch('/api/analysis/tasker/new-accounts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ranges }),
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker new accounts',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerRatingRanges = async () => {
+    const response = await apiFetch('/api/analysis/tasker/rating-ranges');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker rating ranges',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerHourRateRanges = async () => {
+    const response = await apiFetch('/api/analysis/tasker/hour-rate-ranges');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker hour rate ranges',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerWorkedHoursRanges = async () => {
+    const response = await apiFetch('/api/analysis/tasker/worked-hours-ranges');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker worked hours ranges',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerServiceCounts = async (serviceIds) => {
+    const response = await apiFetch('/api/analysis/tasker/service-counts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ serviceIds }),
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker service counts',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerCityCounts = async (cities) => {
+    const response = await apiFetch('/api/analysis/tasker/city-counts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cities }),
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker city counts',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskerStatusCounts = async () => {
+    const response = await apiFetch('/api/analysis/tasker/status-counts');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch tasker status counts',
+            data,
+        };
+    }
+
+    return data;
+};
+
+// Task Analysis APIs
+export const getTaskStartDateRanges = async (ranges) => {
+    const response = await apiFetch('/api/analysis/task/start-date-ranges', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ranges }),
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch task start date ranges',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskEndDateRanges = async (ranges) => {
+    const response = await apiFetch('/api/analysis/task/end-date-ranges', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ranges }),
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch task end date ranges',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskBillRanges = async () => {
+    const response = await apiFetch('/api/analysis/task/bill-ranges');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch task bill ranges',
+            data,
+        };
+    }
+
+    return data;
+};
+
+export const getTaskStatusCounts = async () => {
+    const response = await apiFetch('/api/analysis/task/status-counts');
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw {
+            status: response.status,
+            message: data?.message || data?.error || 'Failed to fetch task status counts',
+            data,
+        };
+    }
+
+    return data;
+
+};
+
+// Report & Review Analysis APIs
+export const getReportsPerService = async () => {
+    const response = await apiFetch('/api/analysis/report-review/reports-per-service');
+    const data = await parseJson(response);
+    if (!response.ok) throw { status: response.status, message: data?.message || 'Failed to fetch reports per service' };
+    return data;
+};
+
+export const getReviewsPerService = async () => {
+    const response = await apiFetch('/api/analysis/report-review/reviews-per-service');
+    const data = await parseJson(response);
+    if (!response.ok) throw { status: response.status, message: data?.message || 'Failed to fetch reviews per service' };
+    return data;
+};
+
+export const getReportStatusCounts = async () => {
+    const response = await apiFetch('/api/analysis/report-review/report-status-counts');
+    const data = await parseJson(response);
+    if (!response.ok) throw { status: response.status, message: data?.message || 'Failed to fetch report status counts' };
+    return data;
+};
+
+export const getAvgRatingPerService = async () => {
+    const response = await apiFetch('/api/analysis/report-review/avg-rating-per-service');
+    const data = await parseJson(response);
+    if (!response.ok) throw { status: response.status, message: data?.message || 'Failed to fetch avg rating per service' };
+    return data;
+};
+
 export default {
     getUsers,
     getTaskers,
@@ -244,4 +580,26 @@ export default {
     suspendUsers,
     reactiveUsers,
     getReports,
+    respondToReport,
+    getUserGenderCount,
+    getUserStatusCounts,
+    getUserAgeBuckets,
+    getUserNewAccounts,
+    getTaskerGenderCount,
+    getTaskerAgeBuckets,
+    getTaskerNewAccounts,
+    getTaskerRatingRanges,
+    getTaskerHourRateRanges,
+    getTaskerWorkedHoursRanges,
+    getTaskerServiceCounts,
+    getTaskerCityCounts,
+    getTaskerStatusCounts,
+    getTaskStartDateRanges,
+    getTaskEndDateRanges,
+    getTaskBillRanges,
+    getTaskStatusCounts,
+    getReportsPerService,
+    getReviewsPerService,
+    getReportStatusCounts,
+    getAvgRatingPerService,
 };

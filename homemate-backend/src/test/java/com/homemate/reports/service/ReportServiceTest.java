@@ -31,6 +31,9 @@ class ReportServiceTest {
     @Mock
     private ReportDao reportDao;
 
+    @Mock
+    private com.homemate.notification.service.EmailService emailService;
+
     @InjectMocks
     private ReportServiceImp reportService;
 
@@ -123,6 +126,33 @@ class ReportServiceTest {
         assertEquals(15L, result.getTotalElements());
         
         verify(reportDao, times(1)).getAllShortReports(5L, 5L, filterDto);
+    }
+
+    @Test
+    void testGetAllShortReports_PageSizeExceedsLimit() {
+        // Arrange
+        ReportFilterDto filterDto = new ReportFilterDto();
+        List<ShortReport> mockReports = new ArrayList<>();
+        mockReports.add(ShortReport.builder()
+                .reportID(1)
+                .header("Test Report")
+                .taskID(1)
+                .reporter(true)
+                .adminStatus(AdminStatus.PENDING)
+                .build());
+        
+        when(reportDao.getAllShortReports(30L, 0L, filterDto)).thenReturn(mockReports);
+        when(reportDao.countAllReports(filterDto)).thenReturn(1L);
+
+        // Act
+        PaginatedResponse<ShortReport> result = reportService.getAllShortReports(0, 150, filterDto);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(0, result.getCurrentPage());
+        assertEquals(30, result.getPageSize());
+        assertEquals(1, result.getData().size());
+        verify(reportDao, times(1)).getAllShortReports(30L, 0L, filterDto);
     }
 
     @Test
@@ -474,5 +504,57 @@ class ReportServiceTest {
         // Assert
         assertTrue(result);
         verify(reportDao, times(1)).submitReport(submitReport, true);
+    }
+    @Test
+    void testRespondToReport_Success() {
+        // Arrange
+        DetailedReport mockReport = DetailedReport.builder()
+                .reportID(1)
+                .header("Test Report")
+                .body("Test Body")
+                .taskID(1)
+                .userID(1)
+                .userEmail("user@test.com")
+                .taskerID(1)
+                .taskerEmail("tasker@test.com")
+                .adminStatus(AdminStatus.DONE)
+                .build();
+
+        when(reportDao.getDetailedReportById(1)).thenReturn(Optional.of(mockReport));
+
+        // Act
+        reportService.respondToReport(1, "Test Response");
+
+        // Assert
+        verify(emailService, times(1)).sendDirectEmail("user@test.com", "Admin Response: Test Report", "Test Response");
+        verify(emailService, times(1)).sendDirectEmail("tasker@test.com", "Admin Response: Test Report", "Test Response");
+    }
+
+    @Test
+    void testRespondToReport_NotDone_ThrowsException() {
+        // Arrange
+        DetailedReport mockReport = DetailedReport.builder()
+                .reportID(1)
+                .header("Test Report")
+                .adminStatus(AdminStatus.PENDING)
+                .build();
+
+        when(reportDao.getDetailedReportById(1)).thenReturn(Optional.of(mockReport));
+
+        // Act & Assert
+        assertThrows(IllegalStateException.class, () -> reportService.respondToReport(1, "Test Response"));
+        
+        verify(emailService, never()).sendDirectEmail(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void testRespondToReport_NotFound() {
+        // Arrange
+        when(reportDao.getDetailedReportById(999)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> reportService.respondToReport(999, "Test Response"));
+
+        verify(emailService, never()).sendDirectEmail(anyString(), anyString(), anyString());
     }
 }

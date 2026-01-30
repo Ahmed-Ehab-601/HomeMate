@@ -9,6 +9,7 @@ import com.homemate.reports.service.IReportService;
 import com.homemate.security.model.AppUserDetails;
 import com.homemate.util.PaginatedResponse;
 
+import com.homemate.notification.service.EmailService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,32 +18,24 @@ import java.util.Optional;
 @Service
 public class ReportServiceImp implements IReportService {
 
-    private final int PAGE_SIZE_LIMIT = 100;
+    private final int PAGE_SIZE_LIMIT = 30;
     private final ReportDao reportDao;
+    private final EmailService emailService;
 
-    public ReportServiceImp(ReportDao reportDao) {
+    public ReportServiceImp(ReportDao reportDao, EmailService emailService) {
         this.reportDao = reportDao;
+        this.emailService = emailService;
     }
 
     @Override
     public PaginatedResponse<ShortReport> getAllShortReports(int pageNumber, int pageSize, ReportFilterDto filterDto) {
         
-        // Validate limit
-        pageNumber = Math.min(pageNumber, PAGE_SIZE_LIMIT);
-
-        // Calculate offset
+        pageSize = Math.min(pageSize, PAGE_SIZE_LIMIT);
         long offset = (long) pageNumber * pageSize;
-
-        // Fetch reports for the current page with filters
         List<ShortReport> reports = reportDao.getAllShortReports((long) pageSize, offset, filterDto);
-
-        // Get total count of all reports with filters
         Long totalElements = reportDao.countAllReports(filterDto);
-
-        // Calculate total pages
         int totalPages = (int) Math.ceil((double) totalElements / pageSize);
 
-        // Build and return the paginated response
         return PaginatedResponse.<ShortReport>builder()
                 .data(reports)
                 .currentPage(pageNumber)
@@ -99,5 +92,29 @@ public class ReportServiceImp implements IReportService {
     public Optional<DetailedReport> completeReport(int reportID) {
         reportDao.updateReportStatus(reportID, "done");
         return reportDao.getDetailedReportById(reportID);
+    }
+
+    @Override
+    public void respondToReport(int reportID, String message) {
+        Optional<DetailedReport> reportOpt = reportDao.getDetailedReportById(reportID);
+        if (reportOpt.isEmpty()) {
+             throw new IllegalArgumentException("Report with ID " + reportID + " not found");
+        }
+
+        DetailedReport report = reportOpt.get();
+
+        // Only respond if the report is marked as done
+        if (report.getAdminStatus() == null || !"done".equalsIgnoreCase(report.getAdminStatus().name())) {
+            throw new IllegalStateException("Report is not in done status");
+        }
+        
+        String subject = "Admin Response: " + report.getHeader();
+        
+        if (report.getUserEmail() != null) {
+            emailService.sendDirectEmail(report.getUserEmail(), subject, message);
+        }
+        if (report.getTaskerEmail() != null) {
+            emailService.sendDirectEmail(report.getTaskerEmail(), subject, message);
+        }
     }
 }

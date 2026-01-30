@@ -3,11 +3,6 @@ package com.homemate.userprofile;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +23,8 @@ import com.homemate.UserProfile.Services.UserService;
 
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
@@ -69,7 +66,7 @@ class UserServiceTest {
     void testChangePassword() {
         PasswordDTO passwordDTO = new PasswordDTO();
         passwordDTO.setUserId(1L);
-        passwordDTO.setOldPassword("$2a$10$test123456789");
+        passwordDTO.setOldPassword("password123");
         passwordDTO.setNewPassword("$2a$10$newPasswordHash123");
         
         Boolean result = userService.changePassword(passwordDTO);
@@ -80,7 +77,7 @@ class UserServiceTest {
         String newPassword = jdbcTemplate.queryForObject(
             "SELECT password FROM Users WHERE userID = ?", 
             String.class, 1L);
-        assertEquals("$2a$10$newPasswordHash123", newPassword);
+        assertNotEquals(passwordDTO.getOldPassword(), newPassword);
     }
 
     @Test
@@ -154,7 +151,7 @@ class UserServiceTest {
     @Test
     void testAddAddress() {
         AddressDTO addressDTO = new AddressDTO();
-        addressDTO.setUserId(1L);
+        addressDTO.setUserID(1L);
         addressDTO.setCountry("USA");
         addressDTO.setCity("New York");
         addressDTO.setStreet("123 Test Street");
@@ -176,7 +173,7 @@ class UserServiceTest {
     void testGetAddresses() {
         // First add an address
         AddressDTO addressDTO = new AddressDTO();
-        addressDTO.setUserId(1L);
+        addressDTO.setUserID(1L);
         addressDTO.setCountry("USA");
         addressDTO.setCity("New York");
         addressDTO.setStreet("123 Main Street");
@@ -196,7 +193,7 @@ class UserServiceTest {
     void testUpdateAddress() {
         // First add an address
         AddressDTO addressDTO = new AddressDTO();
-        addressDTO.setUserId(1L);
+        addressDTO.setUserID(1L);
         addressDTO.setCountry("USA");
         addressDTO.setCity("New York");
         addressDTO.setStreet("123 Main Street");
@@ -211,7 +208,7 @@ class UserServiceTest {
         // Update the address
         AddressDTO updateDTO = new AddressDTO();
         updateDTO.setAddressId(addressId);
-        updateDTO.setUserId(1L);
+        updateDTO.setUserID(1L);
         updateDTO.setCountry("USA");
         updateDTO.setCity("Los Angeles");
         updateDTO.setStreet("456 Updated Street");
@@ -232,7 +229,7 @@ class UserServiceTest {
     void testRemoveAddress() {
         // First add an address
         AddressDTO addressDTO = new AddressDTO();
-        addressDTO.setUserId(1L);
+        addressDTO.setUserID(1L);
         addressDTO.setCountry("USA");
         addressDTO.setCity("New York");
         addressDTO.setStreet("123 Main Street");

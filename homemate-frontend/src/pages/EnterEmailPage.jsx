@@ -26,7 +26,9 @@ function EnterEmailPage() {
     setIsLoading(true);
 
     try {
-      const result = await sendOtp(email, flowType);
+      // Determine OTP type based on flow type
+      const otpType = flowType === "FORGOT_PASSWORD" ? "forgetpassword" : "signup";
+      const result = await sendOtp(email, flowType, otpType);
       
       if (result.success) {
         // Navigate to OTP verification page with email and flow type

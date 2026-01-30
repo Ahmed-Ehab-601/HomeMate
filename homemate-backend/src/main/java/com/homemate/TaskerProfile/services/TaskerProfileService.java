@@ -2,6 +2,8 @@ package com.homemate.TaskerProfile.services;
 
 import java.util.List;
 
+import com.homemate.hashing.HashingService;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import com.homemate.TaskerProfile.DTO.AddressCityDTO;
@@ -25,40 +27,37 @@ import com.homemate.TaskerProfile.models.Services;
 import com.homemate.TaskerProfile.models.Tasker;
 
 @Service
+@AllArgsConstructor
 public class TaskerProfileService {
     private final TaskerDao taskerDao;
     private final TaskerProfileServiceDao serviceDao;
     private final ReviewDao reviewDao;
+    private final HashingService hashingService;
 
-    public TaskerProfileService(TaskerDao taskerDao, TaskerProfileServiceDao serviceDao, ReviewDao reviewDao) {
-        this.taskerDao = taskerDao;
-        this.serviceDao = serviceDao;
-        this.reviewDao = reviewDao;
-    }
 
     public Boolean changePassword(PasswordDTO passwordDTO) {
         final int MAX_LENGTH = 255;
         String oldPassword = passwordDTO.getOldPassword();
         String newPassword = passwordDTO.getNewPassword();
-        
+
         if (oldPassword == null || oldPassword.isEmpty()) {
             throw new IllegalArgumentException("Old password is required.");
         }
-        
+
         if (newPassword == null || newPassword.isEmpty()) {
             throw new IllegalArgumentException("New password is required.");
         }
-        
+
         if (newPassword.length() > MAX_LENGTH) {
             throw new IllegalArgumentException("Password must not exceed 255 characters.");
         }
-        
+
         Tasker tasker = taskerDao.getByID(passwordDTO.getTaskerID());
         
-        if (!tasker.getPassword().equals(oldPassword)) {
+        if (!hashingService.verifyPassword(oldPassword,tasker.getPassword())) {
             throw new IllegalArgumentException("Old password is incorrect.");
         }
-         String passwordPattern = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}\\|;:'\",.<>/?]).{8,}$";
+         String passwordPattern = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}|;:'\",.<>/?]).{8,}$";
 
         if (!newPassword.matches(passwordPattern)) {
             throw new IllegalArgumentException(
@@ -67,7 +66,7 @@ public class TaskerProfileService {
             );
         }
         
-        tasker.setPassword(newPassword);
+        tasker.setPassword(hashingService.hashPassword(newPassword));
         taskerDao.update(tasker);
         return true;
         
@@ -77,7 +76,7 @@ public class TaskerProfileService {
         
         final int MAX_LENGTH = 50;
         String newUsername = usernameDTO.getNewUsername();
-        if (newUsername.length() > MAX_LENGTH  || newUsername.length() == 0 ) {
+        if (newUsername.length() > MAX_LENGTH  || newUsername.isEmpty()) {
             throw new IllegalArgumentException("Username must not exceed 50 characters.");
         }
         Tasker tasker = taskerDao.getByID(usernameDTO.getTaskerID());
@@ -110,7 +109,7 @@ public class TaskerProfileService {
     public Boolean ChangeEmail(EmailDTO emailDTO) {
         final int MAX_LENGTH = 50;
         String newEmail = emailDTO.getNewEmail();
-        if (newEmail.length() > MAX_LENGTH || newEmail.length() == 0) {
+        if (newEmail.length() > MAX_LENGTH || newEmail.isEmpty()) {
             throw new IllegalArgumentException("Email must not exceed 50 characters nor empty.");
         }
         Tasker tasker = taskerDao.getByID(emailDTO.getTaskerID());
@@ -170,7 +169,7 @@ public class TaskerProfileService {
             return true;
     }
 
-    public Boolean changeName(NameDTO nameDTO) {
+    public void changeName(NameDTO nameDTO) {
         final int MAX_LENGTH = 50;
         String letterOnlyRegex = "^[A-Za-z]+$";
 
@@ -199,7 +198,6 @@ public class TaskerProfileService {
         tasker.setFirstName(newFirstName);
         tasker.setLastName(newLastName);
         taskerDao.update(tasker);
-        return true;
     }
 
     public Boolean changeService(Long taskerID, Long serviceID) {

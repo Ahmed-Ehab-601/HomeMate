@@ -546,6 +546,7 @@ function SignUpPage() {
                     className="input"
                     value={userForm.password}
                     onChange={handleUserFormChange}
+                    maxLength={72}
                     required
                     disabled={isLoading}
                   />
@@ -587,6 +588,9 @@ function SignUpPage() {
                     )}
                   </button>
                 </div>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                  {userForm.password.length}/72
+                </div>
               </div>
 
               <div className="form-field">
@@ -601,6 +605,7 @@ function SignUpPage() {
                     className="input"
                     value={userForm.confirmPassword}
                     onChange={handleUserFormChange}
+                    maxLength={72}
                     required
                     disabled={isLoading}
                   />
@@ -641,6 +646,9 @@ function SignUpPage() {
                       </svg>
                     )}
                   </button>
+                </div>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                  {userForm.confirmPassword.length}/72
                 </div>
               </div>
 
@@ -811,7 +819,7 @@ function SignUpPage() {
                     id="tasker-hourRate"
                     name="hourRate"
                     type="number"
-                    step="0.01"
+                    step="1"
                     min="0"
                     className="input"
                     value={taskerForm.hourRate}
@@ -864,6 +872,7 @@ function SignUpPage() {
                     className="input"
                     value={taskerForm.password}
                     onChange={handleTaskerFormChange}
+                    maxLength={72}
                     required
                     disabled={isLoading}
                   />
@@ -905,6 +914,9 @@ function SignUpPage() {
                     )}
                   </button>
                 </div>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                  {taskerForm.password.length}/72
+                </div>
               </div>
 
               <div className="form-field">
@@ -919,6 +931,7 @@ function SignUpPage() {
                     className="input"
                     value={taskerForm.confirmPassword}
                     onChange={handleTaskerFormChange}
+                    maxLength={72}
                     required
                     disabled={isLoading}
                   />
@@ -959,6 +972,9 @@ function SignUpPage() {
                       </svg>
                     )}
                   </button>
+                </div>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', textAlign: 'right' }}>
+                  {taskerForm.confirmPassword.length}/72
                 </div>
               </div>
 

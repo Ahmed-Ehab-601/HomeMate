@@ -2,7 +2,7 @@
 .task-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 16px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.2s ease, transform 0.1s ease;
@@ -48,6 +48,20 @@
   font-weight: 600;
   white-space: nowrap;
   transition: all 0.3s ease-in-out;
+}
+
+.task-card__paid-badge {
+  padding: 4px 10px;
+  border-radius: 999px !important;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #065f46; /* default green text */
+  background: #ecfdf5; /* light green bg */
+}
+
+.task-card__paid-badge.unpaid {
+  color: #92400e;
+  background: #fff7ed;
 }
 
 .task-card__details {
@@ -167,6 +181,7 @@
     opacity: 0;
     transform: translate(-50%, -20px);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, 0);
@@ -242,6 +257,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

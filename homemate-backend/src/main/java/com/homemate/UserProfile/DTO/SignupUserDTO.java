@@ -2,6 +2,7 @@ package com.homemate.UserProfile.DTO;
 
 import java.sql.Timestamp;
 
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -18,6 +19,7 @@ public class SignupUserDTO {
     private String firstName;
     private String lastName;
     private String email;
+    @Size(max = 72, message = "password max size is 72")
     private String password;
     private Timestamp birthDate;
     private Character gender;

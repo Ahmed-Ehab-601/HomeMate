@@ -25,6 +25,13 @@ public class TaskCardDto {
     private StatusDto status;
     @NotNull
     private String addressCity;
+    @NotNull
+    private Integer estimation;
+    @NotNull
+    private Boolean userHasUnreadMessages;
+    @NotNull
+    private Boolean taskerHasUnreadMessages;
 
+    private boolean paid;
 
 }

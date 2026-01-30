@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 
 @SpringBootTest
-@ActiveProfiles("service")  // ← Uses application-admin.properties
+@ActiveProfiles("admin")  // ← Uses application-admin.properties
 @Transactional  // ← Rolls back after each test
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CreationPart {
@@ -59,7 +59,7 @@ public class CreationPart {
         String imageData = "1234";
 
         ServiceEntity service = ServiceEntity.builder()
-                .name("Electrical")
+                .name("Security")
                 .description("Professional plumbing services")
                 .imageData(imageData)
                 .imageType("png")
@@ -75,7 +75,7 @@ public class CreationPart {
         assertNotNull(savedImageData);
         assertEquals(imageData, savedImageData);
 
-        jdbcTemplate.execute("DELETE FROM service WHERE name = 'Electrical'");
+        jdbcTemplate.execute("DELETE FROM service WHERE name = 'Security'");
 
     }
 }

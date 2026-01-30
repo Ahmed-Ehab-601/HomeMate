@@ -3,6 +3,7 @@ package com.homemate.UserProfile.Controllers;
 import java.util.Collections;
 import java.util.Map;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -53,7 +54,7 @@ public class ManageUserProfileController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<?> addAddress(@AuthenticationPrincipal AppUserDetails userDetails, @RequestBody AddressDTO newAddress) {
         Long userId = userDetails.getId();
-        newAddress.setUserId(userId);
+        newAddress.setUserID(userId);
         boolean flag = userService.addAddress(newAddress);
         
         
@@ -88,7 +89,7 @@ public class ManageUserProfileController {
     public ResponseEntity<Map<String, String>> updateAddress(@AuthenticationPrincipal AppUserDetails userDetails,
                                                              @PathVariable Long addressId,
                                                              @RequestBody AddressDTO updateAddress) {
-        updateAddress.setUserId(userDetails.getId());
+        updateAddress.setUserID(userDetails.getId());
         updateAddress.setAddressId(addressId);
         Boolean flag =userService.updateAddress(updateAddress);
         
@@ -164,7 +165,7 @@ public class ManageUserProfileController {
     @PutMapping("/password")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Map<String, String>> changePassword(@AuthenticationPrincipal AppUserDetails userDetails,
-                                                              @RequestBody PasswordDTO passwordDTO) {
+                                                              @RequestBody @Valid PasswordDTO passwordDTO) {
         try{                                                      
             passwordDTO.setUserId(userDetails.getId());
             userService.changePassword(passwordDTO);

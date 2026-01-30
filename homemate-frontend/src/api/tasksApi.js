@@ -82,3 +82,57 @@ export async function fetchTaskerTasks(taskerId, statusDto = "All", page = 0, pa
 
   return data;
 }
+
+/**
+ * Fetch user tasks for calendar view by date range
+ * @param {number} userId - User ID
+ * @param {string} startDate - Start date (YYYY-MM-DD)
+ * @param {string} endDate - End date (YYYY-MM-DD)
+ * @param {string} statusDto - Status filter (All, InReview, Accepted, InProgress, Suspended, Done, Rejected)
+ * @returns {Promise<Array>} Array of tasks
+ */
+export async function fetchUserTasksByDate(userId, startDate, endDate, statusDto = "All") {
+  const url = `${baseUrl}/api/user/getTasks?startDate=${startDate}&endDate=${endDate}&status=${statusDto}`;
+
+  console.log("🔵 [fetchUserTasksByDate] Request:", {
+    url,
+    userId,
+    startDate,
+    endDate,
+    statusDto,
+  });
+
+  const data = await apiRequest(url, {
+    method: "GET",
+  });
+
+  console.log("🟢 [fetchUserTasksByDate] Response:", data);
+  return data;
+}
+
+/**
+ * Fetch tasker tasks for calendar view by date range
+ * @param {number} taskerId - Tasker ID
+ * @param {string} startDate - Start date (YYYY-MM-DD)
+ * @param {string} endDate - End date (YYYY-MM-DD)
+ * @param {string} statusDto - Status filter (All, InReview, Accepted, InProgress, Suspended, Done, Rejected)
+ * @returns {Promise<Array>} Array of tasks
+ */
+export async function fetchTaskerTasksByDate(taskerId, startDate, endDate, statusDto = "All") {
+  const url = `${baseUrl}/api/tasker/getTasks?startDate=${startDate}&endDate=${endDate}&status=${statusDto}`;
+
+  console.log("🔵 [fetchTaskerTasksByDate] Request:", {
+    url,
+    taskerId,
+    startDate,
+    endDate,
+    statusDto,
+  });
+
+  const data = await apiRequest(url, {
+    method: "GET",
+  });
+
+  console.log("🟢 [fetchTaskerTasksByDate] Response:", data);
+  return data;
+}
