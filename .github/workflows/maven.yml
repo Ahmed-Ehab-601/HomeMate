@@ -209,14 +209,14 @@ jobs:
         verbose: true
     
     - name: Upload coverage HTML report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: coverage-report
         path: homemate-backend/target/site/jacoco/
     
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: steps.maven-build.outcome == 'success'
       with:
         name: package
